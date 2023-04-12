@@ -72,54 +72,6 @@ public:
 
 
 //***********************************************************************
-template<typename T>
-class ConcurentVoltageAveraging {
-//***********************************************************************
-    class Stored {
-        T voltage = T();
-        uns n = 0;
-    public:
-        Stored() = default;
-        Stored(T value) noexcept : voltage{ value } {}
-        Stored(const Stored& s, T value) noexcept : voltage{ s.voltage + value}, n{ s.n + 1}{}
-        T getValue()const noexcept { return voltage / n; }
-        bool isSet()const noexcept { return n != 0; }
-    };
-    std::atomic<Stored> voltage;
-
-public:
-    //***********************************************************************
-    explicit ConcurentVoltageAveraging(T def = T()) noexcept: voltage{ Stored{ def } } {}
-    void store(const T& value)noexcept { value.store(Stored{ value }); }
-    T load()const noexcept { return voltage.load().getValue(); }
-    const T& operator=(const T& value) noexcept { voltage.store(Stored{ value }); return value; }
-    //***********************************************************************
-
-    //***********************************************************************
-    void moveToValueIfSet(T& destValue) noexcept {
-    //***********************************************************************
-        Stored s = voltage.load();
-        if (s.isSet()) {
-            voltage.store(Stored{});
-            destValue = s.getValue();
-        }
-    }
-
-    //***********************************************************************
-    void fetch_add(T value) noexcept {
-    //***********************************************************************
-        Stored temp{ voltage.load(std::memory_order_relaxed) };
-        while (!voltage.compare_exchange_strong(temp, Stored{ temp, value }, std::memory_order_relaxed))
-            ;
-    }
-
-    //***********************************************************************
-    void fetch_sub(const T& value) noexcept { fetch_add(-value); }
-    //***********************************************************************
-};
-
-
-//***********************************************************************
 struct CircuitNodeDataAC {
 //***********************************************************************
     cplx value = cplx0;              // voltage/temperature/... of the node
@@ -144,7 +96,6 @@ struct NodeData {
     ConcurentValue<rvt> d;  // defect (current)
     rvt v = rvt0;           // error (voltage)
     rvt toSave = rvt0;      // stored for saving
-    ConcurentVoltageAveraging<rvt> mgExternalNodeVoltage; // mg interpolation stores the voltage of the external nodes of the contained components here
     std::unique_ptr<CircuitNodeDataAC> acNodePtr;
     uns defaultValueIndex;  // in FixVoltages::V
     //***********************************************************************

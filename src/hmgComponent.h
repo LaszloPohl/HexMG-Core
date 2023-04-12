@@ -15,6 +15,7 @@
 #include "hmgMatrix.hpp"
 #include "hmgComponentModel.h"
 #include "hmgSunred.h"
+#include "hmgMultigridTypes.h"
 //***********************************************************************
 
 
@@ -1383,8 +1384,8 @@ class SubCircuitFullMatrixReductorDC {
 //***********************************************************************
     friend class ComponentSubCircuit;
     //***********************************************************************
-    matrix<rvt> YRED; // fullmatrix and sunred forwsubs sets, multigrid not allocates
-    vektor<rvt> JRED; // forwsubs sets; fullmatrix and sunred sets, multigrid not allocates
+    matrix<rvt> YRED; // forwsubs sets
+    vektor<rvt> JRED; // forwsubs sets
     matrix<rvt> YAwork, YAcopy, XATwork, XATcopy, XBwork, XBcopy, YBwork, YBcopy; // step 1: fill "work" YA, XA, XB, YB; step2: update all "copy". If no change, no need for matrix reduction. 
     matrix<rvt> NZB, NZBXA, NZBXAT;
     vektor<rvt> JA, JB, NZBJB, UA, UB;
