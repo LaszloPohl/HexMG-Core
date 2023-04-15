@@ -133,6 +133,8 @@ public:
     virtual bool isJacobianMXSymmetrical(bool isDC)const noexcept = 0; // e.g. controlled source is alway asymmetrical, in AC, too
     virtual void resetNodes(bool isDC) noexcept = 0;
     virtual void deleteD(bool isDC) noexcept = 0;
+    virtual void deleteF(bool isDC) noexcept = 0;
+    virtual void loadFtoD(bool isDC) noexcept = 0;
     virtual void calculateCurrent(bool isDC) noexcept = 0;
     virtual void forwsubs(bool isDC) = 0;
     virtual void backsubs(bool isDC) = 0;
@@ -212,6 +214,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
+    void deleteF(bool isDC) noexcept override final {}
+    void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     //************************** DC functions *******************************
@@ -354,6 +358,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
+    void deleteF(bool isDC) noexcept override final {}
+    void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     //************************** DC functions *******************************
@@ -439,6 +445,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
+    void deleteF(bool isDC) noexcept override final {}
+    void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     //************************** DC functions *******************************
@@ -548,6 +556,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override {}
     void deleteD(bool isDC) noexcept override {}
+    void deleteF(bool isDC) noexcept override {}
+    void loadFtoD(bool isDC) noexcept override {}
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
@@ -660,6 +670,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
     void deleteD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
+    void deleteF(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
+    void loadFtoD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -822,6 +834,8 @@ public:
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override { }
     void deleteD(bool isDC) noexcept override { }
+    void deleteF(bool isDC) noexcept override { }
+    void loadFtoD(bool isDC) noexcept override { }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -1305,6 +1319,58 @@ public:
         for (auto& comp : components)
             if (comp.get()->isEnabled) comp.get()->acceptIterationAndStepAC();
     }
+    //************************  Multigrid Functions  ************************
+    void deleteF(bool isDC) noexcept override {
+    // TO PARALLEL
+    //***********************************************************************
+        if (isDC) {
+            for (auto& node : internalNodesAndVars)
+                node.deleteFDC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->deleteF(true);
+        }
+        else {
+            for (auto& node : internalNodesAndVars)
+                node.deleteFAC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->deleteF(false);
+        }
+    }
+    //***********************************************************************
+    void loadFtoD(bool isDC) noexcept override {
+    // TO PARALLEL
+    //***********************************************************************
+        if (isDC) {
+            for (auto& node : internalNodesAndVars)
+                node.loadFtoDDC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->loadFtoD(true);
+        }
+        else {
+            for (auto& node : internalNodesAndVars)
+                node.loadFtoDAC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->loadFtoD(false);
+        }
+    }
+    //***********************  DC Multigrid Functions  **********************
+    void solveDC() {} // d0 += f0 kell!
+    void relaxDC() {} // f-et is figyelembe kell venni!
+    void prolongateUDC(const FineCoarseConnectionDescription&) {}
+    void restrictUDC(const FineCoarseConnectionDescription&) {}
+    rvt restrictFDDC(const FineCoarseConnectionDescription&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
+    void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&) {}   // dH_NonConcurent = uH – R(uh)
+    void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&) {}     // uh = uh + P(dH_NonConcurent)
+    rvt calculateResidualDC()const {} // sum (dh)^2
+    //***********************  AC Multigrid Functions  **********************
+    void solveAC() {} // d0 += f0 kell!
+    void relaxAC() {} // f-et is figyelembe kell venni!
+    void prolongeteUAC(const FineCoarseConnectionDescription&) {}
+    void restrictUAC(const FineCoarseConnectionDescription&) {}
+    rvt restrictFDDAC(const FineCoarseConnectionDescription&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
+    void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&) {}   // dH_NonConcurent = uH – R(uh)
+    void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&) {}     // uh = uh + P(dH_NonConcurent)
+    rvt calculateResidualAC()const {} // sum (dh)^2 => saját fv kell a re*re+im*im-hez
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     //***********************************************************************

@@ -53,7 +53,9 @@ public:
     void setIsGnd(bool is)noexcept { isGnd = is; }
     bool getIsGnd() const noexcept { return isGnd; }
     void store(const T& value)noexcept { if (isGnd) return; if (isConcurrent)concurrent.store(value); else nonConcurrent = value; }
+    void storeToNonConcurent(const T& value)noexcept { nonConcurrent = value; }
     T load()const noexcept { return isConcurrent ? concurrent.load() : nonConcurrent; }
+    T loadNonConcurent()const noexcept { return nonConcurrent; }
     const T& operator=(const T& value) noexcept { if (isConcurrent)concurrent.store(value); else nonConcurrent = value; return value; }
     //***********************************************************************
 
@@ -79,6 +81,8 @@ struct CircuitNodeDataAC {
     ConcurentValue<cplx> d;          // defect (current)
     cplx v = 0;                      // error (voltage)
     //***********************************************************************
+    cplx f = cplx0; // multigrid defect
+    //***********************************************************************
     void reset() noexcept {
     //***********************************************************************
         value = cplx0;
@@ -98,6 +102,8 @@ struct NodeData {
     rvt toSave = rvt0;      // stored for saving
     std::unique_ptr<CircuitNodeDataAC> acNodePtr;
     uns defaultValueIndex;  // in FixVoltages::V
+    //***********************************************************************
+    rvt f = rvt0; // multigrid defect
     //***********************************************************************
     inline static rvt alpha = 1; // multiplicator for getValue
     //***********************************************************************
@@ -205,10 +211,14 @@ struct VariableNodeBase final : public ParVarNodeType {
     }
     //***********************************************************************
     void setDDC(rvt d)noexcept { nodePtr->d.store(d); }
+    void setDNonConcurentDC(rvt d)noexcept { nodePtr->d.storeToNonConcurent(d); }
     void setVDC(rvt v)noexcept { nodePtr->v = v; }
     void incDDC(rvt d)noexcept { nodePtr->d.fetch_add(d); }
     void deleteDDC()noexcept { if (isNode()) nodePtr->d.store(rvt0); }
+    void deleteFDC()noexcept { if (isNode()) nodePtr->f = rvt0; }
+    void loadFtoDDC()noexcept { if (isNode()) nodePtr->d.store(nodePtr->f); }
     rvt getDDC()const noexcept { return nodePtr->d.load(); }
+    rvt getDNonConcurentDC()const noexcept { return nodePtr->d.loadNonConcurent(); }
     rvt getVDC()const noexcept { return nodePtr->v; }
     //************************** AC functions *******************************
 private:
@@ -227,6 +237,8 @@ public:
     //***********************************************************************
     void createAC() { if (isNode()) make_AC(); }
     void deleteDAC() { if (isNode()) { make_AC(); nodePtr->acNodePtr->d.store(cplx0); } }
+    void deleteFAC() { if (isNode()) { make_AC(); nodePtr->acNodePtr->f = cplx0; } }
+    void loadFtoDAC() { if (isNode()) { nodePtr->acNodePtr->d.store(nodePtr->acNodePtr->f); } }
     //***********************************************************************
     cplx getValueAC()const {
     //***********************************************************************
@@ -237,6 +249,7 @@ public:
     }
     //***********************************************************************
     cplx getDAC()const noexcept { return nodePtr->acNodePtr->d.load(); }
+    cplx getDNonConcurentAC()const noexcept { return nodePtr->acNodePtr->d.loadNonConcurent(); }
     cplx getVAC()const noexcept(!hmgVErrorCheck) { return nodePtr->acNodePtr->v; }
     void incDAC(ccplx& d)noexcept { nodePtr->acNodePtr->d.fetch_add(d); }
     void resetAC() noexcept { if(isNode()) nodePtr->acNodePtr->reset(); }
@@ -252,6 +265,7 @@ public:
     }
     //***********************************************************************
     void setDAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.store(d); }
+    void setDNonConcurentAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.storeToNonConcurent(d); }
     void setVAC(ccplx& v)noexcept { nodePtr->acNodePtr->v = v; }
     //***********************************************************************
 };
