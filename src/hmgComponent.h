@@ -134,6 +134,7 @@ public:
     virtual void resetNodes(bool isDC) noexcept = 0;
     virtual void deleteD(bool isDC) noexcept = 0;
     virtual void deleteF(bool isDC) noexcept = 0;
+    virtual void deleteYii(bool isDC) noexcept = 0;
     virtual void loadFtoD(bool isDC) noexcept = 0;
     virtual void calculateCurrent(bool isDC) noexcept = 0;
     virtual void forwsubs(bool isDC) = 0;
@@ -147,11 +148,13 @@ public:
     virtual DefectCollector collectVoltageDefectDC() const noexcept = 0; // no AC version
     virtual rvt getJreducedDC(uns y) const noexcept = 0;
     virtual rvt getYDC(uns y, uns x) const noexcept = 0;
+    virtual void calculateYiiDC() noexcept = 0;
     //************************** AC functions *******************************
     virtual void acceptIterationAndStepAC() noexcept = 0; // Vnode = Vnode + v
     virtual void buildForAC() = 0; // buildOrReplace() do this for DC
     virtual cplx getJreducedAC(uns y) const noexcept = 0;
     virtual cplx getYAC(uns y, uns x) const noexcept = 0;
+    virtual void calculateYiiAC() noexcept = 0;
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     virtual const VariableNodeBase* getInternalNode(siz nodeIndex)const noexcept { return nullptr; };
@@ -215,6 +218,7 @@ public:
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
     void deleteF(bool isDC) noexcept override final {}
+    void deleteYii(bool isDC) noexcept override final {}
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
@@ -268,9 +272,27 @@ public:
     //***********************************************************************
     rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
     rvt getYDC(uns y, uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); }
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        crvt G = componentValue.getValueDC();
+        N0->incYiiDC(G);
+        N1->incYiiDC(G);
+    }
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
     cplx getYAC(uns y, uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); } // componentValue.getValueDC() !
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
+        N0->incYiiAC(G);
+        N1->incYiiAC(G);
+    }
     //***********************************************************************
 };
 
@@ -316,6 +338,14 @@ public:
     rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
     rvt getYDC(uns y, uns x) const noexcept override { return y == x ? Gc : -Gc; }
     void acceptStepDC() noexcept override { I_stepStart = componentCurrent.getValueDC(); }
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        N0->incYiiDC(Gc);
+        N1->incYiiDC(Gc);
+    }
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
     //***********************************************************************
@@ -324,6 +354,15 @@ public:
         return y == x  // componentValue.getValueDC() !
             ?  componentValue.getValueDC() * SimControl::getComplexFrequency()
             : -componentValue.getValueDC() * SimControl::getComplexFrequency();
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        ccplx G = componentValue.getValueDC() * SimControl::getComplexFrequency();
+        N0->incYiiAC(G);
+        N1->incYiiAC(G);
     }
     //***********************************************************************
 };
@@ -359,6 +398,7 @@ public:
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
     void deleteF(bool isDC) noexcept override final {}
+    void deleteYii(bool isDC) noexcept override final {}
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
@@ -418,9 +458,11 @@ public:
     //***********************************************************************
     rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
     rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    void calculateYiiDC() noexcept override {}
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
     cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    void calculateYiiAC() noexcept override {}
     //***********************************************************************
 };
 
@@ -446,6 +488,7 @@ public:
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
     void deleteF(bool isDC) noexcept override final {}
+    void deleteYii(bool isDC) noexcept override final {}
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
@@ -519,13 +562,43 @@ public:
             return rvt0;
         return (x == y + 2) ? componentValue.getValueDC() : -componentValue.getValueDC();
     }
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        if (N[2] == N[3])
+            return;
+        if (N[0] == N[2]) N[0]->incYiiDC( componentValue.getValueDC());
+        if (N[0] == N[3]) N[0]->incYiiDC(-componentValue.getValueDC());
+        if (N[1] == N[2]) N[1]->incYiiDC(-componentValue.getValueDC());
+        if (N[1] == N[3]) N[1]->incYiiDC( componentValue.getValueDC());
+    }
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
     cplx getYAC(uns y, uns x) const noexcept override {
     //***********************************************************************
         if (y > 1 || x < 2)
             return cplx0;
-        return (x == y + 2) ? componentValue.getValueDC() : -componentValue.getValueDC(); // componentValue.getValueDC() !
+        crvt A = param[2].get();
+        crvt Phi = param[3].get();
+        ccplx S = cplx{ A * cos(Phi), A * sin(Phi) };
+        return (x == y + 2) ? S : -S;
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        if (N[2] == N[3])
+            return;
+        crvt A = param[2].get();
+        crvt Phi = param[3].get();
+        ccplx S = cplx{ A * cos(Phi), A * sin(Phi) };
+        if (N[0] == N[2]) N[0]->incYiiAC( S);
+        if (N[0] == N[3]) N[0]->incYiiAC(-S);
+        if (N[1] == N[2]) N[1]->incYiiAC(-S);
+        if (N[1] == N[3]) N[1]->incYiiAC( S);
     }
 };
 
@@ -557,6 +630,7 @@ public:
     void resetNodes(bool isDC) noexcept override {}
     void deleteD(bool isDC) noexcept override {}
     void deleteF(bool isDC) noexcept override {}
+    void deleteYii(bool isDC) noexcept override {}
     void loadFtoD(bool isDC) noexcept override {}
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
@@ -599,12 +673,25 @@ public:
     //***********************************************************************
         if (y < 2) {
             if (x < 2)  return rvt0;
-            else        return y + 2 == x ? -param[0].get() : param[0].get();
+            else        return y + 2 == x ? -param[0].get() : param[0].get(); // I don't know why -S
         }
         else {
             if (x < 2)  return x + 2 == y ? -param[1].get() : param[1].get();
             else        return rvt0;
         }
+    }
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        if (N[2] == N[3])
+            return;
+        crvt s = -(param[0].get() + param[1].get()); // I set -S because in getYDC -S is used but I don't know why
+        if (N[0] == N[2]) N[0]->incYiiDC( s);
+        if (N[0] == N[3]) N[0]->incYiiDC(-s);
+        if (N[1] == N[2]) N[1]->incYiiDC(-s);
+        if (N[1] == N[3]) N[1]->incYiiDC( s);
     }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
@@ -620,6 +707,19 @@ public:
             if (x < 2)  return x + 2 == y ? -param[1].get() : param[1].get();
             else        return cplx0;
         }
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        if (N[2] == N[3])
+            return;
+        ccplx s = -(param[0].get() + param[1].get()); // I set -S because in getYAC -S is used but I don't know why
+        if (N[0] == N[2]) N[0]->incYiiAC( s);
+        if (N[0] == N[3]) N[0]->incYiiAC(-s);
+        if (N[1] == N[2]) N[1]->incYiiAC(-s);
+        if (N[1] == N[3]) N[1]->incYiiAC( s);
     }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
@@ -671,6 +771,7 @@ public:
     void resetNodes(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
     void deleteD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
     void deleteF(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
+    void deleteYii(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
     void loadFtoD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
     //***********************************************************************
@@ -770,6 +871,16 @@ public:
         return y == x ? param[4].get() : -param[4].get();
     }
     //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    // the internal node is ignored here
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        crvt G = param[4].get();
+        N[0]->incYiiDC(G);
+        N[1]->incYiiDC(G);
+    }
+    //***********************************************************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     //************************** AC functions *******************************
@@ -785,6 +896,16 @@ public:
     cplx getYAC(uns y, uns x) const noexcept override {
     //***********************************************************************
         return y == x ? param[4].get() : -param[4].get();
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    // the internal node is ignored here
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        ccplx G = param[4].get();
+        N[0]->incYiiAC(G);
+        N[1]->incYiiAC(G);
     }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
@@ -835,6 +956,7 @@ public:
     void resetNodes(bool isDC) noexcept override { }
     void deleteD(bool isDC) noexcept override { }
     void deleteF(bool isDC) noexcept override { }
+    void deleteYii(bool isDC) noexcept override { }
     void loadFtoD(bool isDC) noexcept override { }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
@@ -1337,6 +1459,23 @@ public:
         }
     }
     //***********************************************************************
+    void deleteYii(bool isDC) noexcept override { 
+    // TO PARALLEL
+    //***********************************************************************
+        if (isDC) {
+            for (auto& node : internalNodesAndVars)
+                node.deleteYiiDC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->deleteYii(true);
+        }
+        else {
+            for (auto& node : internalNodesAndVars)
+                node.deleteYiiAC();
+            for (auto& comp : components)
+                if (comp.get()->isEnabled) comp.get()->deleteYii(false);
+        }
+    }
+    //***********************************************************************
     void loadFtoD(bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
@@ -1354,8 +1493,9 @@ public:
         }
     }
     //***********************  DC Multigrid Functions  **********************
-    void solveDC() {} // d0 += f0 kell!
-    void relaxDC() {} // f-et is figyelembe kell venni!
+    void solveDC(); // d0 += f0 kell!
+    void relaxDC(uns nRelax); // f-et is figyelembe kell venni!
+    void calculateYiiDC() noexcept override {}
     void prolongateUDC(const FineCoarseConnectionDescription&) {}
     void restrictUDC(const FineCoarseConnectionDescription&) {}
     rvt restrictFDDC(const FineCoarseConnectionDescription&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
@@ -1364,7 +1504,7 @@ public:
     rvt calculateResidualDC()const {} // sum (dh)^2
     //***********************  AC Multigrid Functions  **********************
     void solveAC() {} // d0 += f0 kell!
-    void relaxAC() {} // f-et is figyelembe kell venni!
+    void relaxAC(uns nRelax) {} // f-et is figyelembe kell venni!
     void prolongeteUAC(const FineCoarseConnectionDescription&) {}
     void restrictUAC(const FineCoarseConnectionDescription&) {}
     rvt restrictFDDAC(const FineCoarseConnectionDescription&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez

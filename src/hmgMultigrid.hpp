@@ -49,7 +49,7 @@ struct hmgMultigrid {
             for (uns iV = 0; iV < nVcycles; iV++) {
                 rvt truncationError = rvt0;
 
-                // downward line of the letter V
+                // downward line of the V
 
                 uns iDown = iDestLevel + 1;
                 do {
@@ -63,8 +63,7 @@ struct hmgMultigrid {
 
                     // relax
 
-                    for (uns iRelax = 0; iRelax < nPreSmoothings; iRelax++)
-                        hGrid.relaxDC();
+                    hGrid.relaxDC(nPreSmoothings);
 
                     // Lh
 
@@ -94,7 +93,7 @@ struct hmgMultigrid {
 
                 gc.fullCircuitInstances[levels[0].indexCoarseFullCircuit].component->solveDC(); // d0 += f0 kell!
 
-                // upward line of the letter V
+                // upward line of the V
 
                 for (uns iUp = 0; iUp <= iDestLevel; iUp++) {
                     
@@ -104,12 +103,11 @@ struct hmgMultigrid {
                     // uh
 
                     hGrid.uHMinusRestrictUhToDHNCDC(hLevel); // dH_NonConcurent = uH – R(uh)
-                    hGrid.prolongateDHNCAddToUhDC(hLevel);   // // uh += P(dH_NonConcurent)
+                    hGrid.prolongateDHNCAddToUhDC(hLevel);   // uh += P(dH_NonConcurent)
 
                     // relax
 
-                    for (uns iRelax = 0; iRelax < nPostSmoothings; iRelax++)
-                        hGrid.relaxDC();
+                    hGrid.relaxDC(nPostSmoothings);
                 }
 
                 // residual

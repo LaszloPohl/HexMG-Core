@@ -596,5 +596,36 @@ void SubCircuitFullMatrixReductorAC::backsubs() {
 
 
 //***********************************************************************
+void ComponentSubCircuit::solveDC() {
+//***********************************************************************
+    calculateValueDC();
+    loadFtoD(true); // ! this is a multigrid-specific instruction, in normal case (e.g. sunred), D is deleted
+    calculateCurrent(true);
+    //ComponentBase::DefectCollector d = collectCurrentDefectDC();
+    //ComponentBase::DefectCollector v = collectVoltageDefectDC();
+    forwsubs(true);
+    backsubs(true);
+    acceptIterationDC(); // value += v
+    acceptStepDC(); // stepstart = value
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::relaxDC(uns nRelax) {
+//***********************************************************************
+    calculateValueDC();
+    deleteYii(true);
+    // calculateYiiDC();
+    for (uns i = 0; i < nRelax; i++) {
+        loadFtoD(true);
+        calculateCurrent(true);
+        // a tárolt komponensek internal node-jaira Jakobi-iteráció (párhuzamos)
+        // this node-jaira Jakobi iteráció (párhuzamos)
+        // this node-jaira setValueAcceptedMGDC() (párhuzamos)
+    }
+}
+
+
+//***********************************************************************
 }
 //***********************************************************************

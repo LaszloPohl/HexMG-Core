@@ -76,12 +76,13 @@ public:
 //***********************************************************************
 struct CircuitNodeDataAC {
 //***********************************************************************
-    cplx value = cplx0;              // voltage/temperature/... of the node
+    cplx value = cplx0;             // voltage/temperature/... of the node
     cplx toSave = cplx0;
-    ConcurentValue<cplx> d;          // defect (current)
-    cplx v = 0;                      // error (voltage)
+    ConcurentValue<cplx> d;         // defect (current)
+    cplx v = 0;                     // error (voltage)
     //***********************************************************************
-    cplx f = cplx0; // multigrid defect
+    cplx f = cplx0;                 // multigrid defect
+    ConcurentValue<cplx> yii;       // admitance for multigrid
     //***********************************************************************
     void reset() noexcept {
     //***********************************************************************
@@ -89,6 +90,8 @@ struct CircuitNodeDataAC {
         toSave = cplx0;
         d.store(cplx0);
         v = cplx0;
+        f = cplx0;
+        yii.store(cplx0);
     }
 };
 
@@ -104,6 +107,7 @@ struct NodeData {
     uns defaultValueIndex;  // in FixVoltages::V
     //***********************************************************************
     rvt f = rvt0; // multigrid defect
+    ConcurentValue<rvt> yii;  // admitance for multigrid
     //***********************************************************************
     inline static rvt alpha = 1; // multiplicator for getValue
     //***********************************************************************
@@ -150,8 +154,8 @@ struct VariableNodeBase final : public ParVarNodeType {
     }
     //***********************************************************************
     void reset() noexcept; // DC + AC
-    void setIsConcurrentDC(bool is) noexcept { if (isNode()) nodePtr->d.setIsConcurrent(is); }
-    void setIsGndDC(bool is) noexcept { if (isNode()) nodePtr->d.setIsGnd(is); }
+    void setIsConcurrentDC(bool is) noexcept { if (isNode()) { nodePtr->d.setIsConcurrent(is); nodePtr->yii.setIsConcurrent(is); } }
+    void setIsGndDC(bool is) noexcept { if (isNode()) { nodePtr->d.setIsGnd(is); nodePtr->yii.setIsGnd(is); } }
     rvt getValueDC()const noexcept {  return isNode() ? (value + nodePtr->v * NodeData::alpha) : value; } // value + v*alpha
     rvt getValue0DC()const noexcept { return value; }
     rvt getStepStartDC()const noexcept { return stepStart; }
@@ -211,15 +215,19 @@ struct VariableNodeBase final : public ParVarNodeType {
     }
     //***********************************************************************
     void setDDC(rvt d)noexcept { nodePtr->d.store(d); }
+    void setYiiDC(rvt y)noexcept { nodePtr->yii.store(y); }
     void setDNonConcurentDC(rvt d)noexcept { nodePtr->d.storeToNonConcurent(d); }
     void setVDC(rvt v)noexcept { nodePtr->v = v; }
     void incDDC(rvt d)noexcept { nodePtr->d.fetch_add(d); }
+    void incYiiDC(rvt y)noexcept { nodePtr->yii.fetch_add(y); }
     void deleteDDC()noexcept { if (isNode()) nodePtr->d.store(rvt0); }
+    void deleteYiiDC()noexcept { if (isNode()) nodePtr->yii.store(rvt0); }
     void deleteFDC()noexcept { if (isNode()) nodePtr->f = rvt0; }
     void loadFtoDDC()noexcept { if (isNode()) nodePtr->d.store(nodePtr->f); }
     rvt getDDC()const noexcept { return nodePtr->d.load(); }
     rvt getDNonConcurentDC()const noexcept { return nodePtr->d.loadNonConcurent(); }
     rvt getVDC()const noexcept { return nodePtr->v; }
+    rvt getYiiDC()const noexcept { return nodePtr->yii.load(); }
     //************************** AC functions *******************************
 private:
     //***********************************************************************
@@ -231,12 +239,15 @@ private:
             nd.acNodePtr = std::make_unique<CircuitNodeDataAC>();
             nd.acNodePtr->d.setIsConcurrent(nd.d.getIsConcurrent());
             nd.acNodePtr->d.setIsGnd(nd.d.getIsGnd());
+            nd.acNodePtr->yii.setIsConcurrent(nd.yii.getIsConcurrent());
+            nd.acNodePtr->yii.setIsGnd(nd.yii.getIsGnd());
         }
     }
 public:
     //***********************************************************************
     void createAC() { if (isNode()) make_AC(); }
     void deleteDAC() { if (isNode()) { make_AC(); nodePtr->acNodePtr->d.store(cplx0); } }
+    void deleteYiiAC() { if (isNode()) { make_AC(); nodePtr->acNodePtr->yii.store(cplx0); } }
     void deleteFAC() { if (isNode()) { make_AC(); nodePtr->acNodePtr->f = cplx0; } }
     void loadFtoDAC() { if (isNode()) { nodePtr->acNodePtr->d.store(nodePtr->acNodePtr->f); } }
     //***********************************************************************
@@ -251,7 +262,9 @@ public:
     cplx getDAC()const noexcept { return nodePtr->acNodePtr->d.load(); }
     cplx getDNonConcurentAC()const noexcept { return nodePtr->acNodePtr->d.loadNonConcurent(); }
     cplx getVAC()const noexcept(!hmgVErrorCheck) { return nodePtr->acNodePtr->v; }
+    cplx getYiiAC()const noexcept { return nodePtr->acNodePtr->yii.load(); }
     void incDAC(ccplx& d)noexcept { nodePtr->acNodePtr->d.fetch_add(d); }
+    void incYiiAC(ccplx& y)noexcept { nodePtr->acNodePtr->yii.fetch_add(y); }
     void resetAC() noexcept { if(isNode()) nodePtr->acNodePtr->reset(); }
     //***********************************************************************
     void setValueAcceptedAC()noexcept {
@@ -267,6 +280,7 @@ public:
     void setDAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.store(d); }
     void setDNonConcurentAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.storeToNonConcurent(d); }
     void setVAC(ccplx& v)noexcept { nodePtr->acNodePtr->v = v; }
+    void setYiiAC(const cplx& y)noexcept { nodePtr->acNodePtr->yii.store(y); }
     //***********************************************************************
 };
 
@@ -336,6 +350,8 @@ inline rvt NodeData::reset() noexcept {
     v = rvt0;
     if (acNodePtr)
         acNodePtr->reset();
+    f = rvt0;
+    yii.store(rvt0);
     return toSave;
 }
 
