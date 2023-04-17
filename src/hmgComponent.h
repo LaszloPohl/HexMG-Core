@@ -139,8 +139,9 @@ public:
     virtual void calculateCurrent(bool isDC) noexcept = 0;
     virtual void forwsubs(bool isDC) = 0;
     virtual void backsubs(bool isDC) = 0;
+    virtual void jacobiIteration(bool isDC) = 0;
     //************************** DC functions *******************************
-    virtual void acceptIterationDC() noexcept = 0; // Vnode = Vnode + v*alpha
+    virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
     virtual void calculateValueDC() noexcept = 0; // no AC version
     virtual void calculateControllersDC(uns step) noexcept {} // no AC version, step 1 and 2: to reduce the number of virtual functions
@@ -222,10 +223,11 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
+    void jacobiIteration(bool isDC) override final {}
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
-    void acceptIterationDC() noexcept override final {}
+    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -402,10 +404,11 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
+    void jacobiIteration(bool isDC) override final {}
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
-    void acceptIterationDC() noexcept override final {}
+    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override final {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -492,10 +495,11 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
+    void jacobiIteration(bool isDC) override final {}
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
-    void acceptIterationDC() noexcept override final {}
+    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override final {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -634,6 +638,7 @@ public:
     void loadFtoD(bool isDC) noexcept override {}
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
+    void jacobiIteration(bool isDC) override {}
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -659,7 +664,7 @@ public:
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
-    void acceptIterationDC() noexcept override {}
+    void acceptIterationDC(bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
     void calculateValueDC() noexcept override {
@@ -839,8 +844,18 @@ public:
             N[2]->setVAC(UB);
         }
     }
+    //***********************************************************************
+    void jacobiIteration(bool isDC) override {
+    //***********************************************************************
+        if (isDC) {
+            N[2]->setValue0DC(N[2]->getValue0DC() + param[4].get() * N[2]->getDDC()); // + or - ? I'm not sure
+        }
+        else {
+            N[2]->setValue0AC(N[2]->getValue0AC() + param[4].get() * N[2]->getDAC()); // + or - ? I'm not sure
+        }
+    }
     //************************** DC functions *******************************
-    void acceptIterationDC() noexcept override { N[2]->setValueAcceptedDC(); }
+    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
     //***********************************************************************
     // If the current node is not connected, buildOrReplace creates an internal node and connect the current node to it.
@@ -953,11 +968,11 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override { }
-    void deleteD(bool isDC) noexcept override { }
-    void deleteF(bool isDC) noexcept override { }
-    void deleteYii(bool isDC) noexcept override { }
-    void loadFtoD(bool isDC) noexcept override { }
+    void resetNodes(bool isDC) noexcept override {}
+    void deleteD(bool isDC) noexcept override {}
+    void deleteF(bool isDC) noexcept override {}
+    void deleteYii(bool isDC) noexcept override {}
+    void loadFtoD(bool isDC) noexcept override {}
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -978,12 +993,13 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override { }
-    void backsubs(bool isDC) override { }
+    void forwsubs(bool isDC) override {}
+    void backsubs(bool isDC) override {}
+    void jacobiIteration(bool isDC) override {}
     //************************** DC functions *******************************
-    void acceptIterationDC() noexcept override { }
-    void acceptStepDC() noexcept override { }
-    void buildOrReplace() override { }
+    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptStepDC() noexcept override {}
+    void buildOrReplace() override {}
     //***********************************************************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -1022,10 +1038,28 @@ public:
         return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
     }
     //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (externalNodes[0] == externalNodes[1])
+            return;
+
+        rvt Y = rvt0;
+        for (uns i = 0; i < externalNodes.size(); i++)
+            if (externalNodes[i] == externalNodes[0])
+                Y += getYDC(0, i);
+        Y = rvt0;
+
+        externalNodes[0]->incYiiDC(Y);
+        for (uns i = 1; i < externalNodes.size(); i++)
+            if (externalNodes[i] == externalNodes[1])
+                Y += getYDC(0, i);
+        externalNodes[1]->incYiiDC(Y);
+    }
+    //***********************************************************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     //************************** AC functions *******************************
-    void acceptIterationAndStepAC() noexcept override { }
+    void acceptIterationAndStepAC() noexcept override {}
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC(uns y, uns x) const noexcept override {
@@ -1034,6 +1068,15 @@ public:
             return cplx0;
         crvt G = x == 0 ? pars[0].get() : x == 1 ? -pars[0].get() : rvt0;
         return y == 0 ? G : -G;
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (externalNodes[0] == externalNodes[1])
+            return;
+        ccplx G = pars[0].get();
+        externalNodes[0]->incYiiAC(G);
+        externalNodes[1]->incYiiAC(G);
     }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
@@ -1356,6 +1399,32 @@ public:
     //***********************************************************************
     void forwsubs(bool isDC)override { if (isDC) forwsubsDC(); else forwsubsAC(); }
     void backsubs(bool isDC)override { if (isDC) backsubsDC(); else backsubsAC(); }
+    //***********************************************************************
+    void jacobiIteration(bool isDC) override {
+    // TO PARALLEL
+    //***********************************************************************
+        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+        
+        for (auto& comp : components)
+            if (comp.get()->isEnabled) comp.get()->jacobiIteration(isDC);
+        
+        if (isDC) {
+            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+                crvt y = internalNodesAndVars[i].getYiiDC();
+                crvt d = internalNodesAndVars[i].getDDC();
+                if (y != rvt0)
+                    internalNodesAndVars[i].setValue0DC(-d / y); // is - needed ? I'm not sure
+            }
+        }
+        else {
+            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+                ccplx y = internalNodesAndVars[i].getYiiAC();
+                ccplx d = internalNodesAndVars[i].getDAC();
+                if (y != cplx0)
+                    internalNodesAndVars[i].setValue0AC(-d / y); // is - needed ? I'm not sure
+            }
+        }
+    }
     //************************** DC functions *******************************
     void allocForReductionDC();
     //***********************************************************************
@@ -1396,16 +1465,28 @@ public:
     rvt getJreducedDC(uns y) const noexcept override;
     rvt getYDC(uns y, uns x) const noexcept override;
     //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    // TO PARALLEL
+    //***********************************************************************
+        for (auto& comp : components)
+            if (comp.get()->isEnabled) comp.get()->calculateYiiDC();
+    }
+    //***********************************************************************
 
     //***********************************************************************
-    void acceptIterationDC() noexcept override {
+    void acceptIterationDC(bool isNoAlpha) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-            internalNodesAndVars[i].setValueAcceptedDC();
+        if (isNoAlpha)
+            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+                internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
+        else {
+            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+                internalNodesAndVars[i].setValueAcceptedDC();
+        }
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->acceptIterationDC();
+            if (comp.get()->isEnabled) comp.get()->acceptIterationDC(isNoAlpha);
     }
     //***********************************************************************
     void acceptStepDC() noexcept override {
@@ -1432,7 +1513,14 @@ public:
     cplx getJreducedAC(uns y) const noexcept override;
     cplx getYAC(uns y, uns x) const noexcept override;
     //***********************************************************************
-    void acceptIterationAndStepAC() noexcept override {
+    void calculateYiiAC() noexcept override {
+    // TO PARALLEL
+    //***********************************************************************
+        for (auto& comp : components)
+            if (comp.get()->isEnabled) comp.get()->calculateYiiAC();
+    }
+    //***********************************************************************
+    void acceptIterationAndStepAC() noexcept override { // sunred and multigrid
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
@@ -1495,7 +1583,6 @@ public:
     //***********************  DC Multigrid Functions  **********************
     void solveDC(); // d0 += f0 kell!
     void relaxDC(uns nRelax); // f-et is figyelembe kell venni!
-    void calculateYiiDC() noexcept override {}
     void prolongateUDC(const FineCoarseConnectionDescription&) {}
     void restrictUDC(const FineCoarseConnectionDescription&) {}
     rvt restrictFDDC(const FineCoarseConnectionDescription&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error

@@ -605,7 +605,7 @@ void ComponentSubCircuit::solveDC() {
     //ComponentBase::DefectCollector v = collectVoltageDefectDC();
     forwsubs(true);
     backsubs(true);
-    acceptIterationDC(); // value += v
+    acceptIterationDC(true); // value += v
     acceptStepDC(); // stepstart = value
 }
 
@@ -615,13 +615,11 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
 //***********************************************************************
     calculateValueDC();
     deleteYii(true);
-    // calculateYiiDC();
+    calculateYiiDC();
     for (uns i = 0; i < nRelax; i++) {
         loadFtoD(true);
         calculateCurrent(true);
-        // a tárolt komponensek internal node-jaira Jakobi-iteráció (párhuzamos)
-        // this node-jaira Jakobi iteráció (párhuzamos)
-        // this node-jaira setValueAcceptedMGDC() (párhuzamos)
+        jacobiIteration(true);
     }
 }
 

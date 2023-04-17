@@ -239,7 +239,7 @@ void runStepDC() {
 		cout << "\n*********\n" << endl;
 	gc.fullCircuitInstances[0].component->forwsubs(true);
 	gc.fullCircuitInstances[0].component->backsubs(true);
-	gc.fullCircuitInstances[0].component->acceptIterationDC();
+	gc.fullCircuitInstances[0].component->acceptIterationDC(false);
 	gc.fullCircuitInstances[0].component->acceptStepDC();
 	gc.fullCircuitInstances[0].component->calculateValueDC();
 	gc.fullCircuitInstances[0].component->deleteD(true);
@@ -273,7 +273,7 @@ void runStepLessPrintDC() {
 	ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
 	gc.fullCircuitInstances[0].component->forwsubs(true);
 	gc.fullCircuitInstances[0].component->backsubs(true);
-	gc.fullCircuitInstances[0].component->acceptIterationDC();
+	gc.fullCircuitInstances[0].component->acceptIterationDC(false);
 	gc.fullCircuitInstances[0].component->acceptStepDC();
 	gc.fullCircuitInstances[0].component->calculateValueDC();
 	gc.fullCircuitInstances[0].component->deleteD(true);
@@ -313,7 +313,7 @@ void runStepNoPrintDC() {
 		ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
 		gc.fullCircuitInstances[0].component->forwsubs(true);
 		gc.fullCircuitInstances[0].component->backsubs(true);
-		gc.fullCircuitInstances[0].component->acceptIterationDC();
+		gc.fullCircuitInstances[0].component->acceptIterationDC(false);
 		//std::cout << i << " \tt = " << ComponentBase::SimControl::timeStepStop.getValue() << " sec \t" << gc.fullCircuitInstances[0].component->getStoredComponent(12)->getInternalNode(0)->getValue() << std::endl;
 	}
 	gc.fullCircuitInstances[0].component->acceptStepDC();
@@ -702,7 +702,7 @@ void probaSzimulacio3() {
 	cout << "\n*********\n" << endl;
 	gc.fullCircuitInstances[0].component->forwsubs(true);
 	gc.fullCircuitInstances[0].component->backsubs(true);
-	gc.fullCircuitInstances[0].component->acceptIterationDC();
+	gc.fullCircuitInstances[0].component->acceptIterationDC(false);
 	gc.fullCircuitInstances[0].component->acceptStepDC();
 	gc.fullCircuitInstances[0].component->calculateValueDC();
 	gc.fullCircuitInstances[0].component->deleteD(true);

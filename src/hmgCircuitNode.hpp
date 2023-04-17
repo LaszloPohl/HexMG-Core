@@ -171,7 +171,7 @@ struct VariableNodeBase final : public ParVarNodeType {
         }
     }
     //***********************************************************************
-    void setValueAcceptedMGDC() noexcept {
+    void setValueAcceptedNoAlphaDC() noexcept {
     // accept the result of the current iteration with the current alpha
     //***********************************************************************
         if (isNode()) {
@@ -214,6 +214,7 @@ struct VariableNodeBase final : public ParVarNodeType {
         }
     }
     //***********************************************************************
+    void setValue0DC(rvt val)noexcept { value = val; }
     void setDDC(rvt d)noexcept { nodePtr->d.store(d); }
     void setYiiDC(rvt y)noexcept { nodePtr->yii.store(y); }
     void setDNonConcurentDC(rvt d)noexcept { nodePtr->d.storeToNonConcurent(d); }
@@ -266,6 +267,8 @@ public:
     void incDAC(ccplx& d)noexcept { nodePtr->acNodePtr->d.fetch_add(d); }
     void incYiiAC(ccplx& y)noexcept { nodePtr->acNodePtr->yii.fetch_add(y); }
     void resetAC() noexcept { if(isNode()) nodePtr->acNodePtr->reset(); }
+    void setValue0AC(ccplx& val)noexcept { nodePtr->acNodePtr->value = val; }
+    cplx getValue0AC()const noexcept { return nodePtr->acNodePtr->value; }
     //***********************************************************************
     void setValueAcceptedAC()noexcept {
     // value += v
