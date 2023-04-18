@@ -59,6 +59,8 @@ public:
     uns getN_Start_Of_O_Nodes()const noexcept { return nIONodes + nNormalINodes + nControlINodes; }
     uns getN_ExternalNodes()const noexcept { return nIONodes + nNormalINodes + nControlINodes + nNormalONodes + nForwardedONodes; }
     uns getN_Params()const noexcept { return nParams; }
+    virtual uns getN_NormalInternalNodes()const noexcept { return 0; }
+    virtual uns getN_InternalNodes()const noexcept { return 0; }
     bool isController()const noexcept { return nIONodes + nNormalINodes == 0; }
 };
 
@@ -134,6 +136,8 @@ class ModelConstV final : public ComponentAndControllerModelBase {
 public:
     ModelConstV() :ComponentAndControllerModelBase{ 2, 0, 0, 1, 0, 5 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    uns getN_NormalInternalNodes()const noexcept final override { return 1; }
+    uns getN_InternalNodes()const noexcept final override { return 1; }
 };
 
 
@@ -244,8 +248,8 @@ public:
            srTreeInstructions = std::move(*srTree);
     }
     //***********************************************************************
-    uns getN_Normal_Internal_Nodes()const noexcept { return nNormalInternalNodes; }
-    uns getN_Internal_Nodes()const noexcept { return nInternalNodes; }
+    uns getN_NormalInternalNodes()const noexcept final override{ return nNormalInternalNodes; }
+    uns getN_InternalNodes()const noexcept final override{ return nInternalNodes; }
     uns getN_Control_Internal_Nodes()const noexcept { return nInternalNodes - nNormalInternalNodes; }
     //***********************************************************************
     void setNInternalVars(uns n) noexcept { version++; nInternalVars = n; }

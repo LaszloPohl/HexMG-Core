@@ -214,7 +214,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
 
     cuns A1_nIONodes = model.getN_IO_Nodes();
     cuns A2_nNINodes = model.getN_Normal_I_Nodes();
-    cuns B1_nNInternalNodes = model.getN_Normal_Internal_Nodes();
+    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
     cuns B2_nNONodes = model.getN_Normal_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
     cuns NONodes_end = ONodes_start + B2_nNONodes; // end index of normal ONodes
@@ -372,7 +372,7 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
     cuns A1_nIONodes = model.getN_IO_Nodes();
     cuns A2_nNINodes = model.getN_Normal_I_Nodes();
     cuns nA = A1_nIONodes + A2_nNINodes;
-    cuns B1_nNInternalNodes = model.getN_Normal_Internal_Nodes();
+    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
     cuns B2_nNONodes = model.getN_Normal_O_Nodes();
 
     for (uns i = 0; i < nA; i++) {
@@ -413,7 +413,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
 
     cuns A1_nIONodes = model.getN_IO_Nodes();
     cuns A2_nNINodes = model.getN_Normal_I_Nodes();
-    cuns B1_nNInternalNodes = model.getN_Normal_Internal_Nodes();
+    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
     cuns B2_nNONodes = model.getN_Normal_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
     cuns NONodes_end = ONodes_start + B2_nNONodes; // end index of normal ONodes
@@ -570,7 +570,7 @@ void SubCircuitFullMatrixReductorAC::backsubs() {
     cuns A1_nIONodes = model.getN_IO_Nodes();
     cuns A2_nNINodes = model.getN_Normal_I_Nodes();
     cuns nA = A1_nIONodes + A2_nNINodes;
-    cuns B1_nNInternalNodes = model.getN_Normal_Internal_Nodes();
+    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
     cuns B2_nNONodes = model.getN_Normal_O_Nodes();
 
     for (uns i = 0; i < nA; i++) {
@@ -651,22 +651,19 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
         // top level components
         
         for (const auto& dest : instructions.components) {
+            
             rvt sumU = rvt0;
+            
             for (const auto& src : dest.instr) {
+                
                 ComponentBase* srcComponent = src.isFine ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
-                if (src.isExternal) {
-                    sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
-                }
-                else {
-                    sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
-                }
+                
+                if (src.isExternal) sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                else                sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
             }
-            if (dest.isExternal) {
-                components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)->setValue0DC(sumU);
-            }
-            else {
-                components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
-            }
+
+            if (dest.isExternal) components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)->setValue0DC(sumU);
+            else                 components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
         }
 
         // deep components (in most cases there are no deep components)
@@ -693,12 +690,8 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
                 // adding the weighted node value
 
-                if (src.isExternal) {
-                    sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
-                }
-                else {
-                    sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
-                }
+                if (src.isExternal) sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                else                sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
             }
 
             // finding the destination component: the starting component
@@ -713,13 +706,42 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
             // setting the voltage
 
-            if (dest.isExternal) {
-                destComponent->getNode(dest.nodeIndex)->setValue0DC(sumU);
-            }
-            else {
-                destComponent->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
-            }
+            if (dest.isExternal) destComponent->getNode(dest.nodeIndex)->setValue0DC(sumU);
+            else                 destComponent->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
         }
+    }
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& connections, const hmgMultigrid& multigrid) {
+    //***********************************************************************
+
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    ComponentSubCircuit& coarse = *gc.fullCircuitInstances[connections.indexCoarseFullCircuit].component;
+
+    // internal nodes
+
+    for (const auto& instruction : connections.globalNodeRestrictions) {
+        rvt sumU = rvt0;
+        for (const auto& src : instruction.instr) {
+            sumU += internalNodesAndVars[src.srcNodeIndex].getValue0DC() * src.weight;
+        }
+        coarse.internalNodesAndVars[instruction.destNodeIndex].setValue0DC(sumU);
+    }
+
+
+    // contained components
+
+    for (const auto& componentGroup : connections.componentGroups) {
+
+        if (componentGroup.isNormalRestriction) {
+
+        }
+        else {
+
+        }
+
     }
 }
 

@@ -1306,7 +1306,7 @@ public:
         externalNodesToComponents.clear();
         externalNodesToComponents.resize(pModel->getN_ExternalNodes()); // NormalONode is possible
         internalNodesToComponents.clear();
-        internalNodesToComponents.resize(static_cast<const ModelSubCircuit*>(pModel)->getN_Normal_Internal_Nodes());
+        internalNodesToComponents.resize(static_cast<const ModelSubCircuit*>(pModel)->getN_NormalInternalNodes());
         for (uns i = 0; i < components.size(); i++) {
             const auto& comp = *components[i];
             if (comp.isEnabled) {
@@ -1422,7 +1422,7 @@ public:
             if (comp.get()->isEnabled) comp.get()->jacobiIteration(isDC);
         
         if (isDC) {
-            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
                 crvt y = internalNodesAndVars[i].getYiiDC();
                 crvt d = internalNodesAndVars[i].getDDC();
                 if (y != rvt0)
@@ -1430,7 +1430,7 @@ public:
             }
         }
         else {
-            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
                 ccplx y = internalNodesAndVars[i].getYiiAC();
                 ccplx d = internalNodesAndVars[i].getDAC();
                 if (y != cplx0)
@@ -1454,7 +1454,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
         }
         for (auto& comp : components)
@@ -1467,7 +1467,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) {
+        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
         }
         for (auto& comp : components)
@@ -1492,10 +1492,10 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
-            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
                 internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
         else {
-            for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
                 internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
@@ -1537,7 +1537,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Normal_Internal_Nodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
             internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
             if (comp.get()->isEnabled) comp.get()->acceptIterationAndStepAC();
@@ -1597,7 +1597,7 @@ public:
     void solveDC(); // d0 += f0 kell!
     void relaxDC(uns nRelax); // f-et is figyelembe kell venni!
     void prolongateUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
-    void restrictUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
+    void restrictUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
     rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
     void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
     void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
@@ -1617,7 +1617,7 @@ public:
     void printNodeValueDC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeValueDC(i);
@@ -1627,7 +1627,7 @@ public:
     void printNodeErrorDC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeErrorDC(i);
@@ -1637,7 +1637,7 @@ public:
     void printNodeDefectDC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeDefectDC(i);
@@ -1647,7 +1647,7 @@ public:
     void printNodeValueAC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeValueAC(i);
@@ -1657,7 +1657,7 @@ public:
     void printNodeErrorAC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeErrorAC(i);
@@ -1667,7 +1667,7 @@ public:
     void printNodeDefectAC(uns n) const noexcept override {
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_Internal_Nodes(); i++)
+        for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i].get()->isEnabled) components[i].get()->printNodeDefectAC(i);
@@ -1703,7 +1703,7 @@ public:
         const bool isSymm = pSubCircuit->isJacobianMXSymmetrical(true);
         cuns Arow = model.getN_IO_Nodes();
         cuns Acol = Arow + (isSymm ? 0 : model.getN_Normal_I_Nodes());
-        cuns Browcol = model.getN_Normal_Internal_Nodes() + model.getN_Normal_O_Nodes();
+        cuns Browcol = model.getN_NormalInternalNodes() + model.getN_Normal_O_Nodes();
         YRED.resize_if_needed(Arow, Acol, isSymm);
         JRED.resize_if_needed(Arow);
         YAwork.resize_if_needed(Arow, Acol, isSymm);
@@ -1754,7 +1754,7 @@ public:
         const bool isSymm = pSubCircuit->isJacobianMXSymmetrical(false);
         cuns Arow = model.getN_IO_Nodes();
         cuns Acol = Arow + (isSymm ? 0 : model.getN_Normal_I_Nodes());
-        cuns Browcol = model.getN_Normal_Internal_Nodes() + model.getN_Normal_O_Nodes();
+        cuns Browcol = model.getN_NormalInternalNodes() + model.getN_Normal_O_Nodes();
         YRED.resize_if_needed(Arow, Acol, isSymm);
         JRED.resize_if_needed(Arow);
         YA.resize_if_needed(Arow, Acol, isSymm);
