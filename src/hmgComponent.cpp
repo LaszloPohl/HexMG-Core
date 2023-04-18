@@ -7,6 +7,7 @@
 
 //***********************************************************************
 #include "hmgComponent.h"
+#include "hmgMultigrid.hpp"
 //***********************************************************************
 
 
@@ -620,6 +621,105 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
         loadFtoD(true);
         calculateCurrent(true);
         jacobiIteration(true);
+    }
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& connections, const hmgMultigrid& multigrid) {
+//***********************************************************************
+
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    ComponentSubCircuit& coarse = *gc.fullCircuitInstances[connections.indexCoarseFullCircuit].component;
+
+    // internal nodes
+
+    for (const auto& instruction : connections.globalNodeProlongations) {
+        rvt sumU = rvt0;
+        for (const auto& src : instruction.instr) {
+            sumU += coarse.internalNodesAndVars[src.srcNodeIndex].getValue0DC() * src.weight;
+        }
+        internalNodesAndVars[instruction.destNodeIndex].setValue0DC(sumU);
+    }
+
+    // contained components
+
+    for (const auto& componentGroup : connections.componentGroups) {
+        
+        const LocalProlongationOrRestrictionInstructions& instructions = multigrid.localNodeProlongationTypes[componentGroup.localProlongationIndex];
+
+        // top level components
+        
+        for (const auto& dest : instructions.components) {
+            rvt sumU = rvt0;
+            for (const auto& src : dest.instr) {
+                ComponentBase* srcComponent = src.isFine ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
+                if (src.isExternal) {
+                    sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+                else {
+                    sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+            }
+            if (dest.isExternal) {
+                components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+            else {
+                components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+        }
+
+        // deep components (in most cases there are no deep components)
+
+        for (const auto& dest : instructions.deepComponents) {
+
+            // calculating the voltage
+            
+            rvt sumU = rvt0;
+            
+            for (const auto& src : dest.instr) {
+
+                // getting the starting component
+
+                ComponentBase* srcComponent = src.isFine
+                    ? components[componentGroup.fineCells[src.srcComponentIndex[0]]].get()
+                    : coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get();
+
+                // going through the chain
+
+                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                }
+
+                // adding the weighted node value
+
+                if (src.isExternal) {
+                    sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+                else {
+                    sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+            }
+
+            // finding the destination component: the starting component
+
+            ComponentBase* destComponent = components[componentGroup.fineCells[dest.destComponentIndex[0]]].get();
+
+            // finding the destination component: going through the chain
+
+            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            }
+
+            // setting the voltage
+
+            if (dest.isExternal) {
+                destComponent->getNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+            else {
+                destComponent->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+        }
     }
 }
 

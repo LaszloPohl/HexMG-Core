@@ -31,8 +31,8 @@ struct hmgMultigrid {
     uns nPostSmoothings = 2;
     rvt errorRate = 1.0 / 3.0;
 
-    std::vector<LocalRestrictionInstructions>  localNodeRestrictionTypes;
-    std::vector<LocalProlongationInstructions> localNodeProlongationTypes;
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
     std::vector<FineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
 
     //***********************************************************************
@@ -44,7 +44,7 @@ struct hmgMultigrid {
         for (uns iDestLevel = 0; iDestLevel < levels.size(); iDestLevel++) {
             const FineCoarseConnectionDescription& destLevel = levels[iDestLevel];
 
-            gc.fullCircuitInstances[destLevel.indexFineFullCircuit].component->prolongateUDC(destLevel);
+            gc.fullCircuitInstances[destLevel.indexFineFullCircuit].component->prolongateUDC(destLevel, *this);
 
             for (uns iV = 0; iV < nVcycles; iV++) {
                 rvt truncationError = rvt0;
@@ -73,7 +73,7 @@ struct hmgMultigrid {
 
                     // R(uh)
 
-                    hGrid.restrictUDC(hLevel);
+                    hGrid.restrictUDC(hLevel, *this);
 
                     // LH
 
@@ -83,7 +83,7 @@ struct hmgMultigrid {
 
                     // fH
 
-                    rvt truncErr = hGrid.restrictFDDC(hLevel); // fH = R(fh) + dH – R(dh)
+                    rvt truncErr = hGrid.restrictFDDC(hLevel, *this); // fH = R(fh) + dH – R(dh)
                     if (iDown == iDestLevel)
                         truncationError = truncErr;
 
@@ -102,8 +102,8 @@ struct hmgMultigrid {
 
                     // uh
 
-                    hGrid.uHMinusRestrictUhToDHNCDC(hLevel); // dH_NonConcurent = uH – R(uh)
-                    hGrid.prolongateDHNCAddToUhDC(hLevel);   // uh += P(dH_NonConcurent)
+                    hGrid.uHMinusRestrictUhToDHNCDC(hLevel, *this); // dH_NonConcurent = uH – R(uh)
+                    hGrid.prolongateDHNCAddToUhDC(hLevel, *this);   // uh += P(dH_NonConcurent)
 
                     // relax
 

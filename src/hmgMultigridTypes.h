@@ -22,68 +22,48 @@ namespace nsHMG {
 
 
 //***********************************************************************
-struct LocalRestrictionInstructions {
+struct LocalProlongationOrRestrictionInstructions {
 //***********************************************************************
-    struct OneLocalRestrictionInstruction {
-        uns fineIndex = 0; // index in ComponentGroup::fineCells
+    struct OneLocalInstruction {
+        bool isFine = false;     // Prolongation only: using an already calculated external node in the fine level
+        bool isExternal = false; // using an external node of the srcIndex component
+        uns srcIndex = 0;        // index Prolongation: in ComponentGroup::coarseCells (isFine == false) or ComponentGroup::fineCells (isFine == true), Restriction: in ComponentGroup::fineCells
+        uns nodeIndex = 0;       // externalNodeFlag is not set, isExternal decides
+        rvt weight = 0.5;
+    };
+    struct LocalNodeInstruction {
+        bool isExternal = false; // using an external node of the fineIndex component
+        uns destIndex = 0;       // index Prolongation: in ComponentGroup::fineCells, Restriction: in ComponentGroup::coarseCells
+        uns nodeIndex = 0;       // externalNodeFlag is not set, isExternal decides
+        std::vector<OneLocalInstruction> instr; // sum weight should be 1
+    };
+    struct OneRecursiveInstruction {
+        bool isFine = false;     // Prolongation only: using an already calculated external node in the fine level
+        bool isExternal = false; // using an external node of the last srcComponentIndex component
+        std::vector<uns> srcComponentIndex; // all are subckts, except the last one, which is a component (of course it can be a subckt, but it doesn't have to be)
         uns nodeIndex = 0;
         rvt weight = 0.5;
     };
-    struct LocalNodeRestrictionInstruction {
-        uns coarseIndex = 0; // index in ComponentGroup::coarseCells
+    struct RecursiveInstruction {
+        bool isExternal = false;             // using an external node of the fineIndex component
+        std::vector<uns> destComponentIndex; // all are subckts, except the last one, which is a component (of course it can be a subckt, but it doesn't have to be)
         uns nodeIndex = 0;
-        std::vector<OneLocalRestrictionInstruction> instr; // sum weight should be 1
+        std::vector<OneRecursiveInstruction> instr; // sum weight should be 1
     };
-    std::vector<LocalNodeRestrictionInstruction> restrictions;
+    std::vector<LocalNodeInstruction> components;
+    std::vector<RecursiveInstruction> deepComponents; // subckt => subckt => ... => subckt => component => internal node
 };
 
 
 //***********************************************************************
-struct LocalProlongationInstructions {
+struct NodeInstruction {
 //***********************************************************************
-    struct OneLocalProlongationInstruction {
-        uns coarseIndex = 0; // index in ComponentGroup::coarseCells
-        uns nodeIndex = 0;
+    struct OneInstruction {
+        uns srcNodeIndex = 0;
         rvt weight = 0.5;
     };
-    struct LocalNodeProlongationInstruction {
-        uns fineIndex = 0; // index in ComponentGroup::fineCells
-        uns nodeIndex = 0;
-        std::vector<OneLocalProlongationInstruction> instr; // sum weight should be 1
-    };
-    std::vector<LocalNodeProlongationInstruction> restrictions;
-};
-
-
-//***********************************************************************
-struct OneRestrictionInstruction {
-//***********************************************************************
-    uns fineNodeIndex = 0;
-    rvt weight = 0.5;
-};
-
-
-//***********************************************************************
-struct NodeRestrictionInstruction {
-//***********************************************************************
-    uns coarseNodeIndex = 0;
-    std::vector<OneRestrictionInstruction> instr; // sum weight should be 1
-};
-
-
-//***********************************************************************
-struct OneProlongationInstruction {
-//***********************************************************************
-    uns coarseNodeIndex = 0;
-    rvt weight = 0.5;
-};
-
-
-//***********************************************************************
-struct NodeProlongationInstruction {
-//***********************************************************************
-    uns fineNodeIndex = 0;
-    std::vector<OneProlongationInstruction> instr; // sum weight should be 1
+    uns destNodeIndex = 0;
+    std::vector<OneInstruction> instr; // sum weight should be 1
 };
 
 
@@ -104,9 +84,14 @@ struct FineCoarseConnectionDescription {
     uns indexFineFullCircuit = 0;
     uns indexCoarseFullCircuit = 0;
     std::vector<ComponentGroup> componentGroups;
-    std::vector<NodeRestrictionInstruction> globalNodeRestrictions;
-    std::vector<NodeProlongationInstruction> globalNodeProlongations;
+    std::vector<NodeInstruction> globalNodeRestrictions;
+    std::vector<NodeInstruction> globalNodeProlongations;
 };
+
+
+//***********************************************************************
+struct hmgMultigrid;
+//***********************************************************************
 
 
 }

@@ -121,7 +121,8 @@ public:
     //***********************************************************************
     virtual ~ComponentBase() = default;
     virtual const VariableNodeBase& getComponentValue() const noexcept = 0;
-    virtual VariableNodeBase* getNode(siz nodeIndex)const noexcept = 0;
+    virtual VariableNodeBase* getNode(siz nodeIndex) noexcept = 0;
+    virtual VariableNodeBase* getInternalNode(siz nodeIndex) noexcept = 0;
     virtual void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex) noexcept = 0;
     virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
     virtual Param& getParam(siz parIndex) noexcept = 0;
@@ -158,7 +159,6 @@ public:
     virtual void calculateYiiAC() noexcept = 0;
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
-    virtual const VariableNodeBase* getInternalNode(siz nodeIndex)const noexcept { return nullptr; };
     virtual void printNodeValueDC(uns) const noexcept = 0;
     virtual void printNodeErrorDC(uns) const noexcept = 0;
     virtual void printNodeDefectDC(uns) const noexcept = 0;
@@ -199,10 +199,12 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override final {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override final {
     //***********************************************************************
         return nodeIndex == 0 ? N0 : N1;
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override final {
     //***********************************************************************
@@ -380,10 +382,12 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override final {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override final {
     //***********************************************************************
         return nodeIndex == 0 ? N0 : N1;
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override final {
     //***********************************************************************
@@ -480,10 +484,12 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override final {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override final { return param[parIndex]; }
@@ -617,10 +623,12 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
@@ -754,10 +762,12 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
@@ -953,10 +963,12 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override {
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
+    //***********************************************************************
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return pars[parIndex]; }
@@ -1126,7 +1138,7 @@ public:
     }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept { return externalNodes[nodeIndex]; }
+    VariableNodeBase* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
     void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept { return pars[parIndex]; }
     //***********************************************************************
@@ -1268,7 +1280,8 @@ public:
     //***********************************************************************
     const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? FixVoltages::V[0]->fixNode : getContainedComponent(0)->getComponentValue(); }
     const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? FixVoltages::V[0]->fixNode : getContainedComponent(0)->getComponentCurrent(); }
-    VariableNodeBase* getNode(siz nodeIndex)const noexcept override { return externalNodes[nodeIndex]; }
+    VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
     //***********************************************************************
@@ -1583,28 +1596,23 @@ public:
     //***********************  DC Multigrid Functions  **********************
     void solveDC(); // d0 += f0 kell!
     void relaxDC(uns nRelax); // f-et is figyelembe kell venni!
-    void prolongateUDC(const FineCoarseConnectionDescription&) {}
-    void restrictUDC(const FineCoarseConnectionDescription&) {}
-    rvt restrictFDDC(const FineCoarseConnectionDescription&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
-    void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&) {}   // dH_NonConcurent = uH – R(uh)
-    void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&) {}     // uh = uh + P(dH_NonConcurent)
+    void prolongateUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
+    void restrictUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
+    rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
+    void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
+    void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
     rvt calculateResidualDC()const {} // sum (dh)^2
     //***********************  AC Multigrid Functions  **********************
     void solveAC() {} // d0 += f0 kell!
     void relaxAC(uns nRelax) {} // f-et is figyelembe kell venni!
-    void prolongeteUAC(const FineCoarseConnectionDescription&) {}
-    void restrictUAC(const FineCoarseConnectionDescription&) {}
-    rvt restrictFDDAC(const FineCoarseConnectionDescription&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
-    void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&) {}   // dH_NonConcurent = uH – R(uh)
-    void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&) {}     // uh = uh + P(dH_NonConcurent)
+    void prolongeteUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
+    void restrictUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
+    rvt restrictFDDAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
+    void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
+    void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
     rvt calculateResidualAC()const {} // sum (dh)^2 => saját fv kell a re*re+im*im-hez
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
-    //***********************************************************************
-    const VariableNodeBase* getInternalNode(siz nodeIndex)const noexcept override {
-    //***********************************************************************
-        return &internalNodesAndVars[nodeIndex];
-    }
     //***********************************************************************
     void printNodeValueDC(uns n) const noexcept override {
     //***********************************************************************
