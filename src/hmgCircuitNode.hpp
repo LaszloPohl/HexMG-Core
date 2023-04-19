@@ -215,6 +215,7 @@ struct VariableNodeBase final : public ParVarNodeType {
     }
     //***********************************************************************
     void setValue0DC(rvt val)noexcept { value = val; }
+    void incValue0DC(rvt val)noexcept { value += val; }
     void setDDC(rvt d)noexcept { nodePtr->d.store(d); }
     void setFDC(rvt f)noexcept { nodePtr->f = f; }
     void setYiiDC(rvt y)noexcept { nodePtr->yii.store(y); }
@@ -271,6 +272,7 @@ public:
     void incYiiAC(ccplx& y)noexcept { nodePtr->acNodePtr->yii.fetch_add(y); }
     void resetAC() noexcept { if(isNode()) nodePtr->acNodePtr->reset(); }
     void setValue0AC(ccplx& val)noexcept { nodePtr->acNodePtr->value = val; }
+    void incValue0AC(ccplx& val)noexcept { nodePtr->acNodePtr->value += val; }
     cplx getValue0AC()const noexcept { return nodePtr->acNodePtr->value; }
     //***********************************************************************
     void setValueAcceptedAC()noexcept {
