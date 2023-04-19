@@ -83,6 +83,9 @@ enum builtInFunctionType {
 inline rvt cutToPrint(rvt value) noexcept { return abs(value) < rvt(1e-15) ? rvt0 : value; }
 inline cplx cutToPrint(cplx value) noexcept { return abs(value) < rvt(1e-15) ? cplx0 : value; }
 //***********************************************************************
+template<typename T>
+inline T square(T value) { return value * value; }
+//***********************************************************************
 
 
 

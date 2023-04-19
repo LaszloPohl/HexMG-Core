@@ -25,7 +25,7 @@ namespace nsHMG {
 struct LocalProlongationOrRestrictionInstructions {
 //***********************************************************************
     struct OneLocalInstruction {
-        bool isFine = false;     // Prolongation only: using an already calculated external node in the fine level
+        bool isDestLevel = false;// using an already calculated external node in the destination level
         bool isExternal = false; // using an external node of the srcIndex component
         uns srcIndex = 0;        // index Prolongation: in ComponentGroup::coarseCells (isFine == false) or ComponentGroup::fineCells (isFine == true), Restriction: in ComponentGroup::fineCells
         uns nodeIndex = 0;       // externalNodeFlag is not set, isExternal decides
@@ -38,7 +38,7 @@ struct LocalProlongationOrRestrictionInstructions {
         std::vector<OneLocalInstruction> instr; // sum weight should be 1
     };
     struct OneRecursiveInstruction {
-        bool isFine = false;     // Prolongation only: using an already calculated external node in the fine level
+        bool isDestLevel = false;// using an already calculated external node in the destination level
         bool isExternal = false; // using an external node of the last srcComponentIndex component
         std::vector<uns> srcComponentIndex; // all are subckts, except the last one, which is a component (of course it can be a subckt, but it doesn't have to be)
         uns nodeIndex = 0;

@@ -1598,7 +1598,7 @@ public:
     void relaxDC(uns nRelax); // f-et is figyelembe kell venni!
     void prolongateUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
     void restrictUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
-    rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }   // fH = R(fh) + dH – R(dh), ret: truncation error
+    rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);                   // fH = R(fh) + dH – R(dh), ret: truncation error
     void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
     void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
     rvt calculateResidualDC()const {} // sum (dh)^2

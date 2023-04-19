@@ -656,7 +656,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
             
             for (const auto& src : dest.instr) {
                 
-                ComponentBase* srcComponent = src.isFine ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
+                ComponentBase* srcComponent = src.isDestLevel ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
                 
                 if (src.isExternal) sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
                 else                sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
@@ -678,7 +678,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
                 // getting the starting component
 
-                ComponentBase* srcComponent = src.isFine
+                ComponentBase* srcComponent = src.isDestLevel
                     ? components[componentGroup.fineCells[src.srcComponentIndex[0]]].get()
                     : coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get();
 
@@ -715,7 +715,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
 //***********************************************************************
 void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& connections, const hmgMultigrid& multigrid) {
-    //***********************************************************************
+//***********************************************************************
 
     CircuitStorage& gc = CircuitStorage::getInstance();
     ComponentSubCircuit& coarse = *gc.fullCircuitInstances[connections.indexCoarseFullCircuit].component;
@@ -730,19 +730,371 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
         coarse.internalNodesAndVars[instruction.destNodeIndex].setValue0DC(sumU);
     }
 
+    // contained components
+
+    for (const auto& componentGroup : connections.componentGroups) {
+
+        // NormalRestriction
+        
+        // For normal restiction, maximum 4 levels enabled (of course, more levels can be inserted, or recursive version can be created)
+
+        if (componentGroup.isNormalRestriction) {
+            cuns Nfine = (uns)componentGroup.fineCells.size();
+
+            // Level 1
+
+            ComponentBase* destComponent0 = coarse.components[componentGroup.coarseCells[0]].get();
+            cuns NInodes0 = destComponent0->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+            for (uns i = 0; i < NInodes0; i++) {
+                rvt sumU = rvt0;
+                for (uns j = 0; j < Nfine; j++)
+                    sumU += components[componentGroup.fineCells[j]]->getInternalNode(i)->getValue0DC();
+                destComponent0->getInternalNode(i)->setValue0DC(sumU / Nfine);
+            }
+
+            // Level 2+3+4
+
+            ComponentSubCircuit* destSubckt0 = dynamic_cast<ComponentSubCircuit*>(destComponent0);
+            if (destSubckt0 != nullptr) {
+                cuns Ncomp1 = (uns)destSubckt0->components.size();
+                for (uns k = 0; k < Ncomp1; k++) {
+
+                    // Level 2
+
+                    ComponentBase* destComponent1 = destSubckt0->components[k].get();
+                    cuns NInodes1 = destComponent1->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                    for (uns i = 0; i < NInodes1; i++) {
+                        rvt sumU = rvt0;
+                        for (uns j = 0; j < Nfine; j++)
+                            sumU += static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k]->getInternalNode(i)->getValue0DC();
+                        destComponent1->getInternalNode(i)->setValue0DC(sumU / Nfine);
+                    }
+
+                    // Level 3+4
+
+                    ComponentSubCircuit* destSubckt1 = dynamic_cast<ComponentSubCircuit*>(destComponent1);
+                    if (destSubckt1 != nullptr) {
+                        cuns Ncomp2 = (uns)destSubckt1->components.size();
+                        for (uns l = 0; l < Ncomp2; l++) {
+
+                            // level 3
+
+                            ComponentBase* destComponent2 = destSubckt1->components[l].get();
+                            cuns NInodes2 = destComponent2->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                            for (uns i = 0; i < NInodes2; i++) {
+                                rvt sumU = rvt0;
+                                for (uns j = 0; j < Nfine; j++)
+                                    sumU += static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k].get())->components[l]->getInternalNode(i)->getValue0DC();
+                                destComponent2->getInternalNode(i)->setValue0DC(sumU / Nfine);
+                            }
+
+                            // level 4
+
+                            ComponentSubCircuit* destSubckt2 = dynamic_cast<ComponentSubCircuit*>(destComponent2);
+                            if (destSubckt2 != nullptr) {
+                                cuns Ncomp3 = (uns)destSubckt2->components.size();
+                                for (uns m = 0; m < Ncomp3; m++) {
+                                    ComponentBase* destComponent3 = destSubckt2->components[m].get();
+                                    cuns NInodes3 = destComponent3->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                                    for (uns i = 0; i < NInodes3; i++) {
+                                        rvt sumU = rvt0;
+                                        for (uns j = 0; j < Nfine; j++)
+                                            sumU += static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k].get())->components[l].get())->components[m]->getInternalNode(i)->getValue0DC();
+                                        destComponent3->getInternalNode(i)->setValue0DC(sumU / Nfine);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else {
+
+            const LocalProlongationOrRestrictionInstructions& instructions = multigrid.localNodeRestrictionTypes[componentGroup.localRestrictionIndex];
+
+            // top level components
+
+            for (const auto& dest : instructions.components) {
+
+                rvt sumU = rvt0;
+
+                for (const auto& src : dest.instr) {
+
+                    ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
+
+                    if (src.isExternal) sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                    else                sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+
+                if (dest.isExternal) coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex)->setValue0DC(sumU);
+                else                 coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+
+            // deep components (in most cases there are no deep components)
+
+            for (const auto& dest : instructions.deepComponents) {
+
+                // calculating the voltage
+
+                rvt sumU = rvt0;
+
+                for (const auto& src : dest.instr) {
+
+                    // getting the starting component
+
+                    ComponentBase* srcComponent = src.isDestLevel
+                        ? coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get()
+                        : components[componentGroup.fineCells[src.srcComponentIndex[0]]].get();
+
+                    // going through the chain
+
+                    for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
+                        srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                    }
+
+                    // adding the weighted node value
+
+                    if (src.isExternal) sumU += srcComponent->getNode(src.nodeIndex)->getValue0DC() * src.weight;
+                    else                sumU += srcComponent->getInternalNode(src.nodeIndex)->getValue0DC() * src.weight;
+                }
+
+                // finding the destination component: the starting component
+
+                ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.destComponentIndex[0]]].get();
+
+                // finding the destination component: going through the chain
+
+                for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
+                    destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+                }
+
+                // setting the voltage
+
+                if (dest.isExternal) destComponent->getNode(dest.nodeIndex)->setValue0DC(sumU);
+                else                 destComponent->getInternalNode(dest.nodeIndex)->setValue0DC(sumU);
+            }
+        }
+    }
+}
+
+
+//***********************************************************************
+rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& connections, const hmgMultigrid& multigrid) {
+// fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+//***********************************************************************
+
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    ComponentSubCircuit& coarse = *gc.fullCircuitInstances[connections.indexCoarseFullCircuit].component;
+
+    rvt truncationError = rvt0;
+
+    // internal nodes
+
+    for (const auto& instruction : connections.globalNodeRestrictions) {
+        rvt sumRfh = rvt0;
+        rvt sumRdh = rvt0;
+        for (const auto& src : instruction.instr) {
+            const VariableNodeBase& srcNode = internalNodesAndVars[src.srcNodeIndex];
+            sumRfh += srcNode.getFDC() * src.weight;
+            sumRdh += srcNode.getDDC() * src.weight;
+        }
+        VariableNodeBase& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
+        crvt dH = destNode.getDDC();
+        truncationError += square(dH - sumRdh);
+        destNode.setFDC(sumRfh + dH - sumRdh);
+    }
 
     // contained components
 
     for (const auto& componentGroup : connections.componentGroups) {
 
-        if (componentGroup.isNormalRestriction) {
+        // NormalRestriction
 
+        // For normal restiction, maximum 4 levels enabled (of course, more levels can be inserted, or recursive version can be created)
+
+        if (componentGroup.isNormalRestriction) {
+            cuns Nfine = (uns)componentGroup.fineCells.size();
+
+            // Level 1
+
+            ComponentBase* destComponent0 = coarse.components[componentGroup.coarseCells[0]].get();
+            cuns NInodes0 = destComponent0->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+            for (uns i = 0; i < NInodes0; i++) {
+                rvt sumRfh = rvt0;
+                rvt sumRdh = rvt0;
+                for (uns j = 0; j < Nfine; j++) {
+                    const VariableNodeBase& srcNode = *components[componentGroup.fineCells[j]]->getInternalNode(i);
+                    sumRfh += srcNode.getFDC();
+                    sumRdh += srcNode.getDDC();
+                }
+                VariableNodeBase& destNode = *destComponent0->getInternalNode(i);
+                crvt dH = destNode.getDDC();
+                truncationError += square((dH - sumRdh) / Nfine);
+                destNode.setFDC((sumRfh + dH - sumRdh) / Nfine);
+            }
+
+            // Level 2+3+4
+
+            ComponentSubCircuit* destSubckt0 = dynamic_cast<ComponentSubCircuit*>(destComponent0);
+            if (destSubckt0 != nullptr) {
+                cuns Ncomp1 = (uns)destSubckt0->components.size();
+                for (uns k = 0; k < Ncomp1; k++) {
+
+                    // Level 2
+
+                    ComponentBase* destComponent1 = destSubckt0->components[k].get();
+                    cuns NInodes1 = destComponent1->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                    for (uns i = 0; i < NInodes1; i++) {
+                        rvt sumRfh = rvt0;
+                        rvt sumRdh = rvt0;
+                        for (uns j = 0; j < Nfine; j++) {
+                            const VariableNodeBase& srcNode = *static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k]->getInternalNode(i);
+                            sumRfh += srcNode.getFDC();
+                            sumRdh += srcNode.getDDC();
+                        }
+                        VariableNodeBase& destNode = *destComponent1->getInternalNode(i);
+                        crvt dH = destNode.getDDC();
+                        truncationError += square((dH - sumRdh) / Nfine);
+                        destNode.setFDC((sumRfh + dH - sumRdh) / Nfine);
+                    }
+
+                    // Level 3+4
+
+                    ComponentSubCircuit* destSubckt1 = dynamic_cast<ComponentSubCircuit*>(destComponent1);
+                    if (destSubckt1 != nullptr) {
+                        cuns Ncomp2 = (uns)destSubckt1->components.size();
+                        for (uns l = 0; l < Ncomp2; l++) {
+
+                            // level 3
+
+                            ComponentBase* destComponent2 = destSubckt1->components[l].get();
+                            cuns NInodes2 = destComponent2->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                            for (uns i = 0; i < NInodes2; i++) {
+                                rvt sumRfh = rvt0;
+                                rvt sumRdh = rvt0;
+                                for (uns j = 0; j < Nfine; j++) {
+                                    const VariableNodeBase& srcNode = *static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k].get())->components[l]->getInternalNode(i);
+                                    sumRfh += srcNode.getFDC();
+                                    sumRdh += srcNode.getDDC();
+                                }
+                                VariableNodeBase& destNode = *destComponent2->getInternalNode(i);
+                                crvt dH = destNode.getDDC();
+                                truncationError += square((dH - sumRdh) / Nfine);
+                                destNode.setFDC((sumRfh + dH - sumRdh) / Nfine);
+                            }
+
+                            // level 4
+
+                            ComponentSubCircuit* destSubckt2 = dynamic_cast<ComponentSubCircuit*>(destComponent2);
+                            if (destSubckt2 != nullptr) {
+                                cuns Ncomp3 = (uns)destSubckt2->components.size();
+                                for (uns m = 0; m < Ncomp3; m++) {
+                                    ComponentBase* destComponent3 = destSubckt2->components[m].get();
+                                    cuns NInodes3 = destComponent3->pModel->getN_InternalNodes(); // ! for current restriction NormalInternalNodes required
+                                    for (uns i = 0; i < NInodes3; i++) {
+                                        rvt sumRfh = rvt0;
+                                        rvt sumRdh = rvt0;
+                                        for (uns j = 0; j < Nfine; j++) {
+                                            const VariableNodeBase& srcNode = *static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(static_cast<ComponentSubCircuit*>(components[componentGroup.fineCells[j]].get())->components[k].get())->components[l].get())->components[m]->getInternalNode(i);
+                                            sumRfh += srcNode.getFDC();
+                                            sumRdh += srcNode.getDDC();
+                                        }
+                                        VariableNodeBase& destNode = *destComponent3->getInternalNode(i);
+                                        crvt dH = destNode.getDDC();
+                                        truncationError += square((dH - sumRdh) / Nfine);
+                                        destNode.setFDC((sumRfh + dH - sumRdh) / Nfine);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         else {
 
-        }
+            const LocalProlongationOrRestrictionInstructions& instructions = multigrid.localNodeRestrictionTypes[componentGroup.localRestrictionIndex];
 
+            // top level components
+
+            for (const auto& dest : instructions.components) {
+
+                rvt sumRfh = rvt0;
+                rvt sumRdh = rvt0;
+
+                for (const auto& src : dest.instr) {
+
+                    ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
+
+                    const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                    sumRfh += srcNode.getFDC() * src.weight;
+                    sumRdh += srcNode.getDDC() * src.weight;
+
+                }
+
+                VariableNodeBase& destNode = dest.isExternal 
+                    ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex) 
+                    : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+                
+                crvt dH = destNode.getDDC();
+                truncationError += square(dH - sumRdh);
+                destNode.setFDC(sumRfh + dH - sumRdh);
+            }
+
+            // deep components (in most cases there are no deep components)
+
+            for (const auto& dest : instructions.deepComponents) {
+
+                // calculating the voltage
+
+                rvt sumRfh = rvt0;
+                rvt sumRdh = rvt0;
+
+                for (const auto& src : dest.instr) {
+
+                    // getting the starting component
+
+                    ComponentBase* srcComponent = src.isDestLevel
+                        ? coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get()
+                        : components[componentGroup.fineCells[src.srcComponentIndex[0]]].get();
+
+                    // going through the chain
+
+                    for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
+                        srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                    }
+
+                    // adding the weighted node value
+
+                    const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                    sumRfh += srcNode.getFDC() * src.weight;
+                    sumRdh += srcNode.getDDC() * src.weight;
+                }
+
+                // finding the destination component: the starting component
+
+                ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.destComponentIndex[0]]].get();
+
+                // finding the destination component: going through the chain
+
+                for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
+                    destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+                }
+
+                // setting the voltage
+
+                VariableNodeBase& destNode = dest.isExternal
+                    ? *destComponent->getNode(dest.nodeIndex)
+                    : *destComponent->getInternalNode(dest.nodeIndex);
+
+                crvt dH = destNode.getDDC();
+                truncationError += square(dH - sumRdh);
+                destNode.setFDC(sumRfh + dH - sumRdh);
+            }
+        }
     }
+    return truncationError;
 }
 
 

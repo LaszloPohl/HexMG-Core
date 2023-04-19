@@ -216,6 +216,7 @@ struct VariableNodeBase final : public ParVarNodeType {
     //***********************************************************************
     void setValue0DC(rvt val)noexcept { value = val; }
     void setDDC(rvt d)noexcept { nodePtr->d.store(d); }
+    void setFDC(rvt f)noexcept { nodePtr->f = f; }
     void setYiiDC(rvt y)noexcept { nodePtr->yii.store(y); }
     void setDNonConcurentDC(rvt d)noexcept { nodePtr->d.storeToNonConcurent(d); }
     void setVDC(rvt v)noexcept { nodePtr->v = v; }
@@ -227,6 +228,7 @@ struct VariableNodeBase final : public ParVarNodeType {
     void loadFtoDDC()noexcept { if (isNode()) nodePtr->d.store(nodePtr->f); }
     rvt getDDC()const noexcept { return nodePtr->d.load(); }
     rvt getDNonConcurentDC()const noexcept { return nodePtr->d.loadNonConcurent(); }
+    rvt getFDC()const noexcept { return nodePtr->f; }
     rvt getVDC()const noexcept { return nodePtr->v; }
     rvt getYiiDC()const noexcept { return nodePtr->yii.load(); }
     //************************** AC functions *******************************
@@ -261,6 +263,7 @@ public:
     }
     //***********************************************************************
     cplx getDAC()const noexcept { return nodePtr->acNodePtr->d.load(); }
+    cplx getFAC()const noexcept { return nodePtr->acNodePtr->f; }
     cplx getDNonConcurentAC()const noexcept { return nodePtr->acNodePtr->d.loadNonConcurent(); }
     cplx getVAC()const noexcept(!hmgVErrorCheck) { return nodePtr->acNodePtr->v; }
     cplx getYiiAC()const noexcept { return nodePtr->acNodePtr->yii.load(); }
@@ -281,6 +284,7 @@ public:
     }
     //***********************************************************************
     void setDAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.store(d); }
+    void setFAC(const cplx& f)noexcept { nodePtr->acNodePtr->f = f; }
     void setDNonConcurentAC(const cplx& d)noexcept { nodePtr->acNodePtr->d.storeToNonConcurent(d); }
     void setVAC(ccplx& v)noexcept { nodePtr->acNodePtr->v = v; }
     void setYiiAC(const cplx& y)noexcept { nodePtr->acNodePtr->yii.store(y); }
