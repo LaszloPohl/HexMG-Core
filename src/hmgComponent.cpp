@@ -617,11 +617,22 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
     calculateValueDC();
     deleteYii(true);
     calculateYiiDC();
+    std::cout << "\nRelax Start\n" << std::endl;
+    printNodeValueDC(0);
     for (uns i = 0; i < nRelax; i++) {
         loadFtoD(true);
         calculateCurrent(true);
-        jacobiIteration(true);
+        //jacobiIteration(true);
+        GaussSeidelRed(true);
+        loadFtoD(true);
+        calculateCurrent(true);
+        GaussSeidelBlack(true);
+        //std::cout << "\nRelax " << (i + 1) << std::endl;
+        //printNodeValueDC(0);
+        //std::cout << std::endl;
     }
+    std::cout << "\nRelax Stop\n" << std::endl;
+    printNodeValueDC(0);
 }
 
 

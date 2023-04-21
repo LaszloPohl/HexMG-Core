@@ -1426,7 +1426,7 @@ public:
                 crvt y = internalNodesAndVars[i].getYiiDC();
                 crvt d = internalNodesAndVars[i].getDDC();
                 if (y != rvt0)
-                    internalNodesAndVars[i].setValue0DC(-d / y); // is - needed ? I'm not sure
+                    internalNodesAndVars[i].incValue0DC(d / y);
             }
         }
         else {
@@ -1434,7 +1434,39 @@ public:
                 ccplx y = internalNodesAndVars[i].getYiiAC();
                 ccplx d = internalNodesAndVars[i].getDAC();
                 if (y != cplx0)
-                    internalNodesAndVars[i].setValue0AC(-d / y); // is - needed ? I'm not sure
+                    internalNodesAndVars[i].incValue0AC(d / y);
+            }
+        }
+    }
+    //***********************************************************************
+    void GaussSeidelRed(bool isDC) {
+    // TO PARALLEL
+    //***********************************************************************
+        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+        
+        for (auto& comp : components)
+            if (comp.get()->isEnabled) comp.get()->jacobiIteration(isDC);
+    }
+    //***********************************************************************
+    void GaussSeidelBlack(bool isDC) {
+    // TO PARALLEL
+    //***********************************************************************
+        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+        
+        if (isDC) {
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+                crvt y = internalNodesAndVars[i].getYiiDC();
+                crvt d = internalNodesAndVars[i].getDDC();
+                if (y != rvt0)
+                    internalNodesAndVars[i].incValue0DC(d / y);
+            }
+        }
+        else {
+            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+                ccplx y = internalNodesAndVars[i].getYiiAC();
+                ccplx d = internalNodesAndVars[i].getDAC();
+                if (y != cplx0)
+                    internalNodesAndVars[i].incValue0AC(d / y);
             }
         }
     }

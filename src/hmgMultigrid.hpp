@@ -26,9 +26,9 @@ namespace nsHMG {
 //***********************************************************************
 struct hmgMultigrid {
 //***********************************************************************
-    uns nVcycles = 1;
-    uns nPreSmoothings = 2; // 2 because of Jacobi iteration instead of Gauss-Seidel
-    uns nPostSmoothings = 2;
+    uns nVcycles = 2;
+    uns nPreSmoothings = 20;
+    uns nPostSmoothings = 20;
     rvt errorRate = 1.0 / 3.0;
 
     std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;

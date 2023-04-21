@@ -1544,7 +1544,7 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.push_back(9);
 	componentGroup.fineCells.push_back(12);
 	componentGroup.fineCells.push_back(13);
-	componentGroup.coarseCells.push_back(0);
+	componentGroup.coarseCells.push_back(4);
 	level1.componentGroups.push_back(std::move(componentGroup));
 
 	componentGroup.fineCells.clear();
@@ -1557,7 +1557,7 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.push_back(11);
 	componentGroup.fineCells.push_back(14);
 	componentGroup.fineCells.push_back(15);
-	componentGroup.coarseCells.push_back(0);
+	componentGroup.coarseCells.push_back(5);
 	level1.componentGroups.push_back(std::move(componentGroup));
 
 	mg.levels.push_back(std::move(level1));
