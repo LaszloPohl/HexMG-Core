@@ -10,6 +10,7 @@
 #include "hmgComponent.h"
 #include "hmgSpiceExpression.h"
 #include "hmgFunction.hpp"
+#include "hmgMultigrid.hpp"
 #include <chrono>
 #include <ratio>
 //***********************************************************************
@@ -1093,6 +1094,481 @@ void probaSzimulacioMg1() {
 
 	// multigrid
 
+	hmgMultigrid mg;
+
+	FineCoarseConnectionDescription level1;
+	NodeInstruction nodeInstruction;
+	NodeInstruction::OneInstruction oneInstruction;
+
+	level1.indexCoarseFullCircuit = 0;
+	level1.indexFineFullCircuit = 1;
+
+	// global node restrictions
+
+	nodeInstruction.destNodeIndex = 0;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 1;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 2;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 3;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 4;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 5;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	// global node prolongations
+
+	nodeInstruction.destNodeIndex = 0;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 1;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+
+	nodeInstruction.destNodeIndex = 2;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 3;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 4;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 5;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 6;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 7;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 8;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 9;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 10;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 11;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 12;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 13;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 14;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 15;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 16;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 17;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 18;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 19;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 20;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 21;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 22;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 23;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	// localNodeRestrictionTypes
+
+	LocalProlongationOrRestrictionInstructions cellInstructions;
+	LocalProlongationOrRestrictionInstructions::LocalNodeInstruction destCellNode;
+	LocalProlongationOrRestrictionInstructions::OneLocalInstruction srcCellNode;
+	LocalProlongationOrRestrictionInstructions::RecursiveInstruction destDeepCellNode;
+	LocalProlongationOrRestrictionInstructions::OneRecursiveInstruction srcDeepCellNode;
+
+	// coarse = group 0, 4, 5
+	
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 1
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 2
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 3
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	//destDeepCellNode.destComponentIndex.clear();
+	//destDeepCellNode.instr.clear();
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//srcDeepCellNode.srcComponentIndex.clear();
+	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+
+	// localNodeProlongationTypes
+
+	// fine 0, 1, 4, 5      group = 0
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 2, 6      group = 1
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 3      group = 2
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 7      group = 3
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	//destDeepCellNode.destComponentIndex.clear();
+	//destDeepCellNode.instr.clear();
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//srcDeepCellNode.srcComponentIndex.clear();
+	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 8, 9, 12, 13      group = 4
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 10, 11, 14, 15      group = 5
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// componentGroups
+
+	ComponentGroup componentGroup;
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 0;
+	componentGroup.fineCells.push_back(0);
+	componentGroup.fineCells.push_back(1);
+	componentGroup.fineCells.push_back(4);
+	componentGroup.fineCells.push_back(5);
+	componentGroup.coarseCells.push_back(0);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 1;
+	componentGroup.localProlongationIndex = 1;
+	componentGroup.fineCells.push_back(2);
+	componentGroup.fineCells.push_back(6);
+	componentGroup.coarseCells.push_back(1);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 2;
+	componentGroup.localProlongationIndex = 2;
+	componentGroup.fineCells.push_back(3);
+	componentGroup.coarseCells.push_back(2);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 3;
+	componentGroup.localProlongationIndex = 3;
+	componentGroup.fineCells.push_back(7);
+	componentGroup.coarseCells.push_back(3);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 4;
+	componentGroup.fineCells.push_back(8);
+	componentGroup.fineCells.push_back(9);
+	componentGroup.fineCells.push_back(12);
+	componentGroup.fineCells.push_back(13);
+	componentGroup.coarseCells.push_back(0);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.isNormalRestriction = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 5;
+	componentGroup.fineCells.push_back(10);
+	componentGroup.fineCells.push_back(11);
+	componentGroup.fineCells.push_back(14);
+	componentGroup.fineCells.push_back(15);
+	componentGroup.coarseCells.push_back(0);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	mg.levels.push_back(std::move(level1));
+
+	mg.solveDC();
+
+#ifdef HMG_DEBUGPRINT
+	gc.fullCircuitInstances[1].component->printNodeValueDC(0);
+	std::cout << std::endl;
+	gc.fullCircuitInstances[0].component->printNodeValueDC(0);
+#endif
 }
 
 

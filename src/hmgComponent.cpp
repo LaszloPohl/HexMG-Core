@@ -652,7 +652,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
         // top level components
         
-        for (const auto& dest : instructions.components) {
+        for (const auto& dest : instructions.destComponentsNodes) {
             
             rvt sumU = rvt0;
             
@@ -673,7 +673,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
         // deep components (in most cases there are no deep components)
 
-        for (const auto& dest : instructions.deepComponents) {
+        for (const auto& dest : instructions.deepDestComponentNodes) {
 
             // calculating the voltage
             
@@ -845,7 +845,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
             // top level components
 
-            for (const auto& dest : instructions.components) {
+            for (const auto& dest : instructions.destComponentsNodes) {
 
                 rvt sumU = rvt0;
 
@@ -866,7 +866,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
             // deep components (in most cases there are no deep components)
 
-            for (const auto& dest : instructions.deepComponents) {
+            for (const auto& dest : instructions.deepDestComponentNodes) {
 
                 // calculating the voltage
 
@@ -1062,7 +1062,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
             // top level components
 
-            for (const auto& dest : instructions.components) {
+            for (const auto& dest : instructions.destComponentsNodes) {
 
                 rvt sumRfh = rvt0;
                 rvt sumRdh = rvt0;
@@ -1088,7 +1088,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
             // deep components (in most cases there are no deep components)
 
-            for (const auto& dest : instructions.deepComponents) {
+            for (const auto& dest : instructions.deepDestComponentNodes) {
 
                 // calculating the voltage
 
@@ -1272,7 +1272,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
             // top level components
 
-            for (const auto& dest : instructions.components) {
+            for (const auto& dest : instructions.destComponentsNodes) {
 
                 rvt sumU = rvt0;
 
@@ -1295,7 +1295,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
             // deep components (in most cases there are no deep components)
 
-            for (const auto& dest : instructions.deepComponents) {
+            for (const auto& dest : instructions.deepDestComponentNodes) {
 
                 // calculating the voltage
 
@@ -1373,7 +1373,7 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
         // top level components
 
-        for (const auto& dest : instructions.components) {
+        for (const auto& dest : instructions.destComponentsNodes) {
 
             rvt sumTemp = rvt0;
 
@@ -1394,7 +1394,7 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
         // deep components (in most cases there are no deep components)
 
-        for (const auto& dest : instructions.deepComponents) {
+        for (const auto& dest : instructions.deepDestComponentNodes) {
 
             // calculating the voltage
 
