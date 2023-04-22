@@ -85,6 +85,7 @@ inline cplx cutToPrint(cplx value) noexcept { return abs(value) < rvt(1e-15) ? c
 //***********************************************************************
 template<typename T>
 inline T square(T value) { return value * value; }
+inline rvt absSquare(cplx value) { return value.real() * value.real() + value.imag() * value.imag(); }
 //***********************************************************************
 
 

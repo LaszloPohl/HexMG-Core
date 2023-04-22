@@ -52,11 +52,11 @@ public:
     bool getIsConcurrent() const noexcept { return isConcurrent; }
     void setIsGnd(bool is)noexcept { isGnd = is; }
     bool getIsGnd() const noexcept { return isGnd; }
-    void store(const T& value)noexcept { if (isGnd) return; if (isConcurrent)concurrent.store(value); else nonConcurrent = value; }
+    void store(const T& value)noexcept { if (isGnd) return; if (isConcurrent)concurrent.store(value); nonConcurrent = value; } // ! because of storeToNonConcurent, nonConcurrent is always set (deleteD and deleteF)
     void storeToNonConcurent(const T& value)noexcept { nonConcurrent = value; }
     T load()const noexcept { return isConcurrent ? concurrent.load() : nonConcurrent; }
     T loadNonConcurent()const noexcept { return nonConcurrent; }
-    const T& operator=(const T& value) noexcept { if (isConcurrent)concurrent.store(value); else nonConcurrent = value; return value; }
+    const T& operator=(const T& value) noexcept { if (isGnd) return value; if (isConcurrent)concurrent.store(value); nonConcurrent = value; return value; } // ! because of storeToNonConcurent, nonConcurrent is always set (deleteD and deleteF)
     //***********************************************************************
 
     //***********************************************************************

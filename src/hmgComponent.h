@@ -140,7 +140,8 @@ public:
     virtual void calculateCurrent(bool isDC) noexcept = 0;
     virtual void forwsubs(bool isDC) = 0;
     virtual void backsubs(bool isDC) = 0;
-    virtual void jacobiIteration(bool isDC) = 0;
+    virtual void jacobiIteration(bool isDC) noexcept = 0;
+    virtual rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept = 0;
     //************************** DC functions *******************************
     virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
@@ -225,7 +226,8 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) override final {}
+    void jacobiIteration(bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
@@ -408,7 +410,8 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) override final {}
+    void jacobiIteration(bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
@@ -501,7 +504,8 @@ public:
     void loadFtoD(bool isDC) noexcept override final {}
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) override final {}
+    void jacobiIteration(bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
@@ -646,7 +650,8 @@ public:
     void loadFtoD(bool isDC) noexcept override {}
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) override {}
+    void jacobiIteration(bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -855,7 +860,7 @@ public:
         }
     }
     //***********************************************************************
-    void jacobiIteration(bool isDC) override {
+    void jacobiIteration(bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             N[2]->setValue0DC(N[2]->getValue0DC() + param[4].get() * N[2]->getDDC()); // + or - ? I'm not sure
@@ -863,6 +868,11 @@ public:
         else {
             N[2]->setValue0AC(N[2]->getValue0AC() + param[4].get() * N[2]->getDAC()); // + or - ? I'm not sure
         }
+    }
+    //***********************************************************************
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final {
+    //***********************************************************************
+        return rvt0; 
     }
     //************************** DC functions *******************************
     void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
@@ -1007,7 +1017,8 @@ public:
     //***********************************************************************
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) override {}
+    void jacobiIteration(bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     void acceptIterationDC(bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
@@ -1259,6 +1270,7 @@ class ComponentSubCircuit final : public ComponentBase {
     uns version = 0; // buildOrReplace must be run if this->version != model->version
     bool isJacobianMXSymmetricalDC_ = false;
     bool isJacobianMXSymmetricalAC_ = false;
+    bool isContainedComponentWithInternalNode = false;
     //*******     SUNRED     ************************************************
     hmgSunred sunred;
     std::vector<std::vector<uns>> externalNodesToComponents; // IONodes + NormalINodes: which components are connected to this node
@@ -1413,30 +1425,11 @@ public:
     void forwsubs(bool isDC)override { if (isDC) forwsubsDC(); else forwsubsAC(); }
     void backsubs(bool isDC)override { if (isDC) backsubsDC(); else backsubsAC(); }
     //***********************************************************************
-    void jacobiIteration(bool isDC) override {
+    void jacobiIteration(bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
-        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        
-        for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->jacobiIteration(isDC);
-        
-        if (isDC) {
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                crvt y = internalNodesAndVars[i].getYiiDC();
-                crvt d = internalNodesAndVars[i].getDDC();
-                if (y != rvt0)
-                    internalNodesAndVars[i].incValue0DC(d / y);
-            }
-        }
-        else {
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                ccplx y = internalNodesAndVars[i].getYiiAC();
-                ccplx d = internalNodesAndVars[i].getDAC();
-                if (y != cplx0)
-                    internalNodesAndVars[i].incValue0AC(d / y);
-            }
-        }
+        GaussSeidelRed(isDC);
+        GaussSeidelBlack(isDC);
     }
     //***********************************************************************
     void GaussSeidelRed(bool isDC) {
@@ -1469,6 +1462,73 @@ public:
                     internalNodesAndVars[i].incValue0AC(d / y);
             }
         }
+    }
+    //***********************************************************************
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
+    // theOther is the same type as this
+    //***********************************************************************
+        ComponentSubCircuit* coarseSubckt = static_cast<ComponentSubCircuit*>(coarse);
+        cuns NInternal = pModel->getN_InternalNodes();
+        cuns NNormalInternal = pModel->getN_NormalInternalNodes();
+        rvt sumRet = rvt0;
+        if (isDC) {
+            switch (type) {
+                case rprProlongateU: // uh = uH
+                    for (uns i = 0; i < NInternal; i++)
+                        internalNodesAndVars[i].setValue0DC(coarseSubckt->internalNodesAndVars[i].getValue0DC());
+                    break;
+                case rprRestrictU: // uH = uh
+                    for (uns i = 0; i < NInternal; i++)
+                        coarseSubckt->internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC());
+                    break;
+                case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                    for (uns i = 0; i < NInternal; i++) {
+                        rvt diff = coarseSubckt->internalNodesAndVars[i].getDDC() - internalNodesAndVars[i].getDDC();
+                        coarseSubckt->internalNodesAndVars[i].setFDC(internalNodesAndVars[i].getFDC() + diff);
+                        sumRet += diff * diff;
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurent = uH – R(uh)
+                    for (uns i = 0; i < NInternal; i++)
+                        coarseSubckt->internalNodesAndVars[i].setDNonConcurentDC(coarseSubckt->internalNodesAndVars[i].getValue0DC() - internalNodesAndVars[i].getValue0DC());
+                    break;
+                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurent)
+                    for (uns i = 0; i < NInternal; i++)
+                        internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurentDC());
+                    break;
+            }
+        }
+        else {
+            switch (type) {
+                case rprProlongateU: // uh = uH
+                    for (uns i = 0; i < NInternal; i++)
+                        internalNodesAndVars[i].setValue0AC(coarseSubckt->internalNodesAndVars[i].getValue0AC());
+                    break;
+                case rprRestrictU: // uH = uh
+                    for (uns i = 0; i < NInternal; i++)
+                        coarseSubckt->internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC());
+                    break;
+                case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                    for (uns i = 0; i < NInternal; i++) {
+                        cplx diff = coarseSubckt->internalNodesAndVars[i].getDAC() - internalNodesAndVars[i].getDAC();
+                        coarseSubckt->internalNodesAndVars[i].setFAC(internalNodesAndVars[i].getFAC() + diff);
+                        sumRet += absSquare(diff);
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurent = uH – R(uh)
+                    for (uns i = 0; i < NInternal; i++)
+                        coarseSubckt->internalNodesAndVars[i].setDNonConcurentAC(coarseSubckt->internalNodesAndVars[i].getValue0AC() - internalNodesAndVars[i].getValue0AC());
+                    break;
+                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurent)
+                    for (uns i = 0; i < NInternal; i++)
+                        internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurentAC());
+                    break;
+            }
+        }
+        if (isContainedComponentWithInternalNode)
+            for (uns i = 0; i < components.size(); i++)
+                sumRet += components[i]->recursiveProlongRestrictCopy(isDC, type, coarseSubckt->components[i].get());
+        return sumRet;
     }
     //************************** DC functions *******************************
     void allocForReductionDC();

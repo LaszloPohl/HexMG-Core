@@ -22,6 +22,13 @@ namespace nsHMG {
 
 
 //***********************************************************************
+enum RecursiveProlongRestrictType { rprProlongateU, rprRestrictU, 
+    rprRestrictFDD, rpruHMinusRestrictUhToDHNC, rprProlongateDHNCAddToUh
+};
+//***********************************************************************
+
+
+//***********************************************************************
 struct LocalProlongationOrRestrictionInstructions {
 //***********************************************************************
     struct OneLocalInstruction {

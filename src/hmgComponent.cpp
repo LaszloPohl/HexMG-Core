@@ -78,6 +78,19 @@ void ComponentSubCircuit::buildOrReplace() {
         isJacobianMXSymmetricalDC_ = isSymmDC;
         isJacobianMXSymmetricalAC_ = isSymmAC;
 
+        // isContainedComponentWithInternalNode
+
+        bool isInternalNode = false;
+        for (siz i = 0; i < nComponent && !isInternalNode; i++) {
+            isInternalNode = components[i]->pModel->getN_InternalNodes() > 0;
+            if (!isInternalNode) {
+                const ComponentSubCircuit* pSubckt = dynamic_cast<ComponentSubCircuit*>(components[i].get());
+                if (pSubckt)
+                    isInternalNode = pSubckt->isContainedComponentWithInternalNode;
+            }
+        }
+        isContainedComponentWithInternalNode = isInternalNode;
+
         return;
     }
 
@@ -182,6 +195,18 @@ void ComponentSubCircuit::buildOrReplace() {
     isJacobianMXSymmetricalDC_ = isSymmDC;
     isJacobianMXSymmetricalAC_ = isSymmAC;
 
+    // isContainedComponentWithInternalNode
+
+    bool isInternalNode = false;
+    for (siz i = 0; i < nComponent && !isInternalNode; i++) {
+        isInternalNode = components[i]->pModel->getN_InternalNodes() > 0;
+        if (!isInternalNode) {
+            const ComponentSubCircuit* pSubckt = dynamic_cast<ComponentSubCircuit*>(components[i].get());
+            if (pSubckt)
+                isInternalNode = pSubckt->isContainedComponentWithInternalNode;
+        }
+    }
+    isContainedComponentWithInternalNode = isInternalNode;
 
     // set isConcurrent for normal internal nodes (for control internal nodes it does not change! (control internal node can be an internal node of a component))
 
@@ -617,8 +642,8 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
     calculateValueDC();
     deleteYii(true);
     calculateYiiDC();
-    std::cout << "\nRelax Start\n" << std::endl;
-    printNodeValueDC(0);
+    //std::cout << "\nRelax Start\n" << std::endl;
+    //printNodeValueDC(0);
     for (uns i = 0; i < nRelax; i++) {
         loadFtoD(true);
         calculateCurrent(true);
@@ -631,8 +656,8 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
         //printNodeValueDC(0);
         //std::cout << std::endl;
     }
-    std::cout << "\nRelax Stop\n" << std::endl;
-    printNodeValueDC(0);
+    //std::cout << "\nRelax Stop\n" << std::endl;
+    //printNodeValueDC(0);
 }
 
 
@@ -658,6 +683,15 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
     // contained components
 
     for (const auto& componentGroup : connections.componentGroups) {
+
+        // the same cell in both levels
+
+        if (componentGroup.isCopy) {
+            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
+                components[componentGroup.fineCells[i]]->recursiveProlongRestrictCopy(true, rprProlongateU, coarse.components[componentGroup.coarseCells[i]].get());
+            }
+            continue;
+        }
         
         const LocalProlongationOrRestrictionInstructions& instructions = multigrid.localNodeProlongationTypes[componentGroup.localProlongationIndex];
 
@@ -755,6 +789,15 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
     for (const auto& componentGroup : connections.componentGroups) {
 
+        // the same cell in both levels
+
+        if (componentGroup.isCopy) {
+            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
+                components[componentGroup.fineCells[i]]->recursiveProlongRestrictCopy(true, rprRestrictU, coarse.components[componentGroup.coarseCells[i]].get());
+            }
+            continue;
+        }
+
         // NormalRestriction
         
         // For normal restiction, maximum 4 levels enabled (of course, more levels can be inserted, or recursive version can be created)
@@ -781,7 +824,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
             // Level 2+3+4
 
             ComponentSubCircuit* destSubckt0 = dynamic_cast<ComponentSubCircuit*>(destComponent0);
-            if (destSubckt0 != nullptr) {
+            if (destSubckt0 != nullptr && destSubckt0->isContainedComponentWithInternalNode) {
                 cuns Ncomp1 = (uns)destSubckt0->components.size();
                 for (uns k = 0; k < Ncomp1; k++) {
 
@@ -804,7 +847,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
                     // Level 3+4
 
                     ComponentSubCircuit* destSubckt1 = dynamic_cast<ComponentSubCircuit*>(destComponent1);
-                    if (destSubckt1 != nullptr) {
+                    if (destSubckt1 != nullptr && destSubckt1->isContainedComponentWithInternalNode) {
                         cuns Ncomp2 = (uns)destSubckt1->components.size();
                         for (uns l = 0; l < Ncomp2; l++) {
 
@@ -827,7 +870,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
                             // level 4
 
                             ComponentSubCircuit* destSubckt2 = dynamic_cast<ComponentSubCircuit*>(destComponent2);
-                            if (destSubckt2 != nullptr) {
+                            if (destSubckt2 != nullptr && destSubckt2->isContainedComponentWithInternalNode) {
                                 cuns Ncomp3 = (uns)destSubckt2->components.size();
                                 for (uns m = 0; m < Ncomp3; m++) {
                                     ComponentBase* destComponent3 = destSubckt2->components[m].get();
@@ -956,6 +999,15 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
     for (const auto& componentGroup : connections.componentGroups) {
 
+        // the same cell in both levels
+
+        if (componentGroup.isCopy) {
+            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
+                truncationError += components[componentGroup.fineCells[i]]->recursiveProlongRestrictCopy(true, rprRestrictFDD, coarse.components[componentGroup.coarseCells[i]].get());
+            }
+            continue;
+        }
+
         // NormalRestriction
 
         // For normal restiction, maximum 4 levels enabled (of course, more levels can be inserted, or recursive version can be created)
@@ -986,7 +1038,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
             // Level 2+3+4
 
             ComponentSubCircuit* destSubckt0 = dynamic_cast<ComponentSubCircuit*>(destComponent0);
-            if (destSubckt0 != nullptr) {
+            if (destSubckt0 != nullptr && destSubckt0->isContainedComponentWithInternalNode) {
                 cuns Ncomp1 = (uns)destSubckt0->components.size();
                 for (uns k = 0; k < Ncomp1; k++) {
 
@@ -1013,7 +1065,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
                     // Level 3+4
 
                     ComponentSubCircuit* destSubckt1 = dynamic_cast<ComponentSubCircuit*>(destComponent1);
-                    if (destSubckt1 != nullptr) {
+                    if (destSubckt1 != nullptr && destSubckt1->isContainedComponentWithInternalNode) {
                         cuns Ncomp2 = (uns)destSubckt1->components.size();
                         for (uns l = 0; l < Ncomp2; l++) {
 
@@ -1040,7 +1092,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
                             // level 4
 
                             ComponentSubCircuit* destSubckt2 = dynamic_cast<ComponentSubCircuit*>(destComponent2);
-                            if (destSubckt2 != nullptr) {
+                            if (destSubckt2 != nullptr && destSubckt2->isContainedComponentWithInternalNode) {
                                 cuns Ncomp3 = (uns)destSubckt2->components.size();
                                 for (uns m = 0; m < Ncomp3; m++) {
                                     ComponentBase* destComponent3 = destSubckt2->components[m].get();
@@ -1178,6 +1230,15 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
     for (const auto& componentGroup : connections.componentGroups) {
 
+        // the same cell in both levels
+
+        if (componentGroup.isCopy) {
+            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
+                components[componentGroup.fineCells[i]]->recursiveProlongRestrictCopy(true, rpruHMinusRestrictUhToDHNC, coarse.components[componentGroup.coarseCells[i]].get());
+            }
+            continue;
+        }
+
         // NormalRestriction
 
         // For normal restiction, maximum 4 levels enabled (of course, more levels can be inserted, or recursive version can be created)
@@ -1205,7 +1266,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
             // Level 2+3+4
 
             ComponentSubCircuit* destSubckt0 = dynamic_cast<ComponentSubCircuit*>(destComponent0);
-            if (destSubckt0 != nullptr) {
+            if (destSubckt0 != nullptr && destSubckt0->isContainedComponentWithInternalNode) {
                 cuns Ncomp1 = (uns)destSubckt0->components.size();
                 for (uns k = 0; k < Ncomp1; k++) {
 
@@ -1229,7 +1290,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
                     // Level 3+4
 
                     ComponentSubCircuit* destSubckt1 = dynamic_cast<ComponentSubCircuit*>(destComponent1);
-                    if (destSubckt1 != nullptr) {
+                    if (destSubckt1 != nullptr && destSubckt1->isContainedComponentWithInternalNode) {
                         cuns Ncomp2 = (uns)destSubckt1->components.size();
                         for (uns l = 0; l < Ncomp2; l++) {
 
@@ -1253,7 +1314,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
                             // level 4
 
                             ComponentSubCircuit* destSubckt2 = dynamic_cast<ComponentSubCircuit*>(destComponent2);
-                            if (destSubckt2 != nullptr) {
+                            if (destSubckt2 != nullptr && destSubckt2->isContainedComponentWithInternalNode) {
                                 cuns Ncomp3 = (uns)destSubckt2->components.size();
                                 for (uns m = 0; m < Ncomp3; m++) {
                                     ComponentBase* destComponent3 = destSubckt2->components[m].get();
@@ -1379,6 +1440,15 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
     // contained components
 
     for (const auto& componentGroup : connections.componentGroups) {
+
+        // the same cell in both levels
+
+        if (componentGroup.isCopy) {
+            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
+                components[componentGroup.fineCells[i]]->recursiveProlongRestrictCopy(true, rprProlongateDHNCAddToUh, coarse.components[componentGroup.coarseCells[i]].get());
+            }
+            continue;
+        }
 
         const LocalProlongationOrRestrictionInstructions& instructions = multigrid.localNodeProlongationTypes[componentGroup.localProlongationIndex];
 
