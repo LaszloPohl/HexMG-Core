@@ -115,7 +115,7 @@ struct hmgMultigrid {
                 ComponentSubCircuit& destGrid = *gc.fullCircuitInstances[destLevel.indexFineFullCircuit].component;
                 destGrid.calculateValueDC();
                 destGrid.calculateCurrent(true); // no loadFtoD => only d
-                rvt residual = destGrid.calculateResidualDC(); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
+                rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
                 if (residual < errorRate * truncationError)
                     iV = nVcycles; // break
             }

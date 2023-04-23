@@ -80,7 +80,6 @@ struct ComponentGroup {
     std::vector<uns> fineCells;     // index in the fine->components vector
     std::vector<uns> coarseCells;   // index in the coarse->components vector
     bool isCopy = true;             // if true, coarseCells[1] == fineCells[i] required; prolongation and restriction is the copiing of the values
-    bool isNormalRestriction = true;// if true, coarseCells.size() must be 1. If true, coarseCells[0].internalNodes[i] = sum (fineCells[j].internalNodes[i]) / fineCells.size()
     uns localRestrictionIndex = 0;  // in localNodeRestrictionTypes, if isNormalRestriction == false
     uns localProlongationIndex = 0; // in localNodeProlongationTypes, always
 };

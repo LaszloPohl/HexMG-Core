@@ -1493,7 +1493,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 0;
 	componentGroup.localProlongationIndex = 0;
 	componentGroup.fineCells.push_back(0);
@@ -1506,7 +1505,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 1;
 	componentGroup.localProlongationIndex = 1;
 	componentGroup.fineCells.push_back(2);
@@ -1517,7 +1515,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 2;
 	componentGroup.localProlongationIndex = 2;
 	componentGroup.fineCells.push_back(3);
@@ -1527,7 +1524,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 3;
 	componentGroup.localProlongationIndex = 3;
 	componentGroup.fineCells.push_back(7);
@@ -1537,7 +1533,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 0;
 	componentGroup.localProlongationIndex = 4;
 	componentGroup.fineCells.push_back(8);
@@ -1550,7 +1545,6 @@ void probaSzimulacioMg1() {
 	componentGroup.fineCells.clear();
 	componentGroup.coarseCells.clear();
 	componentGroup.isCopy = false;
-	componentGroup.isNormalRestriction = false;
 	componentGroup.localRestrictionIndex = 0;
 	componentGroup.localProlongationIndex = 5;
 	componentGroup.fineCells.push_back(10);

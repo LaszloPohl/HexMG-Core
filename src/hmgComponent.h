@@ -141,7 +141,8 @@ public:
     virtual void forwsubs(bool isDC) = 0;
     virtual void backsubs(bool isDC) = 0;
     virtual void jacobiIteration(bool isDC) noexcept = 0;
-    virtual rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept = 0;
+    virtual rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept = 0;
+    virtual rvt calculateResidual(bool isDC) const noexcept = 0;
     //************************** DC functions *******************************
     virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
@@ -227,7 +228,8 @@ public:
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
@@ -411,7 +413,8 @@ public:
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
@@ -505,7 +508,8 @@ public:
     void forwsubs(bool isDC) override final {}
     void backsubs(bool isDC) override final {}
     void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
@@ -651,7 +655,8 @@ public:
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
     void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent(bool isDC) noexcept override {
@@ -870,10 +875,42 @@ public:
         }
     }
     //***********************************************************************
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final {
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
     //***********************************************************************
-        return rvt0; 
+        ComponentConstV* coarseVgen = static_cast<ComponentConstV*>(coarse);
+        rvt sumRet = rvt0;
+        if (isDC) {
+            switch (type) {
+                case rprProlongateU: N[2]->setValue0DC(coarseVgen->N[2]->getValue0DC()); break; // uh = uH
+                case rprRestrictU:   coarseVgen->N[2]->setValue0DC(N[2]->getValue0DC()); break; // uH = uh
+                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                        rvt diff = coarseVgen->N[2]->getDDC() - N[2]->getDDC();
+                        coarseVgen->N[2]->setFDC(N[2]->getFDC() + diff);
+                        sumRet += diff * diff;
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurentDC(coarseVgen->N[2]->getValue0DC() - N[2]->getValue0DC()); break; // dH_NonConcurent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0DC(coarseVgen->N[2]->getDNonConcurentDC()); break; // uh = uh + P(dH_NonConcurent)
+            }
+        }
+        else {
+            switch (type) {
+                case rprProlongateU: N[2]->setValue0AC(coarseVgen->N[2]->getValue0AC()); break; // uh = uH
+                case rprRestrictU:   coarseVgen->N[2]->setValue0AC(N[2]->getValue0AC()); break; // uH = uh
+                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                        cplx diff = coarseVgen->N[2]->getDAC() - N[2]->getDAC();
+                        coarseVgen->N[2]->setFAC(N[2]->getFAC() + diff);
+                        sumRet = absSquare(diff);
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurentAC(coarseVgen->N[2]->getValue0AC() - N[2]->getValue0AC()); break; // dH_NonConcurent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0AC(coarseVgen->N[2]->getDNonConcurentAC()); break; // uh = uh + P(dH_NonConcurent)
+            }
+        }
+        return sumRet;
     }
+    //***********************************************************************
+    rvt calculateResidual(bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
     //************************** DC functions *******************************
     void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
@@ -1018,7 +1055,8 @@ public:
     void forwsubs(bool isDC) override {}
     void backsubs(bool isDC) override {}
     void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* theOther) noexcept override final { return rvt0; }
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     void acceptIterationDC(bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
@@ -1362,7 +1400,7 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.reset();
             for (auto& comp : components)
-                comp.get()->resetNodes(true);
+                comp->resetNodes(true);
             for (auto& ctrl : controllers)
                 ctrl.get()->resetMVars();
         }
@@ -1370,7 +1408,7 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.resetAC();
             for (auto& comp : components)
-                comp.get()->resetNodes(false);
+                comp->resetNodes(false);
         }
     }
     //***********************************************************************
@@ -1381,13 +1419,13 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.deleteDDC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteD(true);
+                if (comp->isEnabled) comp->deleteD(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
                 node.deleteDAC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteD(false);
+                if (comp->isEnabled) comp->deleteD(false);
         }
     }
     //***********************************************************************
@@ -1396,12 +1434,12 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->calculateCurrent(true);
+                if (comp->isEnabled) comp->calculateCurrent(true);
             // setting own current should be here
         }
         else {
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->calculateCurrent(false);
+                if (comp->isEnabled) comp->calculateCurrent(false);
             // setting own current should be here
         }
     }
@@ -1410,7 +1448,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->calculateControllersDC(step);
+            if (comp->isEnabled) comp->calculateControllersDC(step);
 
         if (step == 1) {
             for (auto& ctrl : controllers)
@@ -1438,7 +1476,7 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->jacobiIteration(isDC);
+            if (comp->isEnabled) comp->jacobiIteration(isDC);
     }
     //***********************************************************************
     void GaussSeidelBlack(bool isDC) {
@@ -1465,7 +1503,7 @@ public:
     }
     //***********************************************************************
     rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
-    // theOther is the same type as this
+    // coarse is the same type as this
     //***********************************************************************
         ComponentSubCircuit* coarseSubckt = static_cast<ComponentSubCircuit*>(coarse);
         cuns NInternal = pModel->getN_InternalNodes();
@@ -1527,8 +1565,31 @@ public:
         }
         if (isContainedComponentWithInternalNode)
             for (uns i = 0; i < components.size(); i++)
-                sumRet += components[i]->recursiveProlongRestrictCopy(isDC, type, coarseSubckt->components[i].get());
+                if (components[i]->isEnabled)
+                    sumRet += components[i]->recursiveProlongRestrictCopy(isDC, type, coarseSubckt->components[i].get());
         return sumRet;
+    }
+    //***********************************************************************
+    rvt calculateResidual(bool isDC) const noexcept override final { 
+    //***********************************************************************
+        rvt residual = rvt0;
+        cuns NInodes = pModel->getN_NormalInternalNodes();
+
+        if (isDC) {
+            for (uns i = 0; i < NInodes; i++)
+                residual += square(internalNodesAndVars[i].getDDC());
+        }
+        else {
+            for (uns i = 0; i < NInodes; i++)
+                residual += absSquare(internalNodesAndVars[i].getDAC());
+        }
+
+        if (isContainedComponentWithInternalNode)
+            for (uns i = 0; i < components.size(); i++)
+                if (components[i]->isEnabled)
+                    residual += components[i]->calculateResidual(isDC);
+
+        return residual;
     }
     //************************** DC functions *******************************
     void allocForReductionDC();
@@ -1537,7 +1598,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->calculateValueDC();
+            if (comp->isEnabled) comp->calculateValueDC();
         // setting own value should be here
     }
     //***********************************************************************
@@ -1550,7 +1611,7 @@ public:
             d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
         }
         for (auto& comp : components)
-            if (comp.get()->isEnabled) d.addCollector(comp.get()->collectCurrentDefectDC());
+            if (comp->isEnabled) d.addCollector(comp->collectCurrentDefectDC());
         return d;
     }
     //***********************************************************************
@@ -1563,7 +1624,7 @@ public:
             d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
         }
         for (auto& comp : components)
-            if (comp.get()->isEnabled) d.addCollector(comp.get()->collectVoltageDefectDC());
+            if (comp->isEnabled) d.addCollector(comp->collectVoltageDefectDC());
         return d;
     }
     //***********************************************************************
@@ -1574,7 +1635,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->calculateYiiDC();
+            if (comp->isEnabled) comp->calculateYiiDC();
     }
     //***********************************************************************
 
@@ -1591,7 +1652,7 @@ public:
                 internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->acceptIterationDC(isNoAlpha);
+            if (comp->isEnabled) comp->acceptIterationDC(isNoAlpha);
     }
     //***********************************************************************
     void acceptStepDC() noexcept override {
@@ -1601,7 +1662,7 @@ public:
         for (uns i = 0; i < internalNodesAndVars.size(); i++)
             internalNodesAndVars[i].setStepStartFromAcceptedDC();
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->acceptStepDC();
+            if (comp->isEnabled) comp->acceptStepDC();
         for (auto& ctrl : controllers)
             if (ctrl.get()->isEnabled) ctrl.get()->setStepStartFromValue();
     }
@@ -1611,7 +1672,7 @@ public:
     void buildForAC() override {
     //***********************************************************************
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->buildForAC();
+            if (comp->isEnabled) comp->buildForAC();
         allocForReductionAC();
     }
     //***********************************************************************
@@ -1622,7 +1683,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->calculateYiiAC();
+            if (comp->isEnabled) comp->calculateYiiAC();
     }
     //***********************************************************************
     void acceptIterationAndStepAC() noexcept override { // sunred and multigrid
@@ -1632,7 +1693,7 @@ public:
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
             internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
-            if (comp.get()->isEnabled) comp.get()->acceptIterationAndStepAC();
+            if (comp->isEnabled) comp->acceptIterationAndStepAC();
     }
     //************************  Multigrid Functions  ************************
     void deleteF(bool isDC) noexcept override {
@@ -1642,13 +1703,13 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.deleteFDC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteF(true);
+                if (comp->isEnabled) comp->deleteF(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
                 node.deleteFAC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteF(false);
+                if (comp->isEnabled) comp->deleteF(false);
         }
     }
     //***********************************************************************
@@ -1659,13 +1720,13 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.deleteYiiDC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteYii(true);
+                if (comp->isEnabled) comp->deleteYii(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
                 node.deleteYiiAC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->deleteYii(false);
+                if (comp->isEnabled) comp->deleteYii(false);
         }
     }
     //***********************************************************************
@@ -1676,13 +1737,13 @@ public:
             for (auto& node : internalNodesAndVars)
                 node.loadFtoDDC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->loadFtoD(true);
+                if (comp->isEnabled) comp->loadFtoD(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
                 node.loadFtoDAC();
             for (auto& comp : components)
-                if (comp.get()->isEnabled) comp.get()->loadFtoD(false);
+                if (comp->isEnabled) comp->loadFtoD(false);
         }
     }
     //***********************  DC Multigrid Functions  **********************
@@ -1712,7 +1773,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeValueDC(i);
+            if (components[i]->isEnabled) components[i]->printNodeValueDC(i);
         }
     }
     //***********************************************************************
@@ -1722,7 +1783,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeErrorDC(i);
+            if (components[i]->isEnabled) components[i]->printNodeErrorDC(i);
         }
     }
     //***********************************************************************
@@ -1732,7 +1793,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeDefectDC(i);
+            if (components[i]->isEnabled) components[i]->printNodeDefectDC(i);
         }
     }
     //***********************************************************************
@@ -1742,7 +1803,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeValueAC(i);
+            if (components[i]->isEnabled) components[i]->printNodeValueAC(i);
         }
     }
     //***********************************************************************
@@ -1752,7 +1813,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeErrorAC(i);
+            if (components[i]->isEnabled) components[i]->printNodeErrorAC(i);
         }
     }
     //***********************************************************************
@@ -1762,7 +1823,7 @@ public:
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
             std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
-            if (components[i].get()->isEnabled) components[i].get()->printNodeDefectAC(i);
+            if (components[i]->isEnabled) components[i]->printNodeDefectAC(i);
         }
     }
     //***********************************************************************
@@ -1957,7 +2018,7 @@ inline void ComponentSubCircuit::forwsubsDC() {
 // TO PARALLEL
 //***********************************************************************
     for (auto& comp : components)
-        if (comp.get()->isEnabled) comp->forwsubs(true);
+        if (comp->isEnabled) comp->forwsubs(true);
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
         sfmrDC->forwsubs();
@@ -1977,7 +2038,7 @@ inline void ComponentSubCircuit::backsubsDC() {
     else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
         sunred.backsubsDC();
     for (auto& comp : components)
-        if (comp.get()->isEnabled) comp->backsubs(true);
+        if (comp->isEnabled) comp->backsubs(true);
 }
 
 
@@ -1986,7 +2047,7 @@ inline void ComponentSubCircuit::forwsubsAC() {
 // TO PARALLEL
 //***********************************************************************
     for (auto& comp : components)
-        if (comp.get()->isEnabled) comp->forwsubs(false);
+        if (comp->isEnabled) comp->forwsubs(false);
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
         sfmrAC->forwsubs();
@@ -2006,7 +2067,7 @@ inline void ComponentSubCircuit::backsubsAC() {
     else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
         sunred.backsubsAC();
     for (auto& comp : components)
-        if (comp.get()->isEnabled) comp->backsubs(false);
+        if (comp->isEnabled) comp->backsubs(false);
 }
 
 
