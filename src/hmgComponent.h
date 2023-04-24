@@ -1754,7 +1754,6 @@ public:
     rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);                 // fH = R(fh) + dH – R(dh), ret: truncation error
     void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);   // dH_NonConcurent = uH – R(uh)
     void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);     // uh = uh + P(dH_NonConcurent)
-    rvt calculateResidualDC()const;                                                                // sum (dh)^2
     //***********************  AC Multigrid Functions  **********************
     void solveAC() {} // d0 += f0 kell!
     void relaxAC(uns nRelax) {} // f-et is figyelembe kell venni!
@@ -1763,7 +1762,6 @@ public:
     rvt restrictFDDAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
     void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
     void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
-    rvt calculateResidualAC()const {} // sum (dh)^2 => saját fv kell a re*re+im*im-hez
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     //***********************************************************************
@@ -1829,6 +1827,20 @@ public:
     //***********************************************************************
     void testPrint() const noexcept override;
     //***********************************************************************
+    void printNodesDC() const noexcept {
+    //***********************************************************************
+        for (uns i = 0; i < internalNodesAndVars.size(); i++) {
+            std::cout << "Internal node " << i << std::endl;
+            internalNodesAndVars[i].printNode();
+        }
+        for (uns i = 0; i < components.size(); i++) {
+            const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(components[i].get());
+            if (subckt != nullptr) {
+                std::cout << "***** Component " << i << std::endl;
+                subckt->printNodesDC();
+            }
+        }
+    }
 #endif
 };
 

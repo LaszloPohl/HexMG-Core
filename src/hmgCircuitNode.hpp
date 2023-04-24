@@ -291,6 +291,14 @@ public:
     void setVAC(ccplx& v)noexcept { nodePtr->acNodePtr->v = v; }
     void setYiiAC(const cplx& y)noexcept { nodePtr->acNodePtr->yii.store(y); }
     //***********************************************************************
+    void printNode()const noexcept {
+    //***********************************************************************
+        std::cout << "Value = " << value << "     stepStart = " << stepStart << std::endl;
+        if (nodePtr) {
+            std::cout << "v = " << nodePtr->v << "     toSave = " << nodePtr->toSave << "     f = " << nodePtr->f << "     yii = " << nodePtr->yii.load() << std::endl;
+            std::cout << "d = " << nodePtr->d.load() << "     d.nonConcurrent = " << nodePtr->d.loadNonConcurent() << "\n"  << std::endl;
+        }
+    }
 };
 
 

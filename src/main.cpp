@@ -1579,6 +1579,750 @@ void probaSzimulacioMg2() {
 
 	instr.data.resize(3);
 
+	instr.data[0].resize(3);
+	instr.data[0][0] = { 0, 0, 0, 1 };
+	instr.data[0][1] = { 0, 2, 0, 3 };
+	instr.data[0][2] = { 0, 4, 0, 5 };
+
+	instr.data[1].resize(1);
+	instr.data[1][0] = { 1, 0, 1, 1 };
+
+	instr.data[2].resize(1);
+	instr.data[2][0] = { 2, 0, 1, 2 };
+
+	//***********************************************************************
+	// cellamodellek
+	//***********************************************************************
+
+	constexpr rvt Cth = rvt(0.00642);
+	constexpr rvt Gx = rvt(1.0 / 3750.0);
+	constexpr rvt Gy = rvt(3.0 / 1250.0);
+	constexpr rvt G0 = rvt(100'000.0);
+	const rvt T0 = (25.0 - FixVoltages::V[1]->getDefaultNodeValue());
+	constexpr rvt Gx22 = Gx;
+	constexpr rvt Gy22 = Gy;
+	constexpr rvt Cth22 = 4 * Cth;
+	constexpr rvt Gx12 = Gx / 2;
+	constexpr rvt Gy12 = Gy * 2;
+	constexpr rvt Cth12 = 2 * Cth;
+	std::unique_ptr<ModelSubCircuit> mc;
+	std::unique_ptr<ComponentDefinition> cd;
+
+	// 0
+
+	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
+
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 1
+
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, 0.0, 0.01, 0.01, 0.0);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 2
+
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 3
+
+	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gy);	mc->push_back_component(std::move(cd));
+	//cd = make_unique<ComponentDefinition>();	setV0(cd, T0, G0);		mc->push_back_component(std::move(cd));
+	//cd = make_unique<ComponentDefinition>();	setGirator0(cd);		mc->push_back_component(std::move(cd));
+	//cd = make_unique<ComponentDefinition>();	setR0(cd, 1.0 / G0, 1, 0);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 1, 5, 5, 0, 0);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR0(cd, G0, 0, 1);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, 5 * G0, 5 * G0, 0, 0);	mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 4
+
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 3, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 5
+
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 0, 3);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 0, 1, 4);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 1, 2, 5);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 2, 6);			mc->push_back_component(std::move(cd));
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 6, 3, 15, 3, 7);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 4, 4, 15, 16, 4, 8);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 4, 4, 16, 17, 5, 9);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 3, 3, 17, 6, 10);		mc->push_back_component(std::move(cd));
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 6, 3, 18, 7, 11);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 4, 4, 18, 19, 8, 12);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 4, 4, 19, 20, 9, 13);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 6, 3, 20, 10, 14);		mc->push_back_component(std::move(cd));
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 1, 2, 21, 11);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 21, 22, 12);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 22, 23, 13);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 23, 14);			mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 6
+
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gy);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	//*********************************
+	
+	// 7
+
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth22);	mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 8
+
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, 0.0, 0.01, 0.01, 0.0);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth22);	mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 9
+
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx12);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gx);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 3, Gy12);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth12);	mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 10
+
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+
+	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy12);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setR(cd, 2, Gy12);	mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setC0(cd, Cth22);	mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+	// 11
+
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 7, 2, 0, 4);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 9, 4, 0, 1, 2, 5);		mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 1, 3);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 3, 3, 2, 3, 6);			mc->push_back_component(std::move(cd));
+
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 8, 2, 7, 4);			mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setCell(cd, 10, 3, 7, 5, 6);		mc->push_back_component(std::move(cd));
+
+	gc.models.push_back(std::move(mc));
+
+
+	//***********************************************************************
+	// példányosítás
+	//***********************************************************************
+
+	gc.createFullCircuit(11, 1);
+	gc.createFullCircuit(5, 1);
+	//ComponentBase::SimControl::setFinalDC();
+	gc.fullCircuitInstances[0].component->resetNodes(true);
+	gc.fullCircuitInstances[1].component->resetNodes(true);
+
+	ComponentConstC_1::isTrapezoid = false;
+	std::cout << "runStepDC();" << std::endl;
+	cout << "\n********* 1\n" << endl;
+	//runStepDC();
+	runStepLessPrintDC();
+
+	//hmgSunred sunred;
+	//sunred.buildTree(instr, gc.fullCircuitInstances[0].component.get());
+	//sunred.allocDC();
+	//sunred.forwsubsDC();
+	//sunred.backsubsDC();
+
+/*
+	std::cout << "for (uns i = 0; i < 100; i++)" << std::endl;
+
+	for (uns i = 0; i < 100; i++) {
+//		std::cout << "******************************************************************" << std::endl;
+		SimControl::stepTransient(10);
+		runStepNoPrintDC();
+//		std::cout << i << " \tt = " << ComponentBase::SimControl::timeStepStop.getValue() << " sec \t" << gc.fullCircuitInstances[0].component->getStoredComponent(12)->getInternalNode(0)->getValue() << std::endl;
+		std::cout << SimControl::timeStepStop.getValueDC() << "    " << gc.fullCircuitInstances[0].component->getStoredComponent(12)->getInternalNode(0)->getValueDC() << std::endl;
+	}
+*/
+	SimControl::setFinalDC();
+	cout << "\n********* 2\n" << endl;
+	runStepLessPrintDC();
+	cout << "\n********* 3\n" << endl;
+	runStepLessPrintDC();
+	cout << "\n********* 4\n" << endl;
+
+	gc.fullCircuitInstances[0].component->buildForAC(); // DC runs in gc.createFullCircuit() => buildOrReplace()
+
+	SimControl::setComplexFrequencyForAC(0.001);
+
+	runStepLessPrintAC();
+
+#ifdef HMG_DEBUGPRINT
+	gc.fullCircuitInstances[0].component->testPrint();
+#endif
+
+	SimControl::setComplexFrequencyForTimeConst(1e-2, 5);
+
+	runStepLessPrintAC();
+
+#ifdef HMG_DEBUGPRINT
+	gc.fullCircuitInstances[0].component->testPrint();
+#endif
+
+	// multigrid
+
+	hmgMultigrid mg;
+
+	FineCoarseConnectionDescription level1;
+	NodeInstruction nodeInstruction;
+	NodeInstruction::OneInstruction oneInstruction;
+
+	level1.indexCoarseFullCircuit = 0;
+	level1.indexFineFullCircuit = 1;
+
+	// global node restrictions
+
+	nodeInstruction.destNodeIndex = 0;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 1;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 2;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 3;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 4;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 5;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 6;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 7;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	// global node prolongations
+
+	nodeInstruction.destNodeIndex = 0;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 1;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 2;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 3;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 4;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 5;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 6;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 7;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 8;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.667;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.333;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 9;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 10;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 11;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 12;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 13;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 14;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 15;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.9;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 16;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 17;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 18;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.9;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 19;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 20;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.45;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.45;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 21;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 22;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 23;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.35;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.35;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.3;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
+
+	// localNodeRestrictionTypes
+
+	LocalProlongationOrRestrictionInstructions cellInstructions;
+	LocalProlongationOrRestrictionInstructions::LocalNodeInstruction destCellNode;
+	LocalProlongationOrRestrictionInstructions::OneLocalInstruction srcCellNode;
+	LocalProlongationOrRestrictionInstructions::RecursiveInstruction destDeepCellNode;
+	LocalProlongationOrRestrictionInstructions::OneRecursiveInstruction srcDeepCellNode;
+
+	// coarse = group 0, 4, 5
+	
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 1
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 2
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 3
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	//destDeepCellNode.destComponentIndex.clear();
+	//destDeepCellNode.instr.clear();
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//srcDeepCellNode.srcComponentIndex.clear();
+	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+
+	// localNodeProlongationTypes
+
+	// fine 0, 1, 4, 5      group = 0
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 2, 6      group = 1
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 3;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 3      group = 2
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 7      group = 3
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	//destDeepCellNode.destComponentIndex.clear();
+	//destDeepCellNode.instr.clear();
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//srcDeepCellNode.srcComponentIndex.clear();
+	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 8, 9, 12, 13      group = 4
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// fine 10, 11, 14, 15      group = 5
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.6;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
+
+	// componentGroups
+
+	ComponentGroup componentGroup;
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 0;
+	componentGroup.fineCells.push_back(0);
+	componentGroup.fineCells.push_back(1);
+	componentGroup.fineCells.push_back(4);
+	componentGroup.fineCells.push_back(5);
+	componentGroup.coarseCells.push_back(0);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 1;
+	componentGroup.localProlongationIndex = 1;
+	componentGroup.fineCells.push_back(2);
+	componentGroup.fineCells.push_back(6);
+	componentGroup.coarseCells.push_back(1);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 2;
+	componentGroup.localProlongationIndex = 2;
+	componentGroup.fineCells.push_back(3);
+	componentGroup.coarseCells.push_back(2);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 3;
+	componentGroup.localProlongationIndex = 3;
+	componentGroup.fineCells.push_back(7);
+	componentGroup.coarseCells.push_back(3);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 4;
+	componentGroup.fineCells.push_back(8);
+	componentGroup.fineCells.push_back(9);
+	componentGroup.fineCells.push_back(12);
+	componentGroup.fineCells.push_back(13);
+	componentGroup.coarseCells.push_back(4);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	componentGroup.fineCells.clear();
+	componentGroup.coarseCells.clear();
+	componentGroup.isCopy = false;
+	componentGroup.localRestrictionIndex = 0;
+	componentGroup.localProlongationIndex = 5;
+	componentGroup.fineCells.push_back(10);
+	componentGroup.fineCells.push_back(11);
+	componentGroup.fineCells.push_back(14);
+	componentGroup.fineCells.push_back(15);
+	componentGroup.coarseCells.push_back(5);
+	level1.componentGroups.push_back(std::move(componentGroup));
+
+	mg.levels.push_back(std::move(level1));
+
+	mg.solveDC();
+
+#ifdef HMG_DEBUGPRINT
+	gc.fullCircuitInstances[1].component->printNodeValueDC(0);
+	std::cout << std::endl;
+	gc.fullCircuitInstances[0].component->printNodeValueDC(0);
+#endif
+}
+
+
+//***********************************************************************
+void probaSzimulacioMg3() {
+//***********************************************************************
+	CircuitStorage& gc = CircuitStorage::getInstance();
+
+	//***********************************************************************
+	// Sunred fa építése
+	//***********************************************************************
+
+	hmgSunred::ReductionTreeInstructions instr;
+
+	instr.data.resize(3);
+
 	instr.data[0].resize(2);
 	instr.data[0][0] = { 0, 1, 0, 2 };
 	instr.data[0][1] = { 0, 0, 0, 4 };
@@ -1921,7 +2665,7 @@ int main() {
 */
 
 	const auto startTime_proba = high_resolution_clock::now();
-	probaSzimulacioMg1();
+	probaSzimulacioMg2();
 	const auto endTime_proba = high_resolution_clock::now();
 
 	duration<double> time_span = duration_cast<duration<double>>(endTime_proba - startTime_proba);

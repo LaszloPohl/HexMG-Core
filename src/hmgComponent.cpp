@@ -647,7 +647,6 @@ void ComponentSubCircuit::relaxDC(uns nRelax) {
     for (uns i = 0; i < nRelax; i++) {
         loadFtoD(true);
         calculateCurrent(true);
-        //jacobiIteration(true);
         GaussSeidelRed(true);
         loadFtoD(true);
         calculateCurrent(true);
@@ -1216,69 +1215,6 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
             destNode.incValue0DC(sumTemp);
         }
     }
-}
-
-
-//***********************************************************************
-rvt ComponentSubCircuit::calculateResidualDC() const {
-//***********************************************************************
-
-    rvt residual = rvt0;
-
-    // internal nodes
-
-    cuns NInodes = pModel->getN_NormalInternalNodes();
-    for (uns i = 0; i < NInodes; i++)
-        residual += square(internalNodesAndVars[i].getDDC());
-
-    // contained components
-
-    // Level 1
-
-    for (const auto& comp1 : components) 
-        if(comp1->isEnabled) {
-            cuns NIn = comp1->pModel->getN_NormalInternalNodes();
-            for (uns i = 0; i < NIn; i++)
-                residual += square(comp1->getInternalNode(i)->getDDC());
-
-            // Level 2
-
-            const ComponentSubCircuit* sckt1 = dynamic_cast<const ComponentSubCircuit*>(comp1.get());
-            if (sckt1 != nullptr) {
-                for (const auto& comp2 : components)
-                    if (comp2->isEnabled) {
-                        cuns NIn = comp2->pModel->getN_NormalInternalNodes();
-                        for (uns i = 0; i < NIn; i++)
-                            residual += square(comp2->getInternalNode(i)->getDDC());
-
-                        // Level 3
-
-                        const ComponentSubCircuit* sckt2 = dynamic_cast<const ComponentSubCircuit*>(comp2.get());
-                        if (sckt2 != nullptr) {
-                            for (const auto& comp3 : components)
-                                if (comp3->isEnabled) {
-                                    cuns NIn = comp3->pModel->getN_NormalInternalNodes();
-                                    for (uns i = 0; i < NIn; i++)
-                                        residual += square(comp3->getInternalNode(i)->getDDC());
-
-                                    // Level 4
-
-                                    const ComponentSubCircuit* sckt3 = dynamic_cast<const ComponentSubCircuit*>(comp3.get());
-                                    if (sckt3 != nullptr) {
-                                        for (const auto& comp4 : components)
-                                            if (comp4->isEnabled) {
-                                                cuns NIn = comp4->pModel->getN_NormalInternalNodes();
-                                                for (uns i = 0; i < NIn; i++)
-                                                    residual += square(comp4->getInternalNode(i)->getDDC());
-                                            }
-                                    }
-                                }
-                        }
-                    }
-            }
-        }
-
-    return residual;
 }
 
 

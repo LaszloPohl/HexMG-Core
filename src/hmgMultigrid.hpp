@@ -58,6 +58,8 @@ struct hmgMultigrid {
                     const FineCoarseConnectionDescription& hLevel = levels[iDown];
                     ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
                     ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
+                    //hGrid.printNodesDC();
+                    //HGrid.printNodesDC();
 
                     // TODO: controllers; where?
 
@@ -68,8 +70,8 @@ struct hmgMultigrid {
                     // Lh
 
                     hGrid.calculateValueDC();
-                    hGrid.loadFtoD(true);
-                    hGrid.calculateCurrent(true); // d + f
+                    hGrid.deleteD(true);
+                    hGrid.calculateCurrent(true);
 
                     // R(uh)
 
@@ -78,8 +80,8 @@ struct hmgMultigrid {
                     // LH
 
                     HGrid.calculateValueDC();
-                    HGrid.loadFtoD(true);
-                    HGrid.calculateCurrent(true); // d + f
+                    HGrid.deleteD(true);
+                    HGrid.calculateCurrent(true);
 
                     // fH
 
@@ -99,6 +101,7 @@ struct hmgMultigrid {
                     
                     const FineCoarseConnectionDescription& hLevel = levels[iUp];
                     ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
+                    ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
 
                     // uh
 
@@ -114,7 +117,8 @@ struct hmgMultigrid {
 
                 ComponentSubCircuit& destGrid = *gc.fullCircuitInstances[destLevel.indexFineFullCircuit].component;
                 destGrid.calculateValueDC();
-                destGrid.calculateCurrent(true); // no loadFtoD => only d
+                destGrid.deleteD(true);
+                destGrid.calculateCurrent(true);
                 rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
                 if (residual < errorRate * truncationError)
                     iV = nVcycles; // break
