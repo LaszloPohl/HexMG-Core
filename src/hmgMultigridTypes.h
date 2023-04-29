@@ -66,6 +66,7 @@ struct LocalProlongationOrRestrictionInstructions {
 struct NodeInstruction {
 //***********************************************************************
     struct OneInstruction {
+        uns srcComponentIndex = unsMax; // if unsMax => global node
         uns srcNodeIndex = 0;
         rvt weight = 0.5;
     };

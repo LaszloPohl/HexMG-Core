@@ -1107,178 +1107,178 @@ void probaSzimulacioMg1() {
 
 	nodeInstruction.destNodeIndex = 0;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 1;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 2;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 3;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 4;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 5;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	// global node prolongations
 
 	nodeInstruction.destNodeIndex = 0;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 1;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 
 	nodeInstruction.destNodeIndex = 2;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 3;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 4;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 5;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 6;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 7;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 8;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 9;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 10;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 11;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 12;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 13;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 14;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 15;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 16;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 17;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 18;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 19;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 20;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 21;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 22;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 23;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	// localNodeRestrictionTypes
@@ -1602,8 +1602,8 @@ void probaSzimulacioMg2() {
 	constexpr rvt Gx22 = Gx;
 	constexpr rvt Gy22 = Gy;
 	constexpr rvt Cth22 = 4 * Cth;
-	constexpr rvt Gx12 = Gx / 2;
-	constexpr rvt Gy12 = Gy * 2;
+	constexpr rvt Gx12 = Gx * 2;
+	constexpr rvt Gy12 = Gy / 2;
 	constexpr rvt Cth12 = 2 * Cth;
 	std::unique_ptr<ModelSubCircuit> mc;
 	std::unique_ptr<ComponentDefinition> cd;
@@ -1841,188 +1841,274 @@ void probaSzimulacioMg2() {
 	level1.indexFineFullCircuit = 1;
 
 	// global node restrictions
-
+/*
 	nodeInstruction.destNodeIndex = 0;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 1;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 2;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 3;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 4;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 5;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 6;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 7;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+*/
+
+	constexpr rvt div2 = 1.0 / 2.0;
+	constexpr rvt div3 = 1.0 / 3.0;
+	constexpr rvt div4 = 1.0 / 4.0;
+	constexpr rvt div6 = 1.0 / 6.0;
+	constexpr rvt div8 = 1.0 / 8.0;
+	constexpr rvt div12 = 1.0 / 12.0;
+	constexpr rvt m5p8 = 5.0 / 8.0;
+
+	nodeInstruction.destNodeIndex = 0;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 1;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 2;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 6;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 1;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 2;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 3;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 2;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = div3;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 6;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 7;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 3;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 3;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 7;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 4;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 8;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 15;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 18;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 4;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 8;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 9;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 5;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 9;	oneInstruction.weight = div3;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 16;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 20;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 6;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 10;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 6;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 10;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 17;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 20;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 7;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 11;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
+
+	nodeInstruction.destNodeIndex = 7;
+	nodeInstruction.instr.clear();
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 12;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 13;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 19;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 22;	oneInstruction.weight = div6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 9;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 10;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 13;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 14;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = div12;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeRestrictions.push_back(std::move(nodeInstruction));
 
 	// global node prolongations
 
 	nodeInstruction.destNodeIndex = 0;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 0;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 1;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 2;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 1;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 3;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 0;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 4;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 0;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 5;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 1;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 6;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 3;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 7;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 8;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.667;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.333;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.667;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.333;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 9;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 10;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 11;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 4;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 12;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 4;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 13;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.6;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.4;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 14;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 15;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.9;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 0;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 16;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 17;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 2;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 18;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.9;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 4;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.5;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 19;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.25;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.75;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 20;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.45;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.45;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.1;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 21;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 4;	oneInstruction.weight = 0.8;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.2;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 4;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 22;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = unsMax;	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	nodeInstruction.destNodeIndex = 23;
 	nodeInstruction.instr.clear();
-	oneInstruction.srcNodeIndex = 5;	oneInstruction.weight = 0.35;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 6;	oneInstruction.weight = 0.35;	nodeInstruction.instr.push_back(oneInstruction);
-	oneInstruction.srcNodeIndex = 7;	oneInstruction.weight = 0.3;	nodeInstruction.instr.push_back(oneInstruction);
+	oneInstruction.srcComponentIndex = 5;		oneInstruction.srcNodeIndex = 0;	oneInstruction.weight = 1.0;	nodeInstruction.instr.push_back(oneInstruction);
 	level1.globalNodeProlongations.push_back(std::move(nodeInstruction));
 
 	// localNodeRestrictionTypes
@@ -2033,6 +2119,7 @@ void probaSzimulacioMg2() {
 	LocalProlongationOrRestrictionInstructions::RecursiveInstruction destDeepCellNode;
 	LocalProlongationOrRestrictionInstructions::OneRecursiveInstruction srcDeepCellNode;
 
+/*
 	// coarse = group 0, 4, 5
 	
 	cellInstructions.destComponentsNodes.clear();
@@ -2084,7 +2171,74 @@ void probaSzimulacioMg2() {
 	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
 
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+*/
 
+// coarse = group 0, 4, 5
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+
+	// coarse = group 1
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = div3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 2
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
+
+	// coarse = group 3
+
+	cellInstructions.destComponentsNodes.clear();
+	cellInstructions.deepDestComponentNodes.clear();
+	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.instr.clear();
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
+
+	//destDeepCellNode.destComponentIndex.clear();
+	//destDeepCellNode.instr.clear();
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//srcDeepCellNode.srcComponentIndex.clear();
+	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+
+	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
 	// localNodeProlongationTypes
 

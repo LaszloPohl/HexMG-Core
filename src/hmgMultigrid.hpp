@@ -27,8 +27,8 @@ namespace nsHMG {
 struct hmgMultigrid {
 //***********************************************************************
     uns nVcycles = 2;
-    uns nPreSmoothings = 20;
-    uns nPostSmoothings = 20;
+    uns nPreSmoothings = 1000;
+    uns nPostSmoothings = 1000;
     rvt errorRate = 1.0 / 3.0;
 
     std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
@@ -58,14 +58,14 @@ struct hmgMultigrid {
                     const FineCoarseConnectionDescription& hLevel = levels[iDown];
                     ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
                     ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
-                    //hGrid.printNodesDC();
-                    //HGrid.printNodesDC();
 
                     // TODO: controllers; where?
 
                     // relax
 
                     hGrid.relaxDC(nPreSmoothings);
+                    //hGrid.printNodesDC();
+                    //HGrid.printNodesDC();
 
                     // Lh
 
@@ -120,7 +120,7 @@ struct hmgMultigrid {
                 destGrid.deleteD(true);
                 destGrid.calculateCurrent(true);
                 rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
-                if (residual < errorRate * truncationError)
+                //if (residual < errorRate * truncationError)
                     iV = nVcycles; // break
             }
         }

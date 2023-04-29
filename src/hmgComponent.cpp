@@ -672,7 +672,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
     for (const auto& instruction : connections.globalNodeProlongations) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = coarse.internalNodesAndVars[src.srcNodeIndex];
+            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
         VariableNodeBase& destNode = internalNodesAndVars[instruction.destNodeIndex];
@@ -779,7 +779,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
     for (const auto& instruction : connections.globalNodeRestrictions) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = internalNodesAndVars[src.srcNodeIndex];
+            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
         VariableNodeBase& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
@@ -890,7 +890,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
         rvt sumRfh = rvt0;
         rvt sumRdh = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = internalNodesAndVars[src.srcNodeIndex];
+            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumRfh += srcNode.getFDC() * src.weight;
             sumRdh += srcNode.getDDC() * src.weight;
         }
@@ -1011,7 +1011,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
     for (const auto& instruction : connections.globalNodeRestrictions) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = internalNodesAndVars[src.srcNodeIndex];
+            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
         VariableNodeBase& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
@@ -1123,7 +1123,7 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
     for (const auto& instruction : connections.globalNodeProlongations) {
         rvt sumTemp = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = coarse.internalNodesAndVars[src.srcNodeIndex];
+            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumTemp += srcNode.getDNonConcurentDC() * src.weight;
         }
         VariableNodeBase& destNode = internalNodesAndVars[instruction.destNodeIndex];
