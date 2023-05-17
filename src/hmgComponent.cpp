@@ -131,10 +131,12 @@ void ComponentSubCircuit::buildOrReplace() {
     csiz nComponent = model.components.size();
     components.resize(nComponent);
     for (siz i = 0; i < nComponent; i++) {
-        const ComponentAndControllerModelBase* iModel = model.components[i]->isBuiltIn
-            ? CircuitStorage::getInstance().builtInModels[model.components[i]->componentModelIndex].get()
-            : CircuitStorage::getInstance().models[model.components[i]->componentModelIndex].get();
-        components[i] = std::unique_ptr<ComponentBase>(static_cast<ComponentBase*>(iModel->makeComponent(model.components[i].get())));
+        const ComponentDefinition& cDef = *model.components[i];
+        uns defNodeIndex = cDef.isForcedDefNodeValueIndex ? cDef.nodesDefValueIndex : this->defaultNodeValueIndex;
+        const ComponentAndControllerModelBase* iModel = cDef.isBuiltIn
+            ? CircuitStorage::getInstance().builtInModels[cDef.componentModelIndex].get()
+            : CircuitStorage::getInstance().models[cDef.componentModelIndex].get();
+        components[i] = std::unique_ptr<ComponentBase>(static_cast<ComponentBase*>(iModel->makeComponent(&cDef, defNodeIndex)));
     }
 
     // setting external nodes and parameters of the contained components
@@ -149,7 +151,6 @@ void ComponentSubCircuit::buildOrReplace() {
                     : cdn.type == ComponentDefinition::CDNodeType::external ? externalNodes[cdn.index]
                     : cdn.type == ComponentDefinition::CDNodeType::ground ? &FixVoltages::V[cdn.index].get()->fixNode
                     : nullptr // unconnected node, never gets here
-                    , def->nodesDefaultValueIndex
                 );
             }
         }

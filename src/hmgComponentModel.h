@@ -49,7 +49,7 @@ public:
         : nIONodes{ nIONodes_ }, nNormalINodes{ nNormalINodes_ }, nControlINodes{ nControlINodes_ }, nNormalONodes{ nNormalONodes_ },
         nForwardedONodes{ nForwardedONodes_ }, nParams{ nParams_ } {}
     virtual ~ComponentAndControllerModelBase() = default;
-    virtual ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const = 0;
+    virtual ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const = 0;
     uns getN_IO_Nodes()const noexcept { return nIONodes; }
     uns getN_Normal_I_Nodes()const noexcept { return nNormalINodes; }
     uns getN_Control_I_Nodes()const noexcept { return nControlINodes; }
@@ -76,11 +76,13 @@ public:
     enum CDParamType{ value, globalVariable, localVariable, param };
     struct CDParam { CDParamType type = CDParamType::value; uns index = 0; rvt value = rvt0; };
 
-    bool isBuiltIn = false;
+    bool isBuiltIn = false, isForcedDefNodeValueIndex = false;
     uns componentModelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
-    uns nodesDefaultValueIndex = 0;
+    uns nodesDefValueIndex = 0;
     std::vector<CDNode> nodesConnectedTo;
     std::vector<CDParam> params;
+
+    void setNodesDefValueIndex(uns nodesDefValueIndex_) noexcept { nodesDefValueIndex = nodesDefValueIndex_; isForcedDefNodeValueIndex = true; }
 };
 
 
@@ -90,7 +92,7 @@ class ModelConstR_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstR_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -99,7 +101,7 @@ class ModelConstC_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstC_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -108,7 +110,7 @@ class ModelConstI_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstI_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 4 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -117,7 +119,7 @@ class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase
 //***********************************************************************
 public:
     ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ 2, 2, 0, 0, 0, 4 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -126,7 +128,7 @@ class ModelGirator final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelGirator() :ComponentAndControllerModelBase{ 4, 0, 0, 0, 0, 2 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -135,7 +137,7 @@ class ModelConstV final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstV() :ComponentAndControllerModelBase{ 2, 0, 0, 1, 0, 5 } {}
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }
 };
@@ -168,7 +170,7 @@ public:
                     nodeToFunctionParam[src.sourceIndex] = i + 2;
             }
         }
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -198,7 +200,7 @@ public:
                 indexField[i + 2] = i + 1;
             controlFunction->fillIndexField(&indexField[0]);
         }
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
 
@@ -234,7 +236,7 @@ private:
     //***********************************************************************
 public:
     //***********************************************************************
-    ComponentAndControllerBase* makeComponent(const ComponentDefinition*) const override; // definition in hmgComponent.h
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     //***********************************************************************
 
     //***********************************************************************

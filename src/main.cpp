@@ -30,7 +30,6 @@ using std::milli;
 //***********************************************************************
 void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstR_1;
 	cd->nodesConnectedTo.resize(2);
@@ -45,16 +44,15 @@ void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 
 
 //***********************************************************************
-void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I, uns groundIndex = 1) {
+void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = groundIndex;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
 	cd->nodesConnectedTo[0].index = 0;
 	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
-	cd->nodesConnectedTo[1].index = groundIndex;
+	cd->nodesConnectedTo[1].index = 0;
 	cd->params.resize(4);
 	cd->params[0].type = ComponentDefinition::CDParamType::value;
 	cd->params[0].value = I;
@@ -70,7 +68,6 @@ void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I, uns groundIndex = 1) 
 //***********************************************************************
 void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd, 1, T0, G0);
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstV;
 	cd->nodesConnectedTo.resize(3);
@@ -97,7 +94,6 @@ void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd
 //***********************************************************************
 void setIStep(std::unique_ptr<ComponentDefinition>& cd, uns intNode, rvt Idc0, rvt Idc, rvt Iac, rvt Phi) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
@@ -120,7 +116,7 @@ void setIStep(std::unique_ptr<ComponentDefinition>& cd, uns intNode, rvt Idc0, r
 //***********************************************************************
 void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns groundIndex) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = groundIndex;
+	cd->setNodesDefValueIndex(groundIndex);
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstR_1;
 	cd->nodesConnectedTo.resize(2);
@@ -137,7 +133,6 @@ void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns g
 //***********************************************************************
 void setC0(std::unique_ptr<ComponentDefinition>& cd, rvt C) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstC_1;
 	cd->nodesConnectedTo.resize(2);
@@ -154,7 +149,6 @@ void setC0(std::unique_ptr<ComponentDefinition>& cd, rvt C) {
 //***********************************************************************
 void setGirator0(std::unique_ptr<ComponentDefinition>& cd) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtGirator;
 	cd->nodesConnectedTo.resize(4);
@@ -177,7 +171,7 @@ void setGirator0(std::unique_ptr<ComponentDefinition>& cd) {
 //***********************************************************************
 void setDissipator(std::unique_ptr<ComponentDefinition>& cd, uns componentModelIndex, rvt G, rvt Gsrc, uns nodeIndex, uns groundIndex, uns srcIndex) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = groundIndex;
+	cd->setNodesDefValueIndex(groundIndex);
 	cd->isBuiltIn = false;
 	cd->componentModelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(3);
@@ -198,7 +192,6 @@ void setDissipator(std::unique_ptr<ComponentDefinition>& cd, uns componentModelI
 //***********************************************************************
 void setCell(std::unique_ptr<ComponentDefinition>& cd, uns componentModelIndex, uns nodeNum, uns index1, uns index2 = 0, uns index3 = 0, uns index4 = 0) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = false;
 	cd->componentModelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(nodeNum);
@@ -536,7 +529,6 @@ void probaSzimulacio1() {
 //***********************************************************************
 void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex = 0, uns groundIndex = 1) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstR_1;
 	cd->nodesConnectedTo.resize(2);
@@ -553,7 +545,6 @@ void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalI
 //***********************************************************************
 void setRinternal2(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex1, uns internalIndex2) {
 //***********************************************************************
-	cd->nodesDefaultValueIndex = 1;
 	cd->isBuiltIn = true;
 	cd->componentModelIndex = builtInModelType::bimtConstR_1;
 	cd->nodesConnectedTo.resize(2);
@@ -800,7 +791,7 @@ void probaSzimulacio4() {
 	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, 0.1, 0, 0);	mc->push_back_component(std::move(cd));
-	cd = make_unique<ComponentDefinition>();	setI(cd, 0.25, 0);				mc->push_back_component(std::move(cd));
+	cd = make_unique<ComponentDefinition>();	setI(cd, 0.25);					mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setDissipator(cd, funcIIndex, 0.5, 0.1, 1, 1, 0);	mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, I, I, 0);		mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setC0(cd, Cth);			mc->push_back_component(std::move(cd));

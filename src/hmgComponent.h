@@ -90,9 +90,10 @@ public:
     const ComponentDefinition* def;
     const ComponentAndControllerModelBase* pModel;
     bool isEnabled = true;
+    uns defaultNodeValueIndex;
 
     //***********************************************************************
-    ComponentAndControllerBase(const ComponentDefinition* def_);
+    ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
     //***********************************************************************
 };
@@ -123,7 +124,7 @@ public:
     virtual const VariableNodeBase& getComponentValue() const noexcept = 0;
     virtual VariableNodeBase* getNode(siz nodeIndex) noexcept = 0;
     virtual VariableNodeBase* getInternalNode(siz nodeIndex) noexcept = 0;
-    virtual void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex) noexcept = 0;
+    virtual void setNode(siz nodeIndex, VariableNodeBase* pNode) noexcept = 0;
     virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
     virtual Param& getParam(siz parIndex) noexcept = 0;
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
@@ -208,9 +209,9 @@ public:
     //***********************************************************************
     VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override final {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override final {
     //***********************************************************************
-        pNode->turnIntoNode(defValueIndex, false);
+        pNode->turnIntoNode(defaultNodeValueIndex, false);
         if (nodeIndex == 0)
             N0 = pNode;
         else
@@ -393,9 +394,9 @@ public:
     //***********************************************************************
     VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override final {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override final {
     //***********************************************************************
-        pNode->turnIntoNode(defValueIndex, false);
+        pNode->turnIntoNode(defaultNodeValueIndex, false);
         if (nodeIndex == 0)
             N0 = pNode;
         else
@@ -539,10 +540,10 @@ public:
     //***********************************************************************
     using Component_4Node_4Par::Component_4Node_4Par;
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex < 2)
-            pNode->turnIntoNode(defValueIndex, false);
+            pNode->turnIntoNode(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -641,9 +642,9 @@ public:
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
-        pNode->turnIntoNode(defValueIndex, false);
+        pNode->turnIntoNode(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -782,14 +783,14 @@ public:
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
             pNode->turnIntoNode(0, true); // the default value is mandatory 0
             pNode->setIsConcurrentDC(false);
         }
         else
-            pNode->turnIntoNode(defValueIndex, false);
+            pNode->turnIntoNode(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -920,7 +921,7 @@ public:
     //***********************************************************************
         if (N[2] == nullptr) { 
             possibleCurrentNode = std::make_unique<VariableNodeBase>(); 
-            setNode(2, possibleCurrentNode.get(), 0);
+            setNode(2, possibleCurrentNode.get());
         } 
     }
     //***********************************************************************
@@ -1000,7 +1001,7 @@ class Component_Function_Controlled_I_with_const_G final : public RealComponent 
     std::vector<rvt> workField;
 public:
     //***********************************************************************
-    Component_Function_Controlled_I_with_const_G(const ComponentDefinition* def_) :RealComponent{ def_ } {
+    Component_Function_Controlled_I_with_const_G(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
     //***********************************************************************
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "Component_Function_Controlled_I_with_const_G::Component_Function_Controlled_I_with_const_G");
@@ -1020,10 +1021,10 @@ public:
     void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return pars[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_IO_Nodes() + pModel->getN_Normal_I_Nodes()) // There are 2 IO nodes.
-            pNode->turnIntoNode(defValueIndex, false);
+            pNode->turnIntoNode(defaultNodeValueIndex, false);
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1173,7 +1174,7 @@ class Controller final : public ComponentAndControllerBase {
     std::vector<rvt> workField;
 public:
     //***********************************************************************
-    Controller(const ComponentDefinition* def_) :ComponentAndControllerBase{ def_ } {
+    Controller(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :ComponentAndControllerBase{ def_, defaultNodeValueIndex_ } {
     // workField size: 
     //***********************************************************************
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "Controller::Controller");
@@ -1321,7 +1322,7 @@ class ComponentSubCircuit final : public ComponentBase {
     //***********************************************************************
 public:
     //***********************************************************************
-    ComponentSubCircuit(const ComponentDefinition* def_) :ComponentBase{ def_ } {
+    ComponentSubCircuit(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :ComponentBase{ def_, defaultNodeValueIndex_ } {
     //***********************************************************************
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "ComponentSubCircuit::ComponentSubCircuit");
         externalNodes.resize(def->nodesConnectedTo.size());
@@ -1333,7 +1334,7 @@ public:
     VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
     VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode, uns defValueIndex)noexcept override {
+    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         externalNodes[nodeIndex] = pNode;
     }
@@ -1952,9 +1953,9 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
     cplx value = static_cast<ComponentSubCircuit*>(components[compindex1].get())->internalNodesAndVars[0].getValueAC();
     std::cout << "\n+++ [ci] AC:" << value << std::endl;
     std::cout << "+++ [ci] TC:" << (1.0 / (2 * hmgPi * SimControl::getFrequency())) << " sec     R: " << (value.imag() * log(10.0) / hmgPi) << std::endl;
-    rvt I = static_cast<ComponentSubCircuit*>(components[compindex2].get())->components[3]->getNode(2)->getValueDC();
-    rvt T = static_cast<ComponentSubCircuit*>(components[compindex2].get())->internalNodesAndVars[0].getValueDC();
-    printf("\n\nI = %.15f\tT = %.15f\n\n", I, T);
+    //rvt I = static_cast<ComponentSubCircuit*>(components[compindex2].get())->components[3]->getNode(2)->getValueDC();
+    //rvt T = static_cast<ComponentSubCircuit*>(components[compindex2].get())->internalNodesAndVars[0].getValueDC();
+    //printf("\n\nI = %.15f\tT = %.15f\n\n", I, T);
 /*
     std::cout << "\nYRED:" << std::endl;
     YREDdc.print_z();
@@ -2094,65 +2095,65 @@ inline void ComponentSubCircuit::backsubsAC() {
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConstR_1::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelConstR_1::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConstR_1(def);
+    return new ComponentConstR_1(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConstC_1::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelConstC_1::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConstC_1(def);
+    return new ComponentConstC_1(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConstI_1::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelConstI_1::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConstI_1(def);
+    return new ComponentConstI_1(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConst_V_Controlled_I_1::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelConst_V_Controlled_I_1::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConst_V_Controlled_I_1(def);
+    return new ComponentConst_V_Controlled_I_1(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelGirator::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelGirator::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentGirator(def);
+    return new ComponentGirator(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConstV::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelConstV::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConstV(def);
+    return new ComponentConstV(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* Model_Function_Controlled_I_with_const_G::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* Model_Function_Controlled_I_with_const_G::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new Component_Function_Controlled_I_with_const_G(def);
+    return new Component_Function_Controlled_I_with_const_G(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelController::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelController::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new Controller(def);
+    return new Controller(def, defaultNodeValueIndex);
 }
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelSubCircuit::makeComponent(const ComponentDefinition* def) const {
+inline ComponentAndControllerBase* ModelSubCircuit::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentSubCircuit(def);
+    return new ComponentSubCircuit(def, defaultNodeValueIndex);
 }
 
 
@@ -2199,8 +2200,7 @@ public:
         FullCircuit fc;
         fc.def = std::make_unique<ComponentDefinition>();
         fc.def->componentModelIndex = componentModelIndex;
-        fc.def->nodesDefaultValueIndex = nodesDefaultValueIndex;
-        fc.component = std::unique_ptr<ComponentSubCircuit>(dynamic_cast<ComponentSubCircuit*>(static_cast<ComponentBase*>(models[componentModelIndex]->makeComponent(fc.def.get()))));
+        fc.component = std::unique_ptr<ComponentSubCircuit>(dynamic_cast<ComponentSubCircuit*>(static_cast<ComponentBase*>(models[componentModelIndex]->makeComponent(fc.def.get(), nodesDefaultValueIndex))));
         fullCircuitInstances.push_back(std::move(fc));
         fullCircuitInstances.back().component->buildOrReplace();
     }
@@ -2208,12 +2208,12 @@ public:
 
 
 //***********************************************************************
-inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDefinition* def_) :def{ def_ },
+inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :def{ def_ },
     pModel{ static_cast<ComponentAndControllerModelBase*>(
         def_->isBuiltIn 
             ? CircuitStorage::getInstance().builtInModels[def_->componentModelIndex].get()
             : CircuitStorage::getInstance().models[def_->componentModelIndex].get()
-        ) } {}
+        ) }, defaultNodeValueIndex{ defaultNodeValueIndex_ } {}
 //***********************************************************************
 
 
