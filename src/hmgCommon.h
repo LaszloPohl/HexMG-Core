@@ -91,6 +91,180 @@ inline rvt absSquare(cplx value) { return value.real() * value.real() + value.im
 
 
 //***********************************************************************
+enum ExpressionAndComponentType {
+//***********************************************************************
+    etInvalid, etConst, etFunction, etListElem, etNodeOrVar, etParameter
+};
+
+
+//***********************************************************************
+enum HMGFileInstructionType {
+//***********************************************************************
+    itNone, itComponentInstance, itSubckt, itSunredTree,
+    itBuiltInComponentType, itController, itExpression
+};
+
+
+//***********************************************************************
+struct NodeID {
+//***********************************************************************
+    enum NodeType {
+        ntGround        = 0x00000001,   // ground=1, everithing else=0
+        ntGlobal        = 0x00000002,   // global=1, local=0; in case of static var and expression this bit is ignored, always global
+
+        ntExternal      = 0x00000004,   // external=1, internal=0
+
+        ntVariable      = 0x00000008,   // variable=1, node=0
+        ntConst         = 0x00000010,   // const=1, non-const=0
+        ntSVariable     = 0x00000020,   // svariable=1, mvariable=0
+        ntStaticVar     = 0x00000040,   // static variable=1, instance variable=0 (if node: ignored)
+
+        ntTamb          = 0x00000080,   // the _Tamb built in variable
+        ntTime          = 0x00000100,   // the _time built in variable
+        ntDTime         = 0x00000200,   // the _dtime built in variable
+        ntFreq          = 0x00000400,   // the _freq built in variable
+
+        ntNotActual     = 0x00000800,   // Prev or StepStart = 1, actual = 0
+        ntStepStart     = 0x00001000,   // StepStart=1, Prev=0
+
+        ntExpression    = 0x00002000,   // Expression=1, node or variable = 0
+
+        ntI             = 0x00004000,   // I of a component instance
+        ntV             = 0x00008000,   // V of a component instance
+        ntValue         = 0x00010000,   // value of a component instance
+
+        ntThermal       = 0x00020000,   // Thermal=1, other=0
+
+        ntForwarded     = 0x00040000,   // forwarded=1, other=0
+
+        ntIsComponentId = 0x00080000    // only for serialization
+    };
+    unsigned nodeType;
+    unsigned componentId;    
+    unsigned nodeId;
+    NodeID() :nodeType{ 0 }, componentId{ 0 }, nodeId{ 0 }{}
+};
+
+
+//***********************************************************************
+struct ExpressionAtom {
+//***********************************************************************
+    ExpressionAndComponentType atomType;
+    builtInFunctionType functionType;
+    double constValue;
+    bool isConst;
+    bool isBool; // true: bool, false: double
+    // one or two parameter functions and the operators do not use parameter list
+    unsigned short par1OrSourceIndex, par2OrPrevIndex; // 0: no source/prev; prev is used only for list members, it points to the prev list member 
+    NodeID nodeID;
+    ExpressionAtom(ExpressionAndComponentType type = etInvalid) : atomType{ type }, functionType{ futInvalid }, constValue{ 0 }, isConst{ false }, isBool{ false },
+        /*, subNode{ sntAct }*/par1OrSourceIndex{ 0 }, par2OrPrevIndex{ 0 }{}
+};
+
+
+//***********************************************************************
+enum StreamInstructionType {
+//***********************************************************************
+    sitNothing = 0, sitEndSimulation,
+
+    sitDefSubckt, sitDefController, sitDefComponentType,
+
+    sitEndDefSubckt, sitEndDefController, sitEndDefComponentType,
+
+    sitReplaceSubckt, sitReplaceController, sitReplaceComponentType,
+
+    sitSubcktInstance, sitControllerInstance, sitSunredTree, 
+    sitBuiltInComponentInstance, 
+
+    sitEndComponentInstance,
+
+    sitSetSubcktContainerSize, sitSetControllerContainerSize, 
+    sitSetComponentTypeContainerSize, sitSetStaticVarContainerSize, 
+    sitSetModelContainerSize, sitSetExpressionContainerSize, sitSetSunredContainerSize,
+
+    sitSetComponentInstanceSize, sitSetVarContainerSize, 
+    sitSetInternalNodeContainerSize, sitSetProbeContainerSize, sitSetForwardedContainerSize,
+
+    sitNodeValueContainerSize, sitParameterValueContainerSize,
+
+    sitNodeValue, sitParameterValue,
+
+    sitExpression, sitExpressionAtom, sitEndExpression,
+
+    // serialized to unsigned short => must be <65536
+};
+
+
+//***********************************************************************
+enum ProbeUnitType {
+//***********************************************************************
+    putNodeVar, putText, putInt, putReal, putZeros
+};
+
+
+//***********************************************************************
+struct ProbeUnit {
+//***********************************************************************
+    ProbeUnitType type; // putNodeVar, putText, putInt, putReal, putZeros
+    NodeID nodeVar;
+    std::string textValue;
+    int intValue;
+    float realValue;
+    unsigned nZeros;
+};
+
+
+//***********************************************************************
+struct ParameterInstance {
+//***********************************************************************
+    unsigned paramIndex; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
+    double value; // if a value is given, paramIndex=0
+    ParameterInstance() :paramIndex{ 0 }, value{ 0 }{}
+};
+
+
+//***********************************************************************
+enum BuiltInComponentTemplateType {
+//***********************************************************************
+    bicttCustom, bictt_R, bictt_RD, bictt_C, bictt_OPEN, bictt_V, bictt_VR,
+    bictt_I, bictt_IR, bictt_HYS, bictt_PCC,
+    bictt_RM, bictt_CM // resistor and capacitor with semiconductor model
+};
+
+
+//***********************************************************************
+inline void most(const std::string & mi_tortent) {
+//***********************************************************************
+    ;
+}
+
+
+//***********************************************************************
+template<typename T>
+inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
+//***********************************************************************
+    if (index < v.size()) {
+        v[index] = x;
+        return true;
+    }
+    else if (index == v.size()) {
+        v.push_back(x);
+        return false;
+    }
+    else {
+        v.resize(index + 1); // zeros the new elements
+        v[index] = x;
+        return false;
+    }
+}
+
+
+
+
+
+
+
+//***********************************************************************
 #define HMG_DEBUGPRINT
 //***********************************************************************
 

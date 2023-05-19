@@ -1,25 +1,20 @@
 //***********************************************************************
-// HexMG SpiceExpression Header
-// Creation date:  2023. 02. 27.
-// Creator:        Pohl László
+// Hex Open NameToIndex Header
+// Creation date:  2021. 06. 23.
+// Creator:        László Pohl
 //***********************************************************************
 
 
 //***********************************************************************
-#ifndef HMG_SPICE_EXPRESSION_HEADER
-#define HMG_SPICE_EXPRESSION_HEADER
+#ifndef HO_NAMETOINDEX_HEADER
+#define HO_NAMETOINDEX_HEADER
 //***********************************************************************
 
 
 //***********************************************************************
+#include <vector>
 #include "hmgException.h"
 #include "hmgCommon.h"
-#include <vector>
-#include <list>
-#include <string>
-//***********************************************************************
-
-
 //***********************************************************************
 
 
@@ -27,19 +22,19 @@
 namespace nsHMG {
 //***********************************************************************
 
-#define MAX_SPICE_LINE_LENGHT 4096
+#define MAX_LINE_LENGHT 4096
 
 //***********************************************************************
 class LineTokenizer {
 //***********************************************************************
     //***********************************************************************
     const char* pLine;
-    uns position, storedPos;
-    char token[MAX_SPICE_LINE_LENGHT];
+    unsigned position, storedPos;
+    char token[MAX_LINE_LENGHT];
     bool isSpecialExpressionToken;
     enum SpecExprTokenType{ setttNone, settVFirst, settVComma, settVSecond, settVClose };
     SpecExprTokenType specExprToken;
-    inline static const char* const specCharsOfNames = "_.:@$";;
+    inline static const char* const specCharsOfNames = "_.:@$";
     //***********************************************************************
     static bool isSpecChar(char ch, bool isExcept_ = false) {
     //***********************************************************************
@@ -53,7 +48,7 @@ class LineTokenizer {
     //***********************************************************************
         isSepSpace = false; isSepOpeningBracket = false; isSepClosingBracket = false; 
         isSepEOL = false; isSepComma = false;
-        uns pos;
+        unsigned pos;
         bool canBeEOL = true;
         for (pos = position; pLine[pos] == ' ' || pLine[pos] == '(' || pLine[pos] == ')' || pLine[pos] == ','; pos++) {
             if (pLine[pos] == ' ') isSepSpace = true;
@@ -113,12 +108,12 @@ public:
     //***********************************************************************
     const char* getLine()const { return pLine; }
     //***********************************************************************
-    const char* getNextToken(const char* fileName, uns lineNumber) {
+    const char* getNextToken(const char* fileName, unsigned lineNumber) {
     // from position the alphanum chars + specCharsOfNames, skips starting
     // separators
     //***********************************************************************
         skipSeparators();
-        uns tokenpos = 0;
+        unsigned tokenpos = 0;
         while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
             token[tokenpos++] = pLine[position++];
         token[tokenpos] = 0;
@@ -128,7 +123,7 @@ public:
         return token;
     }
     //***********************************************************************
-    bool getNextTokenSimple(const char* fileName, uns lineNumber) {
+    bool getNextTokenSimple(const char* fileName, unsigned lineNumber) {
     //***********************************************************************
         getNextToken(fileName, lineNumber);
         return !isSpecChar(token[0], true);
@@ -144,7 +139,7 @@ public:
     //***********************************************************************
         while (pLine[position] == ' ')
             position++;
-        uns tokenpos = 0;
+        unsigned tokenpos = 0;
         while (pLine[position] != 0)
             token[tokenpos++] = pLine[position++];
         token[tokenpos] = 0;
@@ -161,7 +156,7 @@ public:
             ret = token;
             return false;
         }
-        uns tokenpos = 0;
+        unsigned tokenpos = 0;
         position++;
         while (pLine[position] != '\"' && pLine[position] != 0) {
             token[tokenpos++] = pLine[position++];
@@ -206,7 +201,7 @@ public:
             if (specExprToken == settVFirst) {
                 ret.exprType = ExpressionToken::etName;
                 skipSeparators();
-                uns tokenpos = 0;
+                unsigned tokenpos = 0;
                 if (pLine[position] != '@')
                     token[tokenpos++] = '@';
                 while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
@@ -232,7 +227,7 @@ public:
             if (specExprToken == settVSecond) {
                 ret.exprType = ExpressionToken::etName;
                 skipSeparators();
-                uns tokenpos = 0;
+                unsigned tokenpos = 0;
                 if (pLine[position] != '@')
                     token[tokenpos++] = '@';
                 while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
@@ -391,7 +386,7 @@ public:
 
         if (isalnum(pLine[position]) || isSpecChar(pLine[position])) {
             ret.exprType = ExpressionToken::etName;
-            uns i = 0;
+            unsigned i = 0;
             for (; isalnum(pLine[position]) || isSpecChar(pLine[position]); i++, position++)
                 token[i] = pLine[position];
             token[i] = 0;
@@ -419,12 +414,6 @@ public:
                 setIsSeparators();
                 return ret;
             }
-            if (strcmp(token, "_KOQ") == 0) {
-                ret.exprType = ExpressionToken::etNumber;
-                ret.value = hmgK / hmgQ;
-                setIsSeparators();
-                return ret;
-            }
             if (strcmp(token, "_TA") == 0) {
                 ret.exprType = ExpressionToken::etNumber;
                 ret.value = hmgT0;
@@ -434,9 +423,9 @@ public:
             if (strcmp(token, "V") == 0) {
                 setIsSeparators();
                 if (isSepOpeningBracket) { //v(N1) or v(N1,N2) where N1 or N2 can be just a number without @
-                    uns startingPos = position;
+                    unsigned startingPos = position;
                     skipSeparators();
-                    uns tokenpos = 0;
+                    unsigned tokenpos = 0;
                     if (pLine[position] != '@')
                         token[tokenpos++] = '@';
                     while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
@@ -471,7 +460,7 @@ public:
                 setIsSeparators();
                 if (isSepOpeningBracket) { // I(comp1) where comp1 can be just a number without @
                     skipSeparators();
-                    uns tokenpos = 0;
+                    unsigned tokenpos = 0;
                     if (pLine[position] != '@')
                         token[tokenpos++] = '@';
                     while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
@@ -505,29 +494,12 @@ public:
 };
 
 
+class InstructionStream;
+
+
 //***********************************************************************
 struct SpiceExpression {
 //***********************************************************************
-
-    //***********************************************************************
-    enum ExpressionAndComponentType {
-    //***********************************************************************
-        etInvalid, etConst, etFunction, etListElem, etUnidentifiedFunction, etParam
-    };
-
-    //***********************************************************************
-    struct ExpressionAtom {
-    //***********************************************************************
-        ExpressionAndComponentType atomType;
-        builtInFunctionType functionType = futInvalid;
-        double constValue = 0.0;
-        bool isConst = false;
-        bool isBool = false; // true: bool, false: double
-        // one or two parameter functions and the operators do not use parameter list
-        unsigned short par1OrSourceIndex = 0, par2OrPrevIndex = 0; // 0: no source/prev; prev is used only for list members, it points to the prev list member
-        ExpressionAtom(ExpressionAndComponentType type = etInvalid) : atomType{ type } {}
-    };
-
     //***********************************************************************
     struct SpiceExpressionAtom: public ExpressionAtom {
     //***********************************************************************
@@ -540,6 +512,7 @@ struct SpiceExpression {
     std::string errorMessage;
     unsigned short addToTheExpression(const SpiceExpressionAtom& actAtom);
     bool buildFromString(const char* spiceExpression);
+    void toInstructionStream(InstructionStream& iStream, unsigned index);
     //***********************************************************************
 };
 
@@ -548,3 +521,4 @@ struct SpiceExpression {
 
 
 #endif
+

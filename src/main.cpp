@@ -8,11 +8,11 @@
 
 //***********************************************************************
 #include "hmgComponent.h"
-#include "hmgSpiceExpression.h"
 #include "hmgFunction.hpp"
 #include "hmgMultigrid.hpp"
 #include <chrono>
 #include <ratio>
+#include "hmgHMGFileReader.h"
 //***********************************************************************
 
 
@@ -2590,12 +2590,41 @@ void probaSzimulacioMg3() {
 
 // Be kell állítani a CircuitNodeData::defaultNodeValue vektort (méret és értékek) az áramkördefiníciós adatok alapján, utána lehet létrehozni az áramkört
 
+
 //***********************************************************************
-int main() {
+int main(int n, const char** params) {
+//***********************************************************************
+	try {
+		HmgFileReader reader;
+
+		//most("start");
+		//reader.ReadFile(params[1]);
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba.hmg");
+		InstructionStream is;
+		reader.convertToInstructionStream(is);
+		//most("convertToInstructionStream");
+		reader.clear();
+		//most("clear");
+
+		//InstructionProcessor ip;
+		//ip.addInstructionStream(is);
+		//InstructionProcessor::waitToFinish(ip);
+		//most("process instructions");
+		//esemenyek_kiirasa();
+	}
+	catch (const hmgExcept& err) {
+		std::cerr << err.what() << std::endl;
+	}
+
+	return 0;
+}
+
+//***********************************************************************
+int main_1() {
 //***********************************************************************
 
-	SpiceExpression se;
-	se.buildFromString("PUKI(T)+.SQRT(_Q)+.INV(.RATIO(-.PWL(T,25,-20,58+3,-54,25,65K),65K,H))*MUL + V(2) + PUKI() + V(@3,4) - 2 * _PI * I(88) * T");
+	//SpiceExpression se;
+	//se.buildFromString("PUKI(T)+.SQRT(_Q)+.INV(.RATIO(-.PWL(T,25,-20,58+3,-54,25,65K),65K,H))*MUL + V(2) + PUKI() + V(@3,4) - 2 * _PI * I(88) * T");
 
 
 	FixVoltages::resize(2);

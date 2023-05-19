@@ -1,14 +1,14 @@
 //***********************************************************************
-// HexMG SpiceExpression Source
-// Creation date:  2023. 02. 27.
-// Creator:        Pohl László
+// Hex Open Name to Index Source
+// Creation date:  2021. 06. 29.
+// Creator:        László Pohl
 //***********************************************************************
 
 
 //***********************************************************************
+#include "NameToIndex.h"
 #include <list>
 #include <cmath>
-#include "hmgSpiceExpression.h"
 //***********************************************************************
 
 
@@ -21,19 +21,11 @@ namespace nsHMG {
 unsigned short SpiceExpression::addToTheExpression(const SpiceExpressionAtom& actAtom) {
 //***********************************************************************
     ExpressionAndComponentType type = actAtom.atomType;
-    for (uns i = 1; i < theExpression.size(); i++) {
+    for (unsigned i = 1; i < theExpression.size(); i++) {
         if (theExpression[i].atomType == type) {
             switch (type) {
-                case etConst:       if (theExpression[i].constValue         == actAtom.constValue)    
-                                        return unsigned short(i); 
-                                    break;
+                case etConst:       if (theExpression[i].constValue         == actAtom.constValue)    return unsigned short(i); break;
                 case etFunction:    if (theExpression[i].functionType       == actAtom.functionType 
-                                        && theExpression[i].par1OrSourceIndex == actAtom.par1OrSourceIndex
-                                        && theExpression[i].par2OrPrevIndex == actAtom.par2OrPrevIndex)
-                                        return unsigned short(i);
-                                    break;
-                case etUnidentifiedFunction:
-                                    if (theExpression[i].name               == actAtom.name
                                         && theExpression[i].par1OrSourceIndex == actAtom.par1OrSourceIndex
                                         && theExpression[i].par2OrPrevIndex == actAtom.par2OrPrevIndex)
                                         return unsigned short(i);
@@ -42,9 +34,7 @@ unsigned short SpiceExpression::addToTheExpression(const SpiceExpressionAtom& ac
                                         && theExpression[i].par2OrPrevIndex == actAtom.par2OrPrevIndex)
                                         return unsigned short(i);
                                     break;
-                case etParam:       if (theExpression[i].name               == actAtom.name)
-                                        return unsigned short(i);
-                                    break;
+                case etNodeOrVar:   if (theExpression[i].name               == actAtom.name)                return unsigned short(i); break;
             }
         }
     }
@@ -206,7 +196,7 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                 return true;
             }
             if (it1->exprType == LineTokenizer::ExpressionToken::etName) {
-                actAtom.reset(etParam);
+                actAtom.reset(etNodeOrVar);
                 actAtom.name = it1->name;
                 theExpression.push_back(actAtom);
                 return true;
@@ -238,7 +228,7 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                     it1->storedTokenIndex = (unsigned short)(theExpression.size() - 1);
                 }
                 else { // name
-                    actAtom.reset(etParam);
+                    actAtom.reset(etNodeOrVar);
                     actAtom.name = it1->name;
                     theExpression.push_back(actAtom);
                     it1->exprType = LineTokenizer::ExpressionToken::etStoredToken;
@@ -268,7 +258,7 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                         it2->storedTokenIndex = addToTheExpression(actAtom);
                     }
                     else { // name
-                        actAtom.reset(etParam);
+                        actAtom.reset(etNodeOrVar);
                         actAtom.name = it2->name;
                         it2->exprType = LineTokenizer::ExpressionToken::etStoredToken;
                         it2->storedTokenIndex = addToTheExpression(actAtom);
@@ -816,7 +806,7 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
 
             // ,
 
-            uns commaCount = 0;
+            unsigned commaCount = 0;
             for (it = start; it != stop;) {
                 if (it->exprType != LineTokenizer::ExpressionToken::etStoredToken) {
                     errorMessage = "invalid expression (StoredToken expected during \',\' parsing)";
@@ -868,37 +858,36 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                         else if (it->name == ".ACOSH"   || it->name == "ACOSH") actAtom.functionType = futAcosh;
                         else if (it->name == ".ATANH"   || it->name == "ATANH") actAtom.functionType = futAtanh;
                         else {
-                            actAtom.reset(etUnidentifiedFunction);
-                            actAtom.name = it->name;
+                            errorMessage = std::string("invalid function name: ") + it->name;
+                            return false;
                         }
-                        if (actAtom.atomType == etFunction) {
-                            actAtom.isBool = false;
-                            const SpiceExpressionAtom& opat = theExpression[start->storedTokenIndex];
-                            if (actAtom.functionType == futUnit || actAtom.functionType == futUramp) {
-                                actAtom.isConst = false;
-                            }
-                            else {
-                                actAtom.isConst = opat.isConst;
-                                if (actAtom.isConst) {
-                                    switch (actAtom.functionType) {
+                        actAtom.isBool = false;
+                        const SpiceExpressionAtom& opat = theExpression[start->storedTokenIndex];
+                        if (actAtom.functionType == futUnit || actAtom.functionType == futUramp) {
+                            actAtom.isConst = false;
+                        }
+                        else {
+                            actAtom.isConst = opat.isConst;
+                            if (actAtom.isConst) {
+                                switch (actAtom.functionType) {
                                     case futInv:
                                         if (opat.constValue == 0) {
                                             errorMessage = "division by zero";
                                             return false;
                                         }
-                                        actAtom.constValue = 1 / opat.constValue;
+                                        actAtom.constValue = 1 / opat.constValue;   
                                         break;
                                     case futSqrt:   actAtom.constValue = sqrt(opat.constValue); break;
                                     case futExp:    actAtom.constValue = exp(opat.constValue);  break;
                                     case futLn:     actAtom.constValue = log(opat.constValue);  break;
-                                    case futLog:    actAtom.constValue = log10(opat.constValue); break;
+                                    case futLog:    actAtom.constValue = log10(opat.constValue);break;
                                     case futAbs:    actAtom.constValue = fabs(opat.constValue); break;
                                     case futAsin:   actAtom.constValue = asin(opat.constValue); break;
                                     case futAcos:   actAtom.constValue = acos(opat.constValue); break;
                                     case futAtan:   actAtom.constValue = atan(opat.constValue); break;
-                                    case futAsinh:  actAtom.constValue = asinh(opat.constValue); break;
-                                    case futAcosh:  actAtom.constValue = acosh(opat.constValue); break;
-                                    case futAtanh:  actAtom.constValue = atanh(opat.constValue); break;
+                                    case futAsinh:  actAtom.constValue = asinh(opat.constValue);break;
+                                    case futAcosh:  actAtom.constValue = acosh(opat.constValue);break;
+                                    case futAtanh:  actAtom.constValue = atanh(opat.constValue);break;
                                     case futSin:    actAtom.constValue = sin(opat.constValue);  break;
                                     case futCos:    actAtom.constValue = cos(opat.constValue);  break;
                                     case futTan:    actAtom.constValue = tan(opat.constValue);  break;
@@ -908,7 +897,6 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                                     case futQcnl:   actAtom.constValue = opat.constValue;       break;
                                     default:
                                         throw hmgExcept("SpiceExpression::buildFromString", "unknown const function");
-                                    }
                                 }
                             }
                         }
@@ -933,17 +921,17 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                     stop = it = start;
                 }
             }
-/*            else if (commaCount == 1 && start != tokenList.begin()) {
+            else if (commaCount == 1 && start != tokenList.begin()) {
                 // no two parameter function at the moment
                 errorMessage = std::string("there is no two-parameter function");
                 return false;
             }
-*/            else { // create parameter list
+            else { // create parameter list
                 // .ratio, .pwl, 
                 unsigned short prevIndex = 0;
                 actAtom.reset(etListElem);
                 it = start;
-                for (uns i = 0; i < commaCount; i++) {
+                for (unsigned i = 0; i < commaCount; i++) {
                     actAtom.par1OrSourceIndex = it->storedTokenIndex;
                     actAtom.par2OrPrevIndex = prevIndex;
                     prevIndex = addToTheExpression(actAtom);
@@ -969,31 +957,29 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
                         return false;
                     }
                     else { // this is a function call
-                        
-                        if      (it->name == ".RATIO"   || it->name == "RATIO") { actAtom.reset(etFunction); actAtom.functionType = futRatio; }
-                        else if (it->name == ".PWL"     || it->name == "PWL")   { actAtom.reset(etFunction); actAtom.functionType = futPwl; }
+                        actAtom.reset(etFunction);
+                        if      (it->name == ".RATIO"   || it->name == "RATIO") actAtom.functionType = futRatio;
+                        else if (it->name == ".PWL"     || it->name == "PWL")   actAtom.functionType = futPwl;
                         else {
-                            actAtom.reset(etUnidentifiedFunction);
-                            actAtom.name = it->name;
+                            errorMessage = std::string("invalid function name: ") + it->name;
+                            return false;
                         }
-                        if (actAtom.atomType == etFunction) {
-                            switch (actAtom.functionType) {
-                            case futRatio:
-                                if (commaCount != 2) {
-                                    errorMessage = ".ratio must have 3 parameters";
-                                    return false;
-                                }
-                                break;
-                            case futPwl:
-                                if (commaCount % 2 != 0) {
-                                    errorMessage = ".pwl must have an odd number of parameters";
-                                    return false;
-                                }
-                                break;
+                        switch (actAtom.functionType) {
+                        case futRatio: 
+                            if(commaCount!=2){
+                                errorMessage = ".ratio must have 3 parameters";
+                                return false;
                             }
-                            actAtom.isBool = false;
-                            actAtom.isConst = false;
+                            break;
+                        case futPwl:
+                            if (commaCount % 2 != 0) {
+                                errorMessage = ".pwl must have an odd number of parameters";
+                                return false;
+                            }
+                            break;
                         }
+                        actAtom.isBool = false;
+                        actAtom.isConst = false;
                         actAtom.par1OrSourceIndex = start->storedTokenIndex;
                         start->storedTokenIndex = addToTheExpression(actAtom);
                         it = tokenList.erase(it); // del function name
@@ -1019,51 +1005,31 @@ bool SpiceExpression::buildFromString(const char* spiceExpression) {
             // can be empty brackets: (), possible function call without parameter
             // however, at the moment there is no Hex Open function without parameter
             // in an operation the empty bracket pair is a syntax error
-            auto it = start;
-            --it;
-            if (it->exprType != LineTokenizer::ExpressionToken::etOperator || it->opType != LineTokenizer::ExpressionToken::otOpenBracket)
-                throw hmgExcept("SpiceExpression::buildFromString", "LineTokenizer::ExpressionToken::otOpenBracket expected");
-            --it;
-            if (it->exprType != LineTokenizer::ExpressionToken::etName) { // comma separated expressions cannot be in parenthesis
-                errorMessage = std::string("comma separated expressions in bracket");
-                return false;
-            }
-            actAtom.reset(etUnidentifiedFunction);
-            actAtom.name = it->name;
-            actAtom.par1OrSourceIndex = start->storedTokenIndex;
-            it->exprType = LineTokenizer::ExpressionToken::ExprType::etStoredToken;
-            it->storedTokenIndex = addToTheExpression(actAtom);
-            ++it;
-            if (it->exprType != LineTokenizer::ExpressionToken::etOperator || it->opType != LineTokenizer::ExpressionToken::otOpenBracket)
-                throw hmgExcept("SpiceExpression::buildFromString", "LineTokenizer::ExpressionToken::otOpenBracket expected");
-            it = tokenList.erase(it);
-            if (it != stop)
-                throw hmgExcept("SpiceExpression::buildFromString", "LineTokenizer::ExpressionToken::otCloseBracket expected");
-            tokenList.erase(it);
-            stop = it = start;
+            errorMessage = "empty brackets: ()";
+            return false;
         }
     }
 
     // optimization of constant expression parts
     
-    for (uns i = 1; i < theExpression.size(); i++) {
+    for (unsigned i = 1; i < theExpression.size(); i++) {
         if (theExpression[i].atomType == etFunction && theExpression[i].isConst) {
             theExpression[i].atomType = etConst;
             theExpression[i].par1OrSourceIndex = theExpression[i].par2OrPrevIndex = 0;
             theExpression[i].functionType = futInvalid;
         }
     }
-    for (uns i = 1; i < theExpression.size(); i++) {
+    for (unsigned i = 1; i < theExpression.size(); i++) {
         if (theExpression[i].isConst) {
             bool isUsed = false;
-            for (uns j = i + 1; j < theExpression.size(); j++) {
+            for (unsigned j = i + 1; j < theExpression.size(); j++) {
                 if (theExpression[j].par1OrSourceIndex == i || theExpression[j].par2OrPrevIndex == i) {
                     isUsed = true;
                     break;
                 }
             }
             if (!isUsed) {
-                for (uns j = i + 1; j < theExpression.size(); j++) {
+                for (unsigned j = i + 1; j < theExpression.size(); j++) {
                     if (theExpression[j].par1OrSourceIndex > i) theExpression[j].par1OrSourceIndex--;
                     if (theExpression[j].par2OrPrevIndex > i)   theExpression[j].par2OrPrevIndex--;
                 }
