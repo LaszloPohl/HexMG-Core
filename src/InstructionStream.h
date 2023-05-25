@@ -104,9 +104,9 @@ struct IsComponentInstanceInstruction : public IsInstruction {
 //***********************************************************************
 struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
-    NodeID nodeID;
+    SimpleNodeID nodeID;
     IsNodeValueInstruction() :IsInstruction{ sitNodeValue }{}
-    IsNodeValueInstruction(const NodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
+    IsNodeValueInstruction(const SimpleNodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
 };
 
 

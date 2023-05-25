@@ -54,7 +54,25 @@ inline constexpr siz siz0   = siz(0);
 inline constexpr int returnInstructionID = 1'000'000'000;
 inline constexpr uns unsMax = ~uns(0);
 inline constexpr uns externalNodeFlag = uns(1 << 30);
+inline constexpr uns maxRails = 1'048'576;
 //***********************************************************************
+
+
+//***********************************************************************
+enum NodeVarType {
+//***********************************************************************
+    nvtIO, nvtIN, nvtCIN, nvtOUT, nvtFWOUT, nvtNInternal, nvtCInternal, 
+    nvtVarInternal, nvtVarGlobal, nvtParam, nvtRail, nvtGND,
+    nvtTime, nvtDTime, nvtFreq
+};
+
+
+//***********************************************************************
+struct SimpleNodeID {
+//***********************************************************************
+    NodeVarType type = nvtIO;
+    uns index = 0;
+};
 
 
 //***********************************************************************
@@ -100,8 +118,8 @@ enum ExpressionAndComponentType {
 //***********************************************************************
 enum HMGFileInstructionType {
 //***********************************************************************
-    itNone, itComponentInstance, itSubckt, itSunredTree,
-    itBuiltInComponentType, itController, itExpression
+    itNone, itComponentInstance, itModel, itSunredTree, itRail,
+    itExpression, itGlobal, itBuiltInComponentType
 };
 
 
@@ -191,7 +209,6 @@ enum StreamInstructionType {
 
     sitExpression, sitExpressionAtom, sitEndExpression,
 
-    // serialized to unsigned short => must be <65536
 };
 
 
@@ -257,9 +274,6 @@ inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
         return false;
     }
 }
-
-
-
 
 
 

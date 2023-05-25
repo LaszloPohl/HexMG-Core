@@ -28,12 +28,12 @@ namespace nsHMG {
 class LineTokenizer {
 //***********************************************************************
     //***********************************************************************
-    const char* pLine;
-    unsigned position, storedPos;
-    char token[MAX_LINE_LENGHT];
-    bool isSpecialExpressionToken;
+    const char* pLine = nullptr;
+    unsigned position = 0, storedPos = 0;
+    char token[MAX_LINE_LENGHT] = { 0 };
+    bool isSpecialExpressionToken = false;
     enum SpecExprTokenType{ setttNone, settVFirst, settVComma, settVSecond, settVClose };
-    SpecExprTokenType specExprToken;
+    SpecExprTokenType specExprToken = setttNone;
     inline static const char* const specCharsOfNames = "_.:@$";
     //***********************************************************************
     static bool isSpecChar(char ch, bool isExcept_ = false) {
@@ -46,27 +46,23 @@ class LineTokenizer {
     //***********************************************************************
     void setIsSeparators() {
     //***********************************************************************
-        isSepSpace = false; isSepOpeningBracket = false; isSepClosingBracket = false; 
-        isSepEOL = false; isSepComma = false;
+        isSepSpace = isSepOpeningBracket = isSepClosingBracket = isSepEOL = isSepComma = isSepAssignment = false; 
         unsigned pos;
         bool canBeEOL = true;
-        for (pos = position; pLine[pos] == ' ' || pLine[pos] == '(' || pLine[pos] == ')' || pLine[pos] == ','; pos++) {
+        for (pos = position; pLine[pos] == ' ' || pLine[pos] == '(' || pLine[pos] == ')' || pLine[pos] == ',' || pLine[pos] == '='; pos++) {
             if (pLine[pos] == ' ') isSepSpace = true;
             if (pLine[pos] == '(') { isSepOpeningBracket = true; canBeEOL = false; }
             if (pLine[pos] == ')') { isSepClosingBracket = true; canBeEOL = false; }
             if (pLine[pos] == ',') { isSepComma = true; canBeEOL = false; }
+            if (pLine[pos] == '=') { isSepAssignment = true; canBeEOL = false; }
         }
         if(canBeEOL && pLine[pos] == 0) isSepEOL = true;
     }
     //***********************************************************************
 public:
     //***********************************************************************
-    bool isSepSpace, isSepOpeningBracket, isSepClosingBracket, isSepEOL, isSepComma;
+    bool isSepSpace = false, isSepOpeningBracket = false, isSepClosingBracket = false, isSepEOL = false, isSepComma = false, isSepAssignment = false;
     std::string errorMessage;
-    //***********************************************************************
-    LineTokenizer() :pLine{ nullptr }, position{ 0 }, storedPos{ 0 }, token(),
-        isSepSpace{ false }, isSepOpeningBracket{ false }, isSepClosingBracket{ false },
-        isSepEOL{ false }, isSepComma{ false }, isSpecialExpressionToken{ false }, specExprToken{ setttNone }{}
     //***********************************************************************
     void init(const char* theLine) { pLine = theLine; position = 0; setIsSeparators(); }
     //***********************************************************************
@@ -75,13 +71,13 @@ public:
     //***********************************************************************
     void skipSeparators() {
     //***********************************************************************
-        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',')
+        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',' || pLine[position] == '=')
             position++;
     }
     //***********************************************************************
     void skipSeparatorsUntilClosingBracket() {
     //***********************************************************************
-        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',') {
+        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',' || pLine[position] == '=') {
             if (pLine[position] == ')') {
                 position++;
                 break;

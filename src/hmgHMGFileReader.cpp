@@ -11,6 +11,7 @@
 #include "hmgHMGFileReader.h"
 #include <cstdio>
 #include <stack>
+#include <set>
 //***********************************************************************
 
 
@@ -308,7 +309,7 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
 
     // reading the simulation
 
-    globalCircuit.Read(reader, line, lineInfo, "");
+    globalCircuit.Read(reader, line, lineInfo);
     most("Read");
     globalCircuit.ProcessXLines();
     most("ProcessXLines");
@@ -318,7 +319,7 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
 
 
 //***********************************************************************
-void SpiceSubcktDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo, const std::string& containerName) {
+void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
 
@@ -329,186 +330,223 @@ void SpiceSubcktDescription::Read(ReadALine& reader, char* line, LineInfo& lineI
 
     // check line
 
-    if (strcmp(token, ".SUBCKT") != 0)
-        throw hmgExcept("SpiceSubcktDescription::Read", ".SUBCKT expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (strcmp(token, ".MODEL") != 0)
+        throw hmgExcept("HMGFileModelDescription::Read", ".MODEL expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-    // read subckt name
+    // read model name
 
     if (lineToken.isSepEOL || lineToken.isSepOpeningBracket)
-        throw hmgExcept("SpiceSubcktDescription::Read", "missing .SUBCKT name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        throw hmgExcept("HMGFileModelDescription::Read", "missing .MODEL name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-        throw hmgExcept("SpiceSubcktDescription::Read", "simple .SUBCKT name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (containerName.length() > 0)
-        fullName = containerName + "." + lineToken.getActToken();
+        throw hmgExcept("HMGFileModelDescription::Read", "simple .MODEL name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    
+    fullName = lineToken.getActToken();
+
+    if (globalNames.modelNames.contains(fullName))
+        throw hmgExcept("HMGFileModelDescription::Read", ".MODEL %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    modelIndex = (uns)globalNames.modelNames.size();
+    globalNames.modelNames[fullName] = modelIndex;
+
+    // read model type
+
+    if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+        throw hmgExcept("HMGFileModelDescription::Read", ".MODEL type expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if(strcmp(lineToken.getActToken(), "SUBCIRCUIT") == 0)
+        modelType = hfmtSubcircuit;
+    else if (strcmp(lineToken.getActToken(), "CONTROLLER") == 0)
+        modelType = hfmtController;
     else
-        fullName = lineToken.getActToken();
-///    if(!globalNames.subcktNames.add(fullName, subcktIndex))
-///        throw hmgExcept("SpiceSubcktDescription::Read", ".SUBCKT %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        throw hmgExcept("HMGFileModelDescription::Read", "unknown model type, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-    // read external node names
 
-    nNormalNode = nControlNode = 0;
-    while (!lineToken.isSepEOL && !lineToken.isSepOpeningBracket) {
-        if (lineToken.getIsControl()) {
-            nControlNode++;
-        }
-        else {
-            if (nControlNode > 0)
-                throw hmgExcept("SpiceSubcktDescription::Read", "normal and control nodes cannot be mixed, %s arrived in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            nNormalNode++;
-        }
-        if(!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-            throw hmgExcept("SpiceSubcktDescription::Read", "simple node name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        token = lineToken.getActToken();
-        //if(!externalNodeNames.add(token))
-        //    throw hmgExcept("SpiceSubcktDescription::Read", "%s node is redefined in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    // read node, variable and parameter numbers
+
+    nIONodes = nNormalINodes = nControlNodes = nNormalONodes = nForwardedONodes = 0;
+    nNormalInternalNodes = nControlInternalNodes = nInternalVars = nParams = 0;
+
+    if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+        throw hmgExcept("HMGFileModelDescription::Read", "node/parameter=number expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    while (!lineToken.isSepEOL) {
+        if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "X", nIONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "N", nNormalInternalNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", nParams));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN", nNormalINodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN", nControlNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", nNormalONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", nForwardedONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", nControlInternalNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VAR", nInternalVars));
+        else
+            throw hmgExcept("HMGFileModelDescription::Read", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if(!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+            throw hmgExcept("HMGFileModelDescription::Read", "simple node name expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     }
         
-    // read parameters
-
-    nParams = 0;
-    if (!lineToken.isSepEOL && lineToken.isSepOpeningBracket) { // there are parameters
-        while (!lineToken.isSepEOL && !lineToken.isSepClosingBracket) {
-            if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-                throw hmgExcept("SpiceSubcktDescription::Read", "simple parameter name expected, %s arrived in %s, line %u", 
-                    lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            token = lineToken.getActToken();
-            //if (!constParameterNames.add(token))
-            //    throw hmgExcept("SpiceSubcktDescription::Read", "%s parameter is redefined in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            nParams++;
-        }
-        if (!lineToken.isSepEOL && lineToken.isSepClosingBracket)
-            throw hmgExcept("SpiceSubcktDescription::Read", "there is something after the closing bracket: %s in %s, line %u", 
-                lineToken.getRestOfTheLine(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    }
-
-    ReadOrReplaceBody(reader, line, lineInfo, false);
+    if (modelType == hfmtSubcircuit)
+        ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
+    else if (modelType == hfmtController)
+        ReadOrReplaceBodyController(reader, line, lineInfo, false);
+    else
+        throw hmgExcept("HMGFileModelDescription::Read", "Internal error: unknown model type (%u)", modelType);
 }
 
 
 //***********************************************************************
-void SpiceSubcktDescription::Replace(SpiceSubcktDescription* parent, ReadALine& reader, char* line, LineInfo& lineInfo) {
+void HMGFileModelDescription::Replace(HMGFileModelDescription* parent, ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     isReplacer = true;
     pParent = parent;
-    subcktIndex = pParent->subcktIndex;
-    fullName = parent->fullName;// +":" + std::to_string(replaceCounter++);
-    //if (!globalNames.subcktNames.add(fullName, subcktIndex))
-    //    throw hmgExcept("SpiceSubcktDescription::Read", "program error: conflicting replace .SUBCKT names: %s in %s, line %u", fullName.c_str(),
-    //        reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    ReadOrReplaceBody(reader, line, lineInfo, true);
+    modelIndex = pParent->modelIndex;
+    fullName = parent->fullName;
+    if (modelType == hfmtSubcircuit)
+        ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
+    else if (modelType == hfmtController)
+        ReadOrReplaceBodyController(reader, line, lineInfo, false);
+    else
+        throw hmgExcept("HMGFileModelDescription::Read", "Internal error: unknown model type (%u)", modelType);
 }
 
 
 //***********************************************************************
-void SpiceSubcktDescription::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
+void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
 //***********************************************************************
-    bool isSubcktNotEnded = true;
+    bool isModelNotEnded = true;
     LineTokenizer lineToken;
 
     do {
         if(!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
-            throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", "incomplete .SUBCKT definition, missing .ENDS in %s", reader.getFileName(lineInfo).c_str());
-        if (line[0] == 'X' || line[0] == 'R' || line[0] == 'C' || line[0] == 'V' || line[0] == 'I') {
-            SpiceComponentInstanceLine* pxline = new SpiceComponentInstanceLine;
-            itemList.push_back(pxline);
-
-            pxline->theLine = line;
-            pxline->theLineInfo = lineInfo;
-            pxline->fileName = reader.getFileName(lineInfo);
-
+            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "incomplete .MODEL definition (%s), missing .END in %s", fullName.c_str(), reader.getFileName(lineInfo).c_str());
+        if (line[0] == '.') {
             lineToken.init(line);
             const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            //if (!componentInstanceNames.add(token, pxline->componentInstanceIndex))
-            //    throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", "%s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            //vectorForcedSet< HMGFileListItem* >(componentInstances, pxline, pxline->componentInstanceIndex);
-        }
-        else if (line[0] == '.') {
-            lineToken.init(line);
-            const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (strcmp(token, ".SUBCKT") == 0) {
-                SpiceSubcktDescription* psubckt = new SpiceSubcktDescription;
-                itemList.push_back(psubckt);
-                psubckt->Read(reader, line, lineInfo, fullName);
-///                vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex);
-            }
-            else if (strcmp(token, ".END") == 0) {  // global only
-                    throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", ".END arrived in the body of a .SUBCKT definition in %s, line %u", 
-                        reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            }
-            else if (strcmp(token, ".ENDS") == 0) { // local only
-                    throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", ".ENDS arrived in the global circuit in %s, line %u", 
-                        reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            }
-            else if (strcmp(token, ".CONTROLLER") == 0) { // full name stored!
-                SpiceControllerDescription* pController = new SpiceControllerDescription;
-                itemList.push_back(pController);
-                pController->Read(reader, line, lineInfo, fullName);
-///                vectorForcedSet(globalNames.controllerData, pController, pController->controllerIndex);
-            }
-            else if (strcmp(token, ".EXPRESSION") == 0) { // full name stored!
-                SpiceExpressionLine* pExpression = new SpiceExpressionLine;
-                itemList.push_back(pExpression);
-                pExpression->Read(reader, line, lineInfo, fullName);
-            }
-            else if (strcmp(token, ".MODEL") == 0) { // full name stored!
-                TODO("SpiceSubcktDescription::ReadOrReplaceBody: .MODEL"); // => .replace should be usable
-            }
-            else if (strcmp(token, ".REPLACE") == 0) { // global only
-                    throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", ".REPLACE arrived in the body of a .SUBCKT definition in %s, line %u", 
-                        reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                // az eredeti komponens NameToIndex-eit használja, így akárhány replace után is ugyanarra a névre ugyanazt az indexet adja, 
-                // de amúgy üresen indul
+            if (strcmp(token, ".END") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                while (*token == '@')token++;
-                while (*token == ':')token++;
-                // subcktNames, controllerNames, componentTemplateNames, modelNames
-                unsigned index;
-/*///                if ((index = globalNames.subcktNames.find(token)) != 0) {
-                    SpiceSubcktDescription* psubckt = new SpiceSubcktDescription;
-                    itemList.push_back(psubckt);
-                    psubckt->Replace(globalNames.subcktData[index],reader, line, lineInfo);
-                    //vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex); // a tényleges csere majd a szimulációnál lesz
+                if (strcmp(token, "MODEL") != 0)
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".END MODEL expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (fullName != token)
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".END MODEL %s expected, %s arrived in %s, line %u", fullName.c_str(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                isModelNotEnded = false;
+            }
+            else if (strcmp(token, ".MODEL") == 0) {
+                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".MODEL in .MODEL not allowed in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            }
+            else if (strcmp(token, ".DEFAULT") == 0) {
+                lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                SimpleNodeID rail;
+                if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULT: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                SimpleNodeID node;
+                while (!lineToken.isSepEOL) {
+                    lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (!textToSimpleNodeID(lineToken.getActToken(), node))
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULT: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if (!checkNodeValidity(node))
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULT: invalid node index: %u in %s, line %u: %s", node.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if (defaults.size() > 0 && std::get<0>(defaults.back()) == rail.index && std::get<1>(defaults.back()) == node.type) {
+                        auto& last = defaults.back();
+                        if (node.index == std::get<2>(last) - 1)
+                            std::get<2>(last)--;
+                        else if (node.index == std::get<3>(last) + 1)
+                            std::get<3>(last)++;
+                        else
+                            defaults.push_back(std::make_tuple(rail.index, node.type, node.index, node.index));
+                    }
+                    else
+                        defaults.push_back(std::make_tuple(rail.index, node.type, node.index, node.index));
                 }
-                else if ((index = globalNames.controllerNames.find(token)) != 0) {
-                    SpiceControllerDescription* pController = new SpiceControllerDescription;
-                    itemList.push_back(pController);
-                    pController->Replace(globalNames.controllerData[index], reader, line, lineInfo);
-                    //vectorForcedSet(globalNames.controllerData, pController, pController->controllerIndex);
-                }
-                else if ((index = globalNames.componentTemplateNames.find(token)) != 0) {
-                    SpiceComponentTemplateLine* pCompTemp = new SpiceComponentTemplateLine;
-                    itemList.push_back(pCompTemp);
-                    pCompTemp->Replace(globalNames.componentTemplateData[index], reader, line, lineInfo, fullName);
-                    //vectorForcedSet(globalNames.componentTemplateData, pCompTemp, pCompTemp->componentTemplateIndex);
-                }
-                else if ((index = globalNames.modelNames.find(token)) != 0) {
-                    TODO("SpiceSubcktDescription::ReadOrReplaceBody: .REPLACE .MODEL");
-                }
-                else
-                    throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", "unrecognised .REPLACE name (%s) arrived in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-*///
+            }
+            else if (strcmp(token, ".DEFAULTRANGE") == 0) {
+                lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                SimpleNodeID rail;
+                if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                SimpleNodeID node1, node2;
+                lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (!textToSimpleNodeID(lineToken.getActToken(), node1))
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (!textToSimpleNodeID(lineToken.getActToken(), node2))
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                if (!checkNodeValidity(node1))
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: invalid node index: %u in %s, line %u: %s", node1.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                if (!checkNodeValidity(node2))
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: invalid node index: %u in %s, line %u: %s", node2.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                if(node1.type != node2.type)
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRANGE: node range required in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                defaults.push_back(std::make_tuple(rail.index, node1.type, node1.index < node2.index ? node1.index : node2.index, node1.index < node2.index ? node2.index : node1.index));
             }
             else
-                throw hmgExcept("SpiceSubcktDescription::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
-        else
-            throw("SpiceSubcktDescription::ReadOrReplaceBody", "this line type is not supported yet in Hex Open: %s", line);
-    } while (isSubcktNotEnded);
+        else {
+            HMGFileComponentInstanceLine* pxline = new HMGFileComponentInstanceLine;
+            itemList.push_back(pxline);
+
+            lineToken.init(line);
+
+            // component name
+
+            const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            std::string instanceName = token;
+            bool isController = false;
+
+            // component type
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            if (strcmp(token, "MODEL") == 0) {
+
+            }
+            else if (strcmp(token, "R") == 0) {
+                pxline->instanceOfWhat = itBuiltInComponentType;
+                pxline->indexOfTypeInGlobalContainer = bimtConstR_1;
+                for (uns i = 0; i < 2; i++) {
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    pxline->nodes.emplace_back(SimpleNodeID());
+                    if (!textToSimpleNodeID(token, pxline->nodes.back()))
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+            }
+            else if (strcmp(token, "G") == 0) {
+
+            }
+            else if (strcmp(token, "C") == 0) {
+
+            }
+            else if (strcmp(token, "I") == 0) {
+
+            }
+
+            if (isController) {
+                if (controllerInstanceNameIndex.contains(instanceName))
+                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                pxline->instanceIndex = (uns)controllerInstanceNameIndex.size();
+                controllerInstanceNameIndex[instanceName] = pxline->instanceIndex;
+            }
+            else {
+                if (componentInstanceNameIndex.contains(instanceName))
+                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                pxline->instanceIndex = (uns)componentInstanceNameIndex.size();
+                componentInstanceNameIndex[instanceName] = pxline->instanceIndex;
+            }
+        }
+    } while (isModelNotEnded);
 }
 
 
 //***********************************************************************
-void SpiceSubcktDescription::ProcessXLines() {
+void HMGFileModelDescription::ProcessXLines() {
 //***********************************************************************
+/*
     LineTokenizer lineToken;
     const char* token = nullptr;
 
     for (HMGFileListItem* pItem : itemList) {
-        if (pItem->getItemType() == itSubckt)
-            static_cast<SpiceSubcktDescription*>(pItem)->ProcessXLines();
+        if (pItem->getItemType() == itModel)
+            static_cast<HMGFileModelDescription*>(pItem)->ProcessXLines();
         else if (pItem->getItemType() == itComponentInstance) { // normal nodes
-            SpiceComponentInstanceLine* pInstance = static_cast<SpiceComponentInstanceLine*>(pItem);
+            HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
             switch (pInstance->theLine[0]) {
                 case 'R': 
                 case 'C':
@@ -601,7 +639,7 @@ void SpiceSubcktDescription::ProcessXLines() {
                         token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
                     nNodes--;
 
-/*///                    if ((pInstance->indexOfTypeInGlobalContainer = globalNames.componentTemplateNames.findMultiLevel(fullName.length() > 0 ? fullName + "." + token : token)) != 0) {
+                    if ((pInstance->indexOfTypeInGlobalContainer = globalNames.componentTemplateNames.findMultiLevel(fullName.length() > 0 ? fullName + "." + token : token)) != 0) {
                         pInstance->instanceOfWhat = itComponentTemplate;
                         pInstance->nNormalNode  = globalNames.componentTemplateData[pInstance->indexOfTypeInGlobalContainer]->nNormalNode;
                         pInstance->nControlNode = globalNames.componentTemplateData[pInstance->indexOfTypeInGlobalContainer]->nControlNode;
@@ -622,7 +660,7 @@ void SpiceSubcktDescription::ProcessXLines() {
                     else
                         throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "unknown type (%s) in %s, line %u: %s)",
                             token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-*///                    
+                    
                     if(nNodes != unsigned(pInstance->nNormalNode) + unsigned(pInstance->nControlNode))
                         throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "nNodes != pInstance->nNormalNode + pInstance->nControlNode (%u != %u + %u) in %s, line %u: %s)", 
                             nNodes, pInstance->nNormalNode, pInstance->nControlNode, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
@@ -683,7 +721,7 @@ void SpiceSubcktDescription::ProcessXLines() {
     }
     for (HMGFileListItem* pItem : itemList) {
         if (pItem->getItemType() == itComponentInstance) { // control nodes
-            SpiceComponentInstanceLine* pInstance = static_cast<SpiceComponentInstanceLine*>(pItem);
+            HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
 
             lineToken.init(pInstance->theLine.c_str());
 
@@ -696,7 +734,7 @@ void SpiceSubcktDescription::ProcessXLines() {
 
             for (unsigned i = 0; i < pInstance->nControlNode; i++, parentVectorIndex++) {
                 token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-/*///                if (!identifyNode(pInstance->nodes[parentVectorIndex], token)) {
+                if (!identifyNode(pInstance->nodes[parentVectorIndex], token)) {
                     if (strchr(token, '.') != nullptr)
                         throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
                             "component internal node name cannot contain a ., %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
@@ -707,7 +745,7 @@ void SpiceSubcktDescription::ProcessXLines() {
                     pInstance->nodes[parentVectorIndex].componentId = 0;
                     pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
                 }
-*///
+
                 if (parentVectorIndex < pInstance->nodes.size() - 1) {
                     if (lineToken.isSepEOL || lineToken.isSepComma || lineToken.isSepOpeningBracket)
                         throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
@@ -748,17 +786,18 @@ void SpiceSubcktDescription::ProcessXLines() {
             }
         }
     }
+*/
 }
 
 
 //***********************************************************************
-void SpiceSubcktDescription::ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {
+void HMGFileModelDescription::ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {
 //***********************************************************************
     for (HMGFileListItem* pItem : (pItemList== nullptr ? itemList : *pItemList)) {
         switch (pItem->getItemType()) {
             case itNone: break;
             case itComponentInstance: {
-                    SpiceComponentInstanceLine* pInstance = static_cast<SpiceComponentInstanceLine*>(pItem);
+                HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
                     for (auto& it : pInstance->valueExpression.theExpression) {
 ///                        if (!identifyExpressionNodeOrPar(it))
 ///                            throw hmgExcept("SpiceComponentTemplateLine::ProcessExpressionNames", "unknown identifier (%s) in %s, line %u: %s", 
@@ -766,10 +805,10 @@ void SpiceSubcktDescription::ProcessExpressionNames(std::list< HMGFileListItem* 
                     }
                 }
                 break;
-            case itSubckt: static_cast<SpiceSubcktDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
+            case itModel: static_cast<HMGFileModelDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
 ///            case itComponentTemplate: static_cast<SpiceComponentTemplateLine*>(pItem)->ProcessExpressionNames(); break;
             case itBuiltInComponentType: break;
-            case itController: static_cast<SpiceControllerDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
+///            case itController: static_cast<SpiceControllerDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
             case itExpression: {
                     SpiceExpressionLine* pExpression = static_cast<SpiceExpressionLine*>(pItem);
                     for (auto& it : pExpression->theExpression.theExpression) {
@@ -784,7 +823,63 @@ void SpiceSubcktDescription::ProcessExpressionNames(std::list< HMGFileListItem* 
 
 
 //***********************************************************************
-void HMGFileSunredTree::Read(ReadALine& reader, char* line, LineInfo& lineInfo, const std::string&) {
+void HMGFileRails::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read subcircuit head (if not the global circuit is readed)
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".RAILS") != 0)
+        throw hmgExcept("HMGFileRails::Read", ".RAILS expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // read rails number (optional)
+
+    if (lineToken.isSepEOL)
+        throw hmgExcept("HMGFileRails::Read", "empty .RALIS line: %s in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    if (lineToken.isSepAssignment) {
+        if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+            throw hmgExcept("HMGFileRails::Read", ".RALIS=number expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (sscanf_s(lineToken.getActToken(), "%u", &nRails) != 1)
+            throw hmgExcept("HMGFileRails::Read", ".RALIS=number is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (nRails > maxRails)
+            throw hmgExcept("HMGFileRails::Read", ".RALIS=number must be <= %u, %s arrived (%s) in %s, line %u", maxRails, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        globalNRails = nRails;
+    }
+
+    // read rail values
+
+    while (!lineToken.isSepEOL) {
+        if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+            throw hmgExcept("HMGFileRails::Read", "invalid rail id: %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (lineToken.getActToken()[0] != 'R')
+            throw hmgExcept("HMGFileRails::Read", "invalid rail id, Rnumber expected: %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        
+        uns railIndex = 0;
+        if (sscanf_s(lineToken.getActToken() + 1, "%u", &railIndex) != 1)
+            throw hmgExcept("HMGFileRails::Read", "rail index is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if(railIndex > globalNRails)
+            throw hmgExcept("HMGFileRails::Read", "rail index must be <= the number of rails (%u), %s arrived (%s) in %s, line %u", globalNRails, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        
+        rvt value = rvt0;
+        uns position = 0;
+        if (lineToken.isSepEOL)
+            throw hmgExcept("HMGFileRails::Read", "R%u=rail value expected, end of line arrived (%s) in %s, line %u", railIndex, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (!spiceTextToRvt(lineToken.getActToken(), position, value))
+            throw hmgExcept("HMGFileRails::Read", "R%u=rail value expected, %s arrived (%s) in %s, line %u", railIndex, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        railValues.push_back(std::pair<uns, rvt>(railIndex, value));
+    }
+}
+
+
+//***********************************************************************
+void HMGFileSunredTree::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
 
@@ -830,12 +925,66 @@ void HMGFileSunredTree::Replace(HMGFileSunredTree* parent, ReadALine& reader, ch
 //***********************************************************************
 void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
 //***********************************************************************
+    bool isSunredTreeNotEnded = true;
+    LineTokenizer lineToken;
+    std::set<CellID> srcCheck, destCheck;
 
+    do {
+        if(!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+            throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "incomplete .SUNREDTREE definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
+        if (line[0] != '.') {
+            lineToken.init(line);
+            const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "RED") == 0) {
+                CellID dest, src1, src2;
+
+                // read
+
+                if(sscanf(line, "%*s %u %u %u %u %u %u", &dest.level, &dest.index, &src1.level, &src1.index, &src2.level, &src2.index) != 6)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "wrong RED format, %s arrived in %s, line %u", 
+                        line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                
+                // error check
+                
+                if(!srcCheck.insert(src1).second)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "SUNRED cell reduced more than once (src1): %s in %s, line %u",
+                        line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (!srcCheck.insert(src2).second)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "SUNRED cell reduced more than once (src2): %s in %s, line %u",
+                        line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (!destCheck.insert(dest).second)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "calculation of a SUNRED cell is allowed only once, here the destination cell is repeated: %s in %s, line %u",
+                        line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+                // store
+
+                reductions.push_back({ src1, src2, dest });
+            }
+            else
+                throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "unknown .SUNREDTREE instruction or missing .END, %s arrived in %s, line %u", 
+                    line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        }
+        else {
+            lineToken.init(line);
+            const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, ".END") == 0) {
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if(strcmp(token, "SUNREDTREE") != 0)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", ".END SUNREDTREE expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if(fullName != token)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", ".END SUNREDTREE %s expected, %s arrived in %s, line %u: %s", fullName.c_str(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                isSunredTreeNotEnded = false;
+            }
+            else
+                throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+    } while (isSunredTreeNotEnded);
 }
 
 
 //***********************************************************************
-void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo, const std::string&) {
+void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     bool isStop = false;
     LineTokenizer lineToken;
@@ -861,18 +1010,21 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
             lineToken.init(line);
             const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if (strcmp(token, ".MODEL") == 0) {
-
-                SpiceSubcktDescription* psubckt = new SpiceSubcktDescription;
+                HMGFileModelDescription* psubckt = new HMGFileModelDescription;
                 itemList.push_back(psubckt);
-                psubckt->Read(reader, line, lineInfo, fullName);
+                psubckt->Read(reader, line, lineInfo);
 ///                vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex);
             }
             else if (strcmp(token, ".SUNREDTREE") == 0) {
-
                 HMGFileSunredTree* psunredtree = new HMGFileSunredTree;
                 itemList.push_back(psunredtree);
-                psunredtree->Read(reader, line, lineInfo, fullName);
+                psunredtree->Read(reader, line, lineInfo);
                 ///                vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex);
+            }
+            else if (strcmp(token, ".RAILS") == 0) {
+                HMGFileRails* pRails = new HMGFileRails;
+                itemList.push_back(pRails);
+                pRails->Read(reader, line, lineInfo);
             }
             else if (strcmp(token, ".END") == 0) {  // global only
                 isStop = true;
@@ -930,18 +1082,18 @@ void SpiceExpression::toInstructionStream(InstructionStream& iStream, unsigned i
 
 
 //***********************************************************************
-void SpiceComponentInstanceLine::toInstructionStream(InstructionStream& iStream) {
+void HMGFileComponentInstanceLine::toInstructionStream(InstructionStream& iStream) {
 //***********************************************************************
     switch (instanceOfWhat) {
-        case itSubckt:                  iStream.add(new IsComponentInstanceInstruction(sitSubcktInstance,           componentInstanceIndex, indexOfTypeInGlobalContainer)); break;
-        case itController:              iStream.add(new IsComponentInstanceInstruction(sitControllerInstance,       componentInstanceIndex, indexOfTypeInGlobalContainer)); break;
-        case itSunredTree:              iStream.add(new IsComponentInstanceInstruction(sitSunredTree,               componentInstanceIndex, indexOfTypeInGlobalContainer)); break;
-        case itBuiltInComponentType:    iStream.add(new IsComponentInstanceInstruction(sitBuiltInComponentInstance, componentInstanceIndex, indexOfTypeInGlobalContainer)); break;
+        case itModel:                  iStream.add(new IsComponentInstanceInstruction(sitSubcktInstance,           instanceIndex, indexOfTypeInGlobalContainer)); break;
+        //case itController:              iStream.add(new IsComponentInstanceInstruction(sitControllerInstance,       instanceIndex, indexOfTypeInGlobalContainer)); break;
+        case itSunredTree:              iStream.add(new IsComponentInstanceInstruction(sitSunredTree,               instanceIndex, indexOfTypeInGlobalContainer)); break;
+        case itBuiltInComponentType:    iStream.add(new IsComponentInstanceInstruction(sitBuiltInComponentInstance, instanceIndex, indexOfTypeInGlobalContainer)); break;
         default: throw hmgExcept("SpiceComponentInstanceLine::toInstructionStream", "program error bad instanceOfWhat value (%u)", instanceOfWhat);
     }
 
     iStream.add(new IsSetContainerSizeInstruction(sitNodeValueContainerSize, (unsigned)nodes.size()));
-    for (NodeID& it : nodes) 
+    for (SimpleNodeID& it : nodes) 
         iStream.add(new IsNodeValueInstruction(it));
 
     iStream.add(new IsSetContainerSizeInstruction(sitParameterValueContainerSize, (unsigned)params.size()));
@@ -950,12 +1102,12 @@ void SpiceComponentInstanceLine::toInstructionStream(InstructionStream& iStream)
 
     valueExpression.toInstructionStream(iStream, 0);
 
-    iStream.add(new IsEndDefInstruction(sitEndComponentInstance, componentInstanceIndex));
+    iStream.add(new IsEndDefInstruction(sitEndComponentInstance, instanceIndex));
 }
 
 
 //***********************************************************************
-void SpiceSubcktDescription::toInstructionStream(InstructionStream& iStream) {
+void HMGFileModelDescription::toInstructionStream(InstructionStream& iStream) {
 //***********************************************************************
     //if (isGlobal) {
     //    if (!globalNames.subcktNames.getIsEmpty())              iStream.add(new IsSetContainerSizeInstruction(sitSetSubcktContainerSize,        globalNames.subcktNames.getLastIndex() + 1));
@@ -967,8 +1119,8 @@ void SpiceSubcktDescription::toInstructionStream(InstructionStream& iStream) {
     //    if (!globalNames.sunredNames.getIsEmpty())              iStream.add(new IsSetContainerSizeInstruction(sitSetSunredContainerSize,        globalNames.sunredNames.getLastIndex() + 1));
     //}
     //else {
-        if(isReplacer)  iStream.add(new IsReplaceInstruction(sitReplaceSubckt, subcktIndex));
-        else            iStream.add(new IsDefSubcktInstruction(subcktIndex, nNormalNode, nControlNode, nParams));
+        //if(isReplacer)  iStream.add(new IsReplaceInstruction(sitReplaceSubckt, modelIndex));
+        //else            iStream.add(new IsDefSubcktInstruction(modelIndex, nNormalNode, nControlNode, nParams));
     //}
 
     //if (!componentInstanceNames.getIsEmpty())   iStream.add(new IsSetContainerSizeInstruction(sitSetComponentInstanceSize,      componentInstanceNames.getLastIndex() + 1));
@@ -980,150 +1132,12 @@ void SpiceSubcktDescription::toInstructionStream(InstructionStream& iStream) {
     for (HMGFileListItem* it : itemList)
         it->toInstructionStream(iStream);
 
-    iStream.add(new IsEndDefInstruction(sitEndDefSubckt, subcktIndex));
+    iStream.add(new IsEndDefInstruction(sitEndDefSubckt, modelIndex));
 }
 
 
 //***********************************************************************
-void SpiceControllerDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo, const std::string& containerName) {
-//***********************************************************************
-    LineTokenizer lineToken;
-
-    // read controller head
-
-    lineToken.init(line);
-    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-
-    // check line
-
-    if (strcmp(token, ".CONTROLLER") != 0)
-        throw hmgExcept("SpiceControllerDescription::Read", ".CONTROLLER expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-
-    // read controller name
-
-    if (lineToken.isSepEOL || lineToken.isSepOpeningBracket)
-        throw hmgExcept("SpiceControllerDescription::Read", "missing .CONTROLLER name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-        throw hmgExcept("SpiceControllerDescription::Read", "simple .CONTROLLER name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (containerName.length() > 0)
-        fullName = containerName + "." + lineToken.getActToken();
-    else
-        fullName = lineToken.getActToken();
-///    if (!globalNames.controllerNames.add(fullName, controllerIndex))
-///        throw hmgExcept("SpiceControllerDescription::Read", ".CONTROLLER %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-
-    // read external node names
-
-    nControlNode = 0;
-    while (!lineToken.isSepEOL && !lineToken.isSepOpeningBracket) {
-        lineToken.getIsControl(); // whether marked or not, all nodes are control
-        nControlNode++;
-        if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-            throw hmgExcept("SpiceControllerDescription::Read", "simple node name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        token = lineToken.getActToken();
-        //if (!externalNodeNames.add(token))
-        //    throw hmgExcept("SpiceControllerDescription::Read", "%s node is redefined in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    }
-
-    // read parameters
-
-    nParams = 0;
-    if (!lineToken.isSepEOL && lineToken.isSepOpeningBracket) { // there are parameters
-        while (!lineToken.isSepEOL && !lineToken.isSepClosingBracket) {
-            if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-                throw hmgExcept("SpiceControllerDescription::Read", "simple parameter name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            token = lineToken.getActToken();
-            //if (!constParameterNames.add(token))
-            //    throw hmgExcept("SpiceControllerDescription::Read", "%s parameter is redefined in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            nParams++;
-        }
-        if (!lineToken.isSepEOL && lineToken.isSepClosingBracket)
-            throw hmgExcept("SpiceControllerDescription::Read", "there is something after the closing bracket: %s in %s, line %u", lineToken.getRestOfTheLine(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    }
-
-    ReadOrReplaceBody(reader, line, lineInfo, false);
-}
-
-
-//***********************************************************************
-void SpiceControllerDescription::Replace(SpiceControllerDescription* parent, ReadALine& reader, char* line, LineInfo& lineInfo) {
-//***********************************************************************
-    isReplacer = true;
-    pParent = parent;
-    controllerIndex = pParent->controllerIndex;
-    fullName = parent->fullName; // +":" + std::to_string(replaceCounter++);
-    //if (!globalNames.controllerNames.add(fullName, controllerIndex))
-    //    throw hmgExcept("SpiceControllerDescription::Read", "program error: conflicting replace .SUBCKT names: %s in %s, line %u", fullName.c_str(),
-    //        reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    ReadOrReplaceBody(reader, line, lineInfo, true);
-}
-
-
-//***********************************************************************
-void SpiceControllerDescription::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
-//***********************************************************************
-    bool isControllerNotEnded = true;
-    LineTokenizer lineToken;
-
-    do {
-        if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
-            throw hmgExcept("SpiceControllerDescription::ReadOrReplaceBody", "incomplete .CONTROLLER definition, missing .ENDC in %s", reader.getFileName(lineInfo).c_str());
-        if(line[0] != '.')
-            throw hmgExcept("SpiceControllerDescription::ReadOrReplaceBody", "only . started control instructions allowed in a controller in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-        lineToken.init(line);
-        const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        if (strcmp(token, ".EXPRESSION") == 0) { // full name stored!
-            SpiceExpressionLine* pExpression = new SpiceExpressionLine;
-            itemList.push_back(pExpression);
-            pExpression->Read(reader, line, lineInfo, fullName);
-        }
-        else
-            throw hmgExcept("SpiceControllerDescription::ReadOrReplaceBody", "unrecognised token (%s) in %s", token, reader.getFileName(lineInfo).c_str());
-    } while (isControllerNotEnded);
-}
-
-
-//***********************************************************************
-void SpiceControllerDescription::ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {
-//***********************************************************************
-    for (HMGFileListItem* pItem : (pItemList== nullptr ? itemList : *pItemList)) {
-        switch (pItem->getItemType()) {
-            case itNone: break;
-            case itComponentInstance: break;
-            case itSubckt: break;
-            case itSunredTree: break;
-            case itBuiltInComponentType: break;
-            case itController: break;
-            case itExpression: {
-                    SpiceExpressionLine* pExpression = static_cast<SpiceExpressionLine*>(pItem);
-                    for (auto& it : pExpression->theExpression.theExpression) {
-///                        if (!identifyExpressionNodeOrPar(it))
-///                            throw hmgExcept("SpiceControllerDescription::ProcessExpressionNames", "unknown identifier (%s) in %s", it.name.c_str(), pExpression->fullName.c_str());
-                    }
-                }
-                break;
-        }
-    }
-}
-
-
-//***********************************************************************
-void SpiceControllerDescription::toInstructionStream(InstructionStream& iStream) {
-//***********************************************************************
-    if (isReplacer) iStream.add(new IsReplaceInstruction(sitReplaceController, controllerIndex));
-    else            iStream.add(new IsDefControllerInstruction(controllerIndex, nControlNode, nParams));
-
-    //if (!instanceVarNames.getIsEmpty()) iStream.add(new IsSetContainerSizeInstruction(sitSetVarContainerSize, instanceVarNames.getLastIndex() + 1));
-
-    for (HMGFileListItem* it : itemList)
-        it->toInstructionStream(iStream);
-
-    iStream.add(new IsEndDefInstruction(sitEndDefController, controllerIndex));
-}
-
-
-//***********************************************************************
-void SpiceExpressionLine::Read(ReadALine& reader, char* line, LineInfo& lineInfo, const std::string& containerName) {
+void SpiceExpressionLine::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
 
@@ -1138,10 +1152,7 @@ void SpiceExpressionLine::Read(ReadALine& reader, char* line, LineInfo& lineInfo
         throw hmgExcept("SpiceExpressionLine::Read", "missing .EXPRESSION name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
         throw hmgExcept("SpiceExpressionLine::Read", "simple .EXPRESSION name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (containerName.length() > 0)
-        fullName = containerName + "." + lineToken.getActToken();
-    else
-        fullName = lineToken.getActToken();
+    fullName = lineToken.getActToken();
 ///    if (!globalNames.expressionNames.add(fullName, expressionIndex))
 ///        throw hmgExcept("SpiceExpressionLine::Read", ".EXPRESSION %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
