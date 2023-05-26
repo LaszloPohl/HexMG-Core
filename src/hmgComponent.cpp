@@ -174,6 +174,12 @@ void ComponentSubCircuit::buildOrReplace() {
                 case ComponentDefinition::CDParamType::param:
                     par = pars[cdp.index];
                     break;
+                case ComponentDefinition::CDParamType::internalNode:
+                    par.var = &internalNodesAndVars[cdp.index];
+                    break;
+                case ComponentDefinition::CDParamType::externalNode:
+                    par.var = externalNodes[cdp.index];
+                    break;
             }
             comp.setParam(j,par);
         }

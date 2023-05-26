@@ -315,6 +315,7 @@ public:
 
 //***********************************************************************
 struct HMGFileSunredTree;
+struct HMGFileModelDescription;
 struct SpiceSubcktDescription;
 struct SpiceControllerDescription;
 //***********************************************************************
@@ -325,6 +326,7 @@ struct GlobalHMGFileNames {
 //***********************************************************************
     std::map<std::string, uns> modelNames, sunredTreeNames, varNames, functionNames, probeNames, fullCircuitNames;
     std::vector<HMGFileSunredTree*> sunredTreeData;
+    std::vector<HMGFileModelDescription*> modelData;
 };
 
 
@@ -344,14 +346,16 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
 //***********************************************************************
     uns instanceIndex = 0; // component index or controller index
 
-    HMGFileInstructionType instanceOfWhat = itNone; // subckt, controller, componentTemplate, builtInComponent
+    HMGFileInstructionType instanceOfWhat = itNone; // itModel, itBuiltInComponentType
     uns indexOfTypeInGlobalContainer = 0; // modelNames, BuiltInComponentTemplateType
     std::vector<SimpleNodeID> nodes;
     std::vector<ParameterInstance> params;
-    SpiceExpression valueExpression; // for built in components
-    unsigned short nNormalNode, nControlNode, nParams;
+    bool isDefaultRail = false;
+    uns defaultRailIndex = 0;
+    //SpiceExpression valueExpression; // for built in components
+    //unsigned short nNormalNode, nControlNode, nParams;
 
-    HMGFileComponentInstanceLine() :nNormalNode{ 0 }, nControlNode{ 0 }, nParams{ 0 }{}
+    //HMGFileComponentInstanceLine() :nNormalNode{ 0 }, nControlNode{ 0 }, nParams{ 0 }{}
 
     HMGFileInstructionType getItemType()const override { return itComponentInstance; }
     void toInstructionStream(InstructionStream& iStream)override;
@@ -373,10 +377,12 @@ struct HMGFileModelDescription: HMGFileListItem {
     uns nControlNodes = 0;
     uns nNormalONodes = 0;
     uns nForwardedONodes = 0;
+    uns sumExternalNodes = 0;
     // Internal nodes:
     uns nNormalInternalNodes = 0;
     uns nControlInternalNodes = 0;
     uns nInternalVars = 0;
+    uns sumInternalNodes = 0;
     //***********************************************************************
     uns nParams = 0;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object

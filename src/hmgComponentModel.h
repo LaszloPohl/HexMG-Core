@@ -73,7 +73,7 @@ public:
 
     enum CDNodeType{ internal, external, ground, unconnected }; // unconnected: only for ONodes
     struct CDNode { CDNodeType type = external; uns index = 0; };
-    enum CDParamType{ value, globalVariable, localVariable, param };
+    enum CDParamType{ value, globalVariable, localVariable, param, internalNode, externalNode };
     struct CDParam { CDParamType type = CDParamType::value; uns index = 0; rvt value = rvt0; };
 
     bool isBuiltIn = false, isForcedDefNodeValueIndex = false;
@@ -97,6 +97,36 @@ public:
 
 
 //***********************************************************************
+class ModelConstR_2 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstR_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+};
+
+
+//***********************************************************************
+class ModelConstG_1 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstG_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+};
+
+
+//***********************************************************************
+class ModelConstG_2 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstG_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+};
+
+
+//***********************************************************************
 class ModelConstC_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
@@ -106,10 +136,28 @@ public:
 
 
 //***********************************************************************
+class ModelConstC_2 final : public ComponentAndControllerModelBase {
+//***********************************************************************
+public:
+    ModelConstC_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+};
+
+
+//***********************************************************************
 class ModelConstI_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstI_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 4 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+};
+
+
+//***********************************************************************
+class ModelConstI_2 final : public ComponentAndControllerModelBase {
+//***********************************************************************
+public:
+    ModelConstI_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 5 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 

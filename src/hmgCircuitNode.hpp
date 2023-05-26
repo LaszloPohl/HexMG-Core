@@ -306,8 +306,8 @@ public:
 struct Param final : public ParVarNodeType {
 //***********************************************************************
     VariableNodeBase* var = nullptr;
-    rvt value = rvt1;
-    rvt get()const noexcept { return var ? var->value * value : value; }
+    rvt value = rvt0;
+    rvt get()const noexcept { return var ? var->value : value; }
     Param() : ParVarNodeType{ pvntParameter } {}
 };
 

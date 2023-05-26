@@ -61,7 +61,7 @@ inline constexpr uns maxRails = 1'048'576;
 //***********************************************************************
 enum NodeVarType {
 //***********************************************************************
-    nvtIO, nvtIN, nvtCIN, nvtOUT, nvtFWOUT, nvtNInternal, nvtCInternal, 
+    nvtNone, nvtIO, nvtIN, nvtCIN, nvtOUT, nvtFWOUT, nvtNInternal, nvtCInternal, 
     nvtVarInternal, nvtVarGlobal, nvtParam, nvtRail, nvtGND,
     nvtTime, nvtDTime, nvtFreq
 };
@@ -70,15 +70,15 @@ enum NodeVarType {
 //***********************************************************************
 struct SimpleNodeID {
 //***********************************************************************
-    NodeVarType type = nvtIO;
+    NodeVarType type = nvtNone;
     uns index = 0;
 };
 
 
 //***********************************************************************
-enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstC_1,
-    bimtConstI_1, bimtConst_V_Controlled_I, bimtGirator, bimtConstV, 
-    bimtSize }; // bimtSize have to be the last one
+enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
+    bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
+    bimtConst_V_Controlled_I, bimtGirator, bimtConstV, bimtSize }; // bimtSize have to be the last one
 //***********************************************************************
 
 
@@ -234,9 +234,8 @@ struct ProbeUnit {
 //***********************************************************************
 struct ParameterInstance {
 //***********************************************************************
-    unsigned paramIndex; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
-    double value; // if a value is given, paramIndex=0
-    ParameterInstance() :paramIndex{ 0 }, value{ 0 }{}
+    SimpleNodeID param; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
+    rvt value = rvt0; // if a value is given, paramIndex=0
 };
 
 

@@ -31,7 +31,7 @@ using std::milli;
 void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 //***********************************************************************
 	cd->isBuiltIn = true;
-	cd->componentModelIndex = builtInModelType::bimtConstR_1;
+	cd->componentModelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::external;
 	cd->nodesConnectedTo[0].index = externalIndex;
@@ -118,7 +118,7 @@ void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns g
 //***********************************************************************
 	cd->setNodesDefValueIndex(groundIndex);
 	cd->isBuiltIn = true;
-	cd->componentModelIndex = builtInModelType::bimtConstR_1;
+	cd->componentModelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
 	cd->nodesConnectedTo[0].index = nodeIndex;
@@ -530,7 +530,7 @@ void probaSzimulacio1() {
 void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex = 0, uns groundIndex = 1) {
 //***********************************************************************
 	cd->isBuiltIn = true;
-	cd->componentModelIndex = builtInModelType::bimtConstR_1;
+	cd->componentModelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
 	cd->nodesConnectedTo[0].index = internalIndex;
@@ -546,7 +546,7 @@ void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalI
 void setRinternal2(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex1, uns internalIndex2) {
 //***********************************************************************
 	cd->isBuiltIn = true;
-	cd->componentModelIndex = builtInModelType::bimtConstR_1;
+	cd->componentModelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
 	cd->nodesConnectedTo[0].index = internalIndex1;
