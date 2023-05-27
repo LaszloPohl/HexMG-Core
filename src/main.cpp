@@ -369,7 +369,7 @@ void probaSzimulacio1() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -379,7 +379,7 @@ void probaSzimulacio1() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -390,7 +390,7 @@ void probaSzimulacio1() {
 
 	// 2
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -401,8 +401,8 @@ void probaSzimulacio1() {
 
 	// 3
 
-	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -419,7 +419,7 @@ void probaSzimulacio1() {
 
 	// 4
 
-	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -431,8 +431,8 @@ void probaSzimulacio1() {
 
 	// 5
 
-	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, SolutionType::stSunRed, &instr);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 0, 3);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 0, 1, 4);			mc->push_back_component(std::move(cd));
@@ -458,7 +458,7 @@ void probaSzimulacio1() {
 
 	// 6
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -575,7 +575,7 @@ void probaSzimulacio2() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, G);	mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, I, I, 0);		mc->push_back_component(std::move(cd));
@@ -645,7 +645,7 @@ void probaSzimulacio3() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(1, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(1, 0, 0, 0, 0, 2, 2, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, 0.1);		mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 600'000.0, 600'000.0);	mc->push_back_component(std::move(cd));
@@ -658,7 +658,7 @@ void probaSzimulacio3() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(1, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(1, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, 0.1);		mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, 0.1);	mc->push_back_component(std::move(cd));
@@ -668,8 +668,8 @@ void probaSzimulacio3() {
 
 	// 2
 
-	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stSunRed, &instr);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 1, 0);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 1, 1, 0);	mc->push_back_component(std::move(cd));
@@ -788,7 +788,7 @@ void probaSzimulacio4() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 2, 2, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, 0.1, 0, 0);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setI(cd, 0.25);					mc->push_back_component(std::move(cd));
@@ -880,7 +880,7 @@ void probaSzimulacioMg1() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -890,7 +890,7 @@ void probaSzimulacioMg1() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -901,7 +901,7 @@ void probaSzimulacioMg1() {
 
 	// 2
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -912,8 +912,8 @@ void probaSzimulacioMg1() {
 
 	// 3
 
-	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -930,7 +930,7 @@ void probaSzimulacioMg1() {
 
 	// 4
 
-	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -942,7 +942,7 @@ void probaSzimulacioMg1() {
 
 	// 5
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 0, 3);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 0, 1, 4);			mc->push_back_component(std::move(cd));
@@ -968,7 +968,7 @@ void probaSzimulacioMg1() {
 
 	// 6
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -979,7 +979,7 @@ void probaSzimulacioMg1() {
 
 	// 7
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
@@ -989,7 +989,7 @@ void probaSzimulacioMg1() {
 
 	// 8
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
@@ -1000,7 +1000,7 @@ void probaSzimulacioMg1() {
 
 	// 9
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx12);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx12);	mc->push_back_component(std::move(cd));
@@ -1011,8 +1011,8 @@ void probaSzimulacioMg1() {
 
 	// 10
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 6, 6, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 6, 6, true, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 6, 6, true, 0, 0, SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 6, 6, true, 0, 0, SolutionType::stSunRed, &instr);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 7, 2, 0, 2);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 9, 3, 0, 1, 3);			mc->push_back_component(std::move(cd));
@@ -1603,7 +1603,7 @@ void probaSzimulacioMg2() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -1613,7 +1613,7 @@ void probaSzimulacioMg2() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -1624,7 +1624,7 @@ void probaSzimulacioMg2() {
 
 	// 2
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -1635,8 +1635,8 @@ void probaSzimulacioMg2() {
 
 	// 3
 
-	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 2, 2, false, 0, 0, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -1653,7 +1653,7 @@ void probaSzimulacioMg2() {
 
 	// 4
 
-	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -1665,7 +1665,7 @@ void probaSzimulacioMg2() {
 
 	// 5
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 24, 24, true, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 2, 0, 3);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 2, 3, 0, 1, 4);			mc->push_back_component(std::move(cd));
@@ -1691,7 +1691,7 @@ void probaSzimulacioMg2() {
 
 	// 6
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -1704,7 +1704,7 @@ void probaSzimulacioMg2() {
 	
 	// 7
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
@@ -1714,7 +1714,7 @@ void probaSzimulacioMg2() {
 
 	// 8
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy22);	mc->push_back_component(std::move(cd));
@@ -1725,7 +1725,7 @@ void probaSzimulacioMg2() {
 
 	// 9
 
-	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(4, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx12);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -1737,7 +1737,7 @@ void probaSzimulacioMg2() {
 
 	// 10
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx22);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy12);	mc->push_back_component(std::move(cd));
@@ -1748,8 +1748,8 @@ void probaSzimulacioMg2() {
 
 	// 11
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 8, 8, true, 0, 0, SolutionType::stSunRed, &instr);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 7, 2, 0, 4);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 9, 4, 0, 1, 2, 5);		mc->push_back_component(std::move(cd));
@@ -2494,7 +2494,7 @@ void probaSzimulacioMg3() {
 
 	// 0
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -2506,7 +2506,7 @@ void probaSzimulacioMg3() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -2516,7 +2516,7 @@ void probaSzimulacioMg3() {
 
 	// 2
 
-	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(3, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -2529,7 +2529,7 @@ void probaSzimulacioMg3() {
 
 	// 3
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gx);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gy);	mc->push_back_component(std::move(cd));
@@ -2539,7 +2539,7 @@ void probaSzimulacioMg3() {
 
 	// 4
 
-	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(2, 0, 0, 0, 0, 1, 1, false, 0, 0, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, Gy);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setR(cd, 1, Gx);	mc->push_back_component(std::move(cd));
@@ -2549,8 +2549,8 @@ void probaSzimulacioMg3() {
 
 	// 5
 
-	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 5, 5, true, 0, 0, ModelSubCircuit::SolutionType::stFullMatrix);
-	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 5, 5, true, 0, 0, ModelSubCircuit::SolutionType::stSunRed, &instr);
+	mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 5, 5, true, 0, 0, SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(0, 0, 0, 0, 0, 5, 5, true, 0, 0, SolutionType::stSunRed, &instr);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 3, 0, 3, 4);			mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 1, 2, 0, 1);			mc->push_back_component(std::move(cd));

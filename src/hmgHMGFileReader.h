@@ -390,6 +390,8 @@ struct HMGFileModelDescription: HMGFileListItem {
     std::map<std::string, uns> componentInstanceNameIndex;
     std::map<std::string, uns> controllerInstanceNameIndex;
     std::vector<std::tuple<uns, NodeVarType, uns, uns>> defaults; // <rail, type, start_index, stop_index>
+    SolutionType solutionType = stFullMatrix;
+    uns solutionDescriptionIndex = 0; // for sunred and multigrid 
 
     //***********************************************************************
     void clear() { for (auto it : itemList) delete it; itemList.clear(); }

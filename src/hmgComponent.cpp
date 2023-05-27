@@ -20,13 +20,13 @@ namespace nsHMG {
 void ComponentSubCircuit::allocForReductionDC() {
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix || model.solutionType == ModelSubCircuit::SolutionType::stSunRed) {
-        if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix) {
+    if (model.solutionType == SolutionType::stFullMatrix || model.solutionType == SolutionType::stSunRed) {
+        if (model.solutionType == SolutionType::stFullMatrix) {
             if (!sfmrDC)
                 sfmrDC = std::make_unique<SubCircuitFullMatrixReductorDC>(this);
             sfmrDC->alloc();
         }
-        else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed) {
+        else if (model.solutionType == SolutionType::stSunRed) {
             sunred.buildTree(model.srTreeInstructions, this);
             sunred.allocDC();
         }
@@ -38,13 +38,13 @@ void ComponentSubCircuit::allocForReductionDC() {
 void ComponentSubCircuit::allocForReductionAC() {
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix || model.solutionType == ModelSubCircuit::SolutionType::stSunRed) {
-        if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix) {
+    if (model.solutionType == SolutionType::stFullMatrix || model.solutionType == SolutionType::stSunRed) {
+        if (model.solutionType == SolutionType::stFullMatrix) {
             if (!sfmrAC)
                 sfmrAC = std::make_unique<SubCircuitFullMatrixReductorAC>(this);
             sfmrAC->alloc();
         }
-        else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed) {
+        else if (model.solutionType == SolutionType::stSunRed) {
             sunred.allocAC();
         }
     }

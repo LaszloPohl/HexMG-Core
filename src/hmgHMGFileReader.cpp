@@ -377,6 +377,11 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", nForwardedONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", nControlInternalNodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VAR", nInternalVars));
+        else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
+            solutionType = stSunRed;
+            lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            solutionDescriptionIndex = globalNames.sunredTreeNames.at(lineToken.getActToken());
+        }
         else
             throw hmgExcept("HMGFileModelDescription::Read", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if(!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
@@ -502,7 +507,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             pxline->instanceOfWhat = itNone;
             pxline->indexOfTypeInGlobalContainer = bimtSize;
 
-            uns nodenum = 2, parnum = 1;
+            uns nodenum = 2, parnum = 1, funcnum = 0;
             if (strcmp(token, "MODEL") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 pxline->instanceOfWhat = itModel;
@@ -516,17 +521,17 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 isController = mod.modelType == hfmtController;
             }
             else if (strcmp(token,  "R") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_1; }
-            else if (strcmp(token, "R2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_2; parnum = 1; }
+            else if (strcmp(token, "R2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_2; parnum = 2; }
             else if (strcmp(token,  "G") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstG_1; }
-            else if (strcmp(token, "G2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstG_2; parnum = 1; }
+            else if (strcmp(token, "G2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstG_2; parnum = 2; }
             else if (strcmp(token,  "C") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstC_1; }
-            else if (strcmp(token, "C2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstC_2; parnum = 1; }
-            else if (strcmp(token,  "I") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_1; }
-            else if (strcmp(token, "I2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_2; parnum = 1; }
+            else if (strcmp(token, "C2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstC_2; parnum = 2; }
+            else if (strcmp(token,  "I") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_1; parnum = 4; }
+            else if (strcmp(token, "I2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_2; parnum = 5; }
 
             // read nodes and parameters
             
-            if (pxline->indexOfTypeInGlobalContainer != itNone) {
+            if (pxline->instanceOfWhat != itNone) {
                 for (uns i = 0; i < nodenum; i++) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     pxline->nodes.emplace_back(SimpleNodeID());
@@ -534,32 +539,69 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
                 for (uns i = 0; i < parnum; i++) {
-                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     pxline->params.emplace_back(ParameterInstance());
+                }
+                for (uns i = 0; i < parnum; i++) { // the actual number of parameters can be less than the formal parameter number, the missing parameters are 0 values
+                    if (lineToken.isSepEOL)
+                        break;
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (strcmp(token, "DEFAULTRAIL") == 0)
+                        break;
+                    if (pxline->indexOfTypeInGlobalContainer == bimtConstI_1 || pxline->indexOfTypeInGlobalContainer == bimtConstI_2) {
+                        uns index = parnum;
+                        if (     strcmp(token, "DC0") == 0) index = 0;
+                        else if (strcmp(token, "DC")  == 0) index = 1;
+                        else if (strcmp(token, "AC")  == 0) index = 2;
+                        else if (strcmp(token, "PHI") == 0) index = 3;
+                        else if (strcmp(token, "MUL") == 0) index = 4; // for bimtConstI_1 index = 4 == parnum => the error is handled in the next if-else section => it cannot be in an else branch
+                        if (index < parnum) {
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (isalpha(token[0])) { // parameter / variable / node
+                                if (!textToSimpleNodeID(token, pxline->params[index].param))
+                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            else { // value
+                                double val = 0;
+                                if (sscanf_s(token, "%lg", &val) != 1)
+                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                pxline->params[index].value = (rvt)val;
+                            }
+                            continue;
+                        }
+                    }
+                    // this part cannot be put in else section ! (see above):
                     if (isalpha(token[0])) { // parameter / variable / node
-                        if (!textToSimpleNodeID(token, pxline->params.back().param))
+                        if (!textToSimpleNodeID(token, pxline->params[i].param))
                             throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     }
                     else { // value
                         double val = 0;
                         if (sscanf_s(token, "%lg", &val) != 1)
                             throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                        pxline->params.back().value = (rvt)val;
-
+                        pxline->params[i].value = (rvt)val;
                     }
+                }
+                for (uns i = 0; i < funcnum; i++) {
+                    TODO("Read function calls");
                 }
             }
 
             if (!lineToken.isSepEOL) {
-                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                if (strcmp(token, "DEFAULTRAIL") == 0) {
+                bool isDefRail = (strcmp(token, "DEFAULTRAIL") == 0);
+                if (!isDefRail) { // for e.g. current source the parameters can be less than the formal number of paramteres
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    isDefRail = (strcmp(token, "DEFAULTRAIL") == 0);
+                }
+                if (isDefRail) {
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     SimpleNodeID rail;
                     if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     pxline->isDefaultRail = true;
                     pxline->defaultRailIndex = rail.index;
                 }
-
+                else
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised line ending (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             }
 
             // controller instance or node instance => setting instance index

@@ -274,10 +274,6 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
     hmgSunred::ReductionTreeInstructions srTreeInstructions;
     //***********************************************************************
 
-public:
-    //***********************************************************************
-    enum SolutionType{ stFullMatrix, stSunRed, stMultiGrid };
-    //***********************************************************************
 private:
     //***********************************************************************
     SolutionType solutionType;

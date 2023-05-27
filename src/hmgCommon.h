@@ -76,6 +76,11 @@ struct SimpleNodeID {
 
 
 //***********************************************************************
+enum SolutionType { stFullMatrix, stSunRed, stMultiGrid };
+//***********************************************************************
+
+
+//***********************************************************************
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
     bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
     bimtConst_V_Controlled_I, bimtGirator, bimtConstV, bimtSize }; // bimtSize have to be the last one

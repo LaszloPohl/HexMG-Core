@@ -2112,25 +2112,25 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
 //***********************************************************************
 inline rvt ComponentSubCircuit::getJreducedDC(uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrDC->JRED.size() ? sfmrDC->JRED[y] : rvt0;
     return rvt0;
 }
 inline rvt ComponentSubCircuit::getYDC(uns y, uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? sfmrDC->YRED.get_elem(y, x) : rvt0;
     return rvt0;
 }
 inline cplx ComponentSubCircuit::getJreducedAC(uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrAC->JRED.size() ? sfmrAC->JRED[y] : cplx0;
     return cplx0;
 }
 inline cplx ComponentSubCircuit::getYAC(uns y, uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrAC->YRED.get_row() && x < sfmrAC->YRED.get_col() ? sfmrAC->YRED.get_elem(y, x) : cplx0;
     return cplx0;
 }
@@ -2144,9 +2144,9 @@ inline void ComponentSubCircuit::forwsubsDC() {
     for (auto& comp : components)
         if (comp->isEnabled) comp->forwsubs(true);
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         sfmrDC->forwsubs();
-    else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
+    else if (model.solutionType == SolutionType::stSunRed)
         sunred.forwsubsDC();
 }
 
@@ -2157,9 +2157,9 @@ inline void ComponentSubCircuit::backsubsDC() {
 // UA is input in subcircuits, it must be set with setV before calling its backsubs
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         sfmrDC->backsubs();
-    else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
+    else if (model.solutionType == SolutionType::stSunRed)
         sunred.backsubsDC();
     for (auto& comp : components)
         if (comp->isEnabled) comp->backsubs(true);
@@ -2173,9 +2173,9 @@ inline void ComponentSubCircuit::forwsubsAC() {
     for (auto& comp : components)
         if (comp->isEnabled) comp->forwsubs(false);
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         sfmrAC->forwsubs();
-    else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
+    else if (model.solutionType == SolutionType::stSunRed)
         sunred.forwsubsAC();
 }
 
@@ -2186,9 +2186,9 @@ inline void ComponentSubCircuit::backsubsAC() {
 // UA is input in subcircuits, it must be set with setV before calling its backsubs
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == ModelSubCircuit::SolutionType::stFullMatrix)
+    if (model.solutionType == SolutionType::stFullMatrix)
         sfmrAC->backsubs();
-    else if (model.solutionType == ModelSubCircuit::SolutionType::stSunRed)
+    else if (model.solutionType == SolutionType::stSunRed)
         sunred.backsubsAC();
     for (auto& comp : components)
         if (comp->isEnabled) comp->backsubs(false);
