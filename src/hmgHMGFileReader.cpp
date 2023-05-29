@@ -275,6 +275,35 @@ label_NR:
 
 
 //***********************************************************************
+bool GlobalHMGFileNames::textToProbeNodeID(char* token, uns fullCircuitIndex, ProbeNodeID& dest) {
+//***********************************************************************
+    uns componentIndex = 0;
+    HMGFileModelDescription* currentComponent = modelData[fullCircuitData[fullCircuitIndex]->modelID];
+    while (true) {
+        uns i = 0;
+        while (token[i] != '\0' && token[i] != '.')
+            i++;
+        if (token[i] == '.') {
+            token[i] = '\0';
+            if (currentComponent == nullptr || componentIndex >= probeMaxComponentLevel)
+                return false;
+            uns ci = dest.componentID[componentIndex] = currentComponent->instanceListIndex[token];
+            HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+            currentComponent = pxline->instanceOfWhat == itModel ? modelData[pxline->indexOfTypeInGlobalContainer] : nullptr;
+            token[i] = '.';
+            componentIndex++;
+            token += i + 1;
+        }
+        else {
+            if (!textToSimpleNodeID(token, dest.nodeID))
+                return false;
+            return true;
+        }
+    }
+}
+
+
+//***********************************************************************
 void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
 //***********************************************************************
     char line[MAX_LINE_LENGHT];
@@ -335,11 +364,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
 
     // read model name
 
-    if (lineToken.isSepEOL || lineToken.isSepOpeningBracket)
-        throw hmgExcept("HMGFileModelDescription::Read", "missing .MODEL name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-        throw hmgExcept("HMGFileModelDescription::Read", "simple .MODEL name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     fullName = lineToken.getActToken();
 
     if (globalNames.modelNames.contains(fullName))
@@ -490,7 +515,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
         }
         else {
             HMGFileComponentInstanceLine* pxline = new HMGFileComponentInstanceLine;
-            itemList.push_back(pxline);
+            instanceList.push_back(pxline);
 
             lineToken.init(line);
 
@@ -618,6 +643,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 pxline->instanceIndex = (uns)componentInstanceNameIndex.size();
                 componentInstanceNameIndex[instanceName] = pxline->instanceIndex;
             }
+            instanceListIndex[instanceName] = (uns)instanceListIndex.size();
         }
     } while (isModelNotEnded);
 }
@@ -881,32 +907,32 @@ void HMGFileModelDescription::ProcessXLines() {
 //***********************************************************************
 void HMGFileModelDescription::ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {
 //***********************************************************************
-    for (HMGFileListItem* pItem : (pItemList== nullptr ? itemList : *pItemList)) {
-        switch (pItem->getItemType()) {
-            case itNone: break;
-            case itComponentInstance: {
-                HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
+//    for (HMGFileListItem* pItem : (pItemList== nullptr ? itemList : *pItemList)) {
+//        switch (pItem->getItemType()) {
+//            case itNone: break;
+//            case itComponentInstance: {
+//                HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
 ///                    for (auto& it : pInstance->valueExpression.theExpression) {
 ///                        if (!identifyExpressionNodeOrPar(it))
 ///                            throw hmgExcept("SpiceComponentTemplateLine::ProcessExpressionNames", "unknown identifier (%s) in %s, line %u: %s", 
 ///                                it.name.c_str(), pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, pInstance->theLine.c_str());
 ///                    }
-                }
-                break;
-            case itModel: static_cast<HMGFileModelDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
+//                }
+//                break;
+//            case itModel: static_cast<HMGFileModelDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
 ///            case itComponentTemplate: static_cast<SpiceComponentTemplateLine*>(pItem)->ProcessExpressionNames(); break;
-            case itBuiltInComponentType: break;
+//            case itBuiltInComponentType: break;
 ///            case itController: static_cast<SpiceControllerDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
-            case itExpression: {
-                    SpiceExpressionLine* pExpression = static_cast<SpiceExpressionLine*>(pItem);
-                    for (auto& it : pExpression->theExpression.theExpression) {
+///            case itExpression: {
+///                    SpiceExpressionLine* pExpression = static_cast<SpiceExpressionLine*>(pItem);
+///                    for (auto& it : pExpression->theExpression.theExpression) {
 ///                        if (!identifyExpressionNodeOrPar(it))
 ///                            throw hmgExcept("SpiceComponentTemplateLine::ProcessExpressionNames", "unknown identifier (%s) in %s", it.name.c_str(), pExpression->fullName.c_str());
-                    }
-                }
-                break;
-        }
-    }
+///                    }
+///                }
+///                break;
+//        }
+//    }
 }
 
 
@@ -915,7 +941,7 @@ void HMGFileRails::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
 
-    // read subcircuit head (if not the global circuit is readed)
+    // read Rails head
 
     lineToken.init(line);
     const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -943,25 +969,161 @@ void HMGFileRails::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     // read rail values
 
     while (!lineToken.isSepEOL) {
-        if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-            throw hmgExcept("HMGFileRails::Read", "invalid rail id: %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        if (lineToken.getActToken()[0] != 'R')
-            throw hmgExcept("HMGFileRails::Read", "invalid rail id, Rnumber expected: %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        
-        uns railIndex = 0;
-        if (sscanf_s(lineToken.getActToken() + 1, "%u", &railIndex) != 1)
-            throw hmgExcept("HMGFileRails::Read", "rail index is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        SimpleNodeID nid;
+        if (!textToSimpleNodeID(token, nid))
+            throw hmgExcept("HMGFileRails::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        if (nid.type != nvtRail)
+            throw hmgExcept("HMGFileRails::Read", "not a rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        uns railIndex = nid.index;
         if(railIndex > globalNRails)
             throw hmgExcept("HMGFileRails::Read", "rail index must be <= the number of rails (%u), %s arrived (%s) in %s, line %u", globalNRails, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         
         rvt value = rvt0;
         uns position = 0;
-        if (lineToken.isSepEOL)
-            throw hmgExcept("HMGFileRails::Read", "R%u=rail value expected, end of line arrived (%s) in %s, line %u", railIndex, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (!spiceTextToRvt(lineToken.getActToken(), position, value))
             throw hmgExcept("HMGFileRails::Read", "R%u=rail value expected, %s arrived (%s) in %s, line %u", railIndex, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         railValues.push_back(std::pair<uns, rvt>(railIndex, value));
+    }
+}
+
+
+//***********************************************************************
+void HMGFileCreate::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read Create head
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".CREATE") != 0)
+        throw hmgExcept("HMGFileCreate::Read", ".CREATE expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // FullCircuit name
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (globalNames.fullCircuitNames.contains(token))
+        throw hmgExcept("HMGFileCreate::Read", ".CREATE %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    fullCircuitIndex = (uns)globalNames.fullCircuitNames.size();
+    globalNames.fullCircuitNames[token] = fullCircuitIndex;
+    vectorForcedSet(globalNames.fullCircuitData, this, fullCircuitIndex);
+
+    // model ID
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    try { modelID = globalNames.modelNames.at(token); }
+    catch (const std::out_of_range&) {
+        throw hmgExcept("HMGFileCreate::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+    const HMGFileModelDescription& mod = *globalNames.modelData[modelID];
+    if (mod.modelType != HMGFileModelDescription::hfmtSubcircuit)
+        throw hmgExcept("HMGFileCreate::Read", "the created model (%s) must be SUBCIRCUIT in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+    // GND
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (strcmp(token, "GND") != 0)
+        throw hmgExcept("HMGFileCreate::Read", "GND expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    SimpleNodeID nid;
+    if (!textToSimpleNodeID(token, nid))
+        throw hmgExcept("HMGFileCreate::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    if(nid.type != nvtRail)
+        throw hmgExcept("HMGFileCreate::Read", "not a rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    GND = nid.index;
+}
+
+
+//***********************************************************************
+void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool isContinue) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read probe head
+
+    lineToken.init(line);
+    char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".PROBE") != 0)
+        throw hmgExcept("HMGFileCreate::Read", ".PROBE expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // probe name
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if(globalNames.probeNames.contains(token) != isContinue)
+        throw hmgExcept("HMGFileCreate::Read", "Program error: globalNames.probeNames.contains(token) != isContinue");
+    if (!isContinue) {
+        probeIndex = (uns)globalNames.probeNames.size();
+        globalNames.probeNames[token] = probeIndex;
+        vectorForcedSet(globalNames.probeData, this, probeIndex);
+
+        // probe type
+
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+        if (     strcmp(token, "V"      ) == 0) probeType = ptV;
+        else if (strcmp(token, "I"      ) == 0) probeType = ptI;
+        else if (strcmp(token, "SUM"    ) == 0) probeType = ptSum;
+        else if (strcmp(token, "AVERAGE") == 0) probeType = ptAverage;
+        else
+            throw hmgExcept("HMGFileCreate::Read", "Unknown probe type (%s) in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+        // fullCircuit
+
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        try { fullCircuitID = globalNames.fullCircuitNames.at(token); }
+        catch (const std::out_of_range&) {
+            throw hmgExcept("HMGFileCreate::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+    }
+    else {
+
+        // probe type
+
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (strcmp(token, "V") == 0) {
+            if(probeType != ptV)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "I") == 0) {
+            if (probeType != ptI)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "SUM") == 0) {
+            if (probeType != ptSum)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "AVERAGE") == 0) {
+            if (probeType != ptAverage)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+
+        // fullCircuit
+
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        uns newFullCircID;
+        try { newFullCircID = globalNames.fullCircuitNames.at(token); }
+        catch (const std::out_of_range&) {
+            throw hmgExcept("HMGFileCreate::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        if (newFullCircID != fullCircuitID)
+            throw hmgExcept("HMGFileCreate::Read", "A different full circuit ID than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+
+    while (!lineToken.isSepEOL) {
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        ProbeNodeID pnid;
+        if(!globalNames.textToProbeNodeID(token, fullCircuitID, pnid))
+            throw hmgExcept("HMGFileCreate::Read", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        nodes.push_back(pnid);
     }
 }
 
@@ -1102,18 +1264,32 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 HMGFileModelDescription* pModel = new HMGFileModelDescription;
                 itemList.push_back(pModel);
                 pModel->Read(reader, line, lineInfo);
-///                vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex);
+            }
+            else if (strcmp(token, ".PROBE") == 0) {
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if (globalNames.probeNames.contains(token)) {
+                    globalNames.probeData[globalNames.probeNames[token]]->Read(reader, line, lineInfo, true);
+                }
+                else {
+                    HMGFileProbe* pCreate = new HMGFileProbe;
+                    itemList.push_back(pCreate);
+                    pCreate->Read(reader, line, lineInfo, false);
+                }
             }
             else if (strcmp(token, ".SUNREDTREE") == 0) {
                 HMGFileSunredTree* psunredtree = new HMGFileSunredTree;
                 itemList.push_back(psunredtree);
                 psunredtree->Read(reader, line, lineInfo);
-                ///                vectorForcedSet(globalNames.subcktData, psubckt, psubckt->subcktIndex);
             }
             else if (strcmp(token, ".RAILS") == 0) {
                 HMGFileRails* pRails = new HMGFileRails;
                 itemList.push_back(pRails);
                 pRails->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".CREATE") == 0) {
+                HMGFileCreate* pCreate = new HMGFileCreate;
+                itemList.push_back(pCreate);
+                pCreate->Read(reader, line, lineInfo);
             }
             else if (strcmp(token, ".END") == 0) {  // global only
                 isStop = true;
@@ -1218,39 +1394,10 @@ void HMGFileModelDescription::toInstructionStream(InstructionStream& iStream) {
     //if (!probeNames.getIsEmpty())               iStream.add(new IsSetContainerSizeInstruction(sitSetProbeContainerSize,         probeNames.getLastIndex() + 1));
     //if (!forwardedNames.getIsEmpty())           iStream.add(new IsSetContainerSizeInstruction(sitSetForwardedContainerSize,     forwardedNames.getLastIndex() + 1));
 
-    for (HMGFileListItem* it : itemList)
-        it->toInstructionStream(iStream);
+    //for (HMGFileListItem* it : itemList)
+    //    it->toInstructionStream(iStream);
 
     iStream.add(new IsEndDefInstruction(sitEndDefSubckt, modelIndex));
-}
-
-
-//***********************************************************************
-void SpiceExpressionLine::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
-//***********************************************************************
-    LineTokenizer lineToken;
-
-    lineToken.init(line);
-    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (strcmp(token, ".EXPRESSION") != 0)
-        throw hmgExcept("SpiceExpressionLine::Read", ".EXPRESSION expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-
-    // read expression name
-
-    if (lineToken.isSepEOL || lineToken.isSepOpeningBracket || lineToken.isSepComma)
-        throw hmgExcept("SpiceExpressionLine::Read", "missing .EXPRESSION name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-        throw hmgExcept("SpiceExpressionLine::Read", "simple .EXPRESSION name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    fullName = lineToken.getActToken();
-///    if (!globalNames.expressionNames.add(fullName, expressionIndex))
-///        throw hmgExcept("SpiceExpressionLine::Read", ".EXPRESSION %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-
-    // the expression
-
-    token = lineToken.getRestOfTheLine();
-    if (!theExpression.buildFromString(token))
-        throw hmgExcept("SpiceExpressionLine::Read", "invalid expression: %s in %s, line %u: %s)", 
-            theExpression.errorMessage.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, lineToken.getLine());
 }
 
 

@@ -55,6 +55,7 @@ inline constexpr int returnInstructionID = 1'000'000'000;
 inline constexpr uns unsMax = ~uns(0);
 inline constexpr uns externalNodeFlag = uns(1 << 30);
 inline constexpr uns maxRails = 1'048'576;
+inline constexpr uns probeMaxComponentLevel = 3; // if changed, ProbeNodeID::componentID default values must be set
 //***********************************************************************
 
 
@@ -123,8 +124,8 @@ enum ExpressionAndComponentType {
 //***********************************************************************
 enum HMGFileInstructionType {
 //***********************************************************************
-    itNone, itComponentInstance, itModel, itSunredTree, itRail,
-    itExpression, itGlobal, itBuiltInComponentType
+    itNone, itGlobal, itComponentInstance, itModel, itSunredTree, itRail, itCreate,
+    itBuiltInComponentType, itProbe
 };
 
 
@@ -280,9 +281,15 @@ inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
 }
 
 
-
-
 //***********************************************************************
+struct ProbeNodeID {
+//***********************************************************************
+    SimpleNodeID nodeID;
+    uns componentID[probeMaxComponentLevel] = { unsMax, unsMax, unsMax };
+};
+
+
+
 #define HMG_DEBUGPRINT
 //***********************************************************************
 

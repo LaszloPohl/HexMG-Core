@@ -104,7 +104,7 @@ public:
     //***********************************************************************
     const char* getLine()const { return pLine; }
     //***********************************************************************
-    const char* getNextToken(const char* fileName, unsigned lineNumber) {
+    char* getNextToken(const char* fileName, unsigned lineNumber) {
     // from position the alphanum chars + specCharsOfNames, skips starting
     // separators
     //***********************************************************************
