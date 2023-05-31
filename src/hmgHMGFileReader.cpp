@@ -65,6 +65,7 @@ void ReadALine::appendLine(char* result, unsigned resultSize, LineInfo& lineInfo
     }
     actLine++;
     bool isNotFinished = true, isPeek = true;
+    bool inQuote = false;
     enum States { stStart, stEOF, stEOL, stCommentLine };
     States st = stStart;
     while (isNotFinished) {
@@ -73,6 +74,10 @@ void ReadALine::appendLine(char* result, unsigned resultSize, LineInfo& lineInfo
             st = stEOF;
         else if (ch == '\n')
             st = stEOL;
+        if (ch == '\"')
+            inQuote = !inQuote;
+        if (!inQuote)
+            ch = toupper(ch);
         switch (st) {
             case stStart:
                 if (isspace(ch) || ch == '*' || ch == ';') {
@@ -146,6 +151,7 @@ bool ReadALine::getLine(char* result, unsigned resultSize, LineInfo& lineInfo, b
         }
     }
     bool isNotFinished = true;
+    bool inQuote = false;
     actLine++;
     enum States{ stStart, stEOF, stEOL, stCommentLine, stNormalRead, stSpace, stIncludeCheck };
     States st = isContinue ? stNormalRead :stStart;
@@ -157,7 +163,10 @@ bool ReadALine::getLine(char* result, unsigned resultSize, LineInfo& lineInfo, b
             st = stEOF;
         else if (ch == '\n')
             st = stEOL;
-        ch = toupper(ch);
+        if (ch == '\"')
+            inQuote = !inQuote;
+        if (!inQuote)
+            ch = toupper(ch);
         switch (st) {
             case stStart:
                 if (isspace(ch) || ch == '*' || ch == ';')
@@ -277,6 +286,10 @@ label_NR:
 //***********************************************************************
 bool GlobalHMGFileNames::textToProbeNodeID(char* token, uns fullCircuitIndex, ProbeNodeID& dest) {
 //***********************************************************************
+    if (strcmp(token, "0") == 0) {
+        dest.nodeID.index = unsMax;
+        return true;
+    }
     uns componentIndex = 0;
     HMGFileModelDescription* currentComponent = modelData[fullCircuitData[fullCircuitIndex]->modelID];
     while (true) {
@@ -1105,6 +1118,8 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
             if (probeType != ptAverage)
                 throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
+        else
+            throw hmgExcept("HMGFileCreate::Read", "Unknown probe type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
         // fullCircuit
 
@@ -1124,6 +1139,131 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         if(!globalNames.textToProbeNodeID(token, fullCircuitID, pnid))
             throw hmgExcept("HMGFileCreate::Read", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         nodes.push_back(pnid);
+    }
+}
+
+
+//***********************************************************************
+void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read Run head
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".RUN") != 0)
+        throw hmgExcept("HMGFileRun::Read", ".RUN expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // fullCircuitID
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    try { fullCircuitID = globalNames.fullCircuitNames.at(token); }
+    catch (const std::out_of_range&) {
+        throw hmgExcept("HMGFileRun::Read", "unrecognised full circuit name (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+
+    // analysisType
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    if (strcmp(token, "DC") == 0) analysisType = atDC;
+    else if (strcmp(token, "TIMESTEP") == 0) analysisType = atTimeStep;
+    else if (strcmp(token, "AC") == 0) analysisType = atAC;
+    else if (strcmp(token, "TIMECONST") == 0) { analysisType = atTimeConst; iterNumSPD = 5; }
+    else
+        throw hmgExcept("HMGFileRun::Read", "unrecognised analysis type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+    while (!lineToken.isSepEOL) {
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (strcmp(token, "INITIAL") == 0) isInitial = true;
+        else if (strcmp(token, "ITER") == 0) iterNumSPD = 1;
+        else if (strcmp(token, "ITERS") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if(sscanf_s(token, "%u", &iterNumSPD) != 1)
+                throw hmgExcept("HMGFileRun::Read", "unrecognised ITERS number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "PRE") == 0) isPre = true;
+        else if (strcmp(token, "ERR") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!spiceTextToRvt(token, err))
+                throw hmgExcept("HMGFileRun::Read", "unrecognised ERR value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "T") == 0) {
+            isDT = false;
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!spiceTextToRvt(token, fTauDtT))
+                throw hmgExcept("HMGFileRun::Read", "unrecognised T value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "DT") == 0) {
+            isDT = true;
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!spiceTextToRvt(token, fTauDtT))
+                throw hmgExcept("HMGFileRun::Read", "unrecognised DT value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "TAU") == 0) {
+            isTau = true;
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!spiceTextToRvt(token, fTauDtT))
+                throw hmgExcept("HMGFileRun::Read", "unrecognised TAU value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "F") == 0) {
+            isTau = false;
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!spiceTextToRvt(token, fTauDtT))
+                throw hmgExcept("HMGFileRun::Read", "unrecognised F value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "SPD") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(token, "%u", &iterNumSPD) != 1)
+                throw hmgExcept("HMGFileRun::Read", "unrecognised SPD number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else
+            throw hmgExcept("HMGFileRun::Read", "Unknown RUN specifier (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+}
+
+
+//***********************************************************************
+void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read Run head
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".SAVE") != 0)
+        throw hmgExcept("HMGFileRun::Read", ".RUN expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // save types and filename
+
+    while (true) {
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (strcmp(token, "RAW") == 0) isRaw = true;
+        else if (strcmp(token, "APPEND") == 0) isAppend = true;
+        else if (strcmp(token, "FILE") == 0) {
+            if(!lineToken.getQuotedText())
+                throw hmgExcept("HMGFileRun::Read", "cannot find filename in \"\" in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            fileName = token; // token points to lineToken.token
+            break;
+        }
+        else
+        if(lineToken.isSepEOL)
+            throw hmgExcept("HMGFileRun::Read", "cannot find FILE= in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+
+    // probes
+
+    while (!lineToken.isSepEOL) {
+        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        probeIDs.push_back(globalNames.probeNames.at(token));
     }
 }
 
@@ -1291,10 +1431,20 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 itemList.push_back(pCreate);
                 pCreate->Read(reader, line, lineInfo);
             }
-            else if (strcmp(token, ".END") == 0) {  // global only
+            else if (strcmp(token, ".RUN") == 0) {
+                HMGFileRun* pRun = new HMGFileRun;
+                itemList.push_back(pRun);
+                pRun->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".SAVE") == 0) {
+                HMGFileSave* pSave = new HMGFileSave;
+                itemList.push_back(pSave);
+                pSave->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".END") == 0) {
                 isStop = true;
             }
-            else if (strcmp(token, ".REPLACE") == 0) { // global only
+/*///            else if (strcmp(token, ".REPLACE") == 0) {
                 // az eredeti komponens NameToIndex-eit használja, így akárhány replace után is ugyanarra a névre ugyanazt az indexet adja, 
                 // de amúgy üresen indul
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1302,7 +1452,7 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 while (*token == ':')token++;
                 // subcktNames, controllerNames, componentTemplateNames, modelNames
                 unsigned index;
-/*///                if ((index = globalNames.subcktNames.find(token)) != 0) {
+                if ((index = globalNames.subcktNames.find(token)) != 0) {
                     SpiceSubcktDescription* psubckt = new SpiceSubcktDescription;
                     itemList.push_back(psubckt);
                     psubckt->Replace(globalNames.subcktData[index], reader, line, lineInfo);
@@ -1325,8 +1475,8 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 }
                 else
                     throw hmgExcept("HMGFileGlobalDescription::Read", "unrecognised .REPLACE name (%s) arrived in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-*///
             }
+*///            
             else
                 throw hmgExcept("HMGFileGlobalDescription::Read", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }

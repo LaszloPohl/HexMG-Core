@@ -129,6 +129,14 @@ inline bool spiceTextToRvt(const char* text, uns& position, rvt& value) {
 
 
 //***********************************************************************
+inline bool spiceTextToRvt(const char* text,rvt& value) {
+//***********************************************************************
+    uns pos = 0;
+    return spiceTextToRvt(text, pos, value);
+}
+
+
+//***********************************************************************
 inline bool textToSimpleNodeID(const char* text, uns& position, SimpleNodeID& result) {
 //***********************************************************************
     switch (text[position]) {
@@ -316,8 +324,8 @@ public:
 //***********************************************************************
 struct HMGFileSunredTree;
 struct HMGFileModelDescription;
-struct SpiceSubcktDescription;
-struct SpiceControllerDescription;
+struct HMGFileProbe;
+struct HMGFileCreate;
 //***********************************************************************
 
 
@@ -327,6 +335,11 @@ struct GlobalHMGFileNames {
     std::map<std::string, uns> modelNames, sunredTreeNames, varNames, functionNames, probeNames, fullCircuitNames;
     std::vector<HMGFileSunredTree*> sunredTreeData;
     std::vector<HMGFileModelDescription*> modelData;
+    std::vector<HMGFileProbe*> probeData;
+    std::vector<HMGFileCreate*> fullCircuitData;
+    //***********************************************************************
+    bool textToProbeNodeID(char* token, uns fullCircuitIndex, ProbeNodeID& dest);
+    //***********************************************************************
 };
 
 
@@ -386,15 +399,16 @@ struct HMGFileModelDescription: HMGFileListItem {
     //***********************************************************************
     uns nParams = 0;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object
-    std::list< HMGFileListItem* > itemList;
+    std::vector< HMGFileComponentInstanceLine* > instanceList;
     std::map<std::string, uns> componentInstanceNameIndex;
     std::map<std::string, uns> controllerInstanceNameIndex;
+    std::map<std::string, uns> instanceListIndex;
     std::vector<std::tuple<uns, NodeVarType, uns, uns>> defaults; // <rail, type, start_index, stop_index>
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
 
     //***********************************************************************
-    void clear() { for (auto it : itemList) delete it; itemList.clear(); }
+    void clear() { for (auto it : instanceList) delete it; instanceList.clear(); }
     ~HMGFileModelDescription() { clear(); }
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileModelDescription*, ReadALine&, char*, LineInfo&);
@@ -439,20 +453,6 @@ struct HMGFileModelDescription: HMGFileListItem {
 
 
 //***********************************************************************
-struct SpiceExpressionLine: HMGFileListItem {
-//***********************************************************************
-    std::string fullName;
-    uns expressionIndex;
-    SpiceExpression theExpression;
-
-    SpiceExpressionLine() :expressionIndex{ 0 } {}
-    void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itExpression; }
-    void toInstructionStream(InstructionStream& iStream)override { theExpression.toInstructionStream(iStream, expressionIndex); }
-};
-
-
-//***********************************************************************
 struct HMGFileSunredTree: HMGFileListItem {
 //***********************************************************************
     //***********************************************************************
@@ -492,6 +492,67 @@ struct HMGFileRails: HMGFileListItem {
 
     void Read(ReadALine&, char*, LineInfo&);
     HMGFileInstructionType getItemType()const override { return itRail; }
+    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+};
+
+
+//***********************************************************************
+struct HMGFileCreate: HMGFileListItem {
+//***********************************************************************
+    uns fullCircuitIndex = 0;
+    uns modelID = 0;
+    uns GND = 0; // Rail ID
+
+    void Read(ReadALine&, char*, LineInfo&);
+    HMGFileInstructionType getItemType()const override { return itCreate; }
+    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+};
+
+
+//***********************************************************************
+struct HMGFileProbe: HMGFileListItem {
+//***********************************************************************
+    enum ProbeType { ptV, ptI, ptSum, ptAverage };
+    uns probeIndex = 0;
+    uns probeType = ptV;
+    uns fullCircuitID = 0;
+    std::vector<ProbeNodeID> nodes;
+
+    void Read(ReadALine&, char*, LineInfo&, bool);
+    HMGFileInstructionType getItemType()const override { return itProbe; }
+    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+};
+
+
+//***********************************************************************
+struct HMGFileRun: HMGFileListItem {
+//***********************************************************************
+    uns fullCircuitID = 0;
+    AnalysisType analysisType = atDC;
+    bool isInitial = false;
+    bool isPre = false; // successive approximation
+    bool isDT = false;  // TIMESTEP: T or DT
+    bool isTau = false; // fTau is f or tau (f=1/(2*PI*TAU))
+    uns iterNumSPD = 0; // DC/TIMESTEP: number of iteration steps, if 0 => until convergence; TIMECONST: STEP PER DECADE
+    rvt err = 0.0001;
+    rvt fTauDtT = 1;
+
+    void Read(ReadALine&, char*, LineInfo&);
+    HMGFileInstructionType getItemType()const override { return itCreate; }
+    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+};
+
+
+//***********************************************************************
+struct HMGFileSave: HMGFileListItem {
+//***********************************************************************
+    bool isRaw = false;
+    bool isAppend = false;
+    std::string fileName;
+    std::vector<uns> probeIDs;
+
+    void Read(ReadALine&, char*, LineInfo&);
+    HMGFileInstructionType getItemType()const override { return itCreate; }
     void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
 };
 

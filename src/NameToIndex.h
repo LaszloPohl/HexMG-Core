@@ -34,7 +34,7 @@ class LineTokenizer {
     bool isSpecialExpressionToken = false;
     enum SpecExprTokenType{ setttNone, settVFirst, settVComma, settVSecond, settVClose };
     SpecExprTokenType specExprToken = setttNone;
-    inline static const char* const specCharsOfNames = "_.:@$";
+    inline static const char* const specCharsOfNames = "_.:@$+-";
     //***********************************************************************
     static bool isSpecChar(char ch, bool isExcept_ = false) {
     //***********************************************************************
@@ -164,6 +164,12 @@ public:
             position++;
         setIsSeparators();
         return rv;
+    }
+    //***********************************************************************
+    bool getQuotedText() {
+    //***********************************************************************
+        const char* temp;
+        return getQuotedText(temp);
     }
 
     //***********************************************************************
