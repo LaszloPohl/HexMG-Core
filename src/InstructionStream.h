@@ -94,25 +94,15 @@ struct IsDefRailValueInstruction: public IsInstruction {
 struct IsDefModelSubcircuitInstruction: public IsInstruction {
 //***********************************************************************
     uns index = 0;
-    //***********************************************************************
-    // External nodes:
-    uns nIONodes = 0;
-    uns nNormalINodes = 0;
-    uns nControlNodes = 0;
-    uns nNormalONodes = 0;
-    uns nForwardedONodes = 0;
+    ExternalConnectionSizePack externalNs;
     uns sumExternalNodes = 0;
-    // Internal nodes:
-    uns nNormalInternalNodes = 0;
-    uns nControlInternalNodes = 0;
-    uns nInternalVars = 0;
+    InternalNodeVarSizePack internalNs;
     uns sumInternalNodes = 0;
-    //***********************************************************************
-    uns nParams = 0;
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
-    IsDefModelSubcircuitInstruction(unsigned indx, unsigned nNormal, unsigned nControl, unsigned nPar)
-        :IsInstruction{ sitDefModelSubcircuit }, index{ indx }, nNormalNode{ nNormal }, nControlNode{ nControl }, nParams{ nPar } {}
+    IsDefModelSubcircuitInstruction(uns index_, ExternalConnectionSizePack externalNs_, uns sX, InternalNodeVarSizePack internalNs_, uns sI, SolutionType solutionType_, uns sdi)
+        :IsInstruction{ sitDefModelSubcircuit }, index{ index_ }, externalNs{ externalNs_ }, sumExternalNodes{ sX }, 
+        internalNs{ internalNs_ }, sumInternalNodes{ sI }, solutionType{ solutionType_ }, solutionDescriptionIndex{ sdi } {}
 };
 
 

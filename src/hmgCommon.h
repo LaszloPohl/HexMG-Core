@@ -229,6 +229,29 @@ struct ProbeUnit {
 
 
 //***********************************************************************
+struct ExternalConnectionSizePack {
+//***********************************************************************
+    uns nIONodes = 0;
+    uns nNormalINodes = 0;
+    uns nControlINodes = 0;
+    uns nNormalONodes = 0;
+    uns nForwardedONodes = 0;
+    uns nParams = 0;
+    void zero() { nIONodes = nNormalINodes = nControlINodes = nNormalONodes = nForwardedONodes = nParams = 0; }
+};
+
+
+//***********************************************************************
+struct InternalNodeVarSizePack {
+//***********************************************************************
+    uns nNormalInternalNodes = 0;
+    uns nControlInternalNodes = 0;
+    uns nInternalVars = 0;
+    void zero() { nNormalInternalNodes = nControlInternalNodes = nInternalVars = 0; }
+};
+
+
+//***********************************************************************
 struct ReductionInstruction {
 //***********************************************************************
     uns cell1Level = 0;

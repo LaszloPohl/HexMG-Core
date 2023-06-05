@@ -400,21 +400,21 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
 
     // read node, variable and parameter numbers
 
-    nIONodes = nNormalINodes = nControlNodes = nNormalONodes = nForwardedONodes = 0;
-    nNormalInternalNodes = nControlInternalNodes = nInternalVars = nParams = 0;
+    externalNs.zero();
+    internalNs.zero();
 
     if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
         throw hmgExcept("HMGFileModelDescription::Read", "node/parameter=number expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     while (!lineToken.isSepEOL) {
-        if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "X", nIONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "N", nNormalInternalNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", nParams));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN", nNormalINodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN", nControlNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", nNormalONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", nForwardedONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", nControlInternalNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VAR", nInternalVars));
+        if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "X", externalNs.nIONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "N", internalNs.nNormalInternalNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", externalNs.nParams));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN", externalNs.nNormalINodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN", externalNs.nControlINodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", externalNs.nNormalONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", externalNs.nForwardedONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nControlInternalNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VAR", internalNs.nInternalVars));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
             lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -426,8 +426,8 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
             throw hmgExcept("HMGFileModelDescription::Read", "simple node name expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     }
 
-    sumExternalNodes = nIONodes + nNormalINodes + nControlNodes + nNormalONodes + nForwardedONodes;
-    sumInternalNodes = nNormalInternalNodes + nControlInternalNodes;
+    sumExternalNodes = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes + externalNs.nForwardedONodes;
+    sumInternalNodes = internalNs.nNormalInternalNodes + internalNs.nControlInternalNodes;
         
     if (modelType == hfmtSubcircuit)
         ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
@@ -555,7 +555,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 }
                 const HMGFileModelDescription& mod = *globalNames.modelData[pxline->indexOfTypeInGlobalContainer];
                 nodenum = mod.sumExternalNodes;
-                parnum = mod.nParams;
+                parnum = mod.externalNs.nParams;
                 isController = mod.modelType == hfmtController;
             }
             else if (strcmp(token,  "R") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_1; }

@@ -37,31 +37,25 @@ class ComponentAndControllerModelBase {
     //***********************************************************************
     // number of nodes
     // these cannot be changed, this is the interface of a component
-    cuns nIONodes;
-    cuns nNormalINodes;
-    cuns nControlINodes;
-    cuns nNormalONodes;
-    cuns nForwardedONodes;
-    cuns nParams;
+    const ExternalConnectionSizePack Ns;
     //***********************************************************************
 public:
-    ComponentAndControllerModelBase(uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nParams_)
-        : nIONodes{ nIONodes_ }, nNormalINodes{ nNormalINodes_ }, nControlINodes{ nControlINodes_ }, nNormalONodes{ nNormalONodes_ },
-        nForwardedONodes{ nForwardedONodes_ }, nParams{ nParams_ } {}
+    ComponentAndControllerModelBase(ExternalConnectionSizePack Ns_)
+        : Ns{ Ns_ } {}
     virtual ~ComponentAndControllerModelBase() = default;
     virtual ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const = 0;
-    uns getN_IO_Nodes()const noexcept { return nIONodes; }
-    uns getN_Normal_I_Nodes()const noexcept { return nNormalINodes; }
-    uns getN_Control_I_Nodes()const noexcept { return nControlINodes; }
-    uns getN_Normal_O_Nodes()const noexcept { return nNormalONodes; }
-    uns getN_Forwarded_O_Nodes()const noexcept { return nForwardedONodes; }
-    uns getN_O_Nodes()const noexcept { return nNormalONodes + nForwardedONodes; }
-    uns getN_Start_Of_O_Nodes()const noexcept { return nIONodes + nNormalINodes + nControlINodes; }
-    uns getN_ExternalNodes()const noexcept { return nIONodes + nNormalINodes + nControlINodes + nNormalONodes + nForwardedONodes; }
-    uns getN_Params()const noexcept { return nParams; }
+    uns getN_IO_Nodes()const noexcept { return Ns.nIONodes; }
+    uns getN_Normal_I_Nodes()const noexcept { return Ns.nNormalINodes; }
+    uns getN_Control_I_Nodes()const noexcept { return Ns.nControlINodes; }
+    uns getN_Normal_O_Nodes()const noexcept { return Ns.nNormalONodes; }
+    uns getN_Forwarded_O_Nodes()const noexcept { return Ns.nForwardedONodes; }
+    uns getN_O_Nodes()const noexcept { return Ns.nNormalONodes + Ns.nForwardedONodes; }
+    uns getN_Start_Of_O_Nodes()const noexcept { return Ns.nIONodes + Ns.nNormalINodes + Ns.nControlINodes; }
+    uns getN_ExternalNodes()const noexcept { return Ns.nIONodes + Ns.nNormalINodes + Ns.nControlINodes + Ns.nNormalONodes + Ns.nForwardedONodes; }
+    uns getN_Params()const noexcept { return Ns.nParams; }
     virtual uns getN_NormalInternalNodes()const noexcept { return 0; }
     virtual uns getN_InternalNodes()const noexcept { return 0; }
-    bool isController()const noexcept { return nIONodes + nNormalINodes == 0; }
+    bool isController()const noexcept { return Ns.nIONodes + Ns.nNormalINodes == 0; }
 };
 
 
@@ -91,7 +85,7 @@ class ModelConstR_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
+    ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -101,7 +95,7 @@ class ModelConstR_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -111,7 +105,7 @@ class ModelConstG_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
+    ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -121,7 +115,7 @@ class ModelConstG_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -130,7 +124,7 @@ public:
 class ModelConstC_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 1 } {}
+    ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -139,7 +133,7 @@ public:
 class ModelConstC_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 2 } {}
+    ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -148,7 +142,7 @@ public:
 class ModelConstI_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_1() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 4 } {}
+    ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -157,7 +151,7 @@ public:
 class ModelConstI_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_2() :ComponentAndControllerModelBase{ 2, 0, 0, 0, 0, 5 } {}
+    ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -166,7 +160,7 @@ public:
 class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ 2, 2, 0, 0, 0, 4 } {}
+    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -175,7 +169,7 @@ public:
 class ModelGirator final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelGirator() :ComponentAndControllerModelBase{ 4, 0, 0, 0, 0, 2 } {}
+    ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
 };
 
@@ -184,7 +178,7 @@ public:
 class ModelConstV final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstV() :ComponentAndControllerModelBase{ 2, 0, 0, 1, 0, 5 } {}
+    ModelConstV() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }
@@ -201,7 +195,7 @@ public:
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
     Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
         NodeConnectionInstructions functionSources_, std::unique_ptr<HmgFunction> controlFunction_)
-        :ComponentAndControllerModelBase{ 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ },
+        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ } },
         functionSources{ std::move(functionSources_) }, controlFunction{ std::move(controlFunction_) } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
@@ -237,7 +231,7 @@ public:
     uns nMVars;
     ModelController(uns nControlINodes_, uns nControlONodes_, uns nMVars_, uns nParams_,
         NodeConnectionInstructions functionSources_, std::unique_ptr<HmgFunction> controlFunction_)
-        :ComponentAndControllerModelBase{ 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ }, // O nodes of the Controller are defined as normal O nodes
+        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ } }, // O nodes of the Controller are defined as normal O nodes
         nMVars{ nMVars_ }, functionSources {
         std::move(functionSources_)
     }, controlFunction{ std::move(controlFunction_) } {
@@ -260,9 +254,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
 
     //***********************************************************************
     // number of internal nodes and nInternalVars can be changed in the replace procedure
-    uns nInternalNodes; // InternalNodes = NormalInternalNodes + InternalControlNodes in this order
-    uns nNormalInternalNodes;
-    uns nInternalVars;
+    InternalNodeVarSizePack internalNs;
     //***********************************************************************
     uns version = 1; // version is increased with each change in the structure of the subcircuit => the component instance can check that it is up to date
     //***********************************************************************
@@ -284,22 +276,20 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    ModelSubCircuit(uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_,
-        bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
-        : ComponentAndControllerModelBase{ nIONodes_, nNormalINodes_, nControlINodes_, nNormalONodes_, nForwardedONodes_, nParams_ }, 
-        solutionType{solutionType_}, nInternalNodes{ nInternalNodes_ }, nNormalInternalNodes{ nNormalInternalNodes_ }, nInternalVars{ nInternalVars_ } {
+    ModelSubCircuit(ExternalConnectionSizePack Ns_, InternalNodeVarSizePack internalNs_, bool defaultInternalNodeIsConcurrent_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
+        : ComponentAndControllerModelBase{ Ns_ }, internalNs{ internalNs_ }, solutionType{solutionType_} {
     //***********************************************************************
-       internalNodeIsConcurrent.resize(nNormalInternalNodes_, defaultInternalNodeIsConcurrent_);
+       internalNodeIsConcurrent.resize(internalNs_.nNormalInternalNodes, defaultInternalNodeIsConcurrent_);
        if (srTree)
            srTreeInstructions = std::move(*srTree);
     }
     //***********************************************************************
-    uns getN_NormalInternalNodes()const noexcept final override{ return nNormalInternalNodes; }
-    uns getN_InternalNodes()const noexcept final override{ return nInternalNodes; }
-    uns getN_Control_Internal_Nodes()const noexcept { return nInternalNodes - nNormalInternalNodes; }
+    uns getN_NormalInternalNodes()const noexcept final override{ return internalNs.nNormalInternalNodes; }
+    uns getN_InternalNodes()const noexcept final override{ return internalNs.nNormalInternalNodes + internalNs.nControlInternalNodes; }
+    uns getN_Control_Internal_Nodes()const noexcept { return internalNs.nControlInternalNodes; }
     //***********************************************************************
-    void setNInternalVars(uns n) noexcept { version++; nInternalVars = n; }
-    void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; nInternalNodes = nAll; nNormalInternalNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
+    void setNInternalVars(uns n) noexcept { version++; internalNs.nInternalVars = n; }
+    void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; internalNs.nControlInternalNodes = nAll - nNormal; internalNs.nNormalInternalNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
     //***********************************************************************
     uns push_back_component(std::unique_ptr<ComponentDefinition> ptr) { version++; components.push_back(std::move(ptr)); return uns(components.size()); }
     void setComponent(uns index, std::unique_ptr<ComponentDefinition> ptr) noexcept { version++; components[index] = std::move(ptr); }

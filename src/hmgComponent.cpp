@@ -106,7 +106,7 @@ void ComponentSubCircuit::buildOrReplace() {
             nUnconnectedONode++;
     }
 
-    uns nUnconnectedOnodeIndex = model.nInternalNodes + model.nInternalVars; // = the number of internal nodes and internal vars
+    uns nUnconnectedOnodeIndex = model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + model.internalNs.nInternalVars; // = the number of internal nodes and internal vars
     
     internalNodesAndVars.resize(nUnconnectedOnodeIndex + nUnconnectedONode);
 
@@ -169,7 +169,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
                     break;
                 case ComponentDefinition::CDParamType::localVariable:
-                    par.var = &internalNodesAndVars[model.nInternalNodes + cdp.index];
+                    par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
                     break;
                 case ComponentDefinition::CDParamType::param:
                     par = pars[cdp.index];

@@ -378,21 +378,10 @@ struct HMGFileModelDescription: HMGFileListItem {
     uns modelIndex = 0;
     ModelType modelType = hfmtSubcircuit;
     bool isReplacer = false;
-    //***********************************************************************
-    // External nodes:
-    uns nIONodes = 0;
-    uns nNormalINodes = 0;
-    uns nControlNodes = 0;
-    uns nNormalONodes = 0;
-    uns nForwardedONodes = 0;
+    ExternalConnectionSizePack externalNs;
     uns sumExternalNodes = 0;
-    // Internal nodes:
-    uns nNormalInternalNodes = 0;
-    uns nControlInternalNodes = 0;
-    uns nInternalVars = 0;
+    InternalNodeVarSizePack internalNs;
     uns sumInternalNodes = 0;
-    //***********************************************************************
-    uns nParams = 0;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object
     std::vector< HMGFileComponentInstanceLine* > instanceList;
     std::map<std::string, uns> componentInstanceNameIndex;
@@ -430,15 +419,15 @@ struct HMGFileModelDescription: HMGFileListItem {
     bool checkNodeValidity(SimpleNodeID id) const noexcept{
     //***********************************************************************
         switch(id.type){
-            case nvtIO:             return id.index < nIONodes;
-            case nvtIN:             return id.index < nNormalINodes;
-            case nvtCIN:            return id.index < nControlNodes;
-            case nvtOUT:            return id.index < nNormalONodes;
-            case nvtFWOUT:          return id.index < nForwardedONodes;
-            case nvtNInternal:      return id.index < nNormalInternalNodes;
-            case nvtCInternal:      return id.index < nControlInternalNodes;
-            case nvtVarInternal:    return id.index < nInternalVars;
-            case nvtParam:          return id.index < nParams;
+            case nvtIO:             return id.index < externalNs.nIONodes;
+            case nvtIN:             return id.index < externalNs.nNormalINodes;
+            case nvtCIN:            return id.index < externalNs.nControlINodes;
+            case nvtOUT:            return id.index < externalNs.nNormalONodes;
+            case nvtFWOUT:          return id.index < externalNs.nForwardedONodes;
+            case nvtNInternal:      return id.index < internalNs.nNormalInternalNodes;
+            case nvtCInternal:      return id.index < internalNs.nControlInternalNodes;
+            case nvtVarInternal:    return id.index < internalNs.nInternalVars;
+            case nvtParam:          return id.index < externalNs.nParams;
         }
         return true;
     }
