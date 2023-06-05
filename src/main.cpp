@@ -361,7 +361,7 @@ void probaSzimulacio1() {
 	constexpr rvt Gx = rvt(1.0 / 3750.0);
 	constexpr rvt Gy = rvt(3.0 / 1250.0);
 	constexpr rvt G0 = rvt(100'000.0);
-	const rvt T0 = (25.0 - FixVoltages::V[1]->getDefaultNodeValue());
+	const rvt T0 = (25.0 - Rails::V[1]->getDefaultNodeValue());
 	std::unique_ptr<ModelSubCircuit> mc;
 	std::unique_ptr<ComponentDefinition> cd;
 
@@ -866,7 +866,7 @@ void probaSzimulacioMg1() {
 	constexpr rvt Gx = rvt(1.0 / 3750.0);
 	constexpr rvt Gy = rvt(3.0 / 1250.0);
 	constexpr rvt G0 = rvt(100'000.0);
-	const rvt T0 = (25.0 - FixVoltages::V[1]->getDefaultNodeValue());
+	const rvt T0 = (25.0 - Rails::V[1]->getDefaultNodeValue());
 	constexpr rvt Gx22 = Gx;
 	constexpr rvt Gy22 = Gy;
 	constexpr rvt Cth22 = 4 * Cth;
@@ -1589,7 +1589,7 @@ void probaSzimulacioMg2() {
 	constexpr rvt Gx = rvt(1.0 / 3750.0);
 	constexpr rvt Gy = rvt(3.0 / 1250.0);
 	constexpr rvt G0 = rvt(100'000.0);
-	const rvt T0 = (25.0 - FixVoltages::V[1]->getDefaultNodeValue());
+	const rvt T0 = (25.0 - Rails::V[1]->getDefaultNodeValue());
 	constexpr rvt Gx22 = Gx;
 	constexpr rvt Gy22 = Gy;
 	constexpr rvt Cth22 = 4 * Cth;
@@ -2486,7 +2486,7 @@ void probaSzimulacioMg3() {
 	constexpr rvt Gx = rvt(1.0);
 	constexpr rvt Gy = rvt(0.5);
 	constexpr rvt G0 = rvt(100'000.0);
-	const rvt T0 = (25.0 - FixVoltages::V[1]->getDefaultNodeValue());
+	const rvt T0 = (25.0 - Rails::V[1]->getDefaultNodeValue());
 	std::unique_ptr<ModelSubCircuit> mc;
 	std::unique_ptr<ComponentDefinition> cd;
 
@@ -2627,10 +2627,10 @@ int main_1() {
 	//se.buildFromString("PUKI(T)+.SQRT(_Q)+.INV(.RATIO(-.PWL(T,25,-20,58+3,-54,25,65K),65K,H))*MUL + V(2) + PUKI() + V(@3,4) - 2 * _PI * I(88) * T");
 
 
-	FixVoltages::resize(2);
+	Rails::resize(2);
 	// FixVoltages::V[0]->defaultNodeValue is mandatory 0 !!!
-	FixVoltages::SetVoltage(1, 20.0);
-	FixVoltages::reset();
+	Rails::SetVoltage(1, 20.0);
+	Rails::reset();
 
 	CircuitStorage& gc = CircuitStorage::getInstance();
 

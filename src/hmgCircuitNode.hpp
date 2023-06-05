@@ -313,29 +313,29 @@ struct Param final : public ParVarNodeType {
 
 
 //***********************************************************************
-struct FixVoltages {
+struct Rails {
 //***********************************************************************
 
     //***********************************************************************
-    class OneFixVoltage {
+    class OneRail {
     //***********************************************************************
-        friend struct FixVoltages;
+        friend struct Rails;
         rvt defaultNodeValue = rvt0;
     public:
         VariableNodeBase fixNode;
-        explicit OneFixVoltage(uns defValueIndex) noexcept { fixNode.turnIntoNode(defValueIndex, true); }
+        explicit OneRail(uns defValueIndex) noexcept { fixNode.turnIntoNode(defValueIndex, true); }
         rvt getDefaultNodeValue()const noexcept { return defaultNodeValue; }
     };
 
     //***********************************************************************
-    inline static std::vector<std::unique_ptr<OneFixVoltage>> V;
+    inline static std::vector<std::unique_ptr<OneRail>> V;
     //***********************************************************************
 
     //***********************************************************************
     static void resize(uns newSize) {
     //***********************************************************************
         while (V.size() < newSize) {
-            V.push_back(std::make_unique<OneFixVoltage>(uns(V.size())));
+            V.push_back(std::make_unique<OneRail>(uns(V.size())));
         }
     }
 
@@ -362,7 +362,7 @@ struct FixVoltages {
 //***********************************************************************
 inline rvt NodeData::reset() noexcept {
 //***********************************************************************
-    toSave = FixVoltages::V[defaultValueIndex]->getDefaultNodeValue();
+    toSave = Rails::V[defaultValueIndex]->getDefaultNodeValue();
     d.store(rvt0);
     v = rvt0;
     if (acNodePtr)
@@ -384,7 +384,7 @@ inline void VariableNodeBase::reset() noexcept {
 inline NodeData::NodeData(uns defValueIndex) noexcept
     : defaultValueIndex{ defValueIndex } {
 //***********************************************************************
-    if (FixVoltages::V.size() > defValueIndex)
+    if (Rails::V.size() > defValueIndex)
         reset();
 }
 

@@ -191,29 +191,20 @@ enum StreamInstructionType {
 //***********************************************************************
     sitNothing = 0, sitEndSimulation,
 
-    sitDefSubckt, sitDefController, sitDefComponentType,
+    sitDefModelSubcircuit, sitDefModelController, sitEndDefModel, sitReplaceModel,
 
-    sitEndDefSubckt, sitEndDefController, sitEndDefComponentType,
+    sitSubcktInstance, sitControllerInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
 
-    sitReplaceSubckt, sitReplaceController, sitReplaceComponentType,
+    sitRails,
 
-    sitSubcktInstance, sitControllerInstance, sitSunredTree, 
-    sitBuiltInComponentInstance, 
+    sitSetModelContainerSize, 
+    sitSetFunctionContainerSize, sitSetSunredContainerSize,
 
-    sitEndComponentInstance,
-
-    sitSetSubcktContainerSize, sitSetControllerContainerSize, 
-    sitSetComponentTypeContainerSize, sitSetStaticVarContainerSize, 
-    sitSetModelContainerSize, sitSetExpressionContainerSize, sitSetSunredContainerSize,
-
-    sitSetComponentInstanceSize, sitSetVarContainerSize, 
-    sitSetInternalNodeContainerSize, sitSetProbeContainerSize, sitSetForwardedContainerSize,
-
-    sitNodeValueContainerSize, sitParameterValueContainerSize,
-
+    sitSetComponentInstanceSize, sitSetControllerInstanceSize,
+    
     sitNodeValue, sitParameterValue,
 
-    sitExpression, sitExpressionAtom, sitEndExpression,
+    sitFunction, sitExpressionAtom, sitEndFunction,
 
 };
 
@@ -234,6 +225,16 @@ struct ProbeUnit {
     int intValue;
     float realValue;
     unsigned nZeros;
+};
+
+
+//***********************************************************************
+struct ReductionInstruction {
+//***********************************************************************
+    uns cell1Level = 0;
+    uns cell1Index = 0;
+    uns cell2Level = 0;
+    uns cell2Index = 0;
 };
 
 

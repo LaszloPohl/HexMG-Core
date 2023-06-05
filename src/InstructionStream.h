@@ -1,18 +1,17 @@
 //***********************************************************************
-// Hex Open Instruction Stream Header
+// HexMG Instruction Stream Header
 // Creation date:  2021. 07. 26.
 // Creator:        László Pohl
 //***********************************************************************
 
 
 //***********************************************************************
-#ifndef HO_INSTRUCTION_STREAM_HEADER
-#define HO_INSTRUCTION_STREAM_HEADER
+#ifndef HMG_INSTRUCTION_STREAM_HEADER
+#define HMG_INSTRUCTION_STREAM_HEADER
 //***********************************************************************
 
 
 //***********************************************************************
-#define _CRT_SECURE_NO_WARNINGS
 #include <vector>
 #include <list>
 #include <string>
@@ -44,22 +43,85 @@ struct IsNothingInstruction: public IsInstruction {
 
 
 //***********************************************************************
-struct IsDefSubcktInstruction: public IsInstruction {
+struct IsDefSunredInstruction: public IsInstruction {
 //***********************************************************************
-    unsigned index, nNormalNode, nControlNode, nParams;
-    IsDefSubcktInstruction() :IsInstruction{ sitDefSubckt }, index{ 0 }, nNormalNode{ 0 }, nControlNode{ 0 }, nParams{ 0 }{}
-    IsDefSubcktInstruction(unsigned indx, unsigned nNormal, unsigned nControl, unsigned nPar)
-        :IsInstruction{ sitDefSubckt }, index{ indx }, nNormalNode{ nNormal }, nControlNode{ nControl }, nParams{ nPar }{}
+    uns index = 0;
+    uns levels = 0;
+    IsDefSunredInstruction(uns indx, uns lvls)
+        :IsInstruction{ sitSunredTree }, index{ indx }, levels{ lvls } {}
 };
 
 
 //***********************************************************************
-struct IsDefControllerInstruction: public IsInstruction {
+struct IsDefSunredLevelInstruction: public IsInstruction {
 //***********************************************************************
-    unsigned index, nControlNode, nParams;
-    IsDefControllerInstruction() :IsInstruction{ sitDefController }, index{ 0 }, nControlNode{ 0 }, nParams{ 0 }{}
-    IsDefControllerInstruction(unsigned indx, unsigned nControl, unsigned nPar)
-        :IsInstruction{ sitDefController }, index{ indx }, nControlNode{ nControl }, nParams{ nPar }{}
+    uns level = 0;
+    uns nReductions = 0;
+    IsDefSunredLevelInstruction(uns lvl, uns reds)
+        :IsInstruction{ sitSunredLevel }, level{ lvl }, nReductions{ reds } {}
+};
+
+
+//***********************************************************************
+struct IsDefSunredReductionInstruction: public IsInstruction {
+//***********************************************************************
+    ReductionInstruction reduction;
+    IsDefSunredReductionInstruction(ReductionInstruction red)
+        :IsInstruction{ sitSunredReduction }, reduction{ red } {}
+};
+
+
+//***********************************************************************
+struct IsDefRailsInstruction: public IsInstruction {
+//***********************************************************************
+    uns rails = 0;
+    IsDefRailsInstruction(uns rails_)
+        :IsInstruction{ sitRails }, rails{ rails_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefRailValueInstruction: public IsInstruction {
+//***********************************************************************
+    uns index = 0;
+    double value = 0.0;
+    IsDefRailValueInstruction(uns indx, double val)
+        :IsInstruction{ sitRails }, index{ indx }, value{ val } {}
+};
+
+
+//***********************************************************************
+struct IsDefModelSubcircuitInstruction: public IsInstruction {
+//***********************************************************************
+    uns index = 0;
+    //***********************************************************************
+    // External nodes:
+    uns nIONodes = 0;
+    uns nNormalINodes = 0;
+    uns nControlNodes = 0;
+    uns nNormalONodes = 0;
+    uns nForwardedONodes = 0;
+    uns sumExternalNodes = 0;
+    // Internal nodes:
+    uns nNormalInternalNodes = 0;
+    uns nControlInternalNodes = 0;
+    uns nInternalVars = 0;
+    uns sumInternalNodes = 0;
+    //***********************************************************************
+    uns nParams = 0;
+    SolutionType solutionType = stFullMatrix;
+    uns solutionDescriptionIndex = 0; // for sunred and multigrid 
+    IsDefModelSubcircuitInstruction(unsigned indx, unsigned nNormal, unsigned nControl, unsigned nPar)
+        :IsInstruction{ sitDefModelSubcircuit }, index{ indx }, nNormalNode{ nNormal }, nControlNode{ nControl }, nParams{ nPar } {}
+};
+
+
+//***********************************************************************
+struct IsDefModelControllerInstruction: public IsInstruction {
+//***********************************************************************
+    uns index = 0;
+    IsDefModelControllerInstruction(uns indx)
+        :IsInstruction{ sitDefModelController }, index{ indx } {}
 };
 
 
@@ -67,7 +129,6 @@ struct IsDefControllerInstruction: public IsInstruction {
 struct IsEndDefInstruction: public IsInstruction {
 //***********************************************************************
     unsigned index;
-    IsEndDefInstruction(StreamInstructionType what) :IsInstruction{ what }, index{ 0 } {}
     IsEndDefInstruction(StreamInstructionType what, unsigned indx) :IsInstruction{ what }, index{ indx } {}
 };
 
@@ -75,10 +136,10 @@ struct IsEndDefInstruction: public IsInstruction {
 //***********************************************************************
 struct IsReplaceInstruction: public IsInstruction {
 //***********************************************************************
-    unsigned index;
-    IsReplaceInstruction(StreamInstructionType what) :IsInstruction{ what }, index{ 0 } {}
-    IsReplaceInstruction(StreamInstructionType what, unsigned indx)
-        :IsInstruction{ what }, index{ indx }{}
+    uns index;
+    uns data;
+    IsReplaceInstruction(StreamInstructionType what, uns indx, uns data_ = unsMax)
+        :IsInstruction{ what }, index{ indx }, data{ data_ } {}
 };
 
 
@@ -86,7 +147,6 @@ struct IsReplaceInstruction: public IsInstruction {
 struct IsSetContainerSizeInstruction : public IsInstruction {
 //***********************************************************************
     unsigned newSize;
-    IsSetContainerSizeInstruction(StreamInstructionType what) :IsInstruction{ what }, newSize{ 0 }{}
     IsSetContainerSizeInstruction(StreamInstructionType what, unsigned size) :IsInstruction{ what }, newSize{ size }{}
 };
 
@@ -95,7 +155,6 @@ struct IsSetContainerSizeInstruction : public IsInstruction {
 struct IsComponentInstanceInstruction : public IsInstruction {
 //***********************************************************************
     unsigned index, classIndex;
-    IsComponentInstanceInstruction(StreamInstructionType what) :IsInstruction{ what }, index{ 0 }, classIndex{ 0 }{}
     IsComponentInstanceInstruction(StreamInstructionType what, unsigned indx, unsigned classIndx)
         :IsInstruction{ what }, index{ indx }, classIndex{ classIndx }{}
 };
@@ -105,7 +164,6 @@ struct IsComponentInstanceInstruction : public IsInstruction {
 struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
     SimpleNodeID nodeID;
-    IsNodeValueInstruction() :IsInstruction{ sitNodeValue }{}
     IsNodeValueInstruction(const SimpleNodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
 };
 
@@ -114,17 +172,15 @@ struct IsNodeValueInstruction: public IsInstruction {
 struct IsParameterValueInstruction: public IsInstruction {
 //***********************************************************************
     ParameterInstance param;
-    IsParameterValueInstruction() :IsInstruction{ sitParameterValue }{}
     IsParameterValueInstruction(const ParameterInstance& par) :IsInstruction{ sitParameterValue }, param{ par }{}
 };
 
 
 //***********************************************************************
-struct IsExpressionInstruction: public IsInstruction {
+struct IsFunctionInstruction: public IsInstruction {
 //***********************************************************************
     unsigned index, size;
-    IsExpressionInstruction() :IsInstruction{ sitExpression }, index{ 0 }, size{ 0 }{}
-    IsExpressionInstruction(unsigned indx, unsigned siz) :IsInstruction{ sitExpression }, index{ indx }, size{ siz }{}
+    IsFunctionInstruction(unsigned indx, unsigned siz) :IsInstruction{ sitFunction }, index{ indx }, size{ siz }{}
 };
 
 
@@ -132,64 +188,8 @@ struct IsExpressionInstruction: public IsInstruction {
 struct IsExpressionAtomInstruction: public IsInstruction {
 //***********************************************************************
     ExpressionAtom atom;
-    IsExpressionAtomInstruction() :IsInstruction{ sitExpressionAtom }{}
     IsExpressionAtomInstruction(const ExpressionAtom& ant) :IsInstruction{ sitExpressionAtom }, atom{ ant }{}
 };
-
-
-//***********************************************************************
-struct IsDefComponentTypeInstruction : public IsInstruction {
-//***********************************************************************
-    unsigned index, nNormalNode, nControlNode, nParams, nInternalNodes;
-    IsDefComponentTypeInstruction() :IsInstruction{ sitDefComponentType }, index{ 0 }, nNormalNode{ 0 }, nControlNode{ 0 }, nParams{ 0 }, nInternalNodes{ 0 }{}
-    IsDefComponentTypeInstruction(unsigned indx, unsigned nNormal, unsigned nControl, unsigned nPar, unsigned nInternalNode)
-        :IsInstruction{ sitDefComponentType }, index{ indx }, nNormalNode{ nNormal }, nControlNode{ nControl }, nParams{ nPar }, nInternalNodes{ nInternalNode }{}
-};
-
-
-//***********************************************************************
-inline IsInstruction* instantiateIsInstruction(StreamInstructionType instruction) {
-//***********************************************************************
-    switch (instruction) {
-        case sitNothing:                        return new IsNothingInstruction;
-        case sitEndSimulation:                  return new IsEndDefInstruction(sitEndSimulation);
-        case sitDefSubckt:                      return new IsDefSubcktInstruction;
-        case sitDefController:                  return new IsDefControllerInstruction;
-        case sitDefComponentType:               return new IsDefComponentTypeInstruction;
-        case sitEndDefSubckt:                   return new IsEndDefInstruction(sitEndDefSubckt);
-        case sitEndDefController:               return new IsEndDefInstruction(sitEndDefController);
-        case sitEndDefComponentType:            return new IsEndDefInstruction(sitEndDefComponentType);
-        case sitReplaceSubckt:                  return new IsReplaceInstruction(sitReplaceSubckt);
-        case sitReplaceController:              return new IsReplaceInstruction(sitReplaceController);
-        case sitReplaceComponentType:           return new IsReplaceInstruction(sitReplaceComponentType);
-        case sitSubcktInstance:                 return new IsComponentInstanceInstruction(sitSubcktInstance);
-        case sitControllerInstance:             return new IsComponentInstanceInstruction(sitControllerInstance);
-        case sitSunredTree:                     return new IsComponentInstanceInstruction(sitSunredTree);
-        case sitBuiltInComponentInstance:       return new IsComponentInstanceInstruction(sitBuiltInComponentInstance);
-        case sitEndComponentInstance:           return new IsEndDefInstruction(sitEndComponentInstance);
-        case sitSetSubcktContainerSize:         return new IsSetContainerSizeInstruction(sitSetSubcktContainerSize);
-        case sitSetControllerContainerSize:     return new IsSetContainerSizeInstruction(sitSetControllerContainerSize);
-        case sitSetComponentTypeContainerSize:  return new IsSetContainerSizeInstruction(sitSetComponentTypeContainerSize);
-        case sitSetStaticVarContainerSize:      return new IsSetContainerSizeInstruction(sitSetStaticVarContainerSize);
-        case sitSetModelContainerSize:          return new IsSetContainerSizeInstruction(sitSetModelContainerSize);
-        case sitSetExpressionContainerSize:     return new IsSetContainerSizeInstruction(sitSetExpressionContainerSize);
-        case sitSetSunredContainerSize:         return new IsSetContainerSizeInstruction(sitSetSunredContainerSize);
-        case sitSetComponentInstanceSize:       return new IsSetContainerSizeInstruction(sitSetComponentInstanceSize);
-        case sitSetVarContainerSize:            return new IsSetContainerSizeInstruction(sitSetVarContainerSize);
-        case sitSetInternalNodeContainerSize:   return new IsSetContainerSizeInstruction(sitSetInternalNodeContainerSize);
-        case sitSetProbeContainerSize:          return new IsSetContainerSizeInstruction(sitSetProbeContainerSize);
-        case sitSetForwardedContainerSize:      return new IsSetContainerSizeInstruction(sitSetForwardedContainerSize);
-        case sitNodeValueContainerSize:         return new IsSetContainerSizeInstruction(sitNodeValueContainerSize);
-        case sitParameterValueContainerSize:    return new IsSetContainerSizeInstruction(sitParameterValueContainerSize);
-        case sitNodeValue:                      return new IsNodeValueInstruction;
-        case sitParameterValue:                 return new IsParameterValueInstruction;
-        case sitExpression:                     return new IsExpressionInstruction;
-        case sitExpressionAtom:                 return new IsExpressionAtomInstruction;
-        case sitEndExpression:                  return new IsEndDefInstruction(sitEndExpression);
-    default:
-        throw hmgExcept("instantiateIsInstruction", "unknown instruction type (%u)", instruction);
-    }
-}
 
 
 //***********************************************************************
@@ -197,7 +197,6 @@ class InstructionStream {
 //***********************************************************************
     IsNothingInstruction listDummy;
     IsInstruction * pListLast;
-    static const unsigned binBlockSize = 2*65536; // 1048576; // 
 public:
     //***********************************************************************
     InstructionStream() :pListLast { &listDummy } {}

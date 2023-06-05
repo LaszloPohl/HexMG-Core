@@ -353,10 +353,10 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
 
     globalCircuit.Read(reader, line, lineInfo);
     most("Read");
-    globalCircuit.ProcessXLines();
-    most("ProcessXLines");
-    globalCircuit.ProcessExpressionNames(&globalCircuit.itemList);
-    most("ProcessExpressionNames");
+    //globalCircuit.ProcessXLines();
+    //most("ProcessXLines");
+    //globalCircuit.ProcessExpressionNames(&globalCircuit.itemList);
+    //most("ProcessExpressionNames");
 }
 
 
@@ -659,293 +659,6 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             instanceListIndex[instanceName] = (uns)instanceListIndex.size();
         }
     } while (isModelNotEnded);
-}
-
-
-//***********************************************************************
-void HMGFileModelDescription::ProcessXLines() {
-//***********************************************************************
-/*
-    LineTokenizer lineToken;
-    const char* token = nullptr;
-
-    for (HMGFileListItem* pItem : itemList) {
-        if (pItem->getItemType() == itModel)
-            static_cast<HMGFileModelDescription*>(pItem)->ProcessXLines();
-        else if (pItem->getItemType() == itComponentInstance) { // normal nodes
-            HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
-            switch (pInstance->theLine[0]) {
-                case 'R': 
-                case 'C':
-                case 'V':
-                case 'I':
-                {
-                    pInstance->instanceOfWhat = itBuiltInComponentType;
-                    if (pInstance->theLine[0] == 'R') pInstance->indexOfTypeInGlobalContainer = bictt_R;
-                    else if (pInstance->theLine[0] == 'C') pInstance->indexOfTypeInGlobalContainer = bictt_C;
-                    else if (pInstance->theLine[0] == 'V') pInstance->indexOfTypeInGlobalContainer = bictt_V;
-                    else if (pInstance->theLine[0] == 'I') pInstance->indexOfTypeInGlobalContainer = bictt_I;
-                    else throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "imposs");
-
-                    lineToken.init(pInstance->theLine.c_str());
-                    lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // name ignored
-
-                    pInstance->nodes.resize(2);
-                    unsigned parentVectorIndex = 0;
-                    for (unsigned i = 0; i < 2; i++, parentVectorIndex++) {
-                        token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                        while (*token == '@')token++;
-                        if (strchr(token, '.') != nullptr)
-                            throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                "only local external / internal node is accepted as normal node, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                        if ((token[0] == '0' && token[1] == 0) || (token[0] == ':' && token[1] == '0' && token[2] == 0)) {
-                            pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntGround;
-                            pInstance->nodes[parentVectorIndex].componentId = 0;
-                            pInstance->nodes[parentVectorIndex].nodeId = 0;
-                        }
-                        else if (token[0] == '$' || (token[0] == ':' && token[1] == '$')) {
-                            const bool isColon = token[0] == ':';
-                            char num = isColon ? token[2] : token[1];
-                            if (num < '0' || num > '9')
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "special ground node number missing, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                            if(token[isColon ? 3 : 2] != 0)
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "special ground node must be $0 ... $9, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                            pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntGround;
-                            pInstance->nodes[parentVectorIndex].componentId = 0;
-                            pInstance->nodes[parentVectorIndex].nodeId = num - '0';
-                        }
-                        else {
-                            //unsigned nodeIndex = isReplacer ? pParent->externalNodeNames.find(token) : externalNodeNames.find(token);
-                            //if (nodeIndex > 0) {
-                            //    pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntExternal;
-                            //    pInstance->nodes[parentVectorIndex].componentId = 0;
-                            //    pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
-                            //}
-                            //else {
-                            //    nodeIndex = isReplacer ? pParent->internalNodeNames.findOrAdd(token) : internalNodeNames.findOrAdd(token);
-                            //    pInstance->nodes[parentVectorIndex].nodeType = token[0] == 'T' ? NodeID::ntThermal : 0;
-                            //    pInstance->nodes[parentVectorIndex].componentId = 0;
-                            //    pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
-                            //}
-                        }
-                        if (parentVectorIndex < pInstance->nodes.size() - 1) {
-                            if (lineToken.isSepEOL || lineToken.isSepComma || lineToken.isSepOpeningBracket)
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "missing node definition in %s, line %u: %s)", pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                        }
-                    }
-
-                    // TODO: check model names to identify semiconductor resistor/capacitor
-                    // TODO: IC= for capacitor
-
-                    if (pInstance->indexOfTypeInGlobalContainer == bictt_V || pInstance->indexOfTypeInGlobalContainer == bictt_I) {
-                        lineToken.storePosition();
-                        token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                        if (strcmp(token, "DC") != 0) // TODO AC, TRAN, etc
-                            lineToken.loadPosition(); // format: "Vxx N1 N2 DC value" or "Vxx N1 N2 value" => ignoring "DC"
-                    }
-
-                    token = lineToken.getRestOfTheLine();
-                    if (!pInstance->valueExpression.buildFromString(token))
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                            "invalid expression: %s in %s, line %u: %s)", pInstance->valueExpression.errorMessage.c_str(), pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-
-                }
-                break;
-                case 'X': {
-                    lineToken.init(pInstance->theLine.c_str());
-                    lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // name ignored
-                    if(lineToken.isSepEOL || lineToken.isSepOpeningBracket)
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                            "invalid component instance line in %s, line %u: %s)", pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-
-                    unsigned nNodes;
-                    for (nNodes = 0; !lineToken.isSepEOL && !lineToken.isSepOpeningBracket; nNodes++) // counting nodes and finding type
-                        token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                    nNodes--;
-
-                    if ((pInstance->indexOfTypeInGlobalContainer = globalNames.componentTemplateNames.findMultiLevel(fullName.length() > 0 ? fullName + "." + token : token)) != 0) {
-                        pInstance->instanceOfWhat = itComponentTemplate;
-                        pInstance->nNormalNode  = globalNames.componentTemplateData[pInstance->indexOfTypeInGlobalContainer]->nNormalNode;
-                        pInstance->nControlNode = globalNames.componentTemplateData[pInstance->indexOfTypeInGlobalContainer]->nControlNode;
-                        pInstance->nParams      = globalNames.componentTemplateData[pInstance->indexOfTypeInGlobalContainer]->nParams;
-                    }
-                    else if ((pInstance->indexOfTypeInGlobalContainer = globalNames.controllerNames.findMultiLevel(fullName.length() > 0 ? fullName + "." + token : token)) != 0) {
-                        pInstance->instanceOfWhat = itController;
-                        pInstance->nNormalNode  = 0;
-                        pInstance->nControlNode = globalNames.controllerData[pInstance->indexOfTypeInGlobalContainer]->nControlNode;
-                        pInstance->nParams      = globalNames.controllerData[pInstance->indexOfTypeInGlobalContainer]->nParams;
-                    }
-                    else if ((pInstance->indexOfTypeInGlobalContainer = globalNames.subcktNames.findMultiLevel(fullName.length() > 0 ? fullName + "." + token : token)) != 0) {
-                        pInstance->instanceOfWhat = itSubckt;
-                        pInstance->nNormalNode  = globalNames.subcktData[pInstance->indexOfTypeInGlobalContainer]->nNormalNode;
-                        pInstance->nControlNode = globalNames.subcktData[pInstance->indexOfTypeInGlobalContainer]->nControlNode;
-                        pInstance->nParams      = globalNames.subcktData[pInstance->indexOfTypeInGlobalContainer]->nParams;
-                    }
-                    else
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "unknown type (%s) in %s, line %u: %s)",
-                            token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                    
-                    if(nNodes != unsigned(pInstance->nNormalNode) + unsigned(pInstance->nControlNode))
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "nNodes != pInstance->nNormalNode + pInstance->nControlNode (%u != %u + %u) in %s, line %u: %s)", 
-                            nNodes, pInstance->nNormalNode, pInstance->nControlNode, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-
-                    lineToken.init(pInstance->theLine.c_str());
-                    lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // name ignored
-
-                    pInstance->nodes.resize(nNodes);
-                    unsigned parentVectorIndex = 0;
-                    for (unsigned i = 0; i < pInstance->nNormalNode; i++, parentVectorIndex++) {
-                        token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                        while (*token == '@')token++;
-                        if (strchr(token, '.') != nullptr)
-                            throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                "only local external / internal node is accepted as normal node, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                        if ((token[0] == '0' && token[1] == 0) || (token[0] == ':' && token[1] == '0' && token[2] == 0)) {
-                            pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntGround;
-                            pInstance->nodes[parentVectorIndex].componentId = 0;
-                            pInstance->nodes[parentVectorIndex].nodeId = 0;
-                        }
-                        else if (token[0] == '$' || (token[0] == ':' && token[1] == '$')) {
-                            const bool isColon = token[0] == ':';
-                            char num = isColon ? token[2] : token[1];
-                            if (num < '0' || num > '9')
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "special ground node number missing, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                            if (token[isColon ? 3 : 2] != 0)
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "special ground node must be $0 ... $9, %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                            pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntGround;
-                            pInstance->nodes[parentVectorIndex].componentId = 0;
-                            pInstance->nodes[parentVectorIndex].nodeId = num - '0';
-                        }
-                        else {
-                            //unsigned nodeIndex = isReplacer ? pParent->externalNodeNames.find(token) : externalNodeNames.find(token);
-                            //if (nodeIndex > 0) {
-                            //    pInstance->nodes[parentVectorIndex].nodeType = NodeID::ntExternal;
-                            //    pInstance->nodes[parentVectorIndex].componentId = 0;
-                            //    pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
-                            //}
-                            //else {
-                            //    nodeIndex = isReplacer ? pParent->internalNodeNames.findOrAdd(token) : internalNodeNames.findOrAdd(token);
-                            //    pInstance->nodes[parentVectorIndex].nodeType = token[0] == 'T' ? NodeID::ntThermal : 0;
-                            //    pInstance->nodes[parentVectorIndex].componentId = 0;
-                            //    pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
-                            //}
-                        }
-                        if (parentVectorIndex < pInstance->nodes.size() - 1) {
-                            if (lineToken.isSepEOL || lineToken.isSepComma || lineToken.isSepOpeningBracket)
-                                throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                                    "missing node definition in %s, line %u: %s)", pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-    for (HMGFileListItem* pItem : itemList) {
-        if (pItem->getItemType() == itComponentInstance) { // control nodes
-            HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
-
-            lineToken.init(pInstance->theLine.c_str());
-
-            lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // name ignored
-
-            unsigned parentVectorIndex = 0;
-            for (unsigned i = 0; i < pInstance->nNormalNode; i++, parentVectorIndex++) {
-                lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // normal nodes ignored
-            }
-
-            for (unsigned i = 0; i < pInstance->nControlNode; i++, parentVectorIndex++) {
-                token = lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                if (!identifyNode(pInstance->nodes[parentVectorIndex], token)) {
-                    if (strchr(token, '.') != nullptr)
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                            "component internal node name cannot contain a ., %s arrived in %s, line %u", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine);
-                    unsigned nodeIndex;
-                    if (!(isReplacer ? pParent->internalNodeNames.add(token, nodeIndex) : internalNodeNames.add(token, nodeIndex)))
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "program error: existing or not existing node?: %s)", token);
-                    pInstance->nodes[parentVectorIndex].nodeType = token[0] == 'T' ? NodeID::ntThermal : 0;
-                    pInstance->nodes[parentVectorIndex].componentId = 0;
-                    pInstance->nodes[parentVectorIndex].nodeId = nodeIndex;
-                }
-
-                if (parentVectorIndex < pInstance->nodes.size() - 1) {
-                    if (lineToken.isSepEOL || lineToken.isSepComma || lineToken.isSepOpeningBracket)
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines",
-                            "missing node definition (%s) in %s, line %u: %s)", token, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                }
-            }
-
-            lineToken.getNextToken(pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine); // type ignored
-
-            // params
-
-            if (pInstance->nParams > 0) {
-                if (!lineToken.isSepOpeningBracket)
-                    throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "parent parameter list is missing in %s, line %u: %s", 
-                        pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                pInstance->params.resize(pInstance->nParams);
-                for (unsigned i = 0; i < pInstance->nParams; i++) {
-                    lineToken.skipSeparators();
-                    LineTokenizer::ExpressionToken xtok = lineToken.getNextExpressionToken();
-                    if (xtok.exprType == LineTokenizer::ExpressionToken::etNumber) {
-                        pInstance->params[i].paramIndex = 0;
-                        pInstance->params[i].value = xtok.value;
-                    }
-                    else if (xtok.exprType == LineTokenizer::ExpressionToken::etName) {
-                        //pInstance->params[i].paramIndex = isReplacer ? pParent->constParameterNames.find(xtok.name) : constParameterNames.find(xtok.name);
-                        //if (pInstance->params[i].paramIndex == 0)
-                        //    throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "unknown parent parameter name (%s) in %s, line %u: %s", 
-                        //        xtok.name.c_str(), pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                        //pInstance->params[i].value = 0;
-                    }
-                    else
-                        throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "missing or incorrect parent parameter %u in %s, line %u: %s", 
-                            i + 1, pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-                }
-                if (!lineToken.isSepClosingBracket)
-                    throw hmgExcept("SpiceSubcktDescription::ProcessXLines", "parent parameter list closing ) is missing in %s, line %u: %s", 
-                        pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, lineToken.getLine());
-            }
-        }
-    }
-*/
-}
-
-
-//***********************************************************************
-void HMGFileModelDescription::ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {
-//***********************************************************************
-//    for (HMGFileListItem* pItem : (pItemList== nullptr ? itemList : *pItemList)) {
-//        switch (pItem->getItemType()) {
-//            case itNone: break;
-//            case itComponentInstance: {
-//                HMGFileComponentInstanceLine* pInstance = static_cast<HMGFileComponentInstanceLine*>(pItem);
-///                    for (auto& it : pInstance->valueExpression.theExpression) {
-///                        if (!identifyExpressionNodeOrPar(it))
-///                            throw hmgExcept("SpiceComponentTemplateLine::ProcessExpressionNames", "unknown identifier (%s) in %s, line %u: %s", 
-///                                it.name.c_str(), pInstance->fileName.c_str(), pInstance->theLineInfo.firstLine, pInstance->theLine.c_str());
-///                    }
-//                }
-//                break;
-//            case itModel: static_cast<HMGFileModelDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
-///            case itComponentTemplate: static_cast<SpiceComponentTemplateLine*>(pItem)->ProcessExpressionNames(); break;
-//            case itBuiltInComponentType: break;
-///            case itController: static_cast<SpiceControllerDescription*>(pItem)->ProcessExpressionNames(nullptr); break;
-///            case itExpression: {
-///                    SpiceExpressionLine* pExpression = static_cast<SpiceExpressionLine*>(pItem);
-///                    for (auto& it : pExpression->theExpression.theExpression) {
-///                        if (!identifyExpressionNodeOrPar(it))
-///                            throw hmgExcept("SpiceComponentTemplateLine::ProcessExpressionNames", "unknown identifier (%s) in %s", it.name.c_str(), pExpression->fullName.c_str());
-///                    }
-///                }
-///                break;
-//        }
-//    }
 }
 
 
@@ -1346,10 +1059,15 @@ void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInf
                 if (!destCheck.insert(dest).second)
                     throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "calculation of a SUNRED cell is allowed only once, here the destination cell is repeated: %s in %s, line %u",
                         line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                if( dest.level == 0)
+                    throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "destination level cannot be 0: %s in %s, line %u",
+                        line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
                 // store
 
-                reductions.push_back({ src1, src2, dest });
+                if (reductions.size() < dest.level)
+                    reductions.resize(dest.level);
+                vectorForcedSet(reductions[dest.level - 1], { src1.level, src1.index, src2.level, src2.index, true }, dest.index);
             }
             else
                 throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "unknown .SUNREDTREE instruction or missing .END, %s arrived in %s, line %u", 
@@ -1365,6 +1083,10 @@ void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInf
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 if(fullName != token)
                     throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", ".END SUNREDTREE %s expected, %s arrived in %s, line %u: %s", fullName.c_str(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                for (size_t i = 0; i < reductions.size(); i++)
+                    for (size_t j = 0; j < reductions[i].size(); j++)
+                        if (!reductions[i][j].isValid)
+                            throw hmgExcept("HMGFileSunredTree::ReadOrReplaceBody", "SUNREDTREE %s: undefined destination cell [level = %u, index = %u]", fullName.c_str(), (uns)(i + 1), (uns)j);
                 isSunredTreeNotEnded = false;
             }
             else
@@ -1489,10 +1211,10 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
 //***********************************************************************
 void SpiceExpression::toInstructionStream(InstructionStream& iStream, unsigned index) {
 //***********************************************************************
-    iStream.add(new IsExpressionInstruction(index, (unsigned)theExpression.size()));
-    for (SpiceExpressionAtom& it : theExpression)
-        iStream.add(new IsExpressionAtomInstruction(it));
-    iStream.add(new IsEndDefInstruction(sitEndExpression, 0));
+    //iStream.add(new IsExpressionInstruction(index, (unsigned)theExpression.size()));
+    //for (SpiceExpressionAtom& it : theExpression)
+    //    iStream.add(new IsExpressionAtomInstruction(it));
+    //iStream.add(new IsEndDefInstruction(sitEndExpression, 0));
 }
 
 
@@ -1503,21 +1225,21 @@ void HMGFileComponentInstanceLine::toInstructionStream(InstructionStream& iStrea
         case itModel:                  iStream.add(new IsComponentInstanceInstruction(sitSubcktInstance,           instanceIndex, indexOfTypeInGlobalContainer)); break;
         //case itController:              iStream.add(new IsComponentInstanceInstruction(sitControllerInstance,       instanceIndex, indexOfTypeInGlobalContainer)); break;
         case itSunredTree:              iStream.add(new IsComponentInstanceInstruction(sitSunredTree,               instanceIndex, indexOfTypeInGlobalContainer)); break;
-        case itBuiltInComponentType:    iStream.add(new IsComponentInstanceInstruction(sitBuiltInComponentInstance, instanceIndex, indexOfTypeInGlobalContainer)); break;
+        //case itBuiltInComponentType:    iStream.add(new IsComponentInstanceInstruction(sitBuiltInComponentInstance, instanceIndex, indexOfTypeInGlobalContainer)); break;
         default: throw hmgExcept("SpiceComponentInstanceLine::toInstructionStream", "program error bad instanceOfWhat value (%u)", instanceOfWhat);
     }
 
-    iStream.add(new IsSetContainerSizeInstruction(sitNodeValueContainerSize, (unsigned)nodes.size()));
+    //iStream.add(new IsSetContainerSizeInstruction(sitNodeValueContainerSize, (unsigned)nodes.size()));
     for (SimpleNodeID& it : nodes) 
         iStream.add(new IsNodeValueInstruction(it));
 
-    iStream.add(new IsSetContainerSizeInstruction(sitParameterValueContainerSize, (unsigned)params.size()));
-    for (ParameterInstance& it : params)
-        iStream.add(new IsParameterValueInstruction(it));
+    //iStream.add(new IsSetContainerSizeInstruction(sitParameterValueContainerSize, (unsigned)params.size()));
+    //for (ParameterInstance& it : params)
+    //    iStream.add(new IsParameterValueInstruction(it));
 
     //valueExpression.toInstructionStream(iStream, 0);
 
-    iStream.add(new IsEndDefInstruction(sitEndComponentInstance, instanceIndex));
+    //iStream.add(new IsEndDefInstruction(sitEndComponentInstance, instanceIndex));
 }
 
 
@@ -1547,7 +1269,7 @@ void HMGFileModelDescription::toInstructionStream(InstructionStream& iStream) {
     //for (HMGFileListItem* it : itemList)
     //    it->toInstructionStream(iStream);
 
-    iStream.add(new IsEndDefInstruction(sitEndDefSubckt, modelIndex));
+    //iStream.add(new IsEndDefInstruction(sitEndDefSubckt, modelIndex));
 }
 
 

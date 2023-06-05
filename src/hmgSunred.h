@@ -182,12 +182,6 @@ public:
 class hmgSunred {
 //***********************************************************************
 public:
-    struct ReductionInstruction {
-        uns cell1Level = 0;
-        uns cell1Index = 0;
-        uns cell2Level = 0;
-        uns cell2Index = 0;
-    };
     struct ReductionTreeInstructions {
         std::vector<std::vector<ReductionInstruction>> data; // data[0] = Level 1, data[1] = Level 2, etc. level[0][i] = pSrc->components[i]
     };

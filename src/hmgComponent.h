@@ -1480,8 +1480,8 @@ public:
         pars.resize(def->params.size());
     }
     //***********************************************************************
-    const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? FixVoltages::V[0]->fixNode : getContainedComponent(0)->getComponentValue(); }
-    const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? FixVoltages::V[0]->fixNode : getContainedComponent(0)->getComponentCurrent(); }
+    const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->fixNode : getContainedComponent(0)->getComponentValue(); }
+    const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->fixNode : getContainedComponent(0)->getComponentCurrent(); }
     VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
     VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
     //***********************************************************************

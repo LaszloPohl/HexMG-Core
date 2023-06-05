@@ -365,11 +365,6 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     std::vector<ParameterInstance> params;
     bool isDefaultRail = false;
     uns defaultRailIndex = 0;
-    //SpiceExpression valueExpression; // for built in components
-    //unsigned short nNormalNode, nControlNode, nParams;
-
-    //HMGFileComponentInstanceLine() :nNormalNode{ 0 }, nControlNode{ 0 }, nParams{ 0 }{}
-
     HMGFileInstructionType getItemType()const override { return itComponentInstance; }
     void toInstructionStream(InstructionStream& iStream)override;
 };
@@ -414,8 +409,6 @@ struct HMGFileModelDescription: HMGFileListItem {
     void Replace(HMGFileModelDescription*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBodySubcircuit(ReadALine&, char*, LineInfo&, bool);
     void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&, bool) {}
-    void ProcessXLines(); // a subcontrollerre is figyelni! ha replace, akkor figyeljen a node-ok indexére! the definition of .subckt/.component/.controller can be later than its instantiation so we don't now the type of the nodes when an X line arrives
-    void ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList);
     HMGFileInstructionType getItemType()const override { return itModel; }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override;
@@ -465,22 +458,32 @@ struct HMGFileSunredTree: HMGFileListItem {
     //***********************************************************************
     struct Reduction {
     //***********************************************************************
-        CellID src1;
-        CellID src2;
-        CellID dest;
+        ReductionInstruction src;
+        bool isValid = false;
     };
     //***********************************************************************
     std::string fullName;
-    bool isReplacer;
+    bool isReplacer = false;
     uns sunredTreeIndex = 0;
     HMGFileSunredTree* pParent = nullptr; // if this is a replacer, parent is the replaced object
-    std::vector<Reduction> reductions;
+    std::vector<std::vector<Reduction>> reductions;
 
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileSunredTree*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBody(ReadALine&, char*, LineInfo&, bool);
     HMGFileInstructionType getItemType()const override { return itSunredTree; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        if (isReplacer) iStream.add(new IsReplaceInstruction(sitSunredTree, sunredTreeIndex, (uns)reductions.size()));
+        else            iStream.add(new IsDefSunredInstruction(sunredTreeIndex, (uns)reductions.size()));
+        for (size_t i = 0; i < reductions.size(); i++) {
+            iStream.add(new IsDefSunredLevelInstruction((uns)(i + 1), (uns)reductions[i].size()));
+            for(const auto& red : reductions[i])
+                iStream.add(new IsDefSunredReductionInstruction(red.src));
+        }
+        iStream.add(new IsEndDefInstruction(sitSunredTree, sunredTreeIndex));
+    }
 };
 
 
@@ -492,7 +495,14 @@ struct HMGFileRails: HMGFileListItem {
 
     void Read(ReadALine&, char*, LineInfo&);
     HMGFileInstructionType getItemType()const override { return itRail; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsDefRailsInstruction(nRails));
+        for (const auto& val : railValues)
+            iStream.add(new IsDefRailValueInstruction(val.first, val.second));
+        iStream.add(new IsEndDefInstruction(sitRails, 0));
+    }
 };
 
 
@@ -560,20 +570,20 @@ struct HMGFileSave: HMGFileListItem {
 //***********************************************************************
 struct HMGFileGlobalDescription: HMGFileListItem {
 //***********************************************************************
-    std::string fullName;
-    uns subcktIndex;
     std::list< HMGFileListItem* > itemList;
-    std::map<std::string, uns> modelNameIndex;
 
     //***********************************************************************
-    HMGFileGlobalDescription() :subcktIndex{ 0 }{}
     void clear() { for (auto it : itemList) delete it; itemList.clear(); }
     ~HMGFileGlobalDescription() { clear(); }
     void Read(ReadALine&, char*, LineInfo&);
-    void ProcessXLines() {}; // TODO !!! // a subcontrollerre is figyelni! ha replace, akkor figyeljen a node-ok indexére! the definition of .subckt/.component/.controller can be later than its instantiation so we don't now the type of the nodes when an X line arrives
-    void ProcessExpressionNames(std::list< HMGFileListItem* >* pItemList) {}; // TODO !!!
     HMGFileInstructionType getItemType()const override { return itGlobal; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        for (HMGFileListItem* it : itemList)
+            it->toInstructionStream(iStream);
+        iStream.add(new IsEndDefInstruction(sitEndSimulation, 0));
+    };
     //***********************************************************************
 };
 

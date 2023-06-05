@@ -149,7 +149,7 @@ void ComponentSubCircuit::buildOrReplace() {
                 comp.setNode(j,
                     cdn.type == ComponentDefinition::CDNodeType::internal ? &internalNodesAndVars[cdn.index]
                     : cdn.type == ComponentDefinition::CDNodeType::external ? externalNodes[cdn.index]
-                    : cdn.type == ComponentDefinition::CDNodeType::ground ? &FixVoltages::V[cdn.index].get()->fixNode
+                    : cdn.type == ComponentDefinition::CDNodeType::ground ? &Rails::V[cdn.index].get()->fixNode
                     : nullptr // unconnected node, never gets here
                 );
             }
