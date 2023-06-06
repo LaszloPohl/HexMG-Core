@@ -2394,7 +2394,7 @@ public:
     //***********************************************************************
         FullCircuit fc;
         fc.def = std::make_unique<ComponentDefinition>();
-        fc.def->componentModelIndex = componentModelIndex;
+        fc.def->modelIndex = componentModelIndex;
         fc.component = std::unique_ptr<ComponentSubCircuit>(dynamic_cast<ComponentSubCircuit*>(static_cast<ComponentBase*>(models[componentModelIndex]->makeComponent(fc.def.get(), nodesDefaultValueIndex))));
         fullCircuitInstances.push_back(std::move(fc));
         fullCircuitInstances.back().component->buildOrReplace();
@@ -2406,8 +2406,8 @@ public:
 inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :def{ def_ },
     pModel{ static_cast<ComponentAndControllerModelBase*>(
         def_->isBuiltIn 
-            ? CircuitStorage::getInstance().builtInModels[def_->componentModelIndex].get()
-            : CircuitStorage::getInstance().models[def_->componentModelIndex].get()
+            ? CircuitStorage::getInstance().builtInModels[def_->modelIndex].get()
+            : CircuitStorage::getInstance().models[def_->modelIndex].get()
         ) }, defaultNodeValueIndex{ defaultNodeValueIndex_ } {}
 //***********************************************************************
 

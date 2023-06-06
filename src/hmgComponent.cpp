@@ -132,10 +132,10 @@ void ComponentSubCircuit::buildOrReplace() {
     components.resize(nComponent);
     for (siz i = 0; i < nComponent; i++) {
         const ComponentDefinition& cDef = *model.components[i];
-        uns defNodeIndex = cDef.isForcedDefNodeValueIndex ? cDef.nodesDefValueIndex : this->defaultNodeValueIndex;
+        uns defNodeIndex = cDef.isDefaultRail ? cDef.defaultValueRailIndex : this->defaultNodeValueIndex;
         const ComponentAndControllerModelBase* iModel = cDef.isBuiltIn
-            ? CircuitStorage::getInstance().builtInModels[cDef.componentModelIndex].get()
-            : CircuitStorage::getInstance().models[cDef.componentModelIndex].get();
+            ? CircuitStorage::getInstance().builtInModels[cDef.modelIndex].get()
+            : CircuitStorage::getInstance().models[cDef.modelIndex].get();
         components[i] = std::unique_ptr<ComponentBase>(static_cast<ComponentBase*>(iModel->makeComponent(&cDef, defNodeIndex)));
     }
 

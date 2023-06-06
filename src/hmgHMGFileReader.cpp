@@ -302,7 +302,7 @@ bool GlobalHMGFileNames::textToProbeNodeID(char* token, uns fullCircuitIndex, Pr
                 return false;
             uns ci = dest.componentID[componentIndex] = currentComponent->instanceListIndex[token];
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
-            currentComponent = pxline->instanceOfWhat == itModel ? modelData[pxline->indexOfTypeInGlobalContainer] : nullptr;
+            currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
             componentIndex++;
             token += i + 1;
@@ -490,17 +490,17 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     if (!checkNodeValidity(node))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: invalid node index: %u in %s, line %u: %s", node.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                    if (defaults.size() > 0 && std::get<0>(defaults.back()) == rail.index && std::get<1>(defaults.back()) == node.type) {
+                    if (defaults.size() > 0 && defaults.back().rail == rail.index && defaults.back().type == node.type) {
                         auto& last = defaults.back();
-                        if (node.index == std::get<2>(last) - 1)
-                            std::get<2>(last)--;
-                        else if (node.index == std::get<3>(last) + 1)
-                            std::get<3>(last)++;
+                        if (node.index == last.start_index - 1)
+                            last.start_index--;
+                        else if (node.index == last.stop_index + 1)
+                            last.stop_index++;
                         else
-                            defaults.push_back(std::make_tuple(rail.index, node.type, node.index, node.index));
+                            defaults.push_back({ rail.index, node.type, node.index, node.index });
                     }
                     else
-                        defaults.push_back(std::make_tuple(rail.index, node.type, node.index, node.index));
+                        defaults.push_back({ rail.index, node.type, node.index, node.index });
                 }
             }
             else if (strcmp(token, ".DEFAULTRAILRANGE") == 0) {
@@ -521,7 +521,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: invalid node index: %u in %s, line %u: %s", node2.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 if(node1.type != node2.type)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: node range required in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                defaults.push_back(std::make_tuple(rail.index, node1.type, node1.index < node2.index ? node1.index : node2.index, node1.index < node2.index ? node2.index : node1.index));
+                defaults.push_back({ rail.index, node1.type, node1.index < node2.index ? node1.index : node2.index, node1.index < node2.index ? node2.index : node1.index });
             }
             else
                 throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -536,40 +536,40 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
             const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             std::string instanceName = token;
-            bool isController = false;
+            pxline->isController = false;
 
             // component type
 
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-            pxline->instanceOfWhat = itNone;
-            pxline->indexOfTypeInGlobalContainer = bimtSize;
+            pxline->modelIndex = unsMax;
 
             uns nodenum = 2, parnum = 1, funcnum = 0;
             if (strcmp(token, "MODEL") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                pxline->instanceOfWhat = itModel;
-                try { pxline->indexOfTypeInGlobalContainer = globalNames.modelNames.at(token); }
+                pxline->isBuiltIn = false;
+                try { pxline->modelIndex = globalNames.modelNames.at(token); }
                 catch (const std::out_of_range&) {
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
-                const HMGFileModelDescription& mod = *globalNames.modelData[pxline->indexOfTypeInGlobalContainer];
+                const HMGFileModelDescription& mod = *globalNames.modelData[pxline->modelIndex];
                 nodenum = mod.sumExternalNodes;
                 parnum = mod.externalNs.nParams;
-                isController = mod.modelType == hfmtController;
+                pxline->isController = mod.modelType == hfmtController;
             }
-            else if (strcmp(token,  "R") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_1; }
-            else if (strcmp(token, "R2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstR_2; parnum = 2; }
-            else if (strcmp(token,  "G") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstG_1; }
-            else if (strcmp(token, "G2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstG_2; parnum = 2; }
-            else if (strcmp(token,  "C") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstC_1; }
-            else if (strcmp(token, "C2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstC_2; parnum = 2; }
-            else if (strcmp(token,  "I") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_1; parnum = 4; }
-            else if (strcmp(token, "I2") == 0) { pxline->instanceOfWhat = itBuiltInComponentType; pxline->indexOfTypeInGlobalContainer = bimtConstI_2; parnum = 5; }
+            else if (strcmp(token,  "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
+            else if (strcmp(token, "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2; parnum = 2; }
+            else if (strcmp(token,  "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
+            else if (strcmp(token, "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2; parnum = 2; }
+            else if (strcmp(token,  "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
+            else if (strcmp(token, "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2; parnum = 2; }
+            else if (strcmp(token,  "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1; parnum = 4; }
+            else if (strcmp(token, "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2; parnum = 5; }
+            // don't forget to set pxline->isController if needed !
 
             // read nodes and parameters
             
-            if (pxline->instanceOfWhat != itNone) {
+            if (pxline->modelIndex != unsMax) {
                 for (uns i = 0; i < nodenum; i++) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     pxline->nodes.emplace_back(SimpleNodeID());
@@ -585,7 +585,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (strcmp(token, "DEFAULTRAIL") == 0)
                         break;
-                    if (pxline->indexOfTypeInGlobalContainer == bimtConstI_1 || pxline->indexOfTypeInGlobalContainer == bimtConstI_2) {
+                    if (pxline->modelIndex == bimtConstI_1 || pxline->modelIndex == bimtConstI_2) {
                         uns index = parnum;
                         if (     strcmp(token, "DC0") == 0) index = 0;
                         else if (strcmp(token, "DC")  == 0) index = 1;
@@ -623,6 +623,8 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     TODO("Read function calls");
                 }
             }
+            else
+                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised component type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
             if (!lineToken.isSepEOL) {
                 bool isDefRail = (strcmp(token, "DEFAULTRAIL") == 0);
@@ -636,7 +638,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     pxline->isDefaultRail = true;
-                    pxline->defaultRailIndex = rail.index;
+                    pxline->defaultValueRailIndex = rail.index;
                 }
                 else
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised line ending (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -644,7 +646,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
             // controller instance or node instance => setting instance index
 
-            if (isController) {
+            if (pxline->isController) {
                 if (controllerInstanceNameIndex.contains(instanceName))
                     throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 pxline->instanceIndex = (uns)controllerInstanceNameIndex.size();
@@ -874,7 +876,7 @@ void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     // fullCircuitID
 
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    try { fullCircuitID = globalNames.fullCircuitNames.at(token); }
+    try { data.fullCircuitID = globalNames.fullCircuitNames.at(token); }
     catch (const std::out_of_range&) {
         throw hmgExcept("HMGFileRun::Read", "unrecognised full circuit name (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
@@ -883,55 +885,55 @@ void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-    if (strcmp(token, "DC") == 0) analysisType = atDC;
-    else if (strcmp(token, "TIMESTEP") == 0) analysisType = atTimeStep;
-    else if (strcmp(token, "AC") == 0) analysisType = atAC;
-    else if (strcmp(token, "TIMECONST") == 0) { analysisType = atTimeConst; iterNumSPD = 5; }
+    if (     strcmp(token, "DC")        == 0)   data.analysisType = atDC;
+    else if (strcmp(token, "TIMESTEP")  == 0)   data.analysisType = atTimeStep;
+    else if (strcmp(token, "AC")        == 0)   data.analysisType = atAC;
+    else if (strcmp(token, "TIMECONST") == 0) { data.analysisType = atTimeConst; data.iterNumSPD = 5; }
     else
         throw hmgExcept("HMGFileRun::Read", "unrecognised analysis type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        if (strcmp(token, "INITIAL") == 0) isInitial = true;
-        else if (strcmp(token, "ITER") == 0) iterNumSPD = 1;
+        if (strcmp(token, "INITIAL") == 0) data.isInitial = true;
+        else if (strcmp(token, "ITER") == 0) data.iterNumSPD = 1;
         else if (strcmp(token, "ITERS") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if(sscanf_s(token, "%u", &iterNumSPD) != 1)
+            if(sscanf_s(token, "%u", &data.iterNumSPD) != 1)
                 throw hmgExcept("HMGFileRun::Read", "unrecognised ITERS number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
-        else if (strcmp(token, "PRE") == 0) isPre = true;
+        else if (strcmp(token, "PRE") == 0) data.isPre = true;
         else if (strcmp(token, "ERR") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!spiceTextToRvt(token, err))
+            if (!spiceTextToRvt(token, data.err))
                 throw hmgExcept("HMGFileRun::Read", "unrecognised ERR value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "T") == 0) {
-            isDT = false;
+            data.isDT = false;
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!spiceTextToRvt(token, fTauDtT))
+            if (!spiceTextToRvt(token, data.fTauDtT))
                 throw hmgExcept("HMGFileRun::Read", "unrecognised T value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "DT") == 0) {
-            isDT = true;
+            data.isDT = true;
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!spiceTextToRvt(token, fTauDtT))
+            if (!spiceTextToRvt(token, data.fTauDtT))
                 throw hmgExcept("HMGFileRun::Read", "unrecognised DT value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "TAU") == 0) {
-            isTau = true;
+            data.isTau = true;
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!spiceTextToRvt(token, fTauDtT))
+            if (!spiceTextToRvt(token, data.fTauDtT))
                 throw hmgExcept("HMGFileRun::Read", "unrecognised TAU value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "F") == 0) {
-            isTau = false;
+            data.isTau = false;
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!spiceTextToRvt(token, fTauDtT))
+            if (!spiceTextToRvt(token, data.fTauDtT))
                 throw hmgExcept("HMGFileRun::Read", "unrecognised F value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "SPD") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (sscanf_s(token, "%u", &iterNumSPD) != 1)
+            if (sscanf_s(token, "%u", &data.iterNumSPD) != 1)
                 throw hmgExcept("HMGFileRun::Read", "unrecognised SPD number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else
@@ -1104,21 +1106,6 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
 
     while(!isStop && reader.getLine(line, MAX_LINE_LENGHT, lineInfo)) {
 
-        //if (line[0] == 'X' || line[0] == 'R' || line[0] == 'C' || line[0] == 'V' || line[0] == 'I') {
-        //    SpiceComponentInstanceLine* pxline = new SpiceComponentInstanceLine;
-        //    itemList.push_back(pxline);
-        //
-        //    pxline->theLine = line;
-        //    pxline->theLineInfo = lineInfo;
-        //    pxline->fileName = reader.getFileName(lineInfo);
-        //
-        //    lineToken.init(line);
-        //    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        //    if (!componentInstanceNames.add(token, pxline->componentInstanceIndex))
-        //        throw hmgExcept("HMGFileGlobalDescription::Read", "%s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        //    vectorForcedSet< HMGFileListItem* >(componentInstances, pxline, pxline->componentInstanceIndex);
-        //}
-
         if (line[0] == '.') {
             lineToken.init(line);
             const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1215,61 +1202,6 @@ void SpiceExpression::toInstructionStream(InstructionStream& iStream, unsigned i
     //for (SpiceExpressionAtom& it : theExpression)
     //    iStream.add(new IsExpressionAtomInstruction(it));
     //iStream.add(new IsEndDefInstruction(sitEndExpression, 0));
-}
-
-
-//***********************************************************************
-void HMGFileComponentInstanceLine::toInstructionStream(InstructionStream& iStream) {
-//***********************************************************************
-    switch (instanceOfWhat) {
-        case itModel:                  iStream.add(new IsComponentInstanceInstruction(sitSubcktInstance,           instanceIndex, indexOfTypeInGlobalContainer)); break;
-        //case itController:              iStream.add(new IsComponentInstanceInstruction(sitControllerInstance,       instanceIndex, indexOfTypeInGlobalContainer)); break;
-        case itSunredTree:              iStream.add(new IsComponentInstanceInstruction(sitSunredTree,               instanceIndex, indexOfTypeInGlobalContainer)); break;
-        //case itBuiltInComponentType:    iStream.add(new IsComponentInstanceInstruction(sitBuiltInComponentInstance, instanceIndex, indexOfTypeInGlobalContainer)); break;
-        default: throw hmgExcept("SpiceComponentInstanceLine::toInstructionStream", "program error bad instanceOfWhat value (%u)", instanceOfWhat);
-    }
-
-    //iStream.add(new IsSetContainerSizeInstruction(sitNodeValueContainerSize, (unsigned)nodes.size()));
-    for (SimpleNodeID& it : nodes) 
-        iStream.add(new IsNodeValueInstruction(it));
-
-    //iStream.add(new IsSetContainerSizeInstruction(sitParameterValueContainerSize, (unsigned)params.size()));
-    //for (ParameterInstance& it : params)
-    //    iStream.add(new IsParameterValueInstruction(it));
-
-    //valueExpression.toInstructionStream(iStream, 0);
-
-    //iStream.add(new IsEndDefInstruction(sitEndComponentInstance, instanceIndex));
-}
-
-
-//***********************************************************************
-void HMGFileModelDescription::toInstructionStream(InstructionStream& iStream) {
-//***********************************************************************
-    //if (isGlobal) {
-    //    if (!globalNames.subcktNames.getIsEmpty())              iStream.add(new IsSetContainerSizeInstruction(sitSetSubcktContainerSize,        globalNames.subcktNames.getLastIndex() + 1));
-    //    if (!globalNames.controllerNames.getIsEmpty())          iStream.add(new IsSetContainerSizeInstruction(sitSetControllerContainerSize,    globalNames.controllerNames.getLastIndex() + 1));
-    //    if (!globalNames.componentTemplateNames.getIsEmpty())   iStream.add(new IsSetContainerSizeInstruction(sitSetComponentTypeContainerSize, globalNames.componentTemplateNames.getLastIndex() + 1));
-    //    if (!globalNames.staticVarNames.getIsEmpty())           iStream.add(new IsSetContainerSizeInstruction(sitSetStaticVarContainerSize,     globalNames.staticVarNames.getLastIndex() + 1));
-    //    if (!globalNames.modelNames.getIsEmpty())               iStream.add(new IsSetContainerSizeInstruction(sitSetModelContainerSize,         globalNames.modelNames.getLastIndex() + 1));
-    //    if (!globalNames.expressionNames.getIsEmpty())          iStream.add(new IsSetContainerSizeInstruction(sitSetExpressionContainerSize,    globalNames.expressionNames.getLastIndex() + 1));
-    //    if (!globalNames.sunredNames.getIsEmpty())              iStream.add(new IsSetContainerSizeInstruction(sitSetSunredContainerSize,        globalNames.sunredNames.getLastIndex() + 1));
-    //}
-    //else {
-        //if(isReplacer)  iStream.add(new IsReplaceInstruction(sitReplaceSubckt, modelIndex));
-        //else            iStream.add(new IsDefSubcktInstruction(modelIndex, nNormalNode, nControlNode, nParams));
-    //}
-
-    //if (!componentInstanceNames.getIsEmpty())   iStream.add(new IsSetContainerSizeInstruction(sitSetComponentInstanceSize,      componentInstanceNames.getLastIndex() + 1));
-    //if (!internalNodeNames.getIsEmpty())        iStream.add(new IsSetContainerSizeInstruction(sitSetInternalNodeContainerSize,  internalNodeNames.getLastIndex() + 1));
-    //if (!instanceVarNames.getIsEmpty())         iStream.add(new IsSetContainerSizeInstruction(sitSetVarContainerSize,           instanceVarNames.getLastIndex() + 1));
-    //if (!probeNames.getIsEmpty())               iStream.add(new IsSetContainerSizeInstruction(sitSetProbeContainerSize,         probeNames.getLastIndex() + 1));
-    //if (!forwardedNames.getIsEmpty())           iStream.add(new IsSetContainerSizeInstruction(sitSetForwardedContainerSize,     forwardedNames.getLastIndex() + 1));
-
-    //for (HMGFileListItem* it : itemList)
-    //    it->toInstructionStream(iStream);
-
-    //iStream.add(new IsEndDefInstruction(sitEndDefSubckt, modelIndex));
 }
 
 

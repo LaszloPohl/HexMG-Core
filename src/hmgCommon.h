@@ -122,14 +122,6 @@ enum ExpressionAndComponentType {
 
 
 //***********************************************************************
-enum HMGFileInstructionType {
-//***********************************************************************
-    itNone, itGlobal, itComponentInstance, itModel, itSunredTree, itRail, itCreate,
-    itBuiltInComponentType, itProbe
-};
-
-
-//***********************************************************************
 struct NodeID {
 //***********************************************************************
     enum NodeType {
@@ -189,42 +181,23 @@ struct ExpressionAtom {
 //***********************************************************************
 enum StreamInstructionType {
 //***********************************************************************
-    sitNothing = 0, sitEndSimulation,
+    sitNothing = 0, sitEndSimulation, sitCreate, sitSave,
 
     sitDefModelSubcircuit, sitDefModelController, sitEndDefModel, sitReplaceModel,
 
-    sitSubcktInstance, sitControllerInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
+    sitComponentInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
 
-    sitRails,
+    sitRails, sitRailRange, sitNodeValue, sitParameterValue, sitProbe, sitProbeNode,
 
-    sitSetModelContainerSize, 
-    sitSetFunctionContainerSize, sitSetSunredContainerSize,
-
-    sitSetComponentInstanceSize, sitSetControllerInstanceSize,
-    
-    sitNodeValue, sitParameterValue,
-
-    sitFunction, sitExpressionAtom, sitEndFunction,
+    sitFunction, sitExpressionAtom, sitEndFunction, sitUns
 
 };
 
 
 //***********************************************************************
-enum ProbeUnitType {
+enum ProbeType {
 //***********************************************************************
-    putNodeVar, putText, putInt, putReal, putZeros
-};
-
-
-//***********************************************************************
-struct ProbeUnit {
-//***********************************************************************
-    ProbeUnitType type; // putNodeVar, putText, putInt, putReal, putZeros
-    NodeID nodeVar;
-    std::string textValue;
-    int intValue;
-    float realValue;
-    unsigned nZeros;
+    ptV, ptI, ptSum, ptAverage 
 };
 
 
@@ -317,6 +290,31 @@ struct ProbeNodeID {
 //***********************************************************************
     SimpleNodeID nodeID;
     uns componentID[probeMaxComponentLevel] = { unsMax, unsMax, unsMax };
+};
+
+
+//***********************************************************************
+struct DefaultRailRange {
+//***********************************************************************
+    uns rail = 0;
+    NodeVarType type = nvtNone;
+    uns start_index = 0;
+    uns stop_index = 0;
+};
+
+
+//***********************************************************************
+struct RunData {
+//***********************************************************************
+    uns fullCircuitID = 0;
+    AnalysisType analysisType = atDC;
+    bool isInitial = false;
+    bool isPre = false; // successive approximation
+    bool isDT = false;  // TIMESTEP: T or DT
+    bool isTau = false; // fTau is f or tau (f=1/(2*PI*TAU))
+    uns iterNumSPD = 0; // DC/TIMESTEP: number of iteration steps, if 0 => until convergence; TIMECONST: STEP PER DECADE
+    rvt err = 0.0001;
+    rvt fTauDtT = 1;
 };
 
 

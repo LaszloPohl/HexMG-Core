@@ -349,7 +349,6 @@ struct HMGFileListItem {
     inline static GlobalHMGFileNames globalNames;
     inline static uns globalNRails = 0; // for checking
     virtual ~HMGFileListItem() {}
-    virtual HMGFileInstructionType getItemType()const = 0;
     virtual void toInstructionStream(InstructionStream& iStream) = 0;
 };
 
@@ -359,14 +358,23 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
 //***********************************************************************
     uns instanceIndex = 0; // component index or controller index
 
-    HMGFileInstructionType instanceOfWhat = itNone; // itModel, itBuiltInComponentType
-    uns indexOfTypeInGlobalContainer = 0; // modelNames, BuiltInComponentTemplateType
+    uns modelIndex = 0; // modelNames, BuiltInComponentTemplateType
     std::vector<SimpleNodeID> nodes;
     std::vector<ParameterInstance> params;
     bool isDefaultRail = false;
-    uns defaultRailIndex = 0;
-    HMGFileInstructionType getItemType()const override { return itComponentInstance; }
-    void toInstructionStream(InstructionStream& iStream)override;
+    bool isController = false;
+    bool isBuiltIn = false;
+    uns defaultValueRailIndex = 0;
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size()));
+        for(const auto& node : nodes)
+            iStream.add(new IsNodeValueInstruction(node));
+        for (const auto& param : params)
+            iStream.add(new IsParameterValueInstruction(param));
+        iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex));
+    }
 };
 
 
@@ -387,7 +395,7 @@ struct HMGFileModelDescription: HMGFileListItem {
     std::map<std::string, uns> componentInstanceNameIndex;
     std::map<std::string, uns> controllerInstanceNameIndex;
     std::map<std::string, uns> instanceListIndex;
-    std::vector<std::tuple<uns, NodeVarType, uns, uns>> defaults; // <rail, type, start_index, stop_index>
+    std::vector<DefaultRailRange> defaults;
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
 
@@ -398,9 +406,20 @@ struct HMGFileModelDescription: HMGFileListItem {
     void Replace(HMGFileModelDescription*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBodySubcircuit(ReadALine&, char*, LineInfo&, bool);
     void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&, bool) {}
-    HMGFileInstructionType getItemType()const override { return itModel; }
     //***********************************************************************
-    void toInstructionStream(InstructionStream& iStream)override;
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        if (modelType == hfmtSubcircuit) iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, sumExternalNodes, internalNs, sumInternalNodes, solutionType, solutionDescriptionIndex));
+        else                             iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex));
+        for (size_t i = 0; i < defaults.size(); i++) {
+            iStream.add(new IsRailNodeRangeInstruction(defaults[i]));
+        }
+        for (size_t i = 0; i < instanceList.size(); i++) {
+            instanceList[i]->toInstructionStream(iStream);
+        }
+        if (modelType == hfmtSubcircuit) iStream.add(new IsEndDefInstruction(sitDefModelSubcircuit, modelIndex));
+        else                             iStream.add(new IsEndDefInstruction(sitDefModelController, modelIndex));
+    }
     //***********************************************************************
     bool readNodeOrParNumber(const char* line, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo, const char* typeLiteral, uns& destVar) const{
     //***********************************************************************
@@ -460,12 +479,10 @@ struct HMGFileSunredTree: HMGFileListItem {
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileSunredTree*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBody(ReadALine&, char*, LineInfo&, bool);
-    HMGFileInstructionType getItemType()const override { return itSunredTree; }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        if (isReplacer) iStream.add(new IsReplaceInstruction(sitSunredTree, sunredTreeIndex, (uns)reductions.size()));
-        else            iStream.add(new IsDefSunredInstruction(sunredTreeIndex, (uns)reductions.size()));
+        iStream.add(new IsDefSunredInstruction(isReplacer, sunredTreeIndex, (uns)reductions.size()));
         for (size_t i = 0; i < reductions.size(); i++) {
             iStream.add(new IsDefSunredLevelInstruction((uns)(i + 1), (uns)reductions[i].size()));
             for(const auto& red : reductions[i])
@@ -483,11 +500,10 @@ struct HMGFileRails: HMGFileListItem {
     uns nRails = 0; // if 0, no change
 
     void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itRail; }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsDefRailsInstruction(nRails));
+        iStream.add(new IsDefRailsInstruction(nRails, (uns)railValues.size()));
         for (const auto& val : railValues)
             iStream.add(new IsDefRailValueInstruction(val.first, val.second));
         iStream.add(new IsEndDefInstruction(sitRails, 0));
@@ -503,42 +519,45 @@ struct HMGFileCreate: HMGFileListItem {
     uns GND = 0; // Rail ID
 
     void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itCreate; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsCreateInstruction(fullCircuitIndex, modelID, GND));
+    }
 };
 
 
 //***********************************************************************
 struct HMGFileProbe: HMGFileListItem {
 //***********************************************************************
-    enum ProbeType { ptV, ptI, ptSum, ptAverage };
     uns probeIndex = 0;
     uns probeType = ptV;
     uns fullCircuitID = 0;
     std::vector<ProbeNodeID> nodes;
 
     void Read(ReadALine&, char*, LineInfo&, bool);
-    HMGFileInstructionType getItemType()const override { return itProbe; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsProbeInstruction(probeIndex, probeType, fullCircuitID, (uns)nodes.size()));
+        for (const auto& node : nodes)
+            iStream.add(new IsProbeNodeInstruction(node));
+        iStream.add(new IsEndDefInstruction(sitProbe, 0));
+    }
 };
 
 
 //***********************************************************************
 struct HMGFileRun: HMGFileListItem {
 //***********************************************************************
-    uns fullCircuitID = 0;
-    AnalysisType analysisType = atDC;
-    bool isInitial = false;
-    bool isPre = false; // successive approximation
-    bool isDT = false;  // TIMESTEP: T or DT
-    bool isTau = false; // fTau is f or tau (f=1/(2*PI*TAU))
-    uns iterNumSPD = 0; // DC/TIMESTEP: number of iteration steps, if 0 => until convergence; TIMECONST: STEP PER DECADE
-    rvt err = 0.0001;
-    rvt fTauDtT = 1;
+    RunData data;
 
     void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itCreate; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsRunInstruction(data));
+    }
 };
 
 
@@ -551,8 +570,14 @@ struct HMGFileSave: HMGFileListItem {
     std::vector<uns> probeIDs;
 
     void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itCreate; }
-    void toInstructionStream(InstructionStream& iStream)override {}; // TODO !!!
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsSaveInstruction(isRaw, isAppend, fileName, (uns)probeIDs.size()));
+        for (const auto& probe : probeIDs)
+            iStream.add(new IsUnsInstruction(probe));
+        iStream.add(new IsEndDefInstruction(sitSave, 0));
+    }
 };
 
 
@@ -565,7 +590,6 @@ struct HMGFileGlobalDescription: HMGFileListItem {
     void clear() { for (auto it : itemList) delete it; itemList.clear(); }
     ~HMGFileGlobalDescription() { clear(); }
     void Read(ReadALine&, char*, LineInfo&);
-    HMGFileInstructionType getItemType()const override { return itGlobal; }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************

@@ -70,13 +70,13 @@ public:
     enum CDParamType{ value, globalVariable, localVariable, param, internalNode, externalNode };
     struct CDParam { CDParamType type = CDParamType::value; uns index = 0; rvt value = rvt0; };
 
-    bool isBuiltIn = false, isForcedDefNodeValueIndex = false;
-    uns componentModelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
-    uns nodesDefValueIndex = 0;
+    bool isBuiltIn = false, isDefaultRail = false;
+    uns modelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
+    uns defaultValueRailIndex = 0;
     std::vector<CDNode> nodesConnectedTo;
     std::vector<CDParam> params;
 
-    void setNodesDefValueIndex(uns nodesDefValueIndex_) noexcept { nodesDefValueIndex = nodesDefValueIndex_; isForcedDefNodeValueIndex = true; }
+    void setDefaultValueRailIndex(uns defaultValueRailIndex_) noexcept { defaultValueRailIndex = defaultValueRailIndex_; isDefaultRail = true; }
 };
 
 
