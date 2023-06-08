@@ -16,6 +16,7 @@
 #include "hmgComponentModel.h"
 #include "hmgSunred.h"
 #include "hmgMultigridTypes.h"
+#include "hmgSimulation.h"
 //***********************************************************************
 
 
@@ -1480,8 +1481,8 @@ public:
         pars.resize(def->params.size());
     }
     //***********************************************************************
-    const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->fixNode : getContainedComponent(0)->getComponentValue(); }
-    const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->fixNode : getContainedComponent(0)->getComponentCurrent(); }
+    const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
+    const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }
     VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
     VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
     //***********************************************************************
@@ -2380,6 +2381,8 @@ public:
     //***********************************************************************
     struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
     std::vector<FullCircuit> fullCircuitInstances;
+    std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
+    Simulation sim;
     //***********************************************************************
 
     //***********************************************************************
@@ -2399,6 +2402,11 @@ public:
         fullCircuitInstances.push_back(std::move(fc));
         fullCircuitInstances.back().component->buildOrReplace();
     }
+    //***********************************************************************
+    bool processInstructions(IsInstruction*& first);
+    void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
+    void processRailsInstructions(IsInstruction*& first);
+    //***********************************************************************
 };
 
 

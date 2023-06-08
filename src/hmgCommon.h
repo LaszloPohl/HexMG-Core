@@ -77,7 +77,7 @@ struct SimpleNodeID {
 
 
 //***********************************************************************
-enum SolutionType { stFullMatrix, stSunRed, stMultiGrid };
+enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 //***********************************************************************
 
 
@@ -181,16 +181,24 @@ struct ExpressionAtom {
 //***********************************************************************
 enum StreamInstructionType {
 //***********************************************************************
-    sitNothing = 0, sitEndSimulation, sitCreate, sitSave,
+    sitNothing = 0, sitCreate, sitSave,
 
-    sitDefModelSubcircuit, sitDefModelController, sitEndDefModel, sitReplaceModel,
+    sitDefModelSubcircuit, sitDefModelController,
 
     sitComponentInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
 
-    sitRails, sitRailRange, sitNodeValue, sitParameterValue, sitProbe, sitProbeNode,
+    sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
 
-    sitFunction, sitExpressionAtom, sitEndFunction, sitUns
+    sitProbe, sitProbeNode, sitFunction, sitExpressionAtom, sitUns,
 
+    sitEndInstruction
+};
+
+
+//***********************************************************************
+enum ControlInstructionType {
+//***********************************************************************
+    citNothing, citAnalysis, citRepaceComponetType, citSave
 };
 
 

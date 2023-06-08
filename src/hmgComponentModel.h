@@ -12,6 +12,8 @@
 
 
 //***********************************************************************
+#include "hmgInstructionStream.h"
+#include "hmgSimulationController.h"
 #include "hmgCircuitNode.hpp"
 #include "hmgFunction.hpp"
 #include "hmgSunred.h"
@@ -34,6 +36,7 @@ class ComponentAndControllerModelBase {
 // Type definition of the component, this is instantiated as Component
 // e.g. a subcircuit description or built in types (R, C, etc.)
 //***********************************************************************
+    friend class CircuitStorage;
     //***********************************************************************
     // number of nodes
     // these cannot be changed, this is the interface of a component
@@ -250,7 +253,8 @@ public:
 class ModelSubCircuit final : public ComponentAndControllerModelBase {
 //***********************************************************************
     friend class ComponentSubCircuit;
-//***********************************************************************
+    friend class CircuitStorage;
+    //***********************************************************************
 
     //***********************************************************************
     // number of internal nodes and nInternalVars can be changed in the replace procedure
@@ -263,7 +267,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
     std::vector<ForcedNodeDef> forcedNodes; // internal nodes where the default value index is defined
     std::vector<std::unique_ptr<ComponentDefinition>> components;
     std::vector<std::unique_ptr<ComponentDefinition>> controllers;
-    hmgSunred::ReductionTreeInstructions srTreeInstructions;
+    hmgSunred::ReductionTreeInstructions* srTreeInstructions;
     //***********************************************************************
 
 private:
@@ -277,11 +281,9 @@ public:
 
     //***********************************************************************
     ModelSubCircuit(ExternalConnectionSizePack Ns_, InternalNodeVarSizePack internalNs_, bool defaultInternalNodeIsConcurrent_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
-        : ComponentAndControllerModelBase{ Ns_ }, internalNs{ internalNs_ }, solutionType{solutionType_} {
+        : ComponentAndControllerModelBase{ Ns_ }, internalNs{ internalNs_ }, solutionType{ solutionType_ }, srTreeInstructions{ srTree } {
     //***********************************************************************
-       internalNodeIsConcurrent.resize(internalNs_.nNormalInternalNodes, defaultInternalNodeIsConcurrent_);
-       if (srTree)
-           srTreeInstructions = std::move(*srTree);
+        internalNodeIsConcurrent.resize(internalNs_.nNormalInternalNodes, defaultInternalNodeIsConcurrent_);
     }
     //***********************************************************************
     uns getN_NormalInternalNodes()const noexcept final override{ return internalNs.nNormalInternalNodes; }
@@ -302,6 +304,7 @@ public:
     void clearControllers() noexcept { version++; controllers.clear(); }
     //***********************************************************************
     uns getVersion()const noexcept { return version; }
+    void processInstructions(IsInstruction*& first);
     //***********************************************************************
 };
 

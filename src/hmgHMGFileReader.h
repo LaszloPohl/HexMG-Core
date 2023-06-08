@@ -17,9 +17,9 @@
 #include <string>
 #include <map>
 #include "hmgException.h"
-#include "NameToIndex.h"
+#include "hmgNameToIndex.h"
 #include "hmgCommon.h"
-#include "InstructionStream.h"
+#include "hmgInstructionStream.h"
 //***********************************************************************
 
 
@@ -381,15 +381,14 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
 //***********************************************************************
 struct HMGFileModelDescription: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     enum ModelType{ hfmtSubcircuit, hfmtController };
     std::string fullName;
     uns modelIndex = 0;
     ModelType modelType = hfmtSubcircuit;
     bool isReplacer = false;
     ExternalConnectionSizePack externalNs;
-    uns sumExternalNodes = 0;
     InternalNodeVarSizePack internalNs;
-    uns sumInternalNodes = 0;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object
     std::vector< HMGFileComponentInstanceLine* > instanceList;
     std::map<std::string, uns> componentInstanceNameIndex;
@@ -398,6 +397,7 @@ struct HMGFileModelDescription: HMGFileListItem {
     std::vector<DefaultRailRange> defaults;
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
+    //***********************************************************************
 
     //***********************************************************************
     void clear() { for (auto it : instanceList) delete it; instanceList.clear(); }
@@ -409,7 +409,7 @@ struct HMGFileModelDescription: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        if (modelType == hfmtSubcircuit) iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, sumExternalNodes, internalNs, sumInternalNodes, solutionType, solutionDescriptionIndex));
+        if (modelType == hfmtSubcircuit) iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, internalNs, solutionType, solutionDescriptionIndex));
         else                             iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex));
         for (size_t i = 0; i < defaults.size(); i++) {
             iStream.add(new IsRailNodeRangeInstruction(defaults[i]));
@@ -475,7 +475,9 @@ struct HMGFileSunredTree: HMGFileListItem {
     uns sunredTreeIndex = 0;
     HMGFileSunredTree* pParent = nullptr; // if this is a replacer, parent is the replaced object
     std::vector<std::vector<Reduction>> reductions;
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileSunredTree*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBody(ReadALine&, char*, LineInfo&, bool);
@@ -496,14 +498,17 @@ struct HMGFileSunredTree: HMGFileListItem {
 //***********************************************************************
 struct HMGFileRails: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     std::vector<std::pair<uns, rvt>> railValues;
     uns nRails = 0; // if 0, no change
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsDefRailsInstruction(nRails, (uns)railValues.size()));
+        iStream.add(new IsDefRailsInstruction(nRails, (uns)railValues.size() + 1));
         for (const auto& val : railValues)
             iStream.add(new IsDefRailValueInstruction(val.first, val.second));
         iStream.add(new IsEndDefInstruction(sitRails, 0));
@@ -514,10 +519,13 @@ struct HMGFileRails: HMGFileListItem {
 //***********************************************************************
 struct HMGFileCreate: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     uns fullCircuitIndex = 0;
     uns modelID = 0;
     uns GND = 0; // Rail ID
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
@@ -530,11 +538,14 @@ struct HMGFileCreate: HMGFileListItem {
 //***********************************************************************
 struct HMGFileProbe: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     uns probeIndex = 0;
     uns probeType = ptV;
     uns fullCircuitID = 0;
     std::vector<ProbeNodeID> nodes;
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&, bool);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
@@ -550,8 +561,11 @@ struct HMGFileProbe: HMGFileListItem {
 //***********************************************************************
 struct HMGFileRun: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     RunData data;
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
@@ -564,11 +578,14 @@ struct HMGFileRun: HMGFileListItem {
 //***********************************************************************
 struct HMGFileSave: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     bool isRaw = false;
     bool isAppend = false;
     std::string fileName;
     std::vector<uns> probeIDs;
+    //***********************************************************************
 
+    //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
@@ -584,7 +601,9 @@ struct HMGFileSave: HMGFileListItem {
 //***********************************************************************
 struct HMGFileGlobalDescription: HMGFileListItem {
 //***********************************************************************
+    //***********************************************************************
     std::list< HMGFileListItem* > itemList;
+    //***********************************************************************
 
     //***********************************************************************
     void clear() { for (auto it : itemList) delete it; itemList.clear(); }
@@ -595,7 +614,7 @@ struct HMGFileGlobalDescription: HMGFileListItem {
     //***********************************************************************
         for (HMGFileListItem* it : itemList)
             it->toInstructionStream(iStream);
-        iStream.add(new IsEndDefInstruction(sitEndSimulation, 0));
+        iStream.add(new IsEndDefInstruction(sitNothing, 0));
     };
     //***********************************************************************
 };

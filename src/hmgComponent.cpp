@@ -17,6 +17,231 @@ namespace nsHMG {
 
 
 //***********************************************************************
+bool CircuitStorage::processInstructions(IsInstruction*& first) {
+//***********************************************************************
+    bool isNotFinished = true, isStartExecute = false;
+    bool isImpossibleInstruction = false;
+    while (first != nullptr) {
+        IsInstruction* act = first;
+        first = first->next;
+        isStartExecute = false;
+        switch (act->instruction) {
+            case sitNothing:                        break;
+            case sitCreate: {
+                    
+                }
+                break;
+            case sitSave: {
+                    
+                }
+                break;
+            case sitDefModelSubcircuit: {
+                    IsDefModelSubcircuitInstruction* pAct = static_cast<IsDefModelSubcircuitInstruction*>(act);
+                    
+                    if (pAct->isReplace) {
+                        ModelSubCircuit* ms = static_cast<ModelSubCircuit*>(models[pAct->index].get());
+                        uns version = ms->version + 1;
+                        models[pAct->index] = std::make_unique<ModelSubCircuit>(ms->Ns, ms->internalNs, ms->solutionType != SolutionType::stFullMatrix, ms->solutionType, ms->srTreeInstructions);
+                        ms = static_cast<ModelSubCircuit*>(models[pAct->index].get());
+                        ms->version = version;
+                    }
+
+                    if (pAct->index == models.size()) {
+                        models.push_back(std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs, 
+                            pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr));
+                    }
+                    else {
+                        if (pAct->index > models.size())
+                            models.resize(pAct->index + 1);
+                        models[pAct->index] = std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs,
+                            pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr);
+                    }
+
+                }
+                break;
+            case sitDefModelController: {
+                    
+                }
+                break;
+            case sitComponentInstance:              isImpossibleInstruction = true; break;
+            case sitSunredTree: {
+                    IsDefSunredInstruction* pAct = static_cast<IsDefSunredInstruction*>(act);
+
+                    // pAct->isReplace can be ignored
+
+                    if (pAct->index == sunredTrees.size()) {
+                        sunredTrees.push_back(std::make_unique<hmgSunred::ReductionTreeInstructions>());
+                    }
+                    else  {
+                        if (pAct->index > sunredTrees.size())
+                            sunredTrees.resize(pAct->index + 1);
+                        sunredTrees[pAct->index] = std::make_unique<hmgSunred::ReductionTreeInstructions>();
+                    }
+
+                    sunredTrees[pAct->index]->data.resize(pAct->levels);
+
+                    processSunredTreeInstructions(first, pAct->index);
+                }
+                break;
+            case sitSunredLevel:                    isImpossibleInstruction = true; break;
+            case sitSunredReduction:                isImpossibleInstruction = true; break;
+            case sitRails: {
+                    IsDefRailsInstruction* pAct = static_cast<IsDefRailsInstruction*>(act);
+                    Rails::resize(pAct->nRailValues);
+                    processRailsInstructions(first);
+                    Rails::reset();
+                }
+                break;
+            case sitRailRange:                      isImpossibleInstruction = true; break;
+            case sitNodeValue:                      isImpossibleInstruction = true; break;
+            case sitParameterValue:                 isImpossibleInstruction = true; break;
+            case sitProbe: {
+                    
+                }
+                break;
+            case sitProbeNode:                      isImpossibleInstruction = true; break;
+            case sitFunction: {
+                    TODO("sitFunction");
+                }
+                break;
+            case sitExpressionAtom:                 isImpossibleInstruction = true; break;
+            case sitUns:                            isImpossibleInstruction = true; break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitNothing)
+                        throw hmgExcept("CircuitStorage::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processInstructions", "unknown instruction type (%u)", act->instruction);
+        }
+        if(isImpossibleInstruction)
+            throw hmgExcept("CircuitStorage::processInstructions", "%u is not a global instruction", act->instruction);
+        delete act;
+        if(!isNotFinished && first != nullptr)
+            throw hmgExcept("CircuitStorage::processInstructions", "instruction after End Simulation instruction");
+        if (isStartExecute)
+            sim.run();
+    }
+    return isNotFinished;
+}
+
+
+//***********************************************************************
+void CircuitStorage::processSunredTreeInstructions(IsInstruction*& first, uns currentTree) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during sunred tree definition.");
+    uns currentLevel = unsMax, nReductions = 0;
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        if (act->instruction != sitSunredReduction && currentLevel != unsMax) {
+            if(nReductions != sunredTrees[currentTree]->data[currentLevel].size())
+                throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "Not enough or too many reductions in Tree %u Level %u (%u expected, %u arrived)", 
+                    currentTree, currentLevel, nReductions, (uns)sunredTrees[currentTree]->data[currentLevel].size());
+        }
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitSunredLevel: {//instr.data[0].resize(2);
+                    IsDefSunredLevelInstruction* pAct = static_cast<IsDefSunredLevelInstruction*>(act);
+                    if(pAct->level == 0 || pAct->level > sunredTrees[currentTree]->data.size())
+                        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "illegal destination level (%u)", pAct->level);
+                    currentLevel = pAct->level - 1;
+                    nReductions = pAct->nReductions;
+                    sunredTrees[currentTree]->data[currentLevel].reserve(nReductions);
+                }
+                break;
+            case sitSunredReduction: {//instr.data[0][0] = { 0, 1, 0, 2 };
+                    IsDefSunredReductionInstruction* pAct = static_cast<IsDefSunredReductionInstruction*>(act);
+                    sunredTrees[currentTree]->data[currentLevel].push_back(pAct->reduction);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitSunredTree)
+                        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "%u is not a sunred tree instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
+void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during sunred tree definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitRailValue: {
+                    IsDefRailValueInstruction* pAct = static_cast<IsDefRailValueInstruction*>(act);
+                    Rails::SetVoltage(pAct->index, pAct->value);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitRails)
+                        throw hmgExcept("CircuitStorage::processRailsInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processRailsInstructions", "%u is not a sunred tree instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processRailsInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
+void ModelSubCircuit::processInstructions(IsInstruction*& first) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during sunred tree definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitRailRange: {
+                    ...
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitDefModelSubcircuit)
+                        throw hmgExcept("CircuitStorage::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("ModelSubCircuit::processInstructions", "%u is not a sunred tree instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
 void ComponentSubCircuit::allocForReductionDC() {
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
@@ -27,7 +252,7 @@ void ComponentSubCircuit::allocForReductionDC() {
             sfmrDC->alloc();
         }
         else if (model.solutionType == SolutionType::stSunRed) {
-            sunred.buildTree(model.srTreeInstructions, this);
+            sunred.buildTree(*model.srTreeInstructions, this);
             sunred.allocDC();
         }
     }
@@ -149,7 +374,7 @@ void ComponentSubCircuit::buildOrReplace() {
                 comp.setNode(j,
                     cdn.type == ComponentDefinition::CDNodeType::internal ? &internalNodesAndVars[cdn.index]
                     : cdn.type == ComponentDefinition::CDNodeType::external ? externalNodes[cdn.index]
-                    : cdn.type == ComponentDefinition::CDNodeType::ground ? &Rails::V[cdn.index].get()->fixNode
+                    : cdn.type == ComponentDefinition::CDNodeType::ground ? &Rails::V[cdn.index].get()->rail
                     : nullptr // unconnected node, never gets here
                 );
             }

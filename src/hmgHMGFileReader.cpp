@@ -426,9 +426,6 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
             throw hmgExcept("HMGFileModelDescription::Read", "simple node name expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     }
 
-    sumExternalNodes = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes + externalNs.nForwardedONodes;
-    sumInternalNodes = internalNs.nNormalInternalNodes + internalNs.nControlInternalNodes;
-        
     if (modelType == hfmtSubcircuit)
         ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
     else if (modelType == hfmtController)
@@ -553,7 +550,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
                 const HMGFileModelDescription& mod = *globalNames.modelData[pxline->modelIndex];
-                nodenum = mod.sumExternalNodes;
+                nodenum = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes + mod.externalNs.nNormalONodes + mod.externalNs.nForwardedONodes;
                 parnum = mod.externalNs.nParams;
                 pxline->isController = mod.modelType == hfmtController;
             }

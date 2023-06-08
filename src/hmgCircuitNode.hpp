@@ -322,8 +322,8 @@ struct Rails {
         friend struct Rails;
         rvt defaultNodeValue = rvt0;
     public:
-        VariableNodeBase fixNode;
-        explicit OneRail(uns defValueIndex) noexcept { fixNode.turnIntoNode(defValueIndex, true); }
+        VariableNodeBase rail;
+        explicit OneRail(uns defValueIndex) noexcept { rail.turnIntoNode(defValueIndex, true); }
         rvt getDefaultNodeValue()const noexcept { return defaultNodeValue; }
     };
 
@@ -343,9 +343,9 @@ struct Rails {
     static void reset() {
     //***********************************************************************
         for (auto& v : V) {
-            v->fixNode.reset();
-            v->fixNode.setIsGndDC(true);
-            v->fixNode.createAC();
+            v->rail.reset();
+            v->rail.setIsGndDC(true);
+            v->rail.createAC();
         }
     }
 
