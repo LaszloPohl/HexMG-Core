@@ -411,8 +411,54 @@ struct HMGFileModelDescription: HMGFileListItem {
     //***********************************************************************
         if (modelType == hfmtSubcircuit) iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, internalNs, solutionType, solutionDescriptionIndex));
         else                             iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex));
-        for (size_t i = 0; i < defaults.size(); i++) {
-            iStream.add(new IsRailNodeRangeInstruction(defaults[i]));
+        for (const auto& src: defaults) {
+            ForcedNodeDef forcedNodeRange;
+            forcedNodeRange.defaultRailIndex = src.rail;
+            SimpleNodeID startS, stopS;
+            stopS.type = startS.type = src.type;
+            startS.index = src.start_index;
+            stopS.index  = src.stop_index;
+            CDNode startC = SimpleNodeID2CDNode(startS, externalNs, internalNs);
+            CDNode stopC  = SimpleNodeID2CDNode(stopS, externalNs, internalNs);
+            forcedNodeRange.isExternal = startC.type == cdntExternal;
+            forcedNodeRange.nodeStartIndex = startC.index;
+            forcedNodeRange.nodeStopIndex  = stopC.index;
+            /*
+            uns delta = 0;
+            switch (src.type) {
+                case nvtIO:
+                    forcedNodeRange.isExternal = true;
+                    break;
+                case nvtIN:
+                    forcedNodeRange.isExternal = true;
+                    delta = externalNs.nIONodes;
+                    break;
+                case nvtCIN:
+                    forcedNodeRange.isExternal = true;
+                    delta = externalNs.nIONodes + externalNs.nNormalINodes;
+                    break;
+                case nvtOUT:
+                    forcedNodeRange.isExternal = true;
+                    delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+                    break;
+                case nvtFWOUT:
+                    forcedNodeRange.isExternal = true;
+                    delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
+                    break;
+                case nvtNInternal:
+                    forcedNodeRange.isExternal = false;
+                    break;
+                case nvtCInternal:
+                    forcedNodeRange.isExternal = false;
+                    delta = internalNs.nNormalInternalNodes;
+                    break;
+                default:
+                throw hmgExcept("HMGFileModelDescription::toInstructionStream", "DEFAULTRAIL/DEFAULTRAILRANGE: not a node type (%u) connecting to R%u, range: %u-%u", src.type, src.rail, src.start_index, src.stop_index);
+            }
+            forcedNodeRange.nodeStartIndex = src.start_index + delta;
+            forcedNodeRange.nodeStopIndex = src.stop_index + delta;
+            */
+            iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
         }
         for (size_t i = 0; i < instanceList.size(); i++) {
             instanceList[i]->toInstructionStream(iStream);

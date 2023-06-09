@@ -34,12 +34,12 @@ void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::external;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntExternal;
 	cd->nodesConnectedTo[0].index = externalIndex;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[1].index = 0;
 	cd->params.resize(1);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = G;
 }
 
@@ -50,18 +50,18 @@ void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = 0;
 	cd->params.resize(4);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = I;
-	cd->params[1].type = ComponentDefinition::CDParamType::value;
+	cd->params[1].type = CDParamType::cdptValue;
 	cd->params[1].value = I;
-	cd->params[2].type = ComponentDefinition::CDParamType::value;
+	cd->params[2].type = CDParamType::cdptValue;
 	cd->params[2].value = rvt0;
-	cd->params[3].type = ComponentDefinition::CDParamType::value;
+	cd->params[3].type = CDParamType::cdptValue;
 	cd->params[3].value = rvt0;
 }
 
@@ -72,22 +72,22 @@ void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstV;
 	cd->nodesConnectedTo.resize(3);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = 1;
-	cd->nodesConnectedTo[2].type = ComponentDefinition::CDNodeType::unconnected;
+	cd->nodesConnectedTo[2].type = CDNodeType::cdntUnconnected;
 	cd->nodesConnectedTo[2].index = 0;
 	cd->params.resize(5);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = V;
-	cd->params[1].type = ComponentDefinition::CDParamType::value;
+	cd->params[1].type = CDParamType::cdptValue;
 	cd->params[1].value = V;
-	cd->params[2].type = ComponentDefinition::CDParamType::value;
+	cd->params[2].type = CDParamType::cdptValue;
 	cd->params[2].value = rvt0; // in AC GND is 0
-	cd->params[3].type = ComponentDefinition::CDParamType::value;
+	cd->params[3].type = CDParamType::cdptValue;
 	cd->params[3].value = rvt0;
-	cd->params[4].type = ComponentDefinition::CDParamType::value;
+	cd->params[4].type = CDParamType::cdptValue;
 	cd->params[4].value = G;
 }
 
@@ -98,18 +98,18 @@ void setIStep(std::unique_ptr<ComponentDefinition>& cd, uns intNode, rvt Idc0, r
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = intNode;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = 1;
 	cd->params.resize(4);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = Idc0;
-	cd->params[1].type = ComponentDefinition::CDParamType::value;
+	cd->params[1].type = CDParamType::cdptValue;
 	cd->params[1].value = Idc;
-	cd->params[2].type = ComponentDefinition::CDParamType::value;
+	cd->params[2].type = CDParamType::cdptValue;
 	cd->params[2].value = Iac;
-	cd->params[3].type = ComponentDefinition::CDParamType::value;
+	cd->params[3].type = CDParamType::cdptValue;
 	cd->params[3].value = Phi;
 }
 
@@ -121,12 +121,12 @@ void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns g
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = nodeIndex;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = groundIndex;
 	cd->params.resize(1);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = G;
 }
 
@@ -137,12 +137,12 @@ void setC0(std::unique_ptr<ComponentDefinition>& cd, rvt C) {
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstC_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = 1;
 	cd->params.resize(1);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = C;
 }
 
@@ -153,18 +153,18 @@ void setGirator0(std::unique_ptr<ComponentDefinition>& cd) {
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtGirator;
 	cd->nodesConnectedTo.resize(4);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = 1;
-	cd->nodesConnectedTo[2].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[2].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[2].index = 1;
-	cd->nodesConnectedTo[3].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[3].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[3].index = 0;
 	cd->params.resize(2);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = -1.0;
-	cd->params[1].type = ComponentDefinition::CDParamType::value;
+	cd->params[1].type = CDParamType::cdptValue;
 	cd->params[1].value = -1.0;
 }
 
@@ -176,16 +176,16 @@ void setDissipator(std::unique_ptr<ComponentDefinition>& cd, uns componentModelI
 	cd->isBuiltIn = false;
 	cd->modelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(3);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = nodeIndex;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = groundIndex;
-	cd->nodesConnectedTo[2].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[2].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[2].index = srcIndex;
 	cd->params.resize(2);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = G;
-	cd->params[1].type = ComponentDefinition::CDParamType::value;
+	cd->params[1].type = CDParamType::cdptValue;
 	cd->params[1].value = Gsrc;
 }
 
@@ -196,18 +196,18 @@ void setCell(std::unique_ptr<ComponentDefinition>& cd, uns componentModelIndex, 
 	cd->isBuiltIn = false;
 	cd->modelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(nodeNum);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = index1;
 	if (nodeNum > 1) {
-		cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::internal;
+		cd->nodesConnectedTo[1].type = CDNodeType::cdntInternal;
 		cd->nodesConnectedTo[1].index = index2;
 	}
 	if (nodeNum > 2) {
-		cd->nodesConnectedTo[2].type = ComponentDefinition::CDNodeType::internal;
+		cd->nodesConnectedTo[2].type = CDNodeType::cdntInternal;
 		cd->nodesConnectedTo[2].index = index3;
 	}
 	if (nodeNum > 3) {
-		cd->nodesConnectedTo[3].type = ComponentDefinition::CDNodeType::internal;
+		cd->nodesConnectedTo[3].type = CDNodeType::cdntInternal;
 		cd->nodesConnectedTo[3].index = index4;
 	}
 }
@@ -533,12 +533,12 @@ void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalI
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = internalIndex;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::ground;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntRail;
 	cd->nodesConnectedTo[1].index = groundIndex;
 	cd->params.resize(1);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = G;
 }
 
@@ -549,12 +549,12 @@ void setRinternal2(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internal
 	cd->isBuiltIn = true;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
-	cd->nodesConnectedTo[0].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = internalIndex1;
-	cd->nodesConnectedTo[1].type = ComponentDefinition::CDNodeType::internal;
+	cd->nodesConnectedTo[1].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[1].index = internalIndex2;
 	cd->params.resize(1);
-	cd->params[0].type = ComponentDefinition::CDParamType::value;
+	cd->params[0].type = CDParamType::cdptValue;
 	cd->params[0].value = G;
 }
 

@@ -1514,7 +1514,7 @@ public:
             const auto& comp = *components[i];
             if (comp.isEnabled) {
                 for (const auto& node : comp.def->nodesConnectedTo) {
-                    if (node.type == ComponentDefinition::CDNodeType::internal) {
+                    if (node.type == CDNodeType::cdntInternal) {
                         if (node.index < internalNodesToComponents.size()) {
                             bool isNotIn = true;
                             auto& ntc = internalNodesToComponents[node.index];
@@ -1525,7 +1525,7 @@ public:
                                 ntc.push_back(i);
                         }
                     }
-                    else if (node.type == ComponentDefinition::CDNodeType::external) {
+                    else if (node.type == CDNodeType::cdntExternal) {
                         if (node.index < externalNodesToComponents.size()) {
                             bool isNotIn = true;
                             auto& ntc = externalNodesToComponents[node.index];

@@ -312,6 +312,16 @@ struct DefaultRailRange {
 
 
 //***********************************************************************
+struct ForcedNodeDef {
+//***********************************************************************
+    uns defaultRailIndex = 0;
+    uns nodeStartIndex = 0;
+    uns nodeStopIndex = 0;
+    bool isExternal = false;
+};
+
+
+//***********************************************************************
 struct RunData {
 //***********************************************************************
     uns fullCircuitID = 0;
@@ -325,6 +335,13 @@ struct RunData {
     rvt fTauDtT = 1;
 };
 
+
+//***********************************************************************
+enum CDNodeType { cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected }; // unconnected: only for ONodes
+struct CDNode { CDNodeType type = cdntExternal; uns index = 0; };
+enum CDParamType { cdptValue, cdptGlobalVariable, cdptLocalVariable, cdptParam, cdptInternalNode, cdptExternalNode };
+struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt value = rvt0; };
+//***********************************************************************
 
 
 #define HMG_DEBUGPRINT

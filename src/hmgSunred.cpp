@@ -25,9 +25,9 @@ void SunredTreeNode::loadLeafDataFromSubcircuit(ComponentBase* src, ComponentSub
     cuns ncSiz = (uns)srcComponent->def->nodesConnectedTo.size();
     for (uns i = 0; i < ncSiz; i++) {
         const auto& node = srcComponent->def->nodesConnectedTo[i];
-        if (node.type == ComponentDefinition::CDNodeType::internal)
+        if (node.type == CDNodeType::cdntInternal)
             CNodeIndex.push_back({ i, node.index });
-        else if (node.type == ComponentDefinition::CDNodeType::external)
+        else if (node.type == CDNodeType::cdntExternal)
             CNodeIndex.push_back({ i, node.index | externalNodeFlag });
         // ground and unconnected nodes ignored
     }

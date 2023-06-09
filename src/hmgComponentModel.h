@@ -37,29 +37,33 @@ class ComponentAndControllerModelBase {
 // e.g. a subcircuit description or built in types (R, C, etc.)
 //***********************************************************************
     friend class CircuitStorage;
+    friend class ComponentDefinition;
     //***********************************************************************
     // number of nodes
     // these cannot be changed, this is the interface of a component
-    const ExternalConnectionSizePack Ns;
+    const ExternalConnectionSizePack externalNs;
     //***********************************************************************
 public:
     ComponentAndControllerModelBase(ExternalConnectionSizePack Ns_)
-        : Ns{ Ns_ } {}
+        : externalNs{ Ns_ } {}
     virtual ~ComponentAndControllerModelBase() = default;
     virtual ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const = 0;
-    uns getN_IO_Nodes()const noexcept { return Ns.nIONodes; }
-    uns getN_Normal_I_Nodes()const noexcept { return Ns.nNormalINodes; }
-    uns getN_Control_I_Nodes()const noexcept { return Ns.nControlINodes; }
-    uns getN_Normal_O_Nodes()const noexcept { return Ns.nNormalONodes; }
-    uns getN_Forwarded_O_Nodes()const noexcept { return Ns.nForwardedONodes; }
-    uns getN_O_Nodes()const noexcept { return Ns.nNormalONodes + Ns.nForwardedONodes; }
-    uns getN_Start_Of_O_Nodes()const noexcept { return Ns.nIONodes + Ns.nNormalINodes + Ns.nControlINodes; }
-    uns getN_ExternalNodes()const noexcept { return Ns.nIONodes + Ns.nNormalINodes + Ns.nControlINodes + Ns.nNormalONodes + Ns.nForwardedONodes; }
-    uns getN_Params()const noexcept { return Ns.nParams; }
+    uns getN_IO_Nodes()const noexcept { return externalNs.nIONodes; }
+    uns getN_Normal_I_Nodes()const noexcept { return externalNs.nNormalINodes; }
+    uns getN_Control_I_Nodes()const noexcept { return externalNs.nControlINodes; }
+    uns getN_Normal_O_Nodes()const noexcept { return externalNs.nNormalONodes; }
+    uns getN_Forwarded_O_Nodes()const noexcept { return externalNs.nForwardedONodes; }
+    uns getN_O_Nodes()const noexcept { return externalNs.nNormalONodes + externalNs.nForwardedONodes; }
+    uns getN_Start_Of_O_Nodes()const noexcept { return externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes; }
+    uns getN_ExternalNodes()const noexcept { return externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes + externalNs.nForwardedONodes; }
+    uns getN_Params()const noexcept { return externalNs.nParams; }
     virtual uns getN_NormalInternalNodes()const noexcept { return 0; }
     virtual uns getN_InternalNodes()const noexcept { return 0; }
-    bool isController()const noexcept { return Ns.nIONodes + Ns.nNormalINodes == 0; }
+    bool isController()const noexcept { return externalNs.nIONodes + externalNs.nNormalINodes == 0; }
 };
+
+
+class ModelSubCircuit;
 
 
  //***********************************************************************
@@ -67,12 +71,6 @@ class ComponentDefinition final {
 // Instantiation instruction for a Component
 //***********************************************************************
 public:
-
-    enum CDNodeType{ internal, external, ground, unconnected }; // unconnected: only for ONodes
-    struct CDNode { CDNodeType type = external; uns index = 0; };
-    enum CDParamType{ value, globalVariable, localVariable, param, internalNode, externalNode };
-    struct CDParam { CDParamType type = CDParamType::value; uns index = 0; rvt value = rvt0; };
-
     bool isBuiltIn = false, isDefaultRail = false;
     uns modelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
     uns defaultValueRailIndex = 0;
@@ -80,6 +78,7 @@ public:
     std::vector<CDParam> params;
 
     void setDefaultValueRailIndex(uns defaultValueRailIndex_) noexcept { defaultValueRailIndex = defaultValueRailIndex_; isDefaultRail = true; }
+    void processInstructions(IsInstruction*& first, const ModelSubCircuit& container);
 };
 
 
@@ -254,6 +253,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
 //***********************************************************************
     friend class ComponentSubCircuit;
     friend class CircuitStorage;
+    friend class ComponentDefinition;
     //***********************************************************************
 
     //***********************************************************************
@@ -263,7 +263,6 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
     uns version = 1; // version is increased with each change in the structure of the subcircuit => the component instance can check that it is up to date
     //***********************************************************************
     std::vector<bool> internalNodeIsConcurrent; // if true, the defect type will be atomic (slower)
-    struct ForcedNodeDef { uns nodeIndex = 0, defaultValueIndex = 0; bool isExternal = false; };
     std::vector<ForcedNodeDef> forcedNodes; // internal nodes where the default value index is defined
     std::vector<std::unique_ptr<ComponentDefinition>> components;
     std::vector<std::unique_ptr<ComponentDefinition>> controllers;

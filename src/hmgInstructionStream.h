@@ -26,6 +26,105 @@ namespace nsHMG {
 
 
 //***********************************************************************
+inline CDNode SimpleNodeID2CDNode(const SimpleNodeID& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
+//***********************************************************************
+    CDNode res;
+    uns delta = 0;
+    switch (src.type) {
+        case nvtIO:
+            res.type = CDNodeType::cdntExternal;
+            break;
+        case nvtIN:
+            res.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes;
+            break;
+        case nvtCIN:
+            res.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes;
+            break;
+        case nvtOUT:
+            res.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+            break;
+        case nvtFWOUT:
+            res.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
+            break;
+        case nvtNInternal:
+            res.type = CDNodeType::cdntInternal;
+            break;
+        case nvtCInternal:
+            res.type = CDNodeType::cdntInternal;
+            delta = internalNs.nNormalInternalNodes;
+            break;
+        case nvtRail:
+            res.type = CDNodeType::cdntRail;
+            break;
+        case nvtGND:
+            res.type = CDNodeType::cdntGnd;
+            break;
+        default:
+            throw hmgExcept("SimpleNodeID2CDNode", "not a node type (%u)", src.type);
+    }
+    res.index = src.index + delta;
+    return res;
+}
+
+
+//***********************************************************************
+inline CDParam ParameterInstance2CDParam(const ParameterInstance& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
+//***********************************************************************
+    CDParam res;
+    uns delta = 0;
+    res.value = src.value;
+    switch (src.param.type) {
+        case nvtNone:
+            res.type = CDParamType::cdptValue;
+            break;
+        case nvtIO:
+            res.type = CDParamType::cdptExternalNode;
+            break;
+        case nvtIN:
+            res.type = CDParamType::cdptExternalNode;
+            delta = externalNs.nIONodes;
+            break;
+        case nvtCIN:
+            res.type = CDParamType::cdptExternalNode;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes;
+            break;
+        case nvtOUT:
+            res.type = CDParamType::cdptExternalNode;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+            break;
+        case nvtFWOUT:
+            res.type = CDParamType::cdptExternalNode;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
+            break;
+        case nvtNInternal:
+            res.type = CDParamType::cdptInternalNode;
+            break;
+        case nvtCInternal:
+            res.type = CDParamType::cdptInternalNode;
+            delta = internalNs.nNormalInternalNodes;
+            break;
+        case nvtVarInternal:
+            res.type = CDParamType::cdptLocalVariable;
+            break;
+        case nvtVarGlobal:
+            res.type = CDParamType::cdptGlobalVariable;
+            break;
+        case nvtParam:
+            res.type = CDParamType::cdptParam;
+            break;
+        default:
+            throw hmgExcept("ParameterInstance2CDParam", "illegal type (%u)", src.param.type);
+    }
+    res.index = src.param.index + delta;
+    return res;
+}
+
+
+//***********************************************************************
 struct IsInstruction {
 //***********************************************************************
     StreamInstructionType instruction;
@@ -148,8 +247,9 @@ struct IsComponentInstanceInstruction : public IsInstruction {
 //***********************************************************************
 struct IsRailNodeRangeInstruction: public IsInstruction {
 //***********************************************************************
-    DefaultRailRange range;
-    IsRailNodeRangeInstruction(const DefaultRailRange& range_) :IsInstruction{ sitRailRange }, range{ range_ }{}
+    ForcedNodeDef forcedNodeRange;
+    IsRailNodeRangeInstruction(const ForcedNodeDef& forcedNodeRnge)
+        :IsInstruction{ sitRailRange }, forcedNodeRange{ forcedNodeRnge } {}
 };
 
 

@@ -41,22 +41,26 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     if (pAct->isReplace) {
                         ModelSubCircuit* ms = static_cast<ModelSubCircuit*>(models[pAct->index].get());
                         uns version = ms->version + 1;
-                        models[pAct->index] = std::make_unique<ModelSubCircuit>(ms->Ns, ms->internalNs, ms->solutionType != SolutionType::stFullMatrix, ms->solutionType, ms->srTreeInstructions);
+                        models[pAct->index] = std::make_unique<ModelSubCircuit>(ms->externalNs, ms->internalNs, ms->solutionType != SolutionType::stFullMatrix, ms->solutionType, ms->srTreeInstructions);
                         ms = static_cast<ModelSubCircuit*>(models[pAct->index].get());
                         ms->version = version;
                     }
-
-                    if (pAct->index == models.size()) {
-                        models.push_back(std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs, 
-                            pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr));
-                    }
                     else {
-                        if (pAct->index > models.size())
-                            models.resize(pAct->index + 1);
-                        models[pAct->index] = std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs,
-                            pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr);
+                        if (pAct->index == models.size()) {
+                            models.push_back(std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs,
+                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr));
+                        }
+                        else {
+                            if (pAct->index > models.size())
+                                models.resize(pAct->index + 1);
+                            models[pAct->index] = std::make_unique<ModelSubCircuit>(pAct->externalNs, pAct->internalNs,
+                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr);
+                        }
                     }
 
+                    ModelSubCircuit* ms = static_cast<ModelSubCircuit*>(models[pAct->index].get());
+
+                    ms->processInstructions(first);
                 }
                 break;
             case sitDefModelController: {
@@ -181,7 +185,7 @@ void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
-        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during sunred tree definition.");
+        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during rails definition.");
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -214,29 +218,94 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
-        throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during sunred tree definition.");
+        throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during subcircuit definition.");
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
         switch (act->instruction) {
             case sitNothing: break;
+            case sitComponentInstance: {
+                    IsComponentInstanceInstruction* pAct = static_cast<IsComponentInstanceInstruction*>(act);
+
+                    std::unique_ptr<ComponentDefinition> cd = std::make_unique<ComponentDefinition>();
+
+                    cd->isBuiltIn = pAct->isBuiltIn;
+                    cd->isDefaultRail = pAct->isDefaultRail;
+                    cd->defaultValueRailIndex = pAct->defaultValueRailIndex;
+                    cd->modelIndex = pAct->modelIndex;
+                    cd->nodesConnectedTo.reserve(pAct->nNodes);
+                    cd->params.reserve(pAct->nParams);
+
+                    cd->processInstructions(first, *this);
+
+                    std::vector<std::unique_ptr<ComponentDefinition>>& instanceStorage = pAct->isController ? controllers : components;
+
+                    if (pAct->instanceIndex == instanceStorage.size()) {
+                        instanceStorage.push_back(std::move(cd));
+                    }
+                    else {
+                        if (pAct->instanceIndex > instanceStorage.size())
+                            instanceStorage.resize(pAct->instanceIndex + 1);
+                        instanceStorage[pAct->instanceIndex] = std::move(cd);
+                    }
+                }
+                break;
             case sitRailRange: {
-                    ...
+                    IsRailNodeRangeInstruction* pAct = static_cast<IsRailNodeRangeInstruction*>(act);
+                    forcedNodes.push_back(pAct->forcedNodeRange);
                 }
                 break;
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitDefModelSubcircuit)
-                        throw hmgExcept("CircuitStorage::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("ModelSubCircuit::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
         default:
-            throw hmgExcept("ModelSubCircuit::processInstructions", "%u is not a sunred tree instruction", act->instruction);
+            throw hmgExcept("ModelSubCircuit::processInstructions", "%u is not a MODEL SUBCIRCUIT instruction", act->instruction);
         }
         delete act;
         if(isNotFinished && first == nullptr)
             throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
+void ComponentDefinition::processInstructions(IsInstruction*& first, const ModelSubCircuit& container) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("ComponentDefinition::processInstructions", "The instruction stream has ended during component definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitNodeValue: {
+                    IsNodeValueInstruction* pAct = static_cast<IsNodeValueInstruction*>(act);
+                    nodesConnectedTo.push_back(SimpleNodeID2CDNode(pAct->nodeID, container.externalNs, container.internalNs));
+                }
+                break;
+            case sitParameterValue: {
+                    IsParameterValueInstruction* pAct = static_cast<IsParameterValueInstruction*>(act);
+                    params.push_back(ParameterInstance2CDParam(pAct->param, container.externalNs, container.internalNs));
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitComponentInstance)
+                        throw hmgExcept("ComponentDefinition::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("ComponentDefinition::processInstructions", "%u is not a component instance instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("ComponentDefinition::processInstructions", "The instruction stream has ended during sunred tree definition.");
     }
 }
 
@@ -342,9 +411,11 @@ void ComponentSubCircuit::buildOrReplace() {
 
     for (const auto& forced : model.forcedNodes) {
         if (forced.isExternal)
-            externalNodes[forced.nodeIndex]->turnIntoNode(forced.defaultValueIndex, true);
+            for (uns i = forced.nodeStartIndex; i <= forced.nodeStopIndex; i++)
+                externalNodes[i]->turnIntoNode(forced.defaultRailIndex, true);
         else
-            internalNodesAndVars[forced.nodeIndex].turnIntoNode(forced.defaultValueIndex, true);
+            for (uns i = forced.nodeStartIndex; i <= forced.nodeStopIndex; i++)
+                internalNodesAndVars[i].turnIntoNode(forced.defaultRailIndex, true);
     }
 
     // creating components
@@ -369,12 +440,13 @@ void ComponentSubCircuit::buildOrReplace() {
     for (siz i = 0; i < nComponent; i++) {
         ComponentBase& comp = *components[i].get();
         for (siz j = 0; j < comp.def->nodesConnectedTo.size(); j++) {
-            const ComponentDefinition::CDNode& cdn = comp.def->nodesConnectedTo[j];
-            if (cdn.type != ComponentDefinition::CDNodeType::unconnected) {
+            const CDNode& cdn = comp.def->nodesConnectedTo[j];
+            if (cdn.type != CDNodeType::cdntUnconnected) {
                 comp.setNode(j,
-                    cdn.type == ComponentDefinition::CDNodeType::internal ? &internalNodesAndVars[cdn.index]
-                    : cdn.type == ComponentDefinition::CDNodeType::external ? externalNodes[cdn.index]
-                    : cdn.type == ComponentDefinition::CDNodeType::ground ? &Rails::V[cdn.index].get()->rail
+                    cdn.type == CDNodeType::cdntInternal ? &internalNodesAndVars[cdn.index]
+                    : cdn.type == CDNodeType::cdntExternal ? externalNodes[cdn.index]
+                    : cdn.type == CDNodeType::cdntRail ? &Rails::V[cdn.index].get()->rail
+                    : cdn.type == CDNodeType::cdntGnd ? &Rails::V[defaultNodeValueIndex].get()->rail
                     : nullptr // unconnected node, never gets here
                 );
             }
@@ -384,25 +456,25 @@ void ComponentSubCircuit::buildOrReplace() {
     for (siz i = 0; i < nComponent; i++) {
         ComponentBase& comp = *components[i].get();
         for (siz j = 0; j < comp.def->params.size(); j++) {
-            const ComponentDefinition::CDParam& cdp = comp.def->params[j];
+            const CDParam& cdp = comp.def->params[j];
             Param par;
             switch (cdp.type) {
-                case ComponentDefinition::CDParamType::value:
+                case CDParamType::cdptValue:
                     par.value = cdp.value;
                     break;
-                case ComponentDefinition::CDParamType::globalVariable:
+                case CDParamType::cdptGlobalVariable:
                     par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
                     break;
-                case ComponentDefinition::CDParamType::localVariable:
+                case CDParamType::cdptLocalVariable:
                     par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
                     break;
-                case ComponentDefinition::CDParamType::param:
+                case CDParamType::cdptParam:
                     par = pars[cdp.index];
                     break;
-                case ComponentDefinition::CDParamType::internalNode:
+                case CDParamType::cdptInternalNode:
                     par.var = &internalNodesAndVars[cdp.index];
                     break;
-                case ComponentDefinition::CDParamType::externalNode:
+                case CDParamType::cdptExternalNode:
                     par.var = externalNodes[cdp.index];
                     break;
             }
@@ -499,7 +571,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
 
                 // ground connections disappear
 
-                if (compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::ground || compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::unconnected)
+                if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntRail || compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntGnd || compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntUnconnected)
                     continue;
 
                 // what is the destination?
@@ -508,7 +580,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                 bool isA;
                 uns yDest = compDef.nodesConnectedTo[rowSrc].index;
                 if (B2_nNONodes != 0) {
-                    if (compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::external) {
+                    if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal) {
                         if (yDest >= ONodes_start && yDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
                             isA = false; // false: NormalONode
                             yDest += B1_nNInternalNodes - ONodes_start;
@@ -517,7 +589,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                     }
                     else isA = false; // false: internal
                 }
-                else isA = compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::external; // false: internal
+                else isA = compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal; // false: internal
 
                 uns externalIndex1 = isA ? yDest : 0;
                 uns internalIndex1 = isA ? 0 : yDest;
@@ -532,7 +604,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                 // admittances 
 
                 for (uns colSrc = isSymm ? rowSrc : 0; colSrc < nAx; colSrc++) { // in symmetric matrices the admittances should be increased only once(y[i,j] and y[j,i] would be the same)
-                    if (compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::ground || compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::unconnected)
+                    if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntRail || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntGnd || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntUnconnected)
                         continue;
                     crvt adm = compInstance.getYDC(rowSrc, colSrc);
 
@@ -542,7 +614,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                     bool isUp;
                     uns xDest = compDef.nodesConnectedTo[colSrc].index;
                     if (B2_nNONodes != 0) {
-                        if (compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::external) {
+                        if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal) {
                             if (xDest >= ONodes_start && xDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
                                 isUp = false; // false: NormalONode
                                 xDest += B1_nNInternalNodes - ONodes_start;
@@ -551,7 +623,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                         }
                         else isUp = false; // false: internal
                     }
-                    else isUp = compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::external; // false: internal
+                    else isUp = compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal; // false: internal
 
                     uns externalIndex2 = isUp ? xDest : 0;
                     uns internalIndex2 = isUp ? 0 : xDest;
@@ -698,7 +770,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
 
                 // ground connections disappear
 
-                if (compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::ground || compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::unconnected)
+                if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntRail || compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntGnd || compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntUnconnected)
                     continue;
 
                 // what is the destination?
@@ -707,7 +779,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                 bool isA;
                 uns yDest = compDef.nodesConnectedTo[rowSrc].index;
                 if (B2_nNONodes != 0) {
-                    if (compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::external) {
+                    if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal) {
                         if (yDest >= ONodes_start && yDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
                             isA = false; // false: NormalONode
                             yDest += B1_nNInternalNodes - ONodes_start;
@@ -716,7 +788,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                     }
                     else isA = false; // false: internal
                 }
-                else isA = compDef.nodesConnectedTo[rowSrc].type == ComponentDefinition::CDNodeType::external; // false: internal
+                else isA = compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal; // false: internal
 
                 uns externalIndex1 = isA ? yDest : 0;
                 uns internalIndex1 = isA ? 0 : yDest;
@@ -731,7 +803,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                 // admittances 
 
                 for (uns colSrc = isSymm ? rowSrc : 0; colSrc < nAx; colSrc++) { // in symmetric matrices the admittances should be increased only once(y[i,j] and y[j,i] would be the same)
-                    if (compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::ground || compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::unconnected)
+                    if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntRail || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntGnd || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntUnconnected)
                         continue;
                     ccplx adm = compInstance.getYAC(rowSrc, colSrc);
 
@@ -741,7 +813,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                     bool isUp;
                     uns xDest = compDef.nodesConnectedTo[colSrc].index;
                     if (B2_nNONodes != 0) {
-                        if (compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::external) {
+                        if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal) {
                             if (xDest >= ONodes_start && xDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
                                 isUp = false; // false: NormalONode
                                 xDest += B1_nNInternalNodes - ONodes_start;
@@ -750,7 +822,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                         }
                         else isUp = false; // false: internal
                     }
-                    else isUp = compDef.nodesConnectedTo[colSrc].type == ComponentDefinition::CDNodeType::external; // false: internal
+                    else isUp = compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal; // false: internal
 
                     uns externalIndex2 = isUp ? xDest : 0;
                     uns internalIndex2 = isUp ? 0 : xDest;
