@@ -77,7 +77,6 @@ public:
 struct CircuitNodeDataAC {
 //***********************************************************************
     cplx value = cplx0;             // voltage/temperature/... of the node
-    cplx toSave = cplx0;
     ConcurentValue<cplx> d;         // defect (current)
     cplx v = 0;                     // error (voltage)
     //***********************************************************************
@@ -87,7 +86,6 @@ struct CircuitNodeDataAC {
     void reset() noexcept {
     //***********************************************************************
         value = cplx0;
-        toSave = cplx0;
         d.store(cplx0);
         v = cplx0;
         f = cplx0;
@@ -102,7 +100,6 @@ struct NodeData {
     //***********************************************************************
     ConcurentValue<rvt> d;  // defect (current)
     rvt v = rvt0;           // error (voltage)
-    rvt toSave = rvt0;      // stored for saving
     std::unique_ptr<CircuitNodeDataAC> acNodePtr;
     uns defaultValueIndex;  // in FixVoltages::V
     //***********************************************************************
@@ -181,18 +178,6 @@ struct VariableNodeBase final : public ParVarNodeType {
         }
     }
     //***********************************************************************
-    void setValueAcceptedAndSaveDC() noexcept {
-    // accept the result of the current iteration with the current alpha
-    //***********************************************************************
-        if (isNode()) {
-            NodeData& nd = *nodePtr.get();
-            value = value + nd.v * NodeData::alpha;
-            nd.v = rvt0;
-            nd.toSave = value;
-        }
-    }
-    //***********************************************************************
-    void setToSaveFromValueDC() noexcept { if (isNode()) nodePtr->toSave = value; } // v is not cleared!
     void setStepStartFromAcceptedDC() noexcept { stepStart = value; }
     void setValueFromStepStartDC()noexcept { if (!isSimple()) value = stepStart; } // v is not cleared!
     //***********************************************************************
@@ -295,7 +280,7 @@ public:
     //***********************************************************************
         std::cout << "Value = " << value << "     stepStart = " << stepStart << std::endl;
         if (nodePtr) {
-            std::cout << "v = " << nodePtr->v << "     toSave = " << nodePtr->toSave << "     f = " << nodePtr->f << "     yii = " << nodePtr->yii.load() << std::endl;
+            std::cout << "v = " << nodePtr->v << "     f = " << nodePtr->f << "     yii = " << nodePtr->yii.load() << std::endl;
             std::cout << "d = " << nodePtr->d.load() << "     d.nonConcurrent = " << nodePtr->d.loadNonConcurent() << "\n"  << std::endl;
         }
     }
@@ -362,14 +347,13 @@ struct Rails {
 //***********************************************************************
 inline rvt NodeData::reset() noexcept {
 //***********************************************************************
-    toSave = Rails::V[defaultValueIndex]->getDefaultNodeValue();
     d.store(rvt0);
     v = rvt0;
     if (acNodePtr)
         acNodePtr->reset();
     f = rvt0;
     yii.store(rvt0);
-    return toSave;
+    return Rails::V[defaultValueIndex]->getDefaultNodeValue();
 }
 
 

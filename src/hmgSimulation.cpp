@@ -17,24 +17,24 @@ namespace nsHMG {
 
 
 //***********************************************************************
-void Simulation::ananlysis(ControlInstructionBase* instruction) {
+void Simulation::ananlysis(IsInstruction* instruction) {
 //***********************************************************************
-    ControlAnalysisInstruction* analInstr = dynamic_cast<ControlAnalysisInstruction*>(instruction);
-    if (analInstr == nullptr)
-        throw hmgExcept("Simulation::ananlysis", "bug: bad parameter");
+    ///ControlAnalysisInstruction* analInstr = dynamic_cast<ControlAnalysisInstruction*>(instruction);
+    //if (analInstr == nullptr)
+    //    throw hmgExcept("Simulation::ananlysis", "bug: bad parameter");
     //if (gc->isStructuralChange) {
     //    most("xxxxx");
     //    gc->networkModel.initAndRefresh(gc, false);
     //    most("initAndRefresh");
     //    gc->isStructuralChange = false;
     //}
-    switch (analInstr->type) {
-        case atDC: runOp(); break;
-        case atTimeStep: runTimeStep(analInstr->value); break;
+    //switch (analInstr->type) {
+    //    case atDC: runOp(); break;
+    //    case atTimeStep: runTimeStep(analInstr->value); break;
         //case atIterate: iterate(); break;
-        default:
-            throw hmgExcept("Simulation::ananlysis", "unknown analysis type (%u)", analInstr->type);
-    }
+    //    default:
+    //        throw hmgExcept("Simulation::ananlysis", "unknown analysis type (%u)", analInstr->type);
+    //}
 }
 
 

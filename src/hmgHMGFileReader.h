@@ -179,9 +179,14 @@ inline bool textToSimpleNodeID(const char* text, uns& position, SimpleNodeID& re
                 return false;
             break;
         case 'N':
-            result.type = nvtNInternal;
-            if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
-                return false;
+            if (text[position + 1] == 'O' && text[position + 2] == 'N' && text[position + 3] == 'E') {
+                result.type = nvtUnconnected; // ! nvtNone is used for other purposes
+            }
+            else {
+                result.type = nvtNInternal;
+                if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+                    return false;
+            }
             break;
         case 'O':
             if (text[position + 1] != 'U' || text[position + 2] != 'T')

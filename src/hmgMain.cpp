@@ -70,7 +70,7 @@ void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd, 1, T0, G0);
 //***********************************************************************
 	cd->isBuiltIn = true;
-	cd->modelIndex = builtInModelType::bimtConstV;
+	cd->modelIndex = builtInModelType::bimtConstVI;
 	cd->nodesConnectedTo.resize(3);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
@@ -472,7 +472,7 @@ void probaSzimulacio1() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(5, 1);
+	gc.createFullCircuit(5, 1, 0);
 	//ComponentBase::SimControl::setFinalDC();
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 
@@ -589,7 +589,7 @@ void probaSzimulacio2() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(0, 1);
+	gc.createFullCircuit(0, 1, 0);
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 
 	ComponentConstC_1::isTrapezoid = true;
@@ -681,7 +681,7 @@ void probaSzimulacio3() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(2, 1);
+	gc.createFullCircuit(2, 1, 0);
 	SimControl::setFinalDC();
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 	gc.fullCircuitInstances[0].component->calculateValueDC();
@@ -805,7 +805,7 @@ void probaSzimulacio4() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(cellIndex, 1);
+	gc.createFullCircuit(cellIndex, 1, 0);
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 
 	ComponentConstC_1::isTrapezoid = true;
@@ -1030,8 +1030,8 @@ void probaSzimulacioMg1() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(10, 1);
-	gc.createFullCircuit(5, 1);
+	gc.createFullCircuit(10, 1, 0);
+	gc.createFullCircuit(5, 1, 1);
 	//ComponentBase::SimControl::setFinalDC();
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 	gc.fullCircuitInstances[1].component->resetNodes(true);
@@ -1767,8 +1767,8 @@ void probaSzimulacioMg2() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(11, 1);
-	gc.createFullCircuit(5, 1);
+	gc.createFullCircuit(11, 1, 0);
+	gc.createFullCircuit(5, 1, 1);
 	//ComponentBase::SimControl::setFinalDC();
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 	gc.fullCircuitInstances[1].component->resetNodes(true);
@@ -2565,7 +2565,7 @@ void probaSzimulacioMg3() {
 	// példányosítás
 	//***********************************************************************
 
-	gc.createFullCircuit(5, 1);
+	gc.createFullCircuit(5, 1, 0);
 	gc.fullCircuitInstances[0].component->resetNodes(true);
 
 	ComponentConstC_1::isTrapezoid = false;

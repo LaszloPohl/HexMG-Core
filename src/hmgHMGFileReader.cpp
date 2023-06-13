@@ -542,6 +542,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             pxline->modelIndex = unsMax;
 
             uns nodenum = 2, parnum = 1, funcnum = 0;
+            uns startONodes = unsMax, stopONodes = unsMax;
             if (strcmp(token, "MODEL") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 pxline->isBuiltIn = false;
@@ -553,6 +554,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 nodenum = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes + mod.externalNs.nNormalONodes + mod.externalNs.nForwardedONodes;
                 parnum = mod.externalNs.nParams;
                 pxline->isController = mod.modelType == hfmtController;
+                if (mod.externalNs.nNormalONodes != 0) {
+                    startONodes = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes;
+                    stopONodes = startONodes + mod.externalNs.nNormalONodes - 1;
+                }
             }
             else if (strcmp(token,  "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
             else if (strcmp(token, "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2; parnum = 2; }
@@ -562,7 +567,9 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token, "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2; parnum = 2; }
             else if (strcmp(token,  "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1; parnum = 4; }
             else if (strcmp(token, "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2; parnum = 5; }
+            else if (strcmp(token, "VI") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVI;  parnum = 5; startONodes = 2; stopONodes = 2; }
             // don't forget to set pxline->isController if needed !
+            // don't forget to set startONodes and stopONodes if there are normal O nodes !
 
             // read nodes and parameters
             
@@ -572,6 +579,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     pxline->nodes.emplace_back(SimpleNodeID());
                     if (!textToSimpleNodeID(token, pxline->nodes.back()))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if (pxline->nodes.back().type == nvtUnconnected) {
+                        if(startONodes == unsMax || i < startONodes || i > stopONodes)
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "NONE node connection allowed only for normal output nodes (OUT) in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    }
                 }
                 for (uns i = 0; i < parnum; i++) {
                     pxline->params.emplace_back(ParameterInstance());

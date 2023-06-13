@@ -63,6 +63,9 @@ inline CDNode SimpleNodeID2CDNode(const SimpleNodeID& src, const ExternalConnect
         case nvtGND:
             res.type = CDNodeType::cdntGnd;
             break;
+        case nvtUnconnected:
+            res.type = CDNodeType::cdntUnconnected;
+            break;
         default:
             throw hmgExcept("SimpleNodeID2CDNode", "not a node type (%u)", src.type);
     }
@@ -318,7 +321,7 @@ struct IsProbeNodeInstruction: public IsInstruction {
 struct IsRunInstruction: public IsInstruction {
 //***********************************************************************
     RunData data;
-    IsRunInstruction(const RunData& runData) :IsInstruction{ sitExpressionAtom }, data{ runData }{}
+    IsRunInstruction(const RunData& runData) :IsInstruction{ sitRun }, data{ runData }{}
 };
 
 

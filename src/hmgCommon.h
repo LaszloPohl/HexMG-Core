@@ -63,7 +63,7 @@ inline constexpr uns probeMaxComponentLevel = 3; // if changed, ProbeNodeID::com
 enum NodeVarType {
 //***********************************************************************
     nvtNone, nvtIO, nvtIN, nvtCIN, nvtOUT, nvtFWOUT, nvtNInternal, nvtCInternal, 
-    nvtVarInternal, nvtVarGlobal, nvtParam, nvtRail, nvtGND,
+    nvtVarInternal, nvtVarGlobal, nvtParam, nvtRail, nvtGND, nvtUnconnected,
     nvtTime, nvtDTime, nvtFreq
 };
 
@@ -84,7 +84,7 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 //***********************************************************************
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
     bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
-    bimtConst_V_Controlled_I, bimtGirator, bimtConstV, bimtSize }; // bimtSize have to be the last one
+    bimtConst_V_Controlled_I, bimtGirator, bimtConstVI, bimtSize }; // bimtSize have to be the last one
 //***********************************************************************
 
 
@@ -189,7 +189,7 @@ enum StreamInstructionType {
 
     sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
 
-    sitProbe, sitProbeNode, sitFunction, sitExpressionAtom, sitUns,
+    sitProbe, sitProbeNode, sitRun, sitFunction, sitExpressionAtom, sitUns,
 
     sitEndInstruction
 };

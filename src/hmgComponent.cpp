@@ -28,7 +28,9 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
         switch (act->instruction) {
             case sitNothing:                        break;
             case sitCreate: {
-                    
+                    IsCreateInstruction* pAct = static_cast<IsCreateInstruction*>(act);
+                    createFullCircuit(pAct->modelID, pAct->GND, pAct->fullCircuitIndex);
+                    fullCircuitInstances[pAct->fullCircuitIndex].component->resetNodes(true);
                 }
                 break;
             case sitSave: {
@@ -91,7 +93,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitSunredReduction:                isImpossibleInstruction = true; break;
             case sitRails: {
                     IsDefRailsInstruction* pAct = static_cast<IsDefRailsInstruction*>(act);
-                    Rails::resize(pAct->nRailValues);
+                    Rails::resize(pAct->nRailValues + 1);
                     processRailsInstructions(first);
                     Rails::reset();
                 }
@@ -100,10 +102,26 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitNodeValue:                      isImpossibleInstruction = true; break;
             case sitParameterValue:                 isImpossibleInstruction = true; break;
             case sitProbe: {
-                    
+                    IsProbeInstruction* pAct = static_cast<IsProbeInstruction*>(act);
+                    if (pAct->probeIndex == probes.size()) {
+                        probes.push_back(std::make_unique<Probe>(Probe()));
+                    }
+                    else {
+                        if (pAct->probeIndex > probes.size())
+                            probes.resize(pAct->probeIndex + 1);
+                        probes[pAct->probeIndex] = std::make_unique<Probe>(Probe());
+                    }
+                    probes[pAct->probeIndex]->probeType = (ProbeType)pAct->probeType;
+                    probes[pAct->probeIndex]->fullCircuitID = pAct->fullCircuitID;
+                    probes[pAct->probeIndex]->nodes.reserve(pAct->nNodes);
+                    processProbesInstructions(first, pAct->probeIndex);
                 }
                 break;
             case sitProbeNode:                      isImpossibleInstruction = true; break;
+            case sitRun: {
+                    
+                }
+                break;
             case sitFunction: {
                     TODO("sitFunction");
                 }
@@ -209,6 +227,39 @@ void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
         delete act;
         if(isNotFinished && first == nullptr)
             throw hmgExcept("CircuitStorage::processRailsInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
+void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns currentProbe) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during probe node definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitProbeNode: {
+                    IsProbeNodeInstruction* pAct = static_cast<IsProbeNodeInstruction*>(act);
+                    probes[currentProbe]->nodes.push_back(pAct->nodeID);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitProbe)
+                        throw hmgExcept("CircuitStorage::processProbesInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processProbesInstructions", "%u is not a sunred tree instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during sunred tree definition.");
     }
 }
 

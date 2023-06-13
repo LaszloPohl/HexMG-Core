@@ -23,14 +23,9 @@ namespace nsHMG {
 
 
 //***********************************************************************
-class ControlInstructionBase;
-//***********************************************************************
-
-
-//***********************************************************************
 class Simulation {
 //***********************************************************************
-    void ananlysis(ControlInstructionBase* instruction);
+    void ananlysis(IsInstruction* instruction);
     void iterate(); // always DC
     void runOp();
     void runTimeStep(double dt);

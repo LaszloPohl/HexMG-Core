@@ -13,7 +13,6 @@
 
 //***********************************************************************
 #include "hmgInstructionStream.h"
-#include "hmgSimulationController.h"
 #include "hmgCircuitNode.hpp"
 #include "hmgFunction.hpp"
 #include "hmgSunred.h"
@@ -177,10 +176,10 @@ public:
 
 
 //***********************************************************************
-class ModelConstV final : public ComponentAndControllerModelBase {
+class ModelConstVI final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstV() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 } } {}
+    ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }

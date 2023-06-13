@@ -900,7 +900,7 @@ public:
 
 
 //***********************************************************************
-class ComponentConstV final : public RealComponent {
+class ComponentConstVI final : public RealComponent {
 //***********************************************************************
 protected:
     VariableNodeBase* N[3] = { nullptr, nullptr, nullptr };
@@ -1021,7 +1021,7 @@ public:
     //***********************************************************************
     rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
     //***********************************************************************
-        ComponentConstV* coarseVgen = static_cast<ComponentConstV*>(coarse);
+        ComponentConstVI* coarseVgen = static_cast<ComponentConstVI*>(coarse);
         rvt sumRet = rvt0;
         if (isDC) {
             switch (type) {
@@ -2321,9 +2321,9 @@ inline ComponentAndControllerBase* ModelGirator::makeComponent(const ComponentDe
 
 
 //***********************************************************************
-inline ComponentAndControllerBase* ModelConstV::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
+inline ComponentAndControllerBase* ModelConstVI::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
-    return new ComponentConstV(def, defaultNodeValueIndex);
+    return new ComponentConstVI(def, defaultNodeValueIndex);
 }
 
 
@@ -2367,7 +2367,7 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtConstI_2] = std::make_unique<ModelConstI_2>();
         builtInModels[builtInModelType::bimtConst_V_Controlled_I] = std::make_unique<ModelConst_V_Controlled_I_1>();
         builtInModels[builtInModelType::bimtGirator] = std::make_unique<ModelGirator>();
-        builtInModels[builtInModelType::bimtConstV] = std::make_unique<ModelConstV>();
+        builtInModels[builtInModelType::bimtConstVI] = std::make_unique<ModelConstVI>();
     }
 
 public:
@@ -2380,10 +2380,15 @@ public:
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
     //***********************************************************************
     struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
+    struct Probe { ProbeType probeType = ptV; uns fullCircuitID = 0; std::vector<ProbeNodeID> nodes; };
     std::vector<FullCircuit> fullCircuitInstances;
+    std::vector<std::unique_ptr<Probe>> probes;
     std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
     Simulation sim;
     //***********************************************************************
+
+
+
 
     //***********************************************************************
     static CircuitStorage& getInstance() { // singleton
@@ -2393,8 +2398,10 @@ public:
     }
 
     //***********************************************************************
-    void createFullCircuit(uns componentModelIndex, uns nodesDefaultValueIndex) {
+    void createFullCircuit(uns componentModelIndex, uns nodesDefaultValueIndex, uns fullCircuitIndexToCheck) {
     //***********************************************************************
+        if(fullCircuitInstances.size() != fullCircuitIndexToCheck)
+            throw hmgExcept("CircuitStorage::createFullCircuit", "Full circuits must be defined in order: fullCircuitIndex = %u expected, %u arrived.", (uns)fullCircuitInstances.size(), fullCircuitIndexToCheck);
         FullCircuit fc;
         fc.def = std::make_unique<ComponentDefinition>();
         fc.def->modelIndex = componentModelIndex;
@@ -2406,6 +2413,7 @@ public:
     bool processInstructions(IsInstruction*& first);
     void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
     void processRailsInstructions(IsInstruction*& first);
+    void processProbesInstructions(IsInstruction*& first, uns currentProbe);
     //***********************************************************************
 };
 
