@@ -19,12 +19,11 @@ namespace nsHMG {
 //***********************************************************************
 bool CircuitStorage::processInstructions(IsInstruction*& first) {
 //***********************************************************************
-    bool isNotFinished = true, isStartExecute = false;
+    bool isNotFinished = true;
     bool isImpossibleInstruction = false;
     while (first != nullptr) {
         IsInstruction* act = first;
         first = first->next;
-        isStartExecute = false;
         switch (act->instruction) {
             case sitNothing:                        break;
             case sitCreate: {
@@ -34,7 +33,10 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 }
                 break;
             case sitSave: {
-                    
+                    IsSaveInstruction* pAct = static_cast<IsSaveInstruction*>(act);
+                    std::vector<uns> probeIndex;
+                    processSaveInstructions(first, probeIndex);
+                    save(pAct->isRaw, pAct->isAppend, pAct->fileName, probeIndex);
                 }
                 break;
             case sitDefModelSubcircuit: {
@@ -119,7 +121,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitProbeNode:                      isImpossibleInstruction = true; break;
             case sitRun: {
-                    
+                    IsRunInstruction* pAct = static_cast<IsRunInstruction*>(act);
+                    sim.run(pAct->data);
                 }
                 break;
             case sitFunction: {
@@ -143,8 +146,6 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
         delete act;
         if(!isNotFinished && first != nullptr)
             throw hmgExcept("CircuitStorage::processInstructions", "instruction after End Simulation instruction");
-        if (isStartExecute)
-            sim.run();
     }
     return isNotFinished;
 }
@@ -203,7 +204,7 @@ void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
-        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during rails definition.");
+        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during RAILS definition.");
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -222,11 +223,11 @@ void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
                 }
                 break;
         default:
-            throw hmgExcept("CircuitStorage::processRailsInstructions", "%u is not a sunred tree instruction", act->instruction);
+            throw hmgExcept("CircuitStorage::processRailsInstructions", "%u is not a RAILS instruction", act->instruction);
         }
         delete act;
         if(isNotFinished && first == nullptr)
-            throw hmgExcept("CircuitStorage::processRailsInstructions", "The instruction stream has ended during sunred tree definition.");
+            throw hmgExcept("CircuitStorage::processRailsInstructions", "The instruction stream has ended during RAILS definition.");
     }
 }
 
@@ -236,7 +237,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
-        throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during probe node definition.");
+        throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during PROBE node definition.");
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -255,11 +256,44 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
                 }
                 break;
         default:
-            throw hmgExcept("CircuitStorage::processProbesInstructions", "%u is not a sunred tree instruction", act->instruction);
+            throw hmgExcept("CircuitStorage::processProbesInstructions", "%u is not a PROBE instruction", act->instruction);
         }
         delete act;
         if(isNotFinished && first == nullptr)
-            throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during sunred tree definition.");
+            throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during PROBE definition.");
+    }
+}
+
+
+//***********************************************************************
+void CircuitStorage::processSaveInstructions(IsInstruction*& first, std::vector<uns>& probeIndex) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processSaveInstructions", "The instruction stream has ended during SAVE probe definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitUns: {
+                    IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                    probeIndex.push_back(pAct->data);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitSave)
+                        throw hmgExcept("CircuitStorage::processSaveInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processSaveInstructions", "%u is not a SAVE instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processSaveInstructions", "The instruction stream has ended during SAVE definition.");
     }
 }
 
@@ -318,7 +352,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
         }
         delete act;
         if(isNotFinished && first == nullptr)
-            throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during sunred tree definition.");
+            throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during MODEL SUBCIRCUIT definition.");
     }
 }
 
@@ -356,7 +390,7 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
         }
         delete act;
         if(isNotFinished && first == nullptr)
-            throw hmgExcept("ComponentDefinition::processInstructions", "The instruction stream has ended during sunred tree definition.");
+            throw hmgExcept("ComponentDefinition::processInstructions", "The instruction stream has ended during component instance definition.");
     }
 }
 

@@ -46,7 +46,42 @@ void Simulation::iterate() {
 
 
 //***********************************************************************
-void Simulation::runOp() {
+void Simulation::runDC() {
+//***********************************************************************
+
+    // TODO: SimControl::minIter
+
+
+    //ComponentInstance::_dtime.setAct(0);
+
+    //most("start");
+    //gc->networkModel.updateControllers();
+    //most("updateControllers");
+    //gc->networkModel.updateComponents(ComponentInstance::_dtime.getBase());
+    //most("updateComponents");
+    //double err = gc->networkModel.currentCalculation();
+    //most("currentCalculation");
+    //gc->networkModel.forwSubs();
+    //most("forwsubs");
+
+    //gc->isInitialOpNeeded = false;
+}
+
+
+//***********************************************************************
+void Simulation::runTimeStep() {
+//***********************************************************************
+    //if (gc->isInitialOpNeeded) {
+    //    ComponentInstance::_time.setAll(0);
+    //    ComponentInstance::_dtime.setAll(0);
+    //    runOp();
+    //}
+    //ComponentInstance::_dtime.setAct(dt);
+}
+
+
+//***********************************************************************
+void Simulation::runAC() {
 //***********************************************************************
     //ComponentInstance::_dtime.setAct(0);
 
@@ -65,20 +100,72 @@ void Simulation::runOp() {
 
 
 //***********************************************************************
-void Simulation::runTimeStep(double dt) {
+void Simulation::runTimeConst() {
 //***********************************************************************
-    //if (gc->isInitialOpNeeded) {
-    //    ComponentInstance::_time.setAll(0);
-    //    ComponentInstance::_dtime.setAll(0);
-    //    runOp();
-    //}
-    //ComponentInstance::_dtime.setAct(dt);
+    //ComponentInstance::_dtime.setAct(0);
+
+    //most("start");
+    //gc->networkModel.updateControllers();
+    //most("updateControllers");
+    //gc->networkModel.updateComponents(ComponentInstance::_dtime.getBase());
+    //most("updateComponents");
+    //double err = gc->networkModel.currentCalculation();
+    //most("currentCalculation");
+    //gc->networkModel.forwSubs();
+    //most("forwsubs");
+
+    //gc->isInitialOpNeeded = false;
 }
 
 
 //***********************************************************************
-void Simulation::run() {
+void Simulation::run(const RunData& runData) {
 //***********************************************************************
+    analysisType = runData.analysisType;
+    err = runData.err;
+    switch (analysisType) {
+        case atDC: {
+            if(runData.isInitial)
+                SimControl::setInitialDC();
+            else
+                SimControl::setFinalDC();
+            // TODO: runData.isPre
+            timeFreqValue = rvt0;
+            dtValue = rvt0;
+            runDC();
+        }
+        break;
+        case atTimeStep: {
+            if (runData.isDT)
+                SimControl::stepTransientWithDT(runData.fTauDtT);
+            else
+                SimControl::stepTransientWithTStop(runData.fTauDtT);
+            // TODO: runData.isPre
+            timeFreqValue = SimControl::timeStepStop.getValueDC();
+            dtValue = SimControl::dt.getValueDC();
+            runTimeStep();
+        }
+        break;
+        case atAC: {
+            SimControl::setComplexFrequencyForAC(runData.fTauDtT);
+            timeFreqValue = SimControl::getFrequency();
+            dtValue = rvt0;
+            runAC();
+        }
+        break;
+        case atTimeConst: {
+            if (runData.isTau)
+                SimControl::setComplexFrequencyForTimeConst(rvt1 / (2 * hmgPi * runData.fTauDtT), runData.iterNumSPD);
+            else
+                SimControl::setComplexFrequencyForTimeConst(runData.fTauDtT, runData.iterNumSPD);
+            timeFreqValue = SimControl::getFrequency();
+            dtValue = rvt0;
+            runTimeConst();
+        }
+        break;
+        default:
+            throw hmgExcept("Simulation::run", "unknown analysis Type: %u", (uns)analysisType);
+    }
     //printf("*");
     //while (!gc->controlInstructions.empty()) {
         //printf("-");

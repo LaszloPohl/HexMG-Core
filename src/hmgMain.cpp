@@ -599,7 +599,7 @@ void probaSzimulacio2() {
 	rvt steptime = 0.1;
 	for (uns i = 0; i < 14; i++, steptime *= 2) {
 		std::cout << "******************************************************************" << std::endl;
-		SimControl::stepTransient(steptime);
+		SimControl::stepTransientWithDT(steptime);
 		runStepNoPrintDC();
 #ifdef HMG_DEBUGPRINT
 		std::cout << i << " \tt = " << SimControl::timeStepStop.getValueDC() << " sec \t" << gc.fullCircuitInstances[0].component->getInternalNode(0)->getValueDC() << std::endl;

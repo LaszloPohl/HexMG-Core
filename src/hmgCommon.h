@@ -337,6 +337,23 @@ struct RunData {
 
 
 //***********************************************************************
+struct SimulationToSaveData {
+//***********************************************************************
+    bool isRaw = false;
+    bool isAppend = false;
+    AnalysisType analysisType = atDC;
+    uns maxResultsPerRow = 100;
+    rvt timeFreqValue = rvt0;
+    rvt dtValue = rvt0;
+    std::string fileName;
+    std::vector<rvt> saveValuesDC;
+    std::vector<cplx> saveValuesAC;
+    SimulationToSaveData* next = nullptr;
+};
+
+
+
+//***********************************************************************
 enum CDNodeType { cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected }; // unconnected: only for ONodes
 struct CDNode { CDNodeType type = cdntExternal; uns index = 0; };
 enum CDParamType { cdptValue, cdptGlobalVariable, cdptLocalVariable, cdptParam, cdptInternalNode, cdptExternalNode };

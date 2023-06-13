@@ -25,13 +25,20 @@ namespace nsHMG {
 //***********************************************************************
 class Simulation {
 //***********************************************************************
+    AnalysisType analysisType = atDC;
+    rvt timeFreqValue = rvt0;
+    rvt dtValue = rvt0;
+    rvt err = rvt0;
+
     void ananlysis(IsInstruction* instruction);
     void iterate(); // always DC
-    void runOp();
-    void runTimeStep(double dt);
+    void runDC();
+    void runTimeStep();
+    void runAC();
+    void runTimeConst();
 public:
     Simulation() = default;
-    void run();
+    void run(const RunData& runData);
 };
 
 

@@ -12,11 +12,13 @@
 
 
 //***********************************************************************
+#include <thread>
 #include "hmgMatrix.hpp"
 #include "hmgComponentModel.h"
 #include "hmgSunred.h"
 #include "hmgMultigridTypes.h"
 #include "hmgSimulation.h"
+#include "hmgSaver.h"
 //***********************************************************************
 
 
@@ -66,8 +68,10 @@ public:
     inline static VariableNodeBase minIter;         // minimum number of iterations in the current step (e.g. a semiconductor diode is replaced with a resistor for the first 1-2 iterations)
     inline static VariableNodeBase iter;            // which iteration we are at in the current step
     //***********************************************************************
+    static void setInitialDC() noexcept { timeStepStart.setValueDC(rvt0); timeStepStop.setValueDC(rvt0); dt.setValueDC(rvt0); }
     static void setFinalDC() noexcept { if (timeStepStart.getValueDC() == rvt0)timeStepStart.setValueDC(1e-10); timeStepStop.setValueDC(timeStepStart.getValueDC()); dt.setValueDC(rvt0); }
-    static void stepTransient(rvt dt_) noexcept { timeStepStart.setValueDC(timeStepStop.getValueDC()); timeStepStop.setValueDC(timeStepStart.getValueDC() + dt_); dt.setValueDC(dt_); }
+    static void stepTransientWithDT(rvt dt_) noexcept { timeStepStart.setValueDC(timeStepStop.getValueDC()); timeStepStop.setValueDC(timeStepStart.getValueDC() + dt_); dt.setValueDC(dt_); }
+    static void stepTransientWithTStop(rvt tStop) noexcept { rvt tStart = timeStepStop.getValueDC(); if (tStop < tStart)tStop = tStart; timeStepStart.setValueDC(tStart); timeStepStop.setValueDC(tStop); dt.setValueDC(tStop - tStart); }
     static void setComplexFrequencyForAC(rvt f) noexcept { complexFrequency = { 0, 2 * hmgPi * f }; freq = f; }
     //***********************************************************************
     static void setComplexFrequencyForTimeConst(rvt f, uns stepPerDecade) noexcept {
@@ -2351,6 +2355,24 @@ inline ComponentAndControllerBase* ModelSubCircuit::makeComponent(const Componen
 //***********************************************************************
 class CircuitStorage {
 //***********************************************************************
+
+    //***********************************************************************
+    struct Probe {
+    //***********************************************************************
+        ProbeType probeType = ptV;
+        uns fullCircuitID = 0;
+        std::vector<ProbeNodeID> nodes;
+    };
+
+
+    //***********************************************************************
+    std::vector<std::unique_ptr<Probe>> probes;
+    std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
+    Simulation sim;
+    hmgSaver saver;
+    std::thread saverThread;
+    //***********************************************************************
+
  
     //***********************************************************************
     CircuitStorage() {
@@ -2368,11 +2390,44 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtConst_V_Controlled_I] = std::make_unique<ModelConst_V_Controlled_I_1>();
         builtInModels[builtInModelType::bimtGirator] = std::make_unique<ModelGirator>();
         builtInModels[builtInModelType::bimtConstVI] = std::make_unique<ModelConstVI>();
+        saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }
+
+    //***********************************************************************
+    void save(bool isRaw, bool isAppend, const char* fileName, const std::vector<uns>& probeIndex) {
+    //***********************************************************************
+        SimulationToSaveData* src = new SimulationToSaveData;
+        src->isRaw = isRaw;
+        src->isAppend = isAppend;
+        src->fileName = fileName;
+        saver.addSimulationToSaveData(src);
+    }
+/*
+    AnalysisType analysisType = atDC;
+    uns maxResultsPerRow = 100;
+    rvt timeFreqValue = rvt0;
+    rvt dtValue = rvt0;
+    std::vector<rvt> saveValuesDC;
+    std::vector<cplx> saveValuesAC;
+*/
+
+    //***********************************************************************
+    void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
+    void processRailsInstructions(IsInstruction*& first);
+    void processProbesInstructions(IsInstruction*& first, uns currentProbe);
+    void processSaveInstructions(IsInstruction*& first, std::vector<uns>& probeIndex);
+    //***********************************************************************
 
 public:
     CircuitStorage(const CircuitStorage&) = delete;
     CircuitStorage& operator=(const CircuitStorage&) = delete;
+
+    //***********************************************************************
+    ~CircuitStorage() {
+    //***********************************************************************
+        saver.finish();
+        saverThread.join();
+    }
 
     //***********************************************************************
     std::vector<std::unique_ptr<VariableNodeBase>> globalVariables;
@@ -2380,15 +2435,8 @@ public:
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
     //***********************************************************************
     struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
-    struct Probe { ProbeType probeType = ptV; uns fullCircuitID = 0; std::vector<ProbeNodeID> nodes; };
     std::vector<FullCircuit> fullCircuitInstances;
-    std::vector<std::unique_ptr<Probe>> probes;
-    std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
-    Simulation sim;
     //***********************************************************************
-
-
-
 
     //***********************************************************************
     static CircuitStorage& getInstance() { // singleton
@@ -2396,7 +2444,6 @@ public:
         static CircuitStorage instance;
         return instance;
     }
-
     //***********************************************************************
     void createFullCircuit(uns componentModelIndex, uns nodesDefaultValueIndex, uns fullCircuitIndexToCheck) {
     //***********************************************************************
@@ -2411,9 +2458,6 @@ public:
     }
     //***********************************************************************
     bool processInstructions(IsInstruction*& first);
-    void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
-    void processRailsInstructions(IsInstruction*& first);
-    void processProbesInstructions(IsInstruction*& first, uns currentProbe);
     //***********************************************************************
 };
 
