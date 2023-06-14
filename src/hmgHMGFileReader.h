@@ -632,6 +632,7 @@ struct HMGFileSave: HMGFileListItem {
     //***********************************************************************
     bool isRaw = false;
     bool isAppend = false;
+    uns maxResultsPerRow = 100;
     std::string fileName;
     std::vector<uns> probeIDs;
     //***********************************************************************
@@ -641,7 +642,7 @@ struct HMGFileSave: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsSaveInstruction(isRaw, isAppend, fileName, (uns)probeIDs.size()));
+        iStream.add(new IsSaveInstruction(isRaw, isAppend, maxResultsPerRow, fileName, (uns)probeIDs.size()));
         for (const auto& probe : probeIDs)
             iStream.add(new IsUnsInstruction(probe));
         iStream.add(new IsEndDefInstruction(sitSave, 0));

@@ -67,9 +67,11 @@ public:
     inline static VariableNodeBase dt;              // transient: dt of the step
     inline static VariableNodeBase minIter;         // minimum number of iterations in the current step (e.g. a semiconductor diode is replaced with a resistor for the first 1-2 iterations)
     inline static VariableNodeBase iter;            // which iteration we are at in the current step
+    inline static VariableNodeBase stepError;       // relative error of the current iteration compared to the previous
+    inline static std::atomic<uns> nNonlinComponents = 0; // actual number of nonlinear components in the network; if 0 => no more than 1 DC / timestep iteration needed
     //***********************************************************************
     static void setInitialDC() noexcept { timeStepStart.setValueDC(rvt0); timeStepStop.setValueDC(rvt0); dt.setValueDC(rvt0); }
-    static void setFinalDC() noexcept { if (timeStepStart.getValueDC() == rvt0)timeStepStart.setValueDC(1e-10); timeStepStop.setValueDC(timeStepStart.getValueDC()); dt.setValueDC(rvt0); }
+    static void setFinalDC() noexcept { if (timeStepStart.getValueDC() == rvt0)timeStepStart.setValueDC(1e-20); timeStepStop.setValueDC(timeStepStart.getValueDC()); dt.setValueDC(rvt0); }
     static void stepTransientWithDT(rvt dt_) noexcept { timeStepStart.setValueDC(timeStepStop.getValueDC()); timeStepStop.setValueDC(timeStepStart.getValueDC() + dt_); dt.setValueDC(dt_); }
     static void stepTransientWithTStop(rvt tStop) noexcept { rvt tStart = timeStepStop.getValueDC(); if (tStop < tStart)tStop = tStart; timeStepStart.setValueDC(tStart); timeStepStop.setValueDC(tStop); dt.setValueDC(tStop - tStart); }
     static void setComplexFrequencyForAC(rvt f) noexcept { complexFrequency = { 0, 2 * hmgPi * f }; freq = f; }
@@ -101,6 +103,14 @@ public:
     ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
     //***********************************************************************
+
+    //***********************************************************************
+    virtual ~ComponentAndControllerBase() {
+    //***********************************************************************
+        if (pModel->canBeNonlinear())
+            SimControl::nNonlinComponents--;
+    }
+    //***********************************************************************
 };
 
 
@@ -125,7 +135,6 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    virtual ~ComponentBase() = default;
     virtual const VariableNodeBase& getComponentValue() const noexcept = 0;
     virtual VariableNodeBase* getNode(siz nodeIndex) noexcept = 0;
     virtual VariableNodeBase* getInternalNode(siz nodeIndex) noexcept = 0;
@@ -1454,6 +1463,7 @@ class ComponentSubCircuit final : public ComponentBase {
     friend class SubCircuitFullMatrixReductorAC;
     friend class hmgSunred;
     friend class SunredTreeNode;
+    friend class CircuitStorage;
     //***********************************************************************
     std::vector<std::unique_ptr<ComponentBase>> components;
     std::vector<std::unique_ptr<Controller>> controllers;
@@ -2361,7 +2371,7 @@ class CircuitStorage {
     //***********************************************************************
         ProbeType probeType = ptV;
         uns fullCircuitID = 0;
-        std::vector<ProbeNodeID> nodes;
+        std::vector<ProbeCDNodeID> nodes;
     };
 
 
@@ -2394,22 +2404,106 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    void save(bool isRaw, bool isAppend, const char* fileName, const std::vector<uns>& probeIndex) {
+    const VariableNodeBase& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    //***********************************************************************
+        const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
+        for (uns i = 0; i < probeMaxComponentLevel && nodeID.componentID[i] != unsMax; i++) {
+            const ComponentSubCircuit* subckt = static_cast<const ComponentSubCircuit*>(component);
+            component = subckt->components[nodeID.componentID[i]].get();
+        }
+        switch (nodeID.nodeID.type) {
+            case cdntInternal: return static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
+            case cdntExternal: return *const_cast<ComponentBase*>(component)->getNode(nodeID.nodeID.index);
+            default:
+                throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
+        }
+    }
+
+    //***********************************************************************
+    void getProbeValuesDC(const Probe& probe, std::vector<rvt>& saveValuesDC) const {
+    //***********************************************************************
+        switch (probe.probeType) {
+            case ptV: {
+                saveValuesDC.reserve(probe.nodes.size());
+                for (const auto& nodeID : probe.nodes)
+                    saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
+            }
+            break;
+            case ptI: {
+                saveValuesDC.reserve(probe.nodes.size());
+                for (const auto& nodeID : probe.nodes)
+                    saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
+            }
+            break;
+            case ptSum: {
+
+            }
+            break;
+            case ptAverage: {
+
+            }
+            break;
+            default:
+                throw hmgExcept("CircuitStorage::getProbeValuesDC", "unknown probe Type: %u", (uns)probe.probeType);
+        }
+    }
+
+    //***********************************************************************
+    void getProbeValuesAC(const Probe& probe, std::vector<cplx>& saveValuesAC) const {
+    //***********************************************************************
+        switch (probe.probeType) {
+            case ptV: {
+                saveValuesAC.reserve(probe.nodes.size());
+                for (const auto& nodeID : probe.nodes)
+                    saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
+            }
+            break;
+            case ptI: {
+                saveValuesAC.reserve(probe.nodes.size());
+                for (const auto& nodeID : probe.nodes)
+                    saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
+            }
+            break;
+            case ptSum: {
+
+            }
+            break;
+            case ptAverage: {
+
+            }
+            break;
+            default:
+                throw hmgExcept("CircuitStorage::getProbeValuesAC", "unknown probe Type: %u", (uns)probe.probeType);
+        }
+    }
+
+    //***********************************************************************
+    void save(bool isRaw, bool isAppend, uns maxResultsPerRow, const char* fileName, const std::vector<uns>& probeIndex) {
     //***********************************************************************
         SimulationToSaveData* src = new SimulationToSaveData;
         src->isRaw = isRaw;
         src->isAppend = isAppend;
+        src->maxResultsPerRow = maxResultsPerRow;
         src->fileName = fileName;
+        sim.fillSaveData(src);
+        switch (src->analysisType) {
+            case atDC:
+            case atTimeStep: {
+                for (auto probeIndex : probeIndex)
+                    getProbeValuesDC(*probes[probeIndex].get(), src->saveValuesDC);
+            }
+            break;
+            case atAC:
+            case atTimeConst: {
+                for (auto probeIndex : probeIndex)
+                    getProbeValuesAC(*probes[probeIndex].get(), src->saveValuesAC);
+            }
+            break;
+            default:
+                throw hmgExcept("CircuitStorage::save", "unknown analysis Type: %u", (uns)src->analysisType);
+        }
         saver.addSimulationToSaveData(src);
     }
-/*
-    AnalysisType analysisType = atDC;
-    uns maxResultsPerRow = 100;
-    rvt timeFreqValue = rvt0;
-    rvt dtValue = rvt0;
-    std::vector<rvt> saveValuesDC;
-    std::vector<cplx> saveValuesAC;
-*/
 
     //***********************************************************************
     void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
@@ -2468,7 +2562,11 @@ inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDef
         def_->isBuiltIn 
             ? CircuitStorage::getInstance().builtInModels[def_->modelIndex].get()
             : CircuitStorage::getInstance().models[def_->modelIndex].get()
-        ) }, defaultNodeValueIndex{ defaultNodeValueIndex_ } {}
+        ) }, defaultNodeValueIndex{ defaultNodeValueIndex_ } {
+//***********************************************************************
+    if (pModel->canBeNonlinear())
+        SimControl::nNonlinComponents++;
+}
 //***********************************************************************
 
 

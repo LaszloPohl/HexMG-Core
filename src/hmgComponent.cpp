@@ -36,7 +36,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     IsSaveInstruction* pAct = static_cast<IsSaveInstruction*>(act);
                     std::vector<uns> probeIndex;
                     processSaveInstructions(first, probeIndex);
-                    save(pAct->isRaw, pAct->isAppend, pAct->fileName, probeIndex);
+                    save(pAct->isRaw, pAct->isAppend, pAct->maxResultsPerRow, pAct->fileName, probeIndex);
                 }
                 break;
             case sitDefModelSubcircuit: {
@@ -238,6 +238,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
         throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during PROBE node definition.");
+    InternalNodeVarSizePack dummyInternalPack;
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -245,7 +246,23 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
             case sitNothing: break;
             case sitProbeNode: {
                     IsProbeNodeInstruction* pAct = static_cast<IsProbeNodeInstruction*>(act);
-                    probes[currentProbe]->nodes.push_back(pAct->nodeID);
+
+                    const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
+                    for (uns i = 0; i < probeMaxComponentLevel && pAct->nodeID.componentID[i] != unsMax; i++) {
+                        const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+                        if (subckt == nullptr)
+                            throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: [[[SUBCIRCUIT.]SUBCIRCUIT.]COMPONENT.]NODE required but COMPONENT found instead of a SUBCIRCUIT");
+                        component = subckt->components[pAct->nodeID.componentID[i]].get();
+                    }
+                    const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+                    ;
+                    ProbeCDNodeID id = {
+                        SimpleNodeID2CDNode(pAct->nodeID.nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs),
+                        { pAct->nodeID.componentID[0], pAct->nodeID.componentID[1], pAct->nodeID.componentID[2] }
+                    };
+                    if(subckt == nullptr && id.nodeID.type != cdntExternal)
+                        throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: internal node is allowed only for SUBCIRCUITS");
+                    probes[currentProbe]->nodes.push_back(id);
                 }
                 break;
             case sitEndInstruction: {

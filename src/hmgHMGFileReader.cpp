@@ -963,7 +963,7 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     // check line
 
     if (strcmp(token, ".SAVE") != 0)
-        throw hmgExcept("HMGFileRun::Read", ".RUN expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        throw hmgExcept("HMGFileSave::Read", ".RUN expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
     // save types and filename
 
@@ -971,15 +971,21 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (strcmp(token, "RAW") == 0) isRaw = true;
         else if (strcmp(token, "APPEND") == 0) isAppend = true;
+        else if (strcmp(token, "MAXRESULTSPERROW") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(token, "%u", &maxResultsPerRow) != 1)
+                throw hmgExcept("HMGFileSave::Read", "unrecognised MAXRESULTSPERROW number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
         else if (strcmp(token, "FILE") == 0) {
             if(!lineToken.getQuotedText())
-                throw hmgExcept("HMGFileRun::Read", "cannot find filename in \"\" in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileSave::Read", "cannot find filename in \"\" in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             fileName = token; // token points to lineToken.token
             break;
         }
         else
+            throw hmgExcept("HMGFileSave::Read", "unrecognised parameter name (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         if(lineToken.isSepEOL)
-            throw hmgExcept("HMGFileRun::Read", "cannot find FILE= in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileSave::Read", "cannot find FILE= in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
 
     // probes

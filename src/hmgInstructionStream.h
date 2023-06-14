@@ -330,10 +330,13 @@ struct IsSaveInstruction: public IsInstruction {
 //***********************************************************************
     bool isRaw = false;
     bool isAppend = false;
+    uns maxResultsPerRow = 100;
     char fileName[4000] = { '\0' };
     uns nProbeIDs = 0;
-    IsSaveInstruction(bool isRw, bool isAppnd, std::string& fleName, uns nProbe) 
-        :IsInstruction{ sitSave }, isRaw{ isRw }, isAppend{ isAppnd }, nProbeIDs{ nProbe } { strcpy_s(fileName, fleName.c_str()); }
+    IsSaveInstruction(bool isRw, bool isAppnd, uns maxResultsPerRow_, std::string& fleName, uns nProbe)
+        :IsInstruction{ sitSave }, isRaw{ isRw }, isAppend{ isAppnd }, maxResultsPerRow{ maxResultsPerRow_ }, nProbeIDs{ nProbe } {
+        strcpy_s(fileName, fleName.c_str());
+    }
 };
 
 

@@ -361,6 +361,14 @@ struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt v
 //***********************************************************************
 
 
+//***********************************************************************
+struct ProbeCDNodeID {
+//***********************************************************************
+    CDNode nodeID;
+    uns componentID[probeMaxComponentLevel] = { unsMax, unsMax, unsMax };
+};
+
+
 #define HMG_DEBUGPRINT
 //***********************************************************************
 

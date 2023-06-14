@@ -59,6 +59,7 @@ public:
     virtual uns getN_NormalInternalNodes()const noexcept { return 0; }
     virtual uns getN_InternalNodes()const noexcept { return 0; }
     bool isController()const noexcept { return externalNs.nIONodes + externalNs.nNormalINodes == 0; }
+    virtual bool canBeNonlinear()const noexcept = 0;
 };
 
 
@@ -88,6 +89,7 @@ class ModelConstR_1 final : public ComponentAndControllerModelBase {
 public:
     ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -98,6 +100,7 @@ class ModelConstR_2 final : public ComponentAndControllerModelBase {
 public:
     ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -108,6 +111,7 @@ class ModelConstG_1 final : public ComponentAndControllerModelBase {
 public:
     ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -118,6 +122,7 @@ class ModelConstG_2 final : public ComponentAndControllerModelBase {
 public:
     ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -127,6 +132,7 @@ class ModelConstC_1 final : public ComponentAndControllerModelBase {
 public:
     ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -136,6 +142,7 @@ class ModelConstC_2 final : public ComponentAndControllerModelBase {
 public:
     ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -145,6 +152,7 @@ class ModelConstI_1 final : public ComponentAndControllerModelBase {
 public:
     ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -154,6 +162,7 @@ class ModelConstI_2 final : public ComponentAndControllerModelBase {
 public:
     ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -163,6 +172,7 @@ class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase
 public:
     ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -172,6 +182,7 @@ class ModelGirator final : public ComponentAndControllerModelBase {
 public:
     ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2 } } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -183,6 +194,7 @@ public:
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -214,6 +226,7 @@ public:
             }
         }
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return true; }
 };
 
 
@@ -244,6 +257,7 @@ public:
             controlFunction->fillIndexField(&indexField[0]);
         }
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
 };
 
 
@@ -303,6 +317,8 @@ public:
     //***********************************************************************
     uns getVersion()const noexcept { return version; }
     void processInstructions(IsInstruction*& first);
+    //***********************************************************************
+    bool canBeNonlinear()const noexcept override { return false; } // can contain nonlinear components but this is just a container
     //***********************************************************************
 };
 

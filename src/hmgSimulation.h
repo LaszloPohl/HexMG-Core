@@ -25,22 +25,32 @@ namespace nsHMG {
 //***********************************************************************
 class Simulation {
 //***********************************************************************
+    uns fullCircuitID = 0;
     AnalysisType analysisType = atDC;
     rvt timeFreqValue = rvt0;
     rvt dtValue = rvt0;
     rvt err = rvt0;
+    bool wasDC = false;
+    bool isBuiltForAC = false;
 
-    void ananlysis(IsInstruction* instruction);
     void iterate(); // always DC
     void runDC();
     void runTimeStep();
     void runAC();
-    void runTimeConst();
 public:
+    //***********************************************************************
     Simulation() = default;
     void run(const RunData& runData);
-};
+    //***********************************************************************
 
+    //***********************************************************************
+    void fillSaveData(SimulationToSaveData* dest) const noexcept{
+    //***********************************************************************
+        dest->analysisType = analysisType;
+        dest->timeFreqValue = timeFreqValue;
+        dest->dtValue = dtValue;
+    }
+};
 
 
 }
