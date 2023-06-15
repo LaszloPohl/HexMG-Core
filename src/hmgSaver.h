@@ -88,7 +88,7 @@ class hmgSaver {
                         if(isAC)
                             for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
                                 fprintf_s(fp, "%g%+gi", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
-                                if (i == currentSave->saveValuesAC.size() - 1 || i % currentSave->maxResultsPerRow)
+                                if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                                     fprintf_s(fp, "\n");
                                 else
                                     fprintf_s(fp, "\t");
@@ -96,7 +96,7 @@ class hmgSaver {
                         else
                             for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++) {
                                 fprintf_s(fp, "%g", currentSave->saveValuesDC[i]);
-                                if (i == currentSave->saveValuesDC.size() - 1 || i % currentSave->maxResultsPerRow)
+                                if (i == currentSave->saveValuesDC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                                     fprintf_s(fp, "\n");
                                 else
                                     fprintf_s(fp, "\t");
@@ -126,7 +126,7 @@ class hmgSaver {
                         if (isAC)
                             for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
                                 fprintf_s(fp, "%g\t%g", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
-                                if (i == currentSave->saveValuesAC.size() - 1 || i % currentSave->maxResultsPerRow)
+                                if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                                     fprintf_s(fp, "\n");
                                 else
                                     fprintf_s(fp, "\t");
@@ -134,7 +134,7 @@ class hmgSaver {
                         else
                             for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++) {
                                 fprintf_s(fp, "%g", currentSave->saveValuesDC[i]);
-                                if (i == currentSave->saveValuesDC.size() - 1 || i % currentSave->maxResultsPerRow)
+                                if (i == currentSave->saveValuesDC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                                     fprintf_s(fp, "\n");
                                 else
                                     fprintf_s(fp, "\t");

@@ -2424,13 +2424,13 @@ class CircuitStorage {
     //***********************************************************************
         switch (probe.probeType) {
             case ptV: {
-                saveValuesDC.reserve(probe.nodes.size());
+                saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
                     saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
             }
             break;
             case ptI: {
-                saveValuesDC.reserve(probe.nodes.size());
+                saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
                     saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
             }
@@ -2453,13 +2453,13 @@ class CircuitStorage {
     //***********************************************************************
         switch (probe.probeType) {
             case ptV: {
-                saveValuesAC.reserve(probe.nodes.size());
+                saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
                     saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
             }
             break;
             case ptI: {
-                saveValuesAC.reserve(probe.nodes.size());
+                saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
                     saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
             }

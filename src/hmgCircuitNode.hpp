@@ -101,7 +101,7 @@ struct NodeData {
     ConcurentValue<rvt> d;  // defect (current)
     rvt v = rvt0;           // error (voltage)
     std::unique_ptr<CircuitNodeDataAC> acNodePtr;
-    uns defaultValueIndex;  // in FixVoltages::V
+    uns defaultValueIndex;  // in Rails::V
     //***********************************************************************
     rvt f = rvt0; // multigrid defect
     ConcurentValue<rvt> yii;  // admitance for multigrid

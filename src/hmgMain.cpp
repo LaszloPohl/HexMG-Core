@@ -2616,6 +2616,7 @@ int main(int n, const char** params) {
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;
 	}
+	cout << "\n\n" << sizeof(CircuitNodeDataAC) << endl;
 
 	return 0;
 }
@@ -2629,7 +2630,7 @@ int main_1() {
 
 
 	Rails::resize(2);
-	// FixVoltages::V[0]->defaultNodeValue is mandatory 0 !!!
+	// Rails::V[0]->defaultNodeValue is mandatory 0 !!!
 	Rails::SetVoltage(1, 20.0);
 	Rails::reset();
 
