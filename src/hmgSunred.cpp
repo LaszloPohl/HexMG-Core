@@ -517,7 +517,7 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) {
         for (uns i = 0; i < Bsiz; i++)
             dc->calc->JBUB[i] = (BNodeIndex[i] & externalNodeFlag) != 0
                 ? -pSrc->externalNodes[BNodeIndex[i] & ~externalNodeFlag]->getDDC()
-                : -pSrc->internalNodesAndVars[BNodeIndex[i]].getDDC();
+                : -pSrc->internalNodesAndVars[BNodeIndex[i]]->getDDC();
 
         //***********************************************************************
         // sorting of defect 2: input cells
@@ -1005,7 +1005,7 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
         for (uns i = 0; i < Bsiz; i++)
             ac->calc->JBUB[i] = (BNodeIndex[i] & externalNodeFlag) != 0
                 ? -pSrc->externalNodes[BNodeIndex[i] & ~externalNodeFlag]->getDAC()
-                : -pSrc->internalNodesAndVars[BNodeIndex[i]].getDAC();
+                : -pSrc->internalNodesAndVars[BNodeIndex[i]]->getDAC();
 
         //***********************************************************************
         // sorting of defect 2: input cells
@@ -1145,7 +1145,7 @@ void SunredTreeNode::backsubsDC(ComponentSubCircuit* pSrc) {
             uns nodeIndex = ANodeIndex[i].nodeIndex;
             dc->calc->JAUA[i] = (nodeIndex & externalNodeFlag) != 0
                 ? pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->getVDC()
-                : pSrc->internalNodesAndVars[nodeIndex].getVDC();
+                : pSrc->internalNodesAndVars[nodeIndex]->getVDC();
         }
 
         //***********************************************************************
@@ -1166,7 +1166,7 @@ void SunredTreeNode::backsubsDC(ComponentSubCircuit* pSrc) {
                 pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->setVDC(dc->calc->JBUB[i]);
             }
             else {
-                pSrc->internalNodesAndVars[nodeIndex].setVDC(dc->calc->JBUB[i]);
+                pSrc->internalNodesAndVars[nodeIndex]->setVDC(dc->calc->JBUB[i]);
             }
         }
 
@@ -1197,7 +1197,7 @@ void SunredTreeNode::backsubsAC(ComponentSubCircuit* pSrc) {
             uns nodeIndex = ANodeIndex[i].nodeIndex;
             ac->calc->JAUA[i] = (nodeIndex & externalNodeFlag) != 0
                 ? pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->getVAC()
-                : pSrc->internalNodesAndVars[nodeIndex].getVAC();
+                : pSrc->internalNodesAndVars[nodeIndex]->getVAC();
         }
 
         //***********************************************************************
@@ -1218,7 +1218,7 @@ void SunredTreeNode::backsubsAC(ComponentSubCircuit* pSrc) {
                 pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->setVAC(ac->calc->JBUB[i]);
             }
             else {
-                pSrc->internalNodesAndVars[nodeIndex].setVAC(ac->calc->JBUB[i]);
+                pSrc->internalNodesAndVars[nodeIndex]->setVAC(ac->calc->JBUB[i]);
             }
         }
 

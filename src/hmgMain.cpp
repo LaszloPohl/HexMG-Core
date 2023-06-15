@@ -2616,10 +2616,59 @@ int main(int n, const char** params) {
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;
 	}
-	cout << "\n\n" << sizeof(CircuitNodeDataAC) << endl;
+	//cout << "\n\n" << sizeof(NodeVariable) << endl;
 
 	return 0;
 }
+/*
+int main() {
+	NodeVariable a;
+	//a.turnIntoNode(0, false);
+	//a.createAC();
+
+	int isAdd = 1;
+
+//	printf("isAdd? 0 or 1: ");
+//	scanf_s("%d", &isAdd);
+
+//	a.nodePtr->d.setIsGnd(isAdd == 0);
+	//a.acNodePtr->d.setIsGnd(isAdd == 0);
+
+	const auto startTime = high_resolution_clock::now();
+
+	constexpr siz N = 500'000'000;
+	cplx val = { 1.0, 0.2 };
+
+	//for (siz i = 0; i < N; i++) {
+	//	a.fetchAdd(1.5);
+	//	a.fetchSub(1.4);
+	//}
+	a.setIsConcurrent(true);
+	for (siz i = siz0; i < N; i++) {
+		a.d.fetch_add(val, a.isConcurrent, a.isGnd);
+		a.d.fetch_sub(val, a.isConcurrent, a.isGnd);
+		a.d.fetch_add(val, a.isConcurrent, a.isGnd);
+	}
+	//a.acNodePtr->d.setIsConcurrent(false);
+	//for (siz i = siz0; i < N; i++) {
+	//	a.acNodePtr->d.fetch_add(val);
+	//	a.acNodePtr->d.fetch_sub(val);
+	//	a.acNodePtr->d.fetch_add(val);
+	//}
+
+
+	const auto endTime = high_resolution_clock::now();
+
+	double durr = duration_cast<duration<double>>(endTime - startTime).count();
+	double M_op_per_sec = 1e-6 * 3 * N / durr;
+
+	printf("Time: %fs\nM_op_per_sec = %f\n", durr, M_op_per_sec);
+
+	cout << a.d.loadCplx(a.isConcurrent) << endl;
+	cout << sizeof(a.d) << endl;
+}
+*/
+
 
 //***********************************************************************
 int main_1() {
@@ -2848,7 +2897,7 @@ int main_1() {
 
 	cout << "proba time: " << time_span.count() << " seconds\n" << endl;
 
-	cout << sizeof(NodeData) << '\n' << sizeof(CircuitNodeDataAC) << endl;
+	//cout << sizeof(NodeData) << '\n' << sizeof(CircuitNodeDataAC) << endl;
 	cout << sizeof(ComponentConstR_1) << '\n' << sizeof(ComponentSubCircuit) << endl;
 	cout << noexcept(is_true_error(false, "const char* who_threw", "const char* what")) << endl;
 	cout << sizeof(matrix<cplx>) << endl;

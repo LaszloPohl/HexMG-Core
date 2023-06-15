@@ -105,8 +105,8 @@ struct hmgMultigrid {
 
                     // uh
 
-                    hGrid.uHMinusRestrictUhToDHNCDC(hLevel, *this); // dH_NonConcurent = uH – R(uh)
-                    hGrid.prolongateDHNCAddToUhDC(hLevel, *this);   // uh += P(dH_NonConcurent)
+                    hGrid.uHMinusRestrictUhToDHNCDC(hLevel, *this); // dH_NonConcurrent = uH – R(uh)
+                    hGrid.prolongateDHNCAddToUhDC(hLevel, *this);   // uh += P(dH_NonConcurrent)
 
                     // relax
 

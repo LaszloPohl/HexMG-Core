@@ -226,7 +226,7 @@ public:
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override final {
     //***********************************************************************
-        pNode->turnIntoNode(defaultNodeValueIndex, false);
+        pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         if (nodeIndex == 0)
             N0 = pNode;
         else
@@ -688,7 +688,7 @@ public:
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex < 2)
-            pNode->turnIntoNode(defaultNodeValueIndex, false);
+            pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -796,7 +796,7 @@ public:
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
-        pNode->turnIntoNode(defaultNodeValueIndex, false);
+        pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -941,11 +941,11 @@ public:
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
-            pNode->turnIntoNode(0, true); // the default value is mandatory 0
-            pNode->setIsConcurrentDC(false);
+            pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
+            pNode->setIsConcurrent(false);
         }
         else
-            pNode->turnIntoNode(defaultNodeValueIndex, false);
+            pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1046,8 +1046,8 @@ public:
                         sumRet += diff * diff;
                     }
                     break;
-                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurentDC(coarseVgen->N[2]->getValue0DC() - N[2]->getValue0DC()); break; // dH_NonConcurent = uH – R(uh)
-                case rprProlongateDHNCAddToUh:   N[2]->incValue0DC(coarseVgen->N[2]->getDNonConcurentDC()); break; // uh = uh + P(dH_NonConcurent)
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurrentDC(coarseVgen->N[2]->getValue0DC() - N[2]->getValue0DC()); break; // dH_NonConcurrent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0DC(coarseVgen->N[2]->getDNonConcurrentDC()); break; // uh = uh + P(dH_NonConcurrent)
             }
         }
         else {
@@ -1060,8 +1060,8 @@ public:
                         sumRet = absSquare(diff);
                     }
                     break;
-                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurentAC(coarseVgen->N[2]->getValue0AC() - N[2]->getValue0AC()); break; // dH_NonConcurent = uH – R(uh)
-                case rprProlongateDHNCAddToUh:   N[2]->incValue0AC(coarseVgen->N[2]->getDNonConcurentAC()); break; // uh = uh + P(dH_NonConcurent)
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurrentAC(coarseVgen->N[2]->getValue0AC() - N[2]->getValue0AC()); break; // dH_NonConcurrent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0AC(coarseVgen->N[2]->getDNonConcurrentAC()); break; // uh = uh + P(dH_NonConcurrent)
             }
         }
         return sumRet;
@@ -1184,7 +1184,7 @@ public:
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_IO_Nodes() + pModel->getN_Normal_I_Nodes()) // There are 2 IO nodes.
-            pNode->turnIntoNode(defaultNodeValueIndex, false);
+            pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1334,7 +1334,7 @@ class Controller final : public ComponentAndControllerBase {
     friend class HmgF_Set_Controller_mVar_Value;
     friend class HmgF_Set_Controller_mVar_ValueFromStepStart;
     std::vector<VariableNodeBase*> externalNodes;
-    std::vector<VariableNodeBase> mVars;
+    std::vector<std::unique_ptr<VariableNodeBase>> mVars;
     std::vector<Param> pars; // pars[0] is G
     std::vector<rvt> workField;
 public:
@@ -1348,8 +1348,10 @@ public:
         const ModelController* pM = dynamic_cast<const ModelController*>(pModel);
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
         mVars.resize(pM->nMVars);
-        for (auto& mVar : mVars)
-            mVar.turnIntoStateVariable(0);
+        for (auto& mVar : mVars) {
+            mVar = std::make_unique<VariableNodeBase>();
+            mVar->setDefaultValueIndex(0, false);
+        }
     }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
@@ -1402,7 +1404,7 @@ public:
     void setStepStartFromValue() noexcept {
     //***********************************************************************
         for (uns i = 0; i < mVars.size(); i++)
-            mVars[i].setStepStartFromAcceptedDC();
+            mVars[i]->setStepStartFromAcceptedDC();
     }
 };
 
@@ -1418,7 +1420,7 @@ inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workF
 //***********************************************************************
 inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getStepStartDC();
+    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex]->getStepStartDC();
     return 0;
 }
 
@@ -1426,7 +1428,7 @@ inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workF
 //***********************************************************************
 inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getValueDC();
+    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex]->getValueDC();
     return 0;
 }
 
@@ -1434,7 +1436,7 @@ inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField
 //***********************************************************************
 inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex].setValueDC(workField[index[0]]);
+    static_cast<Controller*>(owner)->mVars[varIndex]->setValueDC(workField[index[0]]);
     return 0;
 }
 
@@ -1442,7 +1444,7 @@ inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField,
 //***********************************************************************
 inline int HmgF_Set_Controller_mVar_ValueFromStepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex].setValueFromStepStartDC();
+    static_cast<Controller*>(owner)->mVars[varIndex]->setValueFromStepStartDC();
     return 0;
 }
 
@@ -1468,7 +1470,7 @@ class ComponentSubCircuit final : public ComponentBase {
     std::vector<std::unique_ptr<ComponentBase>> components;
     std::vector<std::unique_ptr<Controller>> controllers;
     std::vector<VariableNodeBase*> externalNodes;
-    std::vector<VariableNodeBase> internalNodesAndVars;
+    std::vector<std::unique_ptr<VariableNodeBase>> internalNodesAndVars;
     std::vector<Param> pars;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
     std::unique_ptr<SubCircuitFullMatrixReductorAC> sfmrAC;
@@ -1498,7 +1500,7 @@ public:
     const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
     const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }
     VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
+    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return internalNodesAndVars[nodeIndex].get(); }
     //***********************************************************************
     void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
     //***********************************************************************
@@ -1565,7 +1567,7 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& node : internalNodesAndVars)
-                node.reset();
+                node->reset();
             for (auto& comp : components)
                 comp->resetNodes(true);
             for (auto& ctrl : controllers)
@@ -1573,7 +1575,7 @@ public:
         }
         else {
             for (auto& node : internalNodesAndVars)
-                node.resetAC();
+                node->resetAC();
             for (auto& comp : components)
                 comp->resetNodes(false);
         }
@@ -1584,13 +1586,13 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& node : internalNodesAndVars)
-                node.deleteDDC();
+                node->deleteDDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteD(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
-                node.deleteDAC();
+                node->deleteDAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteD(false);
         }
@@ -1653,18 +1655,18 @@ public:
         
         if (isDC) {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                crvt y = internalNodesAndVars[i].getYiiDC();
-                crvt d = internalNodesAndVars[i].getDDC();
+                crvt y = internalNodesAndVars[i]->getYiiDC();
+                crvt d = internalNodesAndVars[i]->getDDC();
                 if (y != rvt0)
-                    internalNodesAndVars[i].incValue0DC(d / y);
+                    internalNodesAndVars[i]->incValue0DC(d / y);
             }
         }
         else {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                ccplx y = internalNodesAndVars[i].getYiiAC();
-                ccplx d = internalNodesAndVars[i].getDAC();
+                ccplx y = internalNodesAndVars[i]->getYiiAC();
+                ccplx d = internalNodesAndVars[i]->getDAC();
                 if (y != cplx0)
-                    internalNodesAndVars[i].incValue0AC(d / y);
+                    internalNodesAndVars[i]->incValue0AC(d / y);
             }
         }
     }
@@ -1680,26 +1682,26 @@ public:
             switch (type) {
                 case rprProlongateU: // uh = uH
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i].setValue0DC(coarseSubckt->internalNodesAndVars[i].getValue0DC());
+                        internalNodesAndVars[i]->setValue0DC(coarseSubckt->internalNodesAndVars[i]->getValue0DC());
                     break;
                 case rprRestrictU: // uH = uh
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC());
+                        coarseSubckt->internalNodesAndVars[i]->setValue0DC(internalNodesAndVars[i]->getValue0DC());
                     break;
                 case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        rvt diff = coarseSubckt->internalNodesAndVars[i].getDDC() - internalNodesAndVars[i].getDDC();
-                        coarseSubckt->internalNodesAndVars[i].setFDC(internalNodesAndVars[i].getFDC() + diff);
+                        rvt diff = coarseSubckt->internalNodesAndVars[i]->getDDC() - internalNodesAndVars[i]->getDDC();
+                        coarseSubckt->internalNodesAndVars[i]->setFDC(internalNodesAndVars[i]->getFDC() + diff);
                         sumRet += diff * diff;
                     }
                     break;
-                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurent = uH – R(uh)
+                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurrent = uH – R(uh)
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i].setDNonConcurentDC(coarseSubckt->internalNodesAndVars[i].getValue0DC() - internalNodesAndVars[i].getValue0DC());
+                        coarseSubckt->internalNodesAndVars[i]->setDNonConcurrentDC(coarseSubckt->internalNodesAndVars[i]->getValue0DC() - internalNodesAndVars[i]->getValue0DC());
                     break;
-                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurent)
+                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurrent)
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurentDC());
+                        internalNodesAndVars[i]->setValue0DC(internalNodesAndVars[i]->getValue0DC() + coarseSubckt->internalNodesAndVars[i]->getDNonConcurrentDC());
                     break;
             }
         }
@@ -1707,26 +1709,26 @@ public:
             switch (type) {
                 case rprProlongateU: // uh = uH
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i].setValue0AC(coarseSubckt->internalNodesAndVars[i].getValue0AC());
+                        internalNodesAndVars[i]->setValue0AC(coarseSubckt->internalNodesAndVars[i]->getValue0AC());
                     break;
                 case rprRestrictU: // uH = uh
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC());
+                        coarseSubckt->internalNodesAndVars[i]->setValue0AC(internalNodesAndVars[i]->getValue0AC());
                     break;
                 case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        cplx diff = coarseSubckt->internalNodesAndVars[i].getDAC() - internalNodesAndVars[i].getDAC();
-                        coarseSubckt->internalNodesAndVars[i].setFAC(internalNodesAndVars[i].getFAC() + diff);
+                        cplx diff = coarseSubckt->internalNodesAndVars[i]->getDAC() - internalNodesAndVars[i]->getDAC();
+                        coarseSubckt->internalNodesAndVars[i]->setFAC(internalNodesAndVars[i]->getFAC() + diff);
                         sumRet += absSquare(diff);
                     }
                     break;
-                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurent = uH – R(uh)
+                case rpruHMinusRestrictUhToDHNC: // dH_NonConcurrent = uH – R(uh)
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i].setDNonConcurentAC(coarseSubckt->internalNodesAndVars[i].getValue0AC() - internalNodesAndVars[i].getValue0AC());
+                        coarseSubckt->internalNodesAndVars[i]->setDNonConcurrentAC(coarseSubckt->internalNodesAndVars[i]->getValue0AC() - internalNodesAndVars[i]->getValue0AC());
                     break;
-                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurent)
+                case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurrent)
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurentAC());
+                        internalNodesAndVars[i]->setValue0AC(internalNodesAndVars[i]->getValue0AC() + coarseSubckt->internalNodesAndVars[i]->getDNonConcurrentAC());
                     break;
             }
         }
@@ -1744,11 +1746,11 @@ public:
 
         if (isDC) {
             for (uns i = 0; i < NInodes; i++)
-                residual += square(internalNodesAndVars[i].getDDC());
+                residual += square(internalNodesAndVars[i]->getDDC());
         }
         else {
             for (uns i = 0; i < NInodes; i++)
-                residual += absSquare(internalNodesAndVars[i].getDAC());
+                residual += absSquare(internalNodesAndVars[i]->getDAC());
         }
 
         if (isContainedComponentWithInternalNode)
@@ -1775,7 +1777,7 @@ public:
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-            d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
+            d.addDefectNonSquare(internalNodesAndVars[i]->getDDC());
         }
         for (auto& comp : components)
             if (comp->isEnabled) d.addCollector(comp->collectCurrentDefectDC());
@@ -1788,7 +1790,7 @@ public:
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-            d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
+            d.addDefectNonSquare(internalNodesAndVars[i]->getVDC());
         }
         for (auto& comp : components)
             if (comp->isEnabled) d.addCollector(comp->collectVoltageDefectDC());
@@ -1813,10 +1815,10 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-                internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
+                internalNodesAndVars[i]->setValueAcceptedNoAlphaDC();
         else {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-                internalNodesAndVars[i].setValueAcceptedDC();
+                internalNodesAndVars[i]->setValueAcceptedDC();
         }
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationDC(isNoAlpha);
@@ -1827,7 +1829,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < internalNodesAndVars.size(); i++)
-            internalNodesAndVars[i].setStepStartFromAcceptedDC();
+            internalNodesAndVars[i]->setStepStartFromAcceptedDC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptStepDC();
         for (auto& ctrl : controllers)
@@ -1860,7 +1862,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-            internalNodesAndVars[i].setValueAcceptedAC();
+            internalNodesAndVars[i]->setValueAcceptedAC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationAndStepAC();
     }
@@ -1870,13 +1872,13 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& node : internalNodesAndVars)
-                node.deleteFDC();
+                node->deleteFDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteF(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
-                node.deleteFAC();
+                node->deleteFAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteF(false);
         }
@@ -1887,13 +1889,13 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& node : internalNodesAndVars)
-                node.deleteYiiDC();
+                node->deleteYiiDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteYii(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
-                node.deleteYiiAC();
+                node->deleteYiiAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteYii(false);
         }
@@ -1904,13 +1906,13 @@ public:
     //***********************************************************************
         if (isDC) {
             for (auto& node : internalNodesAndVars)
-                node.loadFtoDDC();
+                node->loadFtoDDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->loadFtoD(true);
         }
         else {
             for (auto& node : internalNodesAndVars)
-                node.loadFtoDAC();
+                node->loadFtoDAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->loadFtoD(false);
         }
@@ -1921,16 +1923,16 @@ public:
     void prolongateUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
     void restrictUDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);
     rvt restrictFDDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);                 // fH = R(fh) + dH – R(dh), ret: truncation error
-    void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);   // dH_NonConcurent = uH – R(uh)
-    void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);     // uh = uh + P(dH_NonConcurent)
+    void uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);   // dH_NonConcurrent = uH – R(uh)
+    void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);     // uh = uh + P(dH_NonConcurrent)
     //***********************  AC Multigrid Functions  **********************
     void solveAC() {} // d0 += f0 kell!
     void relaxAC(uns nRelax) {} // f-et is figyelembe kell venni!
     void prolongeteUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
     void restrictUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
     rvt restrictFDDAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
-    void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurent = uH – R(uh)
-    void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurent)
+    void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurrent = uH – R(uh)
+    void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurrent)
     //***********************************************************************
     cplx getCurrentAC(uns y) const noexcept override { return cplx0; }
     //***********************************************************************
@@ -1940,7 +1942,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
+            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getValueDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeValueDC(i);
         }
@@ -1950,7 +1952,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVDC()) << std::endl;
+            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getVDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeErrorDC(i);
         }
@@ -1960,7 +1962,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDDC()) << std::endl;
+            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getDDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeDefectDC(i);
         }
@@ -1970,7 +1972,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueAC()) << std::endl;
+            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getValueAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeValueAC(i);
         }
@@ -1980,7 +1982,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVAC()) << std::endl;
+            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getVAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeErrorAC(i);
         }
@@ -1990,7 +1992,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDAC()) << std::endl;
+            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getDAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeDefectAC(i);
         }
@@ -2002,7 +2004,7 @@ public:
     //***********************************************************************
         for (uns i = 0; i < internalNodesAndVars.size(); i++) {
             std::cout << "Internal node " << i << std::endl;
-            internalNodesAndVars[i].printNode();
+            internalNodesAndVars[i]->printNode();
         }
         for (uns i = 0; i < components.size(); i++) {
             const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(components[i].get());
@@ -2120,7 +2122,7 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
     //constexpr uns compindex2 = 7;
     constexpr uns compindex1 = 4;
     constexpr uns compindex2 = 3;
-    cplx value = static_cast<ComponentSubCircuit*>(components[compindex1].get())->internalNodesAndVars[0].getValueAC();
+    cplx value = static_cast<ComponentSubCircuit*>(components[compindex1].get())->internalNodesAndVars[0]->getValueAC();
     std::cout << "\n+++ [ci] AC:" << value << std::endl;
     std::cout << "+++ [ci] TC:" << (1.0 / (2 * hmgPi * SimControl::getFrequency())) << " sec     R: " << (value.imag() * log(10.0) / hmgPi) << std::endl;
     //rvt I = static_cast<ComponentSubCircuit*>(components[compindex2].get())->components[3]->getNode(2)->getValueDC();
@@ -2412,7 +2414,7 @@ class CircuitStorage {
             component = subckt->components[nodeID.componentID[i]].get();
         }
         switch (nodeID.nodeID.type) {
-            case cdntInternal: return static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
+            case cdntInternal: return *static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
             case cdntExternal: return *const_cast<ComponentBase*>(component)->getNode(nodeID.nodeID.index);
             default:
                 throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
