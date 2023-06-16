@@ -25,7 +25,7 @@ namespace nsHMG {
 
 
 //***********************************************************************
-class ConcurrentValueX {
+class ConcurrentValue {
 //***********************************************************************
     cplx nonConcurrent;
     std::atomic<rvt> concurrentRe;
@@ -58,7 +58,7 @@ class ConcurrentValueX {
 
 public:
     //***********************************************************************
-    explicit ConcurrentValueX(cplx def = cplx0) noexcept : concurrentRe{ def.real() }, concurrentIm{ def.imag() }, nonConcurrent{ def } {}
+    explicit ConcurrentValue(cplx def = cplx0) noexcept : concurrentRe{ def.real() }, concurrentIm{ def.imag() }, nonConcurrent{ def } {}
     void store(const cplx& value, bool isConcurrent, bool isGnd)noexcept { if (isGnd) return; if (isConcurrent) { concurrentRe.store(value.real()); concurrentIm.store(value.imag()); } nonConcurrent = value; } // ! because of storeToNonConcurrent, nonConcurrent is always set (deleteD and deleteF)
     void store(rvt value, bool isConcurrent, bool isGnd)noexcept { if (isGnd) return; if (isConcurrent) concurrentRe.store(value); nonConcurrent = value; } // ! because of storeToNonConcurrent, nonConcurrent is always set (deleteD and deleteF)
     void storeToNonConcurrent(const cplx& value)noexcept { nonConcurrent = value; }
@@ -101,7 +101,7 @@ public:
 
 
 //***********************************************************************
-struct VariableNodeBase { // NodeVariable
+struct NodeVariable {
 //***********************************************************************
     //***********************************************************************
     inline static rvt alpha = 1; // multiplicator for getValue
@@ -115,14 +115,14 @@ struct VariableNodeBase { // NodeVariable
     bool isGnd = false;
     //***********************************************************************
     // Variables used alternately for DC and AC:
-    ConcurrentValueX d;           // defect (current)
+    ConcurrentValue d;           // defect (current)
     cplx v = cplx0;              // error (voltage)
     cplx f = cplx0;              // multigrid defect
-    ConcurrentValueX yii;         // admitance for multigrid
+    ConcurrentValue yii;         // admitance for multigrid
     //***********************************************************************
     // 
     //***********************************************************************
-    VariableNodeBase() = default;
+    NodeVariable() = default;
     void reset() noexcept; // DC + AC
     void setIsConcurrent(bool is) noexcept { isConcurrent = is; }
     void setIsGnd(bool is) noexcept { isGnd = is; }
@@ -191,7 +191,7 @@ struct VariableNodeBase { // NodeVariable
 //***********************************************************************
 struct Param final {
 //***********************************************************************
-    VariableNodeBase* var = nullptr;
+    NodeVariable* var = nullptr;
     rvt value = rvt0;
     rvt get()const noexcept { return var ? var->valueDC : value; }
 };
@@ -207,7 +207,7 @@ struct Rails {
         friend struct Rails;
         rvt defaultNodeValue = rvt0;
     public:
-        VariableNodeBase rail;
+        NodeVariable rail;
         explicit OneRail(uns defValueIndex) noexcept { rail.setDefaultValueIndex(defValueIndex, true); }
         rvt getDefaultNodeValue()const noexcept { return defaultNodeValue; }
     };
@@ -244,7 +244,7 @@ struct Rails {
 
 
 //***********************************************************************
-inline void VariableNodeBase::reset() noexcept {
+inline void NodeVariable::reset() noexcept {
 //***********************************************************************
     d.store(rvt0, isConcurrent, isGnd);
     v = cplx0;

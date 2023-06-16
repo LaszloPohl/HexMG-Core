@@ -62,12 +62,12 @@ public:
     // dt == 0 && timeStepStop == 0: initial DC
     // dt == 0 && timeStepStop != 0: finishing DC
     //***********************************************************************
-    inline static VariableNodeBase timeStepStart;   // transient: the start time of the step
-    inline static VariableNodeBase timeStepStop;    // transient: the end time of the step (timeStepStop = timeStepStart + dt)
-    inline static VariableNodeBase dt;              // transient: dt of the step
-    inline static VariableNodeBase minIter;         // minimum number of iterations in the current step (e.g. a semiconductor diode is replaced with a resistor for the first 1-2 iterations)
-    inline static VariableNodeBase iter;            // which iteration we are at in the current step
-    inline static VariableNodeBase stepError;       // relative error of the current iteration compared to the previous
+    inline static NodeVariable timeStepStart;   // transient: the start time of the step
+    inline static NodeVariable timeStepStop;    // transient: the end time of the step (timeStepStop = timeStepStart + dt)
+    inline static NodeVariable dt;              // transient: dt of the step
+    inline static NodeVariable minIter;         // minimum number of iterations in the current step (e.g. a semiconductor diode is replaced with a resistor for the first 1-2 iterations)
+    inline static NodeVariable iter;            // which iteration we are at in the current step
+    inline static NodeVariable stepError;       // relative error of the current iteration compared to the previous
     inline static std::atomic<uns> nNonlinComponents = 0; // actual number of nonlinear components in the network; if 0 => no more than 1 DC / timestep iteration needed
     //***********************************************************************
     static void setInitialDC() noexcept { timeStepStart.setValueDC(rvt0); timeStepStop.setValueDC(rvt0); dt.setValueDC(rvt0); }
@@ -135,15 +135,15 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    virtual const VariableNodeBase& getComponentValue() const noexcept = 0;
-    virtual VariableNodeBase* getNode(siz nodeIndex) noexcept = 0;
-    virtual VariableNodeBase* getInternalNode(siz nodeIndex) noexcept = 0;
-    virtual void setNode(siz nodeIndex, VariableNodeBase* pNode) noexcept = 0;
+    virtual const NodeVariable& getComponentValue() const noexcept = 0;
+    virtual NodeVariable* getNode(siz nodeIndex) noexcept = 0;
+    virtual NodeVariable* getInternalNode(siz nodeIndex) noexcept = 0;
+    virtual void setNode(siz nodeIndex, NodeVariable* pNode) noexcept = 0;
     virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
     virtual Param& getParam(siz parIndex) noexcept = 0;
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
     //***********************************************************************
-    virtual const VariableNodeBase& getComponentCurrent() const noexcept = 0;
+    virtual const NodeVariable& getComponentCurrent() const noexcept = 0;
     virtual void buildOrReplace() = 0; // should only be called after the nodes and params have been set!, buildForAC() do this for AC
     //************************** AC / DC functions *******************************
     virtual bool isJacobianMXSymmetrical(bool isDC)const noexcept = 0; // e.g. controlled source is alway asymmetrical, in AC, too
@@ -193,12 +193,12 @@ public:
 class RealComponent : public ComponentBase { // real = not a container
 //***********************************************************************
 protected:
-    VariableNodeBase componentValue;
-    VariableNodeBase componentCurrent;
+    NodeVariable componentValue;
+    NodeVariable componentCurrent;
 public:
     using ComponentBase::ComponentBase;
-    const VariableNodeBase& getComponentValue() const noexcept override { return componentValue; }
-    const VariableNodeBase& getComponentCurrent() const noexcept override { return componentCurrent; }
+    const NodeVariable& getComponentValue() const noexcept override { return componentValue; }
+    const NodeVariable& getComponentCurrent() const noexcept override { return componentCurrent; }
     void buildForAC() override {}
     void buildOrReplace() override {}
 #ifdef HMG_DEBUGPRINT
@@ -212,19 +212,19 @@ public:
 class Component_2Node : public RealComponent {
 //***********************************************************************
 protected:
-    VariableNodeBase*N0 = nullptr, *N1 = nullptr;
+    NodeVariable*N0 = nullptr, *N1 = nullptr;
 public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode(siz nodeIndex) noexcept override final {
     //***********************************************************************
         return nodeIndex == 0 ? N0 : N1;
     }
     //***********************************************************************
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override final {
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         if (nodeIndex == 0)
@@ -629,18 +629,18 @@ public:
 class Component_4Node_4Par : public RealComponent {
 //***********************************************************************
 protected:
-    VariableNodeBase* N[4] = { nullptr, nullptr, nullptr, nullptr };
+    NodeVariable* N[4] = { nullptr, nullptr, nullptr, nullptr };
     Param param[4];
 public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode(siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override final { return param[parIndex]; }
@@ -685,7 +685,7 @@ public:
     //***********************************************************************
     using Component_4Node_4Par::Component_4Node_4Par;
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex < 2)
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -776,7 +776,7 @@ public:
 class ComponentGirator final : public RealComponent {
 //***********************************************************************
 protected:
-    VariableNodeBase* N[4] = { nullptr, nullptr, nullptr, nullptr };
+    NodeVariable* N[4] = { nullptr, nullptr, nullptr, nullptr };
     Param param[2];
     rvt IDC1 = rvt0, IDC2 = rvt0;
     cplx IAC1 = cplx0, IAC2 = cplx0;
@@ -784,17 +784,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         N[nodeIndex] = pNode;
@@ -916,8 +916,8 @@ public:
 class ComponentConstVI final : public RealComponent {
 //***********************************************************************
 protected:
-    VariableNodeBase* N[3] = { nullptr, nullptr, nullptr };
-    std::unique_ptr<VariableNodeBase> possibleCurrentNode;
+    NodeVariable* N[3] = { nullptr, nullptr, nullptr };
+    std::unique_ptr<NodeVariable> possibleCurrentNode;
     Param param[5];
     rvt NZBJB_DC = rvt0;
     cplx NZBJB_AC = cplx0;
@@ -928,17 +928,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
             pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
@@ -1076,7 +1076,7 @@ public:
     void buildOrReplace() override { 
     //***********************************************************************
         if (N[2] == nullptr) { 
-            possibleCurrentNode = std::make_unique<VariableNodeBase>(); 
+            possibleCurrentNode = std::make_unique<NodeVariable>(); 
             setNode(2, possibleCurrentNode.get());
         } 
     }
@@ -1155,7 +1155,7 @@ public:
 class Component_Function_Controlled_I_with_const_G final : public RealComponent {
 //***********************************************************************
     friend class HmgF_Load_ControlledI_Node_StepStart;
-    std::vector<VariableNodeBase*> externalNodes;
+    std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars; // pars[0] is G
     std::vector<rvt> workField;
     cplx IAC = cplx0;
@@ -1171,17 +1171,17 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
     //***********************************************************************
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode(siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept override { return pars[parIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_IO_Nodes() + pModel->getN_Normal_I_Nodes()) // There are 2 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -1333,8 +1333,9 @@ class Controller final : public ComponentAndControllerBase {
     friend class HmgF_Load_Controller_mVar_Value;
     friend class HmgF_Set_Controller_mVar_Value;
     friend class HmgF_Set_Controller_mVar_ValueFromStepStart;
-    std::vector<VariableNodeBase*> externalNodes;
-    std::vector<std::unique_ptr<VariableNodeBase>> mVars;
+    NodeVariable* mVars = nullptr;
+    uns nmVars = 0;
+    std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars; // pars[0] is G
     std::vector<rvt> workField;
 public:
@@ -1347,15 +1348,16 @@ public:
         pars.resize(def->params.size());
         const ModelController* pM = dynamic_cast<const ModelController*>(pModel);
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
-        mVars.resize(pM->nMVars);
-        for (auto& mVar : mVars) {
-            mVar = std::make_unique<VariableNodeBase>();
-            mVar->setDefaultValueIndex(0, false);
+        delete[] mVars;
+        nmVars = pM->nMVars;
+        mVars = new NodeVariable[nmVars];
+        for (uns i = 0; i < nmVars; i++) {
+            mVars[i].setDefaultValueIndex(0, false);
         }
     }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
-    VariableNodeBase* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
+    NodeVariable* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
     void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
     Param& getParam(siz parIndex) noexcept { return pars[parIndex]; }
     //***********************************************************************
@@ -1397,14 +1399,14 @@ public:
     //     it is impossible to see wether a node will be used in a disabled
     //     component. 
     //***********************************************************************
-        for (auto& var : mVars)
-            var.reset();
+        for (uns i = 0; i < nmVars; i++)
+            mVars[i].reset();
     }
     //***********************************************************************
     void setStepStartFromValue() noexcept {
     //***********************************************************************
-        for (uns i = 0; i < mVars.size(); i++)
-            mVars[i]->setStepStartFromAcceptedDC();
+        for (uns i = 0; i < nmVars; i++)
+            mVars[i].setStepStartFromAcceptedDC();
     }
 };
 
@@ -1420,7 +1422,7 @@ inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workF
 //***********************************************************************
 inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex]->getStepStartDC();
+    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getStepStartDC();
     return 0;
 }
 
@@ -1428,7 +1430,7 @@ inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workF
 //***********************************************************************
 inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex]->getValueDC();
+    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getValueDC();
     return 0;
 }
 
@@ -1436,7 +1438,7 @@ inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField
 //***********************************************************************
 inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex]->setValueDC(workField[index[0]]);
+    static_cast<Controller*>(owner)->mVars[varIndex].setValueDC(workField[index[0]]);
     return 0;
 }
 
@@ -1444,7 +1446,7 @@ inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField,
 //***********************************************************************
 inline int HmgF_Set_Controller_mVar_ValueFromStepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
 //***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex]->setValueFromStepStartDC();
+    static_cast<Controller*>(owner)->mVars[varIndex].setValueFromStepStartDC();
     return 0;
 }
 
@@ -1469,11 +1471,13 @@ class ComponentSubCircuit final : public ComponentBase {
     //***********************************************************************
     std::vector<std::unique_ptr<ComponentBase>> components;
     std::vector<std::unique_ptr<Controller>> controllers;
-    std::vector<VariableNodeBase*> externalNodes;
-    std::vector<std::unique_ptr<VariableNodeBase>> internalNodesAndVars;
+    std::vector<NodeVariable*> externalNodes;
+    //std::vector<std::unique_ptr<NodeVariable>> internalNodesAndVars;
+    NodeVariable* internalNodesAndVars = nullptr;
     std::vector<Param> pars;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
     std::unique_ptr<SubCircuitFullMatrixReductorAC> sfmrAC;
+    uns nInternalNodesAndVars = 0;
     uns version = 0; // buildOrReplace must be run if this->version != model->version
     bool isJacobianMXSymmetricalDC_ = false;
     bool isJacobianMXSymmetricalAC_ = false;
@@ -1497,12 +1501,14 @@ public:
         pars.resize(def->params.size());
     }
     //***********************************************************************
-    const VariableNodeBase& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
-    const VariableNodeBase& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }
-    VariableNodeBase* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
-    VariableNodeBase* getInternalNode(siz nodeIndex) noexcept override final { return internalNodesAndVars[nodeIndex].get(); }
+    ~ComponentSubCircuit() { delete[] internalNodesAndVars; }
     //***********************************************************************
-    void setNode(siz nodeIndex, VariableNodeBase* pNode)noexcept override {
+    const NodeVariable& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
+    const NodeVariable& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }
+    NodeVariable* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
+    //***********************************************************************
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         externalNodes[nodeIndex] = pNode;
     }
@@ -1566,16 +1572,16 @@ public:
     //     component. 
     //***********************************************************************
         if (isDC) {
-            for (auto& node : internalNodesAndVars)
-                node->reset();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].reset();
             for (auto& comp : components)
                 comp->resetNodes(true);
             for (auto& ctrl : controllers)
                 ctrl.get()->resetMVars();
         }
         else {
-            for (auto& node : internalNodesAndVars)
-                node->resetAC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].resetAC();
             for (auto& comp : components)
                 comp->resetNodes(false);
         }
@@ -1585,14 +1591,14 @@ public:
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
-            for (auto& node : internalNodesAndVars)
-                node->deleteDDC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteDDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteD(true);
         }
         else {
-            for (auto& node : internalNodesAndVars)
-                node->deleteDAC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteDAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteD(false);
         }
@@ -1655,18 +1661,18 @@ public:
         
         if (isDC) {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                crvt y = internalNodesAndVars[i]->getYiiDC();
-                crvt d = internalNodesAndVars[i]->getDDC();
+                crvt y = internalNodesAndVars[i].getYiiDC();
+                crvt d = internalNodesAndVars[i].getDDC();
                 if (y != rvt0)
-                    internalNodesAndVars[i]->incValue0DC(d / y);
+                    internalNodesAndVars[i].incValue0DC(d / y);
             }
         }
         else {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-                ccplx y = internalNodesAndVars[i]->getYiiAC();
-                ccplx d = internalNodesAndVars[i]->getDAC();
+                ccplx y = internalNodesAndVars[i].getYiiAC();
+                ccplx d = internalNodesAndVars[i].getDAC();
                 if (y != cplx0)
-                    internalNodesAndVars[i]->incValue0AC(d / y);
+                    internalNodesAndVars[i].incValue0AC(d / y);
             }
         }
     }
@@ -1682,26 +1688,26 @@ public:
             switch (type) {
                 case rprProlongateU: // uh = uH
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i]->setValue0DC(coarseSubckt->internalNodesAndVars[i]->getValue0DC());
+                        internalNodesAndVars[i].setValue0DC(coarseSubckt->internalNodesAndVars[i].getValue0DC());
                     break;
                 case rprRestrictU: // uH = uh
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i]->setValue0DC(internalNodesAndVars[i]->getValue0DC());
+                        coarseSubckt->internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC());
                     break;
                 case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        rvt diff = coarseSubckt->internalNodesAndVars[i]->getDDC() - internalNodesAndVars[i]->getDDC();
-                        coarseSubckt->internalNodesAndVars[i]->setFDC(internalNodesAndVars[i]->getFDC() + diff);
+                        rvt diff = coarseSubckt->internalNodesAndVars[i].getDDC() - internalNodesAndVars[i].getDDC();
+                        coarseSubckt->internalNodesAndVars[i].setFDC(internalNodesAndVars[i].getFDC() + diff);
                         sumRet += diff * diff;
                     }
                     break;
                 case rpruHMinusRestrictUhToDHNC: // dH_NonConcurrent = uH – R(uh)
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i]->setDNonConcurrentDC(coarseSubckt->internalNodesAndVars[i]->getValue0DC() - internalNodesAndVars[i]->getValue0DC());
+                        coarseSubckt->internalNodesAndVars[i].setDNonConcurrentDC(coarseSubckt->internalNodesAndVars[i].getValue0DC() - internalNodesAndVars[i].getValue0DC());
                     break;
                 case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurrent)
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i]->setValue0DC(internalNodesAndVars[i]->getValue0DC() + coarseSubckt->internalNodesAndVars[i]->getDNonConcurrentDC());
+                        internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurrentDC());
                     break;
             }
         }
@@ -1709,26 +1715,26 @@ public:
             switch (type) {
                 case rprProlongateU: // uh = uH
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i]->setValue0AC(coarseSubckt->internalNodesAndVars[i]->getValue0AC());
+                        internalNodesAndVars[i].setValue0AC(coarseSubckt->internalNodesAndVars[i].getValue0AC());
                     break;
                 case rprRestrictU: // uH = uh
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i]->setValue0AC(internalNodesAndVars[i]->getValue0AC());
+                        coarseSubckt->internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC());
                     break;
                 case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        cplx diff = coarseSubckt->internalNodesAndVars[i]->getDAC() - internalNodesAndVars[i]->getDAC();
-                        coarseSubckt->internalNodesAndVars[i]->setFAC(internalNodesAndVars[i]->getFAC() + diff);
+                        cplx diff = coarseSubckt->internalNodesAndVars[i].getDAC() - internalNodesAndVars[i].getDAC();
+                        coarseSubckt->internalNodesAndVars[i].setFAC(internalNodesAndVars[i].getFAC() + diff);
                         sumRet += absSquare(diff);
                     }
                     break;
                 case rpruHMinusRestrictUhToDHNC: // dH_NonConcurrent = uH – R(uh)
                     for (uns i = 0; i < NInternal; i++)
-                        coarseSubckt->internalNodesAndVars[i]->setDNonConcurrentAC(coarseSubckt->internalNodesAndVars[i]->getValue0AC() - internalNodesAndVars[i]->getValue0AC());
+                        coarseSubckt->internalNodesAndVars[i].setDNonConcurrentAC(coarseSubckt->internalNodesAndVars[i].getValue0AC() - internalNodesAndVars[i].getValue0AC());
                     break;
                 case rprProlongateDHNCAddToUh: // uh = uh + P(dH_NonConcurrent)
                     for (uns i = 0; i < NInternal; i++)
-                        internalNodesAndVars[i]->setValue0AC(internalNodesAndVars[i]->getValue0AC() + coarseSubckt->internalNodesAndVars[i]->getDNonConcurrentAC());
+                        internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC() + coarseSubckt->internalNodesAndVars[i].getDNonConcurrentAC());
                     break;
             }
         }
@@ -1746,11 +1752,11 @@ public:
 
         if (isDC) {
             for (uns i = 0; i < NInodes; i++)
-                residual += square(internalNodesAndVars[i]->getDDC());
+                residual += square(internalNodesAndVars[i].getDDC());
         }
         else {
             for (uns i = 0; i < NInodes; i++)
-                residual += absSquare(internalNodesAndVars[i]->getDAC());
+                residual += absSquare(internalNodesAndVars[i].getDAC());
         }
 
         if (isContainedComponentWithInternalNode)
@@ -1777,7 +1783,7 @@ public:
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-            d.addDefectNonSquare(internalNodesAndVars[i]->getDDC());
+            d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
         }
         for (auto& comp : components)
             if (comp->isEnabled) d.addCollector(comp->collectCurrentDefectDC());
@@ -1790,7 +1796,7 @@ public:
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
-            d.addDefectNonSquare(internalNodesAndVars[i]->getVDC());
+            d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
         }
         for (auto& comp : components)
             if (comp->isEnabled) d.addCollector(comp->collectVoltageDefectDC());
@@ -1815,10 +1821,10 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-                internalNodesAndVars[i]->setValueAcceptedNoAlphaDC();
+                internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
         else {
             for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-                internalNodesAndVars[i]->setValueAcceptedDC();
+                internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationDC(isNoAlpha);
@@ -1828,8 +1834,8 @@ public:
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < internalNodesAndVars.size(); i++)
-            internalNodesAndVars[i]->setStepStartFromAcceptedDC();
+        for (uns i = 0; i < nInternalNodesAndVars; i++)
+            internalNodesAndVars[i].setStepStartFromAcceptedDC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptStepDC();
         for (auto& ctrl : controllers)
@@ -1862,7 +1868,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
-            internalNodesAndVars[i]->setValueAcceptedAC();
+            internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationAndStepAC();
     }
@@ -1871,14 +1877,14 @@ public:
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
-            for (auto& node : internalNodesAndVars)
-                node->deleteFDC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteFDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteF(true);
         }
         else {
-            for (auto& node : internalNodesAndVars)
-                node->deleteFAC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteFAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteF(false);
         }
@@ -1888,14 +1894,14 @@ public:
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
-            for (auto& node : internalNodesAndVars)
-                node->deleteYiiDC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteYiiDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteYii(true);
         }
         else {
-            for (auto& node : internalNodesAndVars)
-                node->deleteYiiAC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].deleteYiiAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->deleteYii(false);
         }
@@ -1905,14 +1911,14 @@ public:
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
-            for (auto& node : internalNodesAndVars)
-                node->loadFtoDDC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].loadFtoDDC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->loadFtoD(true);
         }
         else {
-            for (auto& node : internalNodesAndVars)
-                node->loadFtoDAC();
+            for (uns i = 0; i < nInternalNodesAndVars; i++)
+                internalNodesAndVars[i].loadFtoDAC();
             for (auto& comp : components)
                 if (comp->isEnabled) comp->loadFtoD(false);
         }
@@ -1942,7 +1948,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getValueDC()) << std::endl;
+            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeValueDC(i);
         }
@@ -1952,7 +1958,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getVDC()) << std::endl;
+            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeErrorDC(i);
         }
@@ -1962,7 +1968,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getDDC()) << std::endl;
+            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeDefectDC(i);
         }
@@ -1972,7 +1978,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getValueAC()) << std::endl;
+            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeValueAC(i);
         }
@@ -1982,7 +1988,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getVAC()) << std::endl;
+            std::cout << "E (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getVAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeErrorAC(i);
         }
@@ -1992,7 +1998,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i]->getDAC()) << std::endl;
+            std::cout << "D (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getDAC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeDefectAC(i);
         }
@@ -2002,9 +2008,9 @@ public:
     //***********************************************************************
     void printNodesDC() const noexcept {
     //***********************************************************************
-        for (uns i = 0; i < internalNodesAndVars.size(); i++) {
+        for (uns i = 0; i < nInternalNodesAndVars; i++) {
             std::cout << "Internal node " << i << std::endl;
-            internalNodesAndVars[i]->printNode();
+            internalNodesAndVars[i].printNode();
         }
         for (uns i = 0; i < components.size(); i++) {
             const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(components[i].get());
@@ -2122,7 +2128,7 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
     //constexpr uns compindex2 = 7;
     constexpr uns compindex1 = 4;
     constexpr uns compindex2 = 3;
-    cplx value = static_cast<ComponentSubCircuit*>(components[compindex1].get())->internalNodesAndVars[0]->getValueAC();
+    cplx value = static_cast<ComponentSubCircuit*>(components[compindex1].get())->internalNodesAndVars[0].getValueAC();
     std::cout << "\n+++ [ci] AC:" << value << std::endl;
     std::cout << "+++ [ci] TC:" << (1.0 / (2 * hmgPi * SimControl::getFrequency())) << " sec     R: " << (value.imag() * log(10.0) / hmgPi) << std::endl;
     //rvt I = static_cast<ComponentSubCircuit*>(components[compindex2].get())->components[3]->getNode(2)->getValueDC();
@@ -2406,7 +2412,7 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    const VariableNodeBase& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    const NodeVariable& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
     //***********************************************************************
         const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
         for (uns i = 0; i < probeMaxComponentLevel && nodeID.componentID[i] != unsMax; i++) {
@@ -2414,7 +2420,7 @@ class CircuitStorage {
             component = subckt->components[nodeID.componentID[i]].get();
         }
         switch (nodeID.nodeID.type) {
-            case cdntInternal: return *static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
+            case cdntInternal: return static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
             case cdntExternal: return *const_cast<ComponentBase*>(component)->getNode(nodeID.nodeID.index);
             default:
                 throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
@@ -2526,7 +2532,7 @@ public:
     }
 
     //***********************************************************************
-    std::vector<std::unique_ptr<VariableNodeBase>> globalVariables;
+    std::vector<std::unique_ptr<NodeVariable>> globalVariables;
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> models; // all models are stored globally, controller models also included
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
     //***********************************************************************

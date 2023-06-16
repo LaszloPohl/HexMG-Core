@@ -504,13 +504,13 @@ void ComponentSubCircuit::buildOrReplace() {
 
     uns nUnconnectedOnodeIndex = model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + model.internalNs.nInternalVars; // = the number of internal nodes and internal vars
     
-    internalNodesAndVars.resize(nUnconnectedOnodeIndex + nUnconnectedONode);
-    for (auto& var : internalNodesAndVars)
-        var = std::make_unique<VariableNodeBase>();
+    delete[] internalNodesAndVars;
+    nInternalNodesAndVars = nUnconnectedOnodeIndex + nUnconnectedONode;
+    internalNodesAndVars = new NodeVariable[nInternalNodesAndVars];
 
     for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
         if (externalNodes[i] == nullptr)
-            externalNodes[i] = internalNodesAndVars[nUnconnectedOnodeIndex++].get();
+            externalNodes[i] = &internalNodesAndVars[nUnconnectedOnodeIndex++];
     }
 
     for (const auto& forced : model.forcedNodes) {
@@ -519,7 +519,7 @@ void ComponentSubCircuit::buildOrReplace() {
                 externalNodes[i]->setDefaultValueIndex(forced.defaultRailIndex, true);
         else
             for (uns i = forced.nodeStartIndex; i <= forced.nodeStopIndex; i++)
-                internalNodesAndVars[i]->setDefaultValueIndex(forced.defaultRailIndex, true);
+                internalNodesAndVars[i].setDefaultValueIndex(forced.defaultRailIndex, true);
     }
 
     // creating components
@@ -547,7 +547,7 @@ void ComponentSubCircuit::buildOrReplace() {
             const CDNode& cdn = comp.def->nodesConnectedTo[j];
             if (cdn.type != CDNodeType::cdntUnconnected) {
                 comp.setNode(j,
-                    cdn.type == CDNodeType::cdntInternal ? internalNodesAndVars[cdn.index].get()
+                    cdn.type == CDNodeType::cdntInternal ? &internalNodesAndVars[cdn.index]
                     : cdn.type == CDNodeType::cdntExternal ? externalNodes[cdn.index]
                     : cdn.type == CDNodeType::cdntRail ? &Rails::V[cdn.index].get()->rail
                     : cdn.type == CDNodeType::cdntGnd ? &Rails::V[defaultNodeValueIndex].get()->rail
@@ -570,13 +570,13 @@ void ComponentSubCircuit::buildOrReplace() {
                     par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
                     break;
                 case CDParamType::cdptLocalVariable:
-                    par.var = internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index].get();
+                    par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
                     break;
                 case CDParamType::cdptParam:
                     par = pars[cdp.index];
                     break;
                 case CDParamType::cdptInternalNode:
-                    par.var = internalNodesAndVars[cdp.index].get();
+                    par.var = &internalNodesAndVars[cdp.index];
                     break;
                 case CDParamType::cdptExternalNode:
                     par.var = externalNodes[cdp.index];
@@ -619,7 +619,7 @@ void ComponentSubCircuit::buildOrReplace() {
     // set isConcurrent for normal internal nodes (for control internal nodes it does not change! (control internal node can be an internal node of a component))
 
     for (siz i = 0; i < model.internalNodeIsConcurrent.size(); i++)
-        internalNodesAndVars[i]->setIsConcurrent(model.internalNodeIsConcurrent[i]);
+        internalNodesAndVars[i].setIsConcurrent(model.internalNodeIsConcurrent[i]);
 
     // Allocations
 
@@ -655,7 +655,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
     // defect of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        JB[i] = -subckt.internalNodesAndVars[i]->getDDC(); // JB initialized here
+        JB[i] = -subckt.internalNodesAndVars[i].getDDC(); // JB initialized here
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         for (uns i = 0; i < B2_nNONodes; i++)
@@ -821,7 +821,7 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
     // v of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        subckt.internalNodesAndVars[i]->setVDC(UB[i]);
+        subckt.internalNodesAndVars[i].setVDC(UB[i]);
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         cuns ONodes_start = model.getN_Start_Of_O_Nodes();
@@ -854,7 +854,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
     // defect of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        JB[i] = -subckt.internalNodesAndVars[i]->getDAC(); // JB initialized here
+        JB[i] = -subckt.internalNodesAndVars[i].getDAC(); // JB initialized here
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         for (uns i = 0; i < B2_nNONodes; i++)
@@ -1019,7 +1019,7 @@ void SubCircuitFullMatrixReductorAC::backsubs() {
     // v of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        subckt.internalNodesAndVars[i]->setVAC(UB[i]);
+        subckt.internalNodesAndVars[i].setVAC(UB[i]);
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         cuns ONodes_start = model.getN_Start_Of_O_Nodes();
@@ -1080,10 +1080,10 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
     for (const auto& instruction : connections.globalNodeProlongations) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? *coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
+            const NodeVariable& srcNode = (src.srcComponentIndex == unsMax) ? coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
-        VariableNodeBase& destNode = *internalNodesAndVars[instruction.destNodeIndex];
+        NodeVariable& destNode = internalNodesAndVars[instruction.destNodeIndex];
         destNode.setValue0DC(sumU);
     }
 
@@ -1114,11 +1114,11 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
                 
                 ComponentBase* srcComponent = src.isDestLevel ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
                 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)
                 : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
 
@@ -1149,7 +1149,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
                 // adding the weighted node value
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
@@ -1165,7 +1165,7 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
             // setting the voltage
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *destComponent->getNode(dest.nodeIndex)
                 : *destComponent->getInternalNode(dest.nodeIndex);
 
@@ -1187,10 +1187,10 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
     for (const auto& instruction : connections.globalNodeRestrictions) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? *internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
+            const NodeVariable& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
-        VariableNodeBase& destNode = *coarse.internalNodesAndVars[instruction.destNodeIndex];
+        NodeVariable& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
         destNode.setValue0DC(sumU);
     }
 
@@ -1221,11 +1221,11 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex)
                 : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
 
@@ -1256,7 +1256,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
                 // adding the weighted node value
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
@@ -1272,7 +1272,7 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
             // setting the voltage
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *destComponent->getNode(dest.nodeIndex)
                 : *destComponent->getInternalNode(dest.nodeIndex);
 
@@ -1298,11 +1298,11 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
         rvt sumRfh = rvt0;
         rvt sumRdh = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? *internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
+            const NodeVariable& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumRfh += srcNode.getFDC() * src.weight;
             sumRdh += srcNode.getDDC() * src.weight;
         }
-        VariableNodeBase& destNode = *coarse.internalNodesAndVars[instruction.destNodeIndex];
+        NodeVariable& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
         crvt dH = destNode.getDDC();
         truncationError += square(dH - sumRdh);
         destNode.setFDC(sumRfh + dH - sumRdh);
@@ -1336,13 +1336,13 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumRfh += srcNode.getFDC() * src.weight;
                 sumRdh += srcNode.getDDC() * src.weight;
 
             }
 
-            VariableNodeBase& destNode = dest.isExternal 
+            NodeVariable& destNode = dest.isExternal 
                 ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex) 
                 : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
                 
@@ -1376,7 +1376,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
                 // adding the weighted node value
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumRfh += srcNode.getFDC() * src.weight;
                 sumRdh += srcNode.getDDC() * src.weight;
             }
@@ -1393,7 +1393,7 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
             // setting the voltage
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *destComponent->getNode(dest.nodeIndex)
                 : *destComponent->getInternalNode(dest.nodeIndex);
 
@@ -1419,10 +1419,10 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
     for (const auto& instruction : connections.globalNodeRestrictions) {
         rvt sumU = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? *internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
+            const NodeVariable& srcNode = (src.srcComponentIndex == unsMax) ? internalNodesAndVars[src.srcNodeIndex] : *components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumU += srcNode.getValue0DC() * src.weight;
         }
-        VariableNodeBase& destNode = *coarse.internalNodesAndVars[instruction.destNodeIndex];
+        NodeVariable& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
         crvt uH = destNode.getValue0DC();
         destNode.setDNonConcurrentDC(uH - sumU);
     }
@@ -1454,12 +1454,12 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
 
             }
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex)
                 : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
 
@@ -1491,7 +1491,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
                 // adding the weighted node value
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
@@ -1507,7 +1507,7 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
             // setting the voltage
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *destComponent->getNode(dest.nodeIndex)
                 : *destComponent->getInternalNode(dest.nodeIndex);
 
@@ -1531,10 +1531,10 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
     for (const auto& instruction : connections.globalNodeProlongations) {
         rvt sumTemp = rvt0;
         for (const auto& src : instruction.instr) {
-            const VariableNodeBase& srcNode = (src.srcComponentIndex == unsMax) ? *coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
+            const NodeVariable& srcNode = (src.srcComponentIndex == unsMax) ? coarse.internalNodesAndVars[src.srcNodeIndex] : *coarse.components[src.srcComponentIndex]->getInternalNode(src.srcNodeIndex);
             sumTemp += srcNode.getDNonConcurrentDC() * src.weight;
         }
-        VariableNodeBase& destNode = *internalNodesAndVars[instruction.destNodeIndex];
+        NodeVariable& destNode = internalNodesAndVars[instruction.destNodeIndex];
         destNode.incValue0DC(sumTemp);
     }
 
@@ -1565,11 +1565,11 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
                 ComponentBase* srcComponent = src.isDestLevel ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumTemp += srcNode.getDNonConcurrentDC() * src.weight;
             }
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)
                 : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
 
@@ -1600,7 +1600,7 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
                 // adding the weighted node value
 
-                const VariableNodeBase& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
                 sumTemp += srcNode.getDNonConcurrentDC() * src.weight;
             }
 
@@ -1616,7 +1616,7 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
             // setting the voltage
 
-            VariableNodeBase& destNode = dest.isExternal
+            NodeVariable& destNode = dest.isExternal
                 ? *destComponent->getNode(dest.nodeIndex)
                 : *destComponent->getInternalNode(dest.nodeIndex);
 
