@@ -205,7 +205,7 @@ enum ControlInstructionType {
 //***********************************************************************
 enum ProbeType {
 //***********************************************************************
-    ptV, ptI, ptSum, ptAverage 
+    ptV, ptI, ptVSum, ptVAverage, ptISum, ptIAverage
 };
 
 
@@ -292,6 +292,12 @@ inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
     }
 }
 
+
+//***********************************************************************
+inline rvt& getRe(cplx& c) { return reinterpret_cast<rvt(&)[2]>(c)[0]; }
+inline rvt& getIm(cplx& c) { return reinterpret_cast<rvt(&)[2]>(c)[1]; }
+//***********************************************************************
+   
 
 //***********************************************************************
 struct ProbeNodeID {

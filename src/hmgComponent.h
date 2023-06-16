@@ -1356,6 +1356,8 @@ public:
         }
     }
     //***********************************************************************
+    ~Controller() { delete[] mVars; }
+    //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
     NodeVariable* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
     void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
@@ -1472,7 +1474,7 @@ class ComponentSubCircuit final : public ComponentBase {
     std::vector<std::unique_ptr<ComponentBase>> components;
     std::vector<std::unique_ptr<Controller>> controllers;
     std::vector<NodeVariable*> externalNodes;
-    //std::vector<std::unique_ptr<NodeVariable>> internalNodesAndVars;
+    std::vector<cplx> externalCurrents;
     NodeVariable* internalNodesAndVars = nullptr;
     std::vector<Param> pars;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
@@ -1498,6 +1500,7 @@ public:
     //***********************************************************************
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "ComponentSubCircuit::ComponentSubCircuit");
         externalNodes.resize(def->nodesConnectedTo.size());
+        externalCurrents.resize(pModel->getN_IO_Nodes());
         pars.resize(def->params.size());
     }
     //***********************************************************************
@@ -1608,14 +1611,38 @@ public:
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
-            for (auto& comp : components)
+            cuns currSiz = (uns)externalCurrents.size();
+            for (uns i = 0; i < currSiz; i++)
+                getRe(externalCurrents[i]) = rvt0;
+            for (auto& comp : components) {
                 if (comp->isEnabled) comp->calculateCurrent(true);
-            // setting own current should be here
+                
+                // calculating the external node currents
+                
+                const std::vector<CDNode>& nodesConnectedTo = comp->def->nodesConnectedTo;
+                for (uns i = 0; i < nodesConnectedTo.size();i++) {
+                    const CDNode& node = nodesConnectedTo[i];
+                    if (node.type == cdntExternal && node.index < currSiz)
+                        getRe(externalCurrents[node.index]) += comp->getCurrentDC(i);
+                }
+            }
         }
         else {
-            for (auto& comp : components)
+            cuns currSiz = (uns)externalCurrents.size();
+            for (uns i = 0; i < currSiz; i++)
+                externalCurrents[i] = cplx0;
+            for (auto& comp : components) {
                 if (comp->isEnabled) comp->calculateCurrent(false);
-            // setting own current should be here
+
+                // calculating the external node currents
+
+                const std::vector<CDNode>& nodesConnectedTo = comp->def->nodesConnectedTo;
+                for (uns i = 0; i < nodesConnectedTo.size(); i++) {
+                    const CDNode& node = nodesConnectedTo[i];
+                    if (node.type == cdntExternal && node.index < currSiz)
+                        externalCurrents[node.index] += comp->getCurrentAC(i);
+                }
+            }
         }
     }
     //***********************************************************************
@@ -1842,7 +1869,7 @@ public:
             if (ctrl.get()->isEnabled) ctrl.get()->setStepStartFromValue();
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return rvt0; }
+    rvt getCurrentDC(uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y].real() : rvt0; }
     //************************** AC functions *******************************
     void allocForReductionAC();
     //***********************************************************************
@@ -1940,7 +1967,7 @@ public:
     void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurrent = uH – R(uh)
     void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurrent)
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return cplx0; }
+    cplx getCurrentAC(uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y] : cplx0; }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     //***********************************************************************
@@ -2412,19 +2439,44 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    const NodeVariable& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    const ComponentBase& getComponent(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
     //***********************************************************************
         const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
         for (uns i = 0; i < probeMaxComponentLevel && nodeID.componentID[i] != unsMax; i++) {
             const ComponentSubCircuit* subckt = static_cast<const ComponentSubCircuit*>(component);
             component = subckt->components[nodeID.componentID[i]].get();
         }
+        return *component;
+    }
+
+    //***********************************************************************
+    const NodeVariable& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    //***********************************************************************
+        const ComponentBase& component = getComponent(fullCircuitID, nodeID);
         switch (nodeID.nodeID.type) {
-            case cdntInternal: return static_cast<const ComponentSubCircuit*>(component)->internalNodesAndVars[nodeID.nodeID.index];
-            case cdntExternal: return *const_cast<ComponentBase*>(component)->getNode(nodeID.nodeID.index);
+            case cdntInternal: return static_cast<const ComponentSubCircuit&>(component).internalNodesAndVars[nodeID.nodeID.index];
+            case cdntExternal: return *const_cast<ComponentBase&>(component).getNode(nodeID.nodeID.index);
             default:
                 throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
         }
+    }
+
+    //***********************************************************************
+    rvt getCurrentDC(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    //***********************************************************************
+        if(nodeID.nodeID.type != cdntExternal)
+            throw hmgExcept("CircuitStorage::getCurrentDC", "not allowed I probe node type: %u, only X enabled", (uns)nodeID.nodeID.type);
+        const ComponentBase& component = getComponent(fullCircuitID, nodeID);
+        return component.getCurrentDC(nodeID.nodeID.index);
+    }
+
+    //***********************************************************************
+    cplx getCurrentAC(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    //***********************************************************************
+        if(nodeID.nodeID.type != cdntExternal)
+            throw hmgExcept("CircuitStorage::getCurrentDC", "not allowed I probe node type: %u, only X enabled", (uns)nodeID.nodeID.type);
+        const ComponentBase& component = getComponent(fullCircuitID, nodeID);
+        return component.getCurrentAC(nodeID.nodeID.index);
     }
 
     //***********************************************************************
@@ -2440,15 +2492,35 @@ class CircuitStorage {
             case ptI: {
                 saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
-                    saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
+                    saveValuesDC.push_back(getCurrentDC(probe.fullCircuitID, nodeID));
             }
             break;
-            case ptSum: {
-
+            case ptVSum: {
+                rvt sum = rvt0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getNode(probe.fullCircuitID, nodeID).getValueDC();
+                saveValuesDC.push_back(sum);
             }
             break;
-            case ptAverage: {
-
+            case ptVAverage: {
+                rvt sum = rvt0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getNode(probe.fullCircuitID, nodeID).getValueDC();
+                saveValuesDC.push_back(sum / probe.nodes.size());
+            }
+            break;
+            case ptISum: {
+                rvt sum = rvt0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getCurrentDC(probe.fullCircuitID, nodeID);
+                saveValuesDC.push_back(sum);
+            }
+            break;
+            case ptIAverage: {
+                rvt sum = rvt0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getCurrentDC(probe.fullCircuitID, nodeID);
+                saveValuesDC.push_back(sum / probe.nodes.size());
             }
             break;
             default:
@@ -2469,15 +2541,35 @@ class CircuitStorage {
             case ptI: {
                 saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
-                    saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
+                    saveValuesAC.push_back(getCurrentAC(probe.fullCircuitID, nodeID));
             }
             break;
-            case ptSum: {
-
+            case ptVSum: {
+                cplx sum = cplx0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getNode(probe.fullCircuitID, nodeID).getValueAC();
+                saveValuesAC.push_back(sum);
             }
             break;
-            case ptAverage: {
-
+            case ptVAverage: {
+                cplx sum = cplx0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getNode(probe.fullCircuitID, nodeID).getValueAC();
+                saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
+            }
+            break;
+            case ptISum: {
+                cplx sum = cplx0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getCurrentAC(probe.fullCircuitID, nodeID);
+                saveValuesAC.push_back(sum);
+            }
+            break;
+            case ptIAverage: {
+                cplx sum = cplx0;
+                for (const auto& nodeID : probe.nodes)
+                    sum += getCurrentAC(probe.fullCircuitID, nodeID);
+                saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
             }
             break;
             default:

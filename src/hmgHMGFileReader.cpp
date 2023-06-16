@@ -805,10 +805,12 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
 
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-        if (     strcmp(token, "V"      ) == 0) probeType = ptV;
-        else if (strcmp(token, "I"      ) == 0) probeType = ptI;
-        else if (strcmp(token, "SUM"    ) == 0) probeType = ptSum;
-        else if (strcmp(token, "AVERAGE") == 0) probeType = ptAverage;
+        if (     strcmp(token, "V"       ) == 0) probeType = ptV;
+        else if (strcmp(token, "I"       ) == 0) probeType = ptI;
+        else if (strcmp(token, "VSUM"    ) == 0) probeType = ptVSum;
+        else if (strcmp(token, "VAVERAGE") == 0) probeType = ptVAverage;
+        else if (strcmp(token, "ISUM"    ) == 0) probeType = ptISum;
+        else if (strcmp(token, "IAVERAGE") == 0) probeType = ptIAverage;
         else
             throw hmgExcept("HMGFileCreate::Read", "Unknown probe type (%s) in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
@@ -833,12 +835,20 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
             if (probeType != ptI)
                 throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
-        else if (strcmp(token, "SUM") == 0) {
-            if (probeType != ptSum)
+        else if (strcmp(token, "VSUM") == 0) {
+            if (probeType != ptVSum)
                 throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
-        else if (strcmp(token, "AVERAGE") == 0) {
-            if (probeType != ptAverage)
+        else if (strcmp(token, "VAVERAGE") == 0) {
+            if (probeType != ptVAverage)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "ISUM") == 0) {
+            if (probeType != ptISum)
+                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "IAVERAGE") == 0) {
+            if (probeType != ptIAverage)
                 throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else
