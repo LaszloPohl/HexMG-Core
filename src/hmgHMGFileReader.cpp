@@ -1219,14 +1219,4 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
 }
 
 
-//***********************************************************************
-void SpiceExpression::toInstructionStream(InstructionStream& iStream, unsigned index) {
-//***********************************************************************
-    //iStream.add(new IsExpressionInstruction(index, (unsigned)theExpression.size()));
-    //for (SpiceExpressionAtom& it : theExpression)
-    //    iStream.add(new IsExpressionAtomInstruction(it));
-    //iStream.add(new IsEndDefInstruction(sitEndExpression, 0));
-}
-
-
 }

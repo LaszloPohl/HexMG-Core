@@ -1,13 +1,13 @@
 //***********************************************************************
-// Hex Open NameToIndex Header
+// HexMG LineTokenizer Header
 // Creation date:  2021. 06. 23.
 // Creator:        László Pohl
 //***********************************************************************
 
 
 //***********************************************************************
-#ifndef HO_NAMETOINDEX_HEADER
-#define HO_NAMETOINDEX_HEADER
+#ifndef HMG_LINETOKENIZER_HEADER
+#define HMG_LINETOKENIZER_HEADER
 //***********************************************************************
 
 
@@ -493,29 +493,6 @@ public:
         errorMessage = "invalid text format";
         return ret;
     }
-};
-
-
-class InstructionStream;
-
-
-//***********************************************************************
-struct SpiceExpression {
-//***********************************************************************
-    //***********************************************************************
-    struct SpiceExpressionAtom: public ExpressionAtom {
-    //***********************************************************************
-        std::string name;
-        SpiceExpressionAtom(ExpressionAndComponentType type = etInvalid) : ExpressionAtom{ type }{}
-        void reset(ExpressionAndComponentType type) { *this = SpiceExpressionAtom(type); }
-    };
-    //***********************************************************************
-    std::vector<SpiceExpressionAtom> theExpression;
-    std::string errorMessage;
-    unsigned short addToTheExpression(const SpiceExpressionAtom& actAtom);
-    bool buildFromString(const char* spiceExpression);
-    void toInstructionStream(InstructionStream& iStream, unsigned index);
-    //***********************************************************************
 };
 
 

@@ -281,14 +281,6 @@ struct IsFunctionInstruction: public IsInstruction {
 
 
 //***********************************************************************
-struct IsExpressionAtomInstruction: public IsInstruction {
-//***********************************************************************
-    ExpressionAtom atom;
-    IsExpressionAtomInstruction(const ExpressionAtom& ant) :IsInstruction{ sitExpressionAtom }, atom{ ant }{}
-};
-
-
-//***********************************************************************
 struct IsCreateInstruction: public IsInstruction {
 //***********************************************************************
     uns fullCircuitIndex = 0;

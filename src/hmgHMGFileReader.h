@@ -17,7 +17,7 @@
 #include <string>
 #include <map>
 #include "hmgException.h"
-#include "hmgNameToIndex.h"
+#include "hmgLineTokenizer.h"
 #include "hmgCommon.h"
 #include "hmgInstructionStream.h"
 //***********************************************************************
