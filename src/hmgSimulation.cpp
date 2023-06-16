@@ -41,6 +41,7 @@ void Simulation::runDC() {
         gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
         gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
         gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+        std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
     else {
@@ -65,6 +66,7 @@ void Simulation::runTimeStep() {
         gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
         gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
         gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+        std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
     else {
@@ -89,6 +91,7 @@ void Simulation::runAC() {
     gc.fullCircuitInstances[fullCircuitID].component->acceptIterationAndStepAC();
     gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
     gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
+    std::cout << std::endl;
     gc.fullCircuitInstances[fullCircuitID].component->printNodeValueAC(0);
 }
 
