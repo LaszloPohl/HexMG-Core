@@ -20,6 +20,7 @@
 #include "hmgLineTokenizer.h"
 #include "hmgCommon.h"
 #include "hmgInstructionStream.h"
+#include "hmgMultigridTypes.h"
 //***********************************************************************
 
 
@@ -337,8 +338,9 @@ struct HMGFileCreate;
 //***********************************************************************
 struct GlobalHMGFileNames {
 //***********************************************************************
-    std::map<std::string, uns> modelNames, sunredTreeNames, varNames, functionNames, probeNames, fullCircuitNames;
-    std::vector<HMGFileSunredTree*> sunredTreeData;
+    std::map<std::string, uns> modelNames, sunredTreeNames, multigridNames,
+        localRestrictionTypeNames, localProlongationTypeNames,
+        varNames, functionNames, probeNames, fullCircuitNames;
     std::vector<HMGFileModelDescription*> modelData;
     std::vector<HMGFileProbe*> probeData;
     std::vector<HMGFileCreate*> fullCircuitData;
@@ -409,8 +411,8 @@ struct HMGFileModelDescription: HMGFileListItem {
     ~HMGFileModelDescription() { clear(); }
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileModelDescription*, ReadALine&, char*, LineInfo&);
-    void ReadOrReplaceBodySubcircuit(ReadALine&, char*, LineInfo&, bool);
-    void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&, bool) {}
+    void ReadOrReplaceBodySubcircuit(ReadALine&, char*, LineInfo&);
+    void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&) {}
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
@@ -531,7 +533,7 @@ struct HMGFileSunredTree: HMGFileListItem {
     //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileSunredTree*, ReadALine&, char*, LineInfo&);
-    void ReadOrReplaceBody(ReadALine&, char*, LineInfo&, bool);
+    void ReadOrReplaceBody(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
@@ -542,6 +544,31 @@ struct HMGFileSunredTree: HMGFileListItem {
                 iStream.add(new IsDefSunredReductionInstruction(red.src));
         }
         iStream.add(new IsEndDefInstruction(sitSunredTree, sunredTreeIndex));
+    }
+};
+
+
+//***********************************************************************
+struct HMGFileMultiGrid : HMGFileListItem {
+//***********************************************************************
+    //***********************************************************************
+    uns multigridIndex = 0;
+    bool isReplacer = false;
+    std::string fullName;
+    HMGFileMultiGrid* pParent = nullptr; // if this is a replacer, parent is the replaced object
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
+    std::vector<FineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
+    //***********************************************************************
+
+    //***********************************************************************
+    void Read(ReadALine&, char*, LineInfo&);
+    void Replace(HMGFileMultiGrid*, ReadALine&, char*, LineInfo&);
+    void ReadOrReplaceBody(ReadALine&, char*, LineInfo&);
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+
     }
 };
 

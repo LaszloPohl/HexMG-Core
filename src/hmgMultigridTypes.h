@@ -80,17 +80,17 @@ struct ComponentGroup {
 //***********************************************************************
     std::vector<uns> fineCells;     // index in the fine->components vector
     std::vector<uns> coarseCells;   // index in the coarse->components vector
-    bool isCopy = true;             // if true, coarseCells[1] == fineCells[i] required; prolongation and restriction is the copiing of the values
-    uns localRestrictionIndex = 0;  // in localNodeRestrictionTypes, if isNormalRestriction == false
-    uns localProlongationIndex = 0; // in localNodeProlongationTypes, always
+    bool isCopy = true;             // if true, coarseCells[i] == fineCells[i] required; prolongation and restriction is the copiing of the values
+    uns localRestrictionIndex = 0;  // in localNodeRestrictionTypes
+    uns localProlongationIndex = 0; // in localNodeProlongationTypes
 };
 
 
 //***********************************************************************
 struct FineCoarseConnectionDescription {
 //***********************************************************************
-    uns indexFineFullCircuit = 0;
-    uns indexCoarseFullCircuit = 0;
+    uns indexFineFullCircuit = unsMax;
+    uns indexCoarseFullCircuit = unsMax;
     std::vector<ComponentGroup> componentGroups;
     std::vector<NodeInstruction> globalNodeRestrictions;
     std::vector<NodeInstruction> globalNodeProlongations;

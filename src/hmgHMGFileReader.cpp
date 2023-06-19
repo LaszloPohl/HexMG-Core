@@ -427,9 +427,9 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
     }
 
     if (modelType == hfmtSubcircuit)
-        ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
+        ReadOrReplaceBodySubcircuit(reader, line, lineInfo);
     else if (modelType == hfmtController)
-        ReadOrReplaceBodyController(reader, line, lineInfo, false);
+        ReadOrReplaceBodyController(reader, line, lineInfo);
     else
         throw hmgExcept("HMGFileModelDescription::Read", "Internal error: unknown model type (%u)", modelType);
 }
@@ -443,16 +443,16 @@ void HMGFileModelDescription::Replace(HMGFileModelDescription* parent, ReadALine
     modelIndex = pParent->modelIndex;
     fullName = parent->fullName;
     if (modelType == hfmtSubcircuit)
-        ReadOrReplaceBodySubcircuit(reader, line, lineInfo, false);
+        ReadOrReplaceBodySubcircuit(reader, line, lineInfo);
     else if (modelType == hfmtController)
-        ReadOrReplaceBodyController(reader, line, lineInfo, false);
+        ReadOrReplaceBodyController(reader, line, lineInfo);
     else
         throw hmgExcept("HMGFileModelDescription::Read", "Internal error: unknown model type (%u)", modelType);
 }
 
 
 //***********************************************************************
-void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
+void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     bool isModelNotEnded = true;
     LineTokenizer lineToken;
@@ -656,13 +656,13 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
             if (pxline->isController) {
                 if (controllerInstanceNameIndex.contains(instanceName))
-                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 pxline->instanceIndex = (uns)controllerInstanceNameIndex.size();
                 controllerInstanceNameIndex[instanceName] = pxline->instanceIndex;
             }
             else {
                 if (componentInstanceNameIndex.contains(instanceName))
-                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 pxline->instanceIndex = (uns)componentInstanceNameIndex.size();
                 componentInstanceNameIndex[instanceName] = pxline->instanceIndex;
             }
@@ -819,7 +819,7 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         try { fullCircuitID = globalNames.fullCircuitNames.at(token); }
         catch (const std::out_of_range&) {
-            throw hmgExcept("HMGFileCreate::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileCreate::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
     }
     else {
@@ -1012,7 +1012,7 @@ void HMGFileSunredTree::Read(ReadALine& reader, char* line, LineInfo& lineInfo) 
 //***********************************************************************
     LineTokenizer lineToken;
 
-    // read subcircuit head (if not the global circuit is readed)
+    // read SunredTree head
 
     lineToken.init(line);
     const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1035,9 +1035,8 @@ void HMGFileSunredTree::Read(ReadALine& reader, char* line, LineInfo& lineInfo) 
         throw hmgExcept("HMGFileSunredTree::Read", ".SUNREDTREE %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     sunredTreeIndex = (uns)globalNames.sunredTreeNames.size();
     globalNames.sunredTreeNames[fullName] = sunredTreeIndex;
-    vectorForcedSet(globalNames.sunredTreeData, this, sunredTreeIndex);
 
-    ReadOrReplaceBody(reader, line, lineInfo, false);
+    ReadOrReplaceBody(reader, line, lineInfo);
 }
 
 
@@ -1048,12 +1047,12 @@ void HMGFileSunredTree::Replace(HMGFileSunredTree* parent, ReadALine& reader, ch
     pParent = parent;
     sunredTreeIndex = pParent->sunredTreeIndex;
     fullName = parent->fullName;
-    ReadOrReplaceBody(reader, line, lineInfo, true);
+    ReadOrReplaceBody(reader, line, lineInfo);
 }
 
 
 //***********************************************************************
-void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo, bool) {
+void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     bool isSunredTreeNotEnded = true;
     LineTokenizer lineToken;
@@ -1123,6 +1122,155 @@ void HMGFileSunredTree::ReadOrReplaceBody(ReadALine& reader, char* line, LineInf
 
 
 //***********************************************************************
+void HMGFileMultiGrid::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read MultiGrid head
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".MULTIGRID") != 0)
+        throw hmgExcept("HMGFileMultiGrid::Read", ".MULTIGRID expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // read MultiGrid name
+
+    if (lineToken.isSepEOL || lineToken.isSepOpeningBracket)
+        throw hmgExcept("HMGFileMultiGrid::Read", "missing .MULTIGRID name in %s, line %u", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+        throw hmgExcept("HMGFileMultiGrid::Read", "simple .MULTIGRID name expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    
+    fullName = lineToken.getActToken();
+    
+    if (globalNames.multigridNames.contains(fullName))
+        throw hmgExcept("HMGFileMultiGrid::Read", ".MULTIGRID %s redefinition in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    multigridIndex = (uns)globalNames.multigridNames.size();
+    globalNames.multigridNames[fullName] = multigridIndex;
+
+    ReadOrReplaceBody(reader, line, lineInfo);
+}
+
+
+//***********************************************************************
+void HMGFileMultiGrid::Replace(HMGFileMultiGrid* parent, ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    isReplacer = true;
+    pParent = parent;
+    multigridIndex = pParent->multigridIndex;
+    fullName = parent->fullName;
+    ReadOrReplaceBody(reader, line, lineInfo);
+}
+
+
+//***********************************************************************
+void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    bool isMultigridNotEnded = true;
+    LineTokenizer lineToken;
+
+    do {
+        if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .SUNREDTREE definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
+        lineToken.init(line);
+        const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (strcmp(token, ".LEVEL") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            uns lvl = 0;
+            if(sscanf_s(token, "%u", &lvl) != 1)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".LEVEL number expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (lvl > maxRails || lvl == 0)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".LEVEL number must be >0 and < %u, %s arrived in %s, line %u: %s", maxRails, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (levels.size() < lvl)
+                levels.resize(lvl);
+            FineCoarseConnectionDescription& level = levels[lvl - 1];
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "COARSE") != 0)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".LEVEL %u must be followed COARSE=, %s arrived in %s, line %u: %s", lvl, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            try { level.indexCoarseFullCircuit = globalNames.fullCircuitNames.at(token); }
+            catch (const std::out_of_range&) {
+                throw hmgExcept("HMGFileCreate::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            }
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "FINE") != 0)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".LEVEL %u COARSE=<fullcircuit name> must be followed FINE=, %s arrived in %s, line %u: %s", lvl, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            try { level.indexFineFullCircuit = globalNames.fullCircuitNames.at(token); }
+            catch (const std::out_of_range&) {
+                throw hmgExcept("HMGFileCreate::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            }
+
+            bool isLevelNotEnded = true;
+            do {
+                if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .LEVEL definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
+                lineToken.init(line);
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+                if (strcmp(token, ".GLOBALRESTRICTION") == 0) {
+
+                }
+                else if (strcmp(token, ".GLOBALPROLONGATION") == 0) {
+
+                }
+                else if (strcmp(token, ".COMPONENTGROUP") == 0) {
+
+                }
+                else if (strcmp(token, ".END") == 0) {
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (strcmp(token, "LEVEL") != 0)
+                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END LEVEL expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    uns tmp = unsMax;
+                    if (sscanf_s(token, "%u", &tmp) != 1 || tmp != lvl)
+                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END LEVEL %u expected, %s arrived in %s, line %u: %s", lvl, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    isLevelNotEnded = false;
+                }
+                else
+                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised tokenin .LEVEL group (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            } while (isLevelNotEnded);
+        }
+        else if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (globalNames.localRestrictionTypeNames.contains(token))
+                throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALRESTRICTIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            uns lrtIndex = (uns)globalNames.localRestrictionTypeNames.size();
+            globalNames.localRestrictionTypeNames[fullName] = lrtIndex;
+
+            localNodeRestrictionTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
+            LocalProlongationOrRestrictionInstructions& rest = localNodeRestrictionTypes.back();
+            bool isRestrictionNotEnded = true;
+            do {
+
+            } while (isRestrictionNotEnded);
+        }
+        else if (strcmp(token, ".LOCALPROLONGATIONTYPE") == 0) {
+
+        }
+        else if (strcmp(token, ".END") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "MULTIGRID") != 0)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END MULTIGRID expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (fullName != token)
+                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END MULTIGRID %s expected, %s arrived in %s, line %u: %s", fullName.c_str(), token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            for (size_t i = 0; i < levels.size(); i++)
+                if (levels[i].indexFineFullCircuit == unsMax)
+                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "MULTIGRID %s: undefined level [level = %u]", fullName.c_str(), (uns)(i + 1));
+            isMultigridNotEnded = false;
+        }
+        else
+            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    } while (isMultigridNotEnded);
+}
+
+
+//***********************************************************************
 void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     bool isStop = false;
@@ -1150,9 +1298,14 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 }
             }
             else if (strcmp(token, ".SUNREDTREE") == 0) {
-                HMGFileSunredTree* psunredtree = new HMGFileSunredTree;
-                itemList.push_back(psunredtree);
-                psunredtree->Read(reader, line, lineInfo);
+                HMGFileSunredTree* pSunredTree = new HMGFileSunredTree;
+                itemList.push_back(pSunredTree);
+                pSunredTree->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".MULTIGRID") == 0) {
+                HMGFileMultiGrid* pMultiGrid = new HMGFileMultiGrid;
+                itemList.push_back(pMultiGrid);
+                pMultiGrid->Read(reader, line, lineInfo);
             }
             else if (strcmp(token, ".RAILS") == 0) {
                 HMGFileRails* pRails = new HMGFileRails;

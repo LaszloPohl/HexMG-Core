@@ -17,6 +17,7 @@
 #include "hmgComponentModel.h"
 #include "hmgSunred.h"
 #include "hmgMultigridTypes.h"
+#include "hmgMultigrid.hpp"
 #include "hmgSimulation.h"
 #include "hmgSaver.h"
 //***********************************************************************
@@ -2413,6 +2414,7 @@ class CircuitStorage {
     //***********************************************************************
     std::vector<std::unique_ptr<Probe>> probes;
     std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
+    std::vector<hmgMultigrid> multigrids;
     Simulation sim;
     hmgSaver saver;
     std::thread saverThread;
