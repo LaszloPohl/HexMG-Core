@@ -230,7 +230,7 @@ inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleI
 
 
 //***********************************************************************
-inline bool textToSimpleNodeID(const char* text, SimpleInterfaceNodeID& result) {
+inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result) {
 //***********************************************************************
     uns pos = 0;
     return textToSimpleInterfaceNodeID(text, pos, result);
@@ -346,6 +346,7 @@ struct GlobalHMGFileNames {
     std::vector<HMGFileCreate*> fullCircuitData;
     //***********************************************************************
     bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
+    bool textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest);
     //***********************************************************************
 };
 
@@ -556,8 +557,8 @@ struct HMGFileMultiGrid : HMGFileListItem {
     bool isReplacer = false;
     std::string fullName;
     HMGFileMultiGrid* pParent = nullptr; // if this is a replacer, parent is the replaced object
-    std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
-    std::vector<LocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
+    std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
+    std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
     std::vector<FineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
     //***********************************************************************
 

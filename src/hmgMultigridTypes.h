@@ -57,6 +57,34 @@ struct LocalProlongationOrRestrictionInstructions {
 
 
 //***********************************************************************
+struct InterfaceLocalProlongationOrRestrictionInstructions {
+//***********************************************************************
+    struct OneLocalInstruction {
+        bool isDestLevel = false;       // using an already calculated external node in the destination level
+        uns srcIndex = 0;               // index Prolongation: in ComponentGroup::coarseCells (isFine == false) or ComponentGroup::fineCells (isFine == true), Restriction: in ComponentGroup::fineCells
+        SimpleInterfaceNodeID nodeID;   // cdntInternal and cdntExternal allowed
+        rvt weight = 0.5;
+    };
+    struct LocalNodeInstruction {
+        uns destIndex = 0;              // index Prolongation: in ComponentGroup::fineCells, Restriction: in ComponentGroup::coarseCells
+        SimpleInterfaceNodeID nodeID;   // cdntInternal and cdntExternal allowed
+        std::vector<OneLocalInstruction> instr; // sum weight should be 1
+    };
+    struct OneRecursiveInstruction {
+        bool isDestLevel = false;       // using an already calculated external node in the destination level
+        DeepInterfaceNodeID nodeID;
+        rvt weight = 0.5;
+    };
+    struct RecursiveInstruction {
+        DeepInterfaceNodeID nodeID;
+        std::vector<OneRecursiveInstruction> instr; // sum weight should be 1
+    };
+    std::vector<LocalNodeInstruction> destComponentsNodes;
+    std::vector<RecursiveInstruction> deepDestComponentNodes; // subckt => subckt => ... => subckt => component => internal node
+};
+
+
+//***********************************************************************
 struct NodeInstruction {
 //***********************************************************************
     struct OneInstruction {
