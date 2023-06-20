@@ -55,7 +55,6 @@ inline constexpr int returnInstructionID = 1'000'000'000;
 inline constexpr uns unsMax = ~uns(0);
 inline constexpr uns externalNodeFlag = uns(1 << 30);
 inline constexpr uns maxRails = 1'048'576;
-inline constexpr uns probeMaxComponentLevel = 3; // if changed, ProbeNodeID::componentID default values must be set
 //***********************************************************************
 
 
@@ -69,7 +68,7 @@ enum NodeVarType {
 
 
 //***********************************************************************
-struct SimpleNodeID {
+struct SimpleInterfaceNodeID {
 //***********************************************************************
     NodeVarType type = nvtNone;
     uns index = 0;
@@ -181,7 +180,7 @@ struct ReductionInstruction {
 //***********************************************************************
 struct ParameterInstance {
 //***********************************************************************
-    SimpleNodeID param; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
+    SimpleInterfaceNodeID param; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
     rvt value = rvt0; // if a value is given, paramIndex=0
 };
 
@@ -236,10 +235,10 @@ inline rvt& getIm(cplx& c) { return reinterpret_cast<rvt(&)[2]>(c)[1]; }
    
 
 //***********************************************************************
-struct ProbeNodeID {
+struct DeepInterfaceNodeID {
 //***********************************************************************
-    SimpleNodeID nodeID;
-    uns componentID[probeMaxComponentLevel] = { unsMax, unsMax, unsMax };
+    SimpleInterfaceNodeID nodeID;
+    std::vector<uns> componentID;
 };
 
 
@@ -304,10 +303,10 @@ struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt v
 
 
 //***********************************************************************
-struct ProbeCDNodeID {
+struct DeepCDNodeID {
 //***********************************************************************
     CDNode nodeID;
-    uns componentID[probeMaxComponentLevel] = { unsMax, unsMax, unsMax };
+    std::vector<uns> componentID;
 };
 
 

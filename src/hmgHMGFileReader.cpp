@@ -284,7 +284,7 @@ label_NR:
 
 
 //***********************************************************************
-bool GlobalHMGFileNames::textToProbeNodeID(char* token, uns fullCircuitIndex, ProbeNodeID& dest) {
+bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest) {
 //***********************************************************************
     if (strcmp(token, "0") == 0) {
         dest.nodeID.index = unsMax;
@@ -298,9 +298,10 @@ bool GlobalHMGFileNames::textToProbeNodeID(char* token, uns fullCircuitIndex, Pr
             i++;
         if (token[i] == '.') {
             token[i] = '\0';
-            if (currentComponent == nullptr || componentIndex >= probeMaxComponentLevel)
+            if (currentComponent == nullptr)
                 return false;
-            uns ci = dest.componentID[componentIndex] = currentComponent->instanceListIndex[token];
+            uns ci = currentComponent->instanceListIndex[token];
+            dest.componentID.push_back(ci);
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
             currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
@@ -477,10 +478,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             }
             else if (strcmp(token, ".DEFAULTRAIL") == 0) {
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                SimpleNodeID rail;
+                SimpleInterfaceNodeID rail;
                 if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                SimpleNodeID node;
+                SimpleInterfaceNodeID node;
                 while (!lineToken.isSepEOL) {
                     lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (!textToSimpleNodeID(lineToken.getActToken(), node))
@@ -502,10 +503,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             }
             else if (strcmp(token, ".DEFAULTRAILRANGE") == 0) {
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                SimpleNodeID rail;
+                SimpleInterfaceNodeID rail;
                 if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                SimpleNodeID node1, node2;
+                SimpleInterfaceNodeID node1, node2;
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 if (!textToSimpleNodeID(lineToken.getActToken(), node1))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -576,7 +577,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             if (pxline->modelIndex != unsMax) {
                 for (uns i = 0; i < nodenum; i++) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    pxline->nodes.emplace_back(SimpleNodeID());
+                    pxline->nodes.emplace_back(SimpleInterfaceNodeID());
                     if (!textToSimpleNodeID(token, pxline->nodes.back()))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     if (pxline->nodes.back().type == nvtUnconnected) {
@@ -642,7 +643,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 }
                 if (isDefRail) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    SimpleNodeID rail;
+                    SimpleInterfaceNodeID rail;
                     if (!textToSimpleNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     pxline->isDefaultRail = true;
@@ -706,7 +707,7 @@ void HMGFileRails::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        SimpleNodeID nid;
+        SimpleInterfaceNodeID nid;
         if (!textToSimpleNodeID(token, nid))
             throw hmgExcept("HMGFileRails::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         if (nid.type != nvtRail)
@@ -767,7 +768,7 @@ void HMGFileCreate::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     if (strcmp(token, "GND") != 0)
         throw hmgExcept("HMGFileCreate::Read", "GND expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    SimpleNodeID nid;
+    SimpleInterfaceNodeID nid;
     if (!textToSimpleNodeID(token, nid))
         throw hmgExcept("HMGFileCreate::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     if(nid.type != nvtRail)
@@ -868,8 +869,8 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
 
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        ProbeNodeID pnid;
-        if(!globalNames.textToProbeNodeID(token, fullCircuitID, pnid))
+        DeepInterfaceNodeID pnid;
+        if(!globalNames.textToDeepInterfaceNodeID(token, fullCircuitID, pnid))
             throw hmgExcept("HMGFileCreate::Read", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         nodes.push_back(pnid);
     }
@@ -1235,22 +1236,38 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised tokenin .LEVEL group (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             } while (isLevelNotEnded);
         }
-        else if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0) {
+        else if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0 || strcmp(token, ".LOCALPROLONGATIONTYPE") == 0) {
+            bool isRestrict = false;
+            uns lrtIndex = 0;
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (globalNames.localRestrictionTypeNames.contains(token))
-                throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALRESTRICTIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            uns lrtIndex = (uns)globalNames.localRestrictionTypeNames.size();
-            globalNames.localRestrictionTypeNames[fullName] = lrtIndex;
+            if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0) {
+                isRestrict = true;
+                if (globalNames.localRestrictionTypeNames.contains(token))
+                    throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALRESTRICTIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                lrtIndex = (uns)globalNames.localRestrictionTypeNames.size();
+                globalNames.localRestrictionTypeNames[token] = lrtIndex;
+                localNodeRestrictionTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
+            }
+            else {
+                if (globalNames.localProlongationTypeNames.contains(token))
+                    throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALPROLONGATIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                lrtIndex = (uns)globalNames.localProlongationTypeNames.size();
+                globalNames.localProlongationTypeNames[token] = lrtIndex;
+                localNodeProlongationTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
+            }
 
-            localNodeRestrictionTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
-            LocalProlongationOrRestrictionInstructions& rest = localNodeRestrictionTypes.back();
-            bool isRestrictionNotEnded = true;
+            LocalProlongationOrRestrictionInstructions& rest = isRestrict ? localNodeRestrictionTypes.back() : localNodeProlongationTypes.back();
+            bool isRestrictionProlongationNotEnded = true;
+            LocalProlongationOrRestrictionInstructions::LocalNodeInstruction simple;
+            LocalProlongationOrRestrictionInstructions::RecursiveInstruction recursive;
             do {
+                if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .%s definition, missing .END in %s", isRestrict ? "LOCALRESTRICTIONTYPE" : "LOCALPROLONGATIONTYPE", reader.getFileName(lineInfo).c_str());
+                lineToken.init(line);
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-            } while (isRestrictionNotEnded);
-        }
-        else if (strcmp(token, ".LOCALPROLONGATIONTYPE") == 0) {
 
+            } while (isRestrictionProlongationNotEnded);
         }
         else if (strcmp(token, ".END") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);

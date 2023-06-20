@@ -33,28 +33,22 @@ struct LocalProlongationOrRestrictionInstructions {
 //***********************************************************************
     struct OneLocalInstruction {
         bool isDestLevel = false;// using an already calculated external node in the destination level
-        bool isExternal = false; // using an external node of the srcIndex component
         uns srcIndex = 0;        // index Prolongation: in ComponentGroup::coarseCells (isFine == false) or ComponentGroup::fineCells (isFine == true), Restriction: in ComponentGroup::fineCells
-        uns nodeIndex = 0;       // externalNodeFlag is not set, isExternal decides
+        CDNode nodeID;           // cdntInternal and cdntExternal allowed
         rvt weight = 0.5;
     };
     struct LocalNodeInstruction {
-        bool isExternal = false; // using an external node of the fineIndex component
         uns destIndex = 0;       // index Prolongation: in ComponentGroup::fineCells, Restriction: in ComponentGroup::coarseCells
-        uns nodeIndex = 0;       // externalNodeFlag is not set, isExternal decides
+        CDNode nodeID;           // cdntInternal and cdntExternal allowed
         std::vector<OneLocalInstruction> instr; // sum weight should be 1
     };
     struct OneRecursiveInstruction {
         bool isDestLevel = false;// using an already calculated external node in the destination level
-        bool isExternal = false; // using an external node of the last srcComponentIndex component
-        std::vector<uns> srcComponentIndex; // all are subckts, except the last one, which is a component (of course it can be a subckt, but it doesn't have to be)
-        uns nodeIndex = 0;
+        DeepCDNodeID nodeID;
         rvt weight = 0.5;
     };
     struct RecursiveInstruction {
-        bool isExternal = false;             // using an external node of the fineIndex component
-        std::vector<uns> destComponentIndex; // all are subckts, except the last one, which is a component (of course it can be a subckt, but it doesn't have to be)
-        uns nodeIndex = 0;
+        DeepCDNodeID nodeID;
         std::vector<OneRecursiveInstruction> instr; // sum weight should be 1
     };
     std::vector<LocalNodeInstruction> destComponentsNodes;

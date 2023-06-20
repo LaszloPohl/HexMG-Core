@@ -138,7 +138,7 @@ inline bool spiceTextToRvt(const char* text,rvt& value) {
 
 
 //***********************************************************************
-inline bool textToSimpleNodeID(const char* text, uns& position, SimpleNodeID& result) {
+inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleInterfaceNodeID& result) {
 //***********************************************************************
     switch (text[position]) {
         case 'C':
@@ -230,10 +230,10 @@ inline bool textToSimpleNodeID(const char* text, uns& position, SimpleNodeID& re
 
 
 //***********************************************************************
-inline bool textToSimpleNodeID(const char* text, SimpleNodeID& result) {
+inline bool textToSimpleNodeID(const char* text, SimpleInterfaceNodeID& result) {
 //***********************************************************************
     uns pos = 0;
-    return textToSimpleNodeID(text, pos, result);
+    return textToSimpleInterfaceNodeID(text, pos, result);
 }
 
 
@@ -345,7 +345,7 @@ struct GlobalHMGFileNames {
     std::vector<HMGFileProbe*> probeData;
     std::vector<HMGFileCreate*> fullCircuitData;
     //***********************************************************************
-    bool textToProbeNodeID(char* token, uns fullCircuitIndex, ProbeNodeID& dest);
+    bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
     //***********************************************************************
 };
 
@@ -366,7 +366,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     uns instanceIndex = 0; // component index or controller index
 
     uns modelIndex = 0; // modelNames, BuiltInComponentTemplateType
-    std::vector<SimpleNodeID> nodes;
+    std::vector<SimpleInterfaceNodeID> nodes;
     std::vector<ParameterInstance> params;
     bool isDefaultRail = false;
     bool isController = false;
@@ -421,12 +421,12 @@ struct HMGFileModelDescription: HMGFileListItem {
         for (const auto& src: defaults) {
             ForcedNodeDef forcedNodeRange;
             forcedNodeRange.defaultRailIndex = src.rail;
-            SimpleNodeID startS, stopS;
+            SimpleInterfaceNodeID startS, stopS;
             stopS.type = startS.type = src.type;
             startS.index = src.start_index;
             stopS.index  = src.stop_index;
-            CDNode startC = SimpleNodeID2CDNode(startS, externalNs, internalNs);
-            CDNode stopC  = SimpleNodeID2CDNode(stopS, externalNs, internalNs);
+            CDNode startC = SimpleInterfaceNodeID2CDNode(startS, externalNs, internalNs);
+            CDNode stopC  = SimpleInterfaceNodeID2CDNode(stopS, externalNs, internalNs);
             forcedNodeRange.isExternal = startC.type == cdntExternal;
             forcedNodeRange.nodeStartIndex = startC.index;
             forcedNodeRange.nodeStopIndex  = stopC.index;
@@ -488,7 +488,7 @@ struct HMGFileModelDescription: HMGFileListItem {
         return false;
     }
     //***********************************************************************
-    bool checkNodeValidity(SimpleNodeID id) const noexcept{
+    bool checkNodeValidity(SimpleInterfaceNodeID id) const noexcept{
     //***********************************************************************
         switch(id.type){
             case nvtIO:             return id.index < externalNs.nIONodes;
@@ -620,7 +620,7 @@ struct HMGFileProbe: HMGFileListItem {
     uns probeIndex = 0;
     uns probeType = ptV;
     uns fullCircuitID = 0;
-    std::vector<ProbeNodeID> nodes;
+    std::vector<DeepInterfaceNodeID> nodes;
     //***********************************************************************
 
     //***********************************************************************

@@ -1076,12 +1076,12 @@ void probaSzimulacioMg1() {
 	
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 2;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 3;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1089,10 +1089,10 @@ void probaSzimulacioMg1() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1100,9 +1100,9 @@ void probaSzimulacioMg1() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1110,9 +1110,9 @@ void probaSzimulacioMg1() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	//destDeepCellNode.destComponentIndex.clear();
@@ -1132,28 +1132,28 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 	
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -1163,15 +1163,15 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 2;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -1181,9 +1181,9 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -1193,9 +1193,9 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	//destDeepCellNode.destComponentIndex.clear();
@@ -1212,28 +1212,28 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -1243,28 +1243,28 @@ void probaSzimulacioMg1() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -1907,12 +1907,12 @@ void probaSzimulacioMg2() {
 	
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 2;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 3;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1920,10 +1920,10 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1931,9 +1931,9 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1941,17 +1941,17 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	//destDeepCellNode.destComponentIndex.clear();
 	//destDeepCellNode.instr.clear();
-	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeID.index = 0;
 	//srcDeepCellNode.srcComponentIndex.clear();
 	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
-	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeID.index = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
 
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 */
@@ -1960,16 +1960,16 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 2;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 3;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 2;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 3;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 3;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 3;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = div6; destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1978,15 +1978,15 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = div3;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 1;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div6;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 2;	srcCellNode.weight = div3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 1;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = div12;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -1994,11 +1994,11 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.25;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -2006,20 +2006,20 @@ void probaSzimulacioMg2() {
 
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 2;	srcCellNode.weight = 0.2;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	//destDeepCellNode.destComponentIndex.clear();
 	//destDeepCellNode.instr.clear();
-	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeID.index = 0;
 	//srcDeepCellNode.srcComponentIndex.clear();
 	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
-	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeID.index = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
 
 	mg.localNodeRestrictionTypes.push_back(std::move(cellInstructions));
 
@@ -2030,28 +2030,28 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 	
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 	
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -2061,15 +2061,15 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 3;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 3;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -2079,9 +2079,9 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -2091,17 +2091,17 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	//destDeepCellNode.destComponentIndex.clear();
 	//destDeepCellNode.instr.clear();
-	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeIndex = 0;
+	//destDeepCellNode.isExternal = false;	destDeepCellNode.destComponentIndex.push_back(0);	destDeepCellNode.destComponentIndex.push_back(3);	destDeepCellNode.nodeID.index = 0;
 	//srcDeepCellNode.srcComponentIndex.clear();
 	//srcDeepCellNode.isDestLevel = false;	srcDeepCellNode.isExternal = false;	srcDeepCellNode.srcComponentIndex.push_back(0); 
-	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeIndex = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
+	//	srcDeepCellNode.srcComponentIndex.push_back(3); srcDeepCellNode.nodeID.index = 0;	srcDeepCellNode.weight = 1.0;	destDeepCellNode.instr.push_back(srcDeepCellNode);
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
 
@@ -2110,28 +2110,28 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.34;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.33;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -2141,28 +2141,28 @@ void probaSzimulacioMg2() {
 	cellInstructions.destComponentsNodes.clear();
 	cellInstructions.deepDestComponentNodes.clear();
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 0;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 0;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 1;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.3;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 1;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 1;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 1;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 2;	srcCellNode.weight = 0.6;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.4;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 2;	srcCellNode.weight = 0.6;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 2;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 2;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = true;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntExternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 0.5;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
-	destCellNode.isExternal = false;	destCellNode.destIndex = 3;	destCellNode.nodeIndex = 0;
+	destCellNode.nodeID.type = cdntInternal;	destCellNode.destIndex = 3;	destCellNode.nodeID.index = 0;
 	destCellNode.instr.clear();
-	srcCellNode.isDestLevel = false;	srcCellNode.isExternal = false;	srcCellNode.srcIndex = 0;	srcCellNode.nodeIndex = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
+	srcCellNode.isDestLevel = false;	srcCellNode.nodeID.type = cdntInternal;	srcCellNode.srcIndex = 0;	srcCellNode.nodeID.index = 0;	srcCellNode.weight = 1.0;	destCellNode.instr.push_back(srcCellNode);
 	cellInstructions.destComponentsNodes.push_back(std::move(destCellNode));
 
 	mg.localNodeProlongationTypes.push_back(std::move(cellInstructions));
@@ -2384,7 +2384,7 @@ void probaSzimulacioMg3() {
 
 
 //***********************************************************************
-int main(int n, const char** params) {
+int main_(int n, const char** params) {
 //***********************************************************************
 	try {
 		HmgFileReader reader;
@@ -2462,7 +2462,7 @@ int main() {
 
 
 //***********************************************************************
-int main_1() {
+int main() {
 //***********************************************************************
 
 	//SpiceExpression se;

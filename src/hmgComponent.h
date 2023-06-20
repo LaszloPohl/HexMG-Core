@@ -2407,7 +2407,7 @@ class CircuitStorage {
     //***********************************************************************
         ProbeType probeType = ptV;
         uns fullCircuitID = 0;
-        std::vector<ProbeCDNodeID> nodes;
+        std::vector<DeepCDNodeID> nodes;
     };
 
 
@@ -2441,10 +2441,10 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    const ComponentBase& getComponent(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    const ComponentBase& getComponent(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
         const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
-        for (uns i = 0; i < probeMaxComponentLevel && nodeID.componentID[i] != unsMax; i++) {
+        for (uns i = 0; i < nodeID.componentID.size(); i++) {
             const ComponentSubCircuit* subckt = static_cast<const ComponentSubCircuit*>(component);
             component = subckt->components[nodeID.componentID[i]].get();
         }
@@ -2452,7 +2452,7 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    const NodeVariable& getNode(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    const NodeVariable& getNode(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
         const ComponentBase& component = getComponent(fullCircuitID, nodeID);
         switch (nodeID.nodeID.type) {
@@ -2464,7 +2464,7 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    rvt getCurrentDC(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    rvt getCurrentDC(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
         if(nodeID.nodeID.type != cdntExternal)
             throw hmgExcept("CircuitStorage::getCurrentDC", "not allowed I probe node type: %u, only X enabled", (uns)nodeID.nodeID.type);
@@ -2473,7 +2473,7 @@ class CircuitStorage {
     }
 
     //***********************************************************************
-    cplx getCurrentAC(uns fullCircuitID, const ProbeCDNodeID& nodeID) const {
+    cplx getCurrentAC(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
         if(nodeID.nodeID.type != cdntExternal)
             throw hmgExcept("CircuitStorage::getCurrentDC", "not allowed I probe node type: %u, only X enabled", (uns)nodeID.nodeID.type);

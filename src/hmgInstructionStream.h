@@ -26,7 +26,7 @@ namespace nsHMG {
 
 
 //***********************************************************************
-inline CDNode SimpleNodeID2CDNode(const SimpleNodeID& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
+inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
 //***********************************************************************
     CDNode res;
     uns delta = 0;
@@ -67,7 +67,7 @@ inline CDNode SimpleNodeID2CDNode(const SimpleNodeID& src, const ExternalConnect
             res.type = CDNodeType::cdntUnconnected;
             break;
         default:
-            throw hmgExcept("SimpleNodeID2CDNode", "not a node type (%u)", src.type);
+            throw hmgExcept("SimpleInterfaceNodeID2CDNode", "not a node type (%u)", src.type);
     }
     res.index = src.index + delta;
     return res;
@@ -259,8 +259,8 @@ struct IsRailNodeRangeInstruction: public IsInstruction {
 //***********************************************************************
 struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
-    SimpleNodeID nodeID;
-    IsNodeValueInstruction(const SimpleNodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
+    SimpleInterfaceNodeID nodeID;
+    IsNodeValueInstruction(const SimpleInterfaceNodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
 };
 
 
@@ -304,8 +304,8 @@ struct IsProbeInstruction: public IsInstruction {
 //***********************************************************************
 struct IsProbeNodeInstruction: public IsInstruction {
 //***********************************************************************
-    ProbeNodeID nodeID;
-    IsProbeNodeInstruction(const ProbeNodeID& node) :IsInstruction{ sitProbeNode }, nodeID{ node }{}
+    DeepInterfaceNodeID nodeID;
+    IsProbeNodeInstruction(const DeepInterfaceNodeID& node) :IsInstruction{ sitProbeNode }, nodeID{ node }{}
 };
 
 

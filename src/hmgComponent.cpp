@@ -248,7 +248,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
                     IsProbeNodeInstruction* pAct = static_cast<IsProbeNodeInstruction*>(act);
 
                     const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
-                    for (uns i = 0; i < probeMaxComponentLevel && pAct->nodeID.componentID[i] != unsMax; i++) {
+                    for (uns i = 0; i < pAct->nodeID.componentID.size(); i++) {
                         const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
                         if (subckt == nullptr)
                             throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: [[[SUBCIRCUIT.]SUBCIRCUIT.]COMPONENT.]NODE required but COMPONENT found instead of a SUBCIRCUIT");
@@ -256,9 +256,9 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
                     }
                     const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
                     ;
-                    ProbeCDNodeID id = {
-                        SimpleNodeID2CDNode(pAct->nodeID.nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs),
-                        { pAct->nodeID.componentID[0], pAct->nodeID.componentID[1], pAct->nodeID.componentID[2] }
+                    DeepCDNodeID id = {
+                        SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs),
+                        pAct->nodeID.componentID
                     };
                     if(subckt == nullptr && id.nodeID.type != cdntExternal)
                         throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: internal node is allowed only for SUBCIRCUITS");
@@ -387,7 +387,7 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
             case sitNothing: break;
             case sitNodeValue: {
                     IsNodeValueInstruction* pAct = static_cast<IsNodeValueInstruction*>(act);
-                    nodesConnectedTo.push_back(SimpleNodeID2CDNode(pAct->nodeID, container.externalNs, container.internalNs));
+                    nodesConnectedTo.push_back(SimpleInterfaceNodeID2CDNode(pAct->nodeID, container.externalNs, container.internalNs));
                 }
                 break;
             case sitParameterValue: {
@@ -1114,13 +1114,13 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
                 
                 ComponentBase* srcComponent = src.isDestLevel ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
                 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
-            NodeVariable& destNode = dest.isExternal
-                ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)
-                : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.type == cdntExternal
+                ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeID.index)
+                : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
 
             destNode.setValue0DC(sumU);
         }
@@ -1138,36 +1138,36 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
                 // getting the starting component
 
                 ComponentBase* srcComponent = src.isDestLevel
-                    ? components[componentGroup.fineCells[src.srcComponentIndex[0]]].get()
-                    : coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get();
+                    ? components[componentGroup.fineCells[src.nodeID.componentID[0]]].get()
+                    : coarse.components[componentGroup.coarseCells[src.nodeID.componentID[0]]].get();
 
                 // going through the chain
 
-                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
                 }
 
                 // adding the weighted node value
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
             // finding the destination component: the starting component
 
-            ComponentBase* destComponent = components[componentGroup.fineCells[dest.destComponentIndex[0]]].get();
+            ComponentBase* destComponent = components[componentGroup.fineCells[dest.nodeID.componentID[0]]].get();
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
             }
 
             // setting the voltage
 
-            NodeVariable& destNode = dest.isExternal
-                ? *destComponent->getNode(dest.nodeIndex)
-                : *destComponent->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.nodeID.type == cdntExternal
+                ? *destComponent->getNode(dest.nodeID.nodeID.index)
+                : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             destNode.setValue0DC(sumU);
         }
@@ -1221,13 +1221,13 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
-            NodeVariable& destNode = dest.isExternal
-                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex)
-                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.type == cdntExternal
+                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeID.index)
+                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
 
             destNode.setValue0DC(sumU);
         }
@@ -1245,36 +1245,36 @@ void ComponentSubCircuit::restrictUDC(const FineCoarseConnectionDescription& con
                 // getting the starting component
 
                 ComponentBase* srcComponent = src.isDestLevel
-                    ? coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get()
-                    : components[componentGroup.fineCells[src.srcComponentIndex[0]]].get();
+                    ? coarse.components[componentGroup.coarseCells[src.nodeID.componentID[0]]].get()
+                    : components[componentGroup.fineCells[src.nodeID.componentID[0]]].get();
 
                 // going through the chain
 
-                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
                 }
 
                 // adding the weighted node value
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
             // finding the destination component: the starting component
 
-            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.destComponentIndex[0]]].get();
+            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.nodeID.componentID[0]]].get();
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
             }
 
             // setting the voltage
 
-            NodeVariable& destNode = dest.isExternal
-                ? *destComponent->getNode(dest.nodeIndex)
-                : *destComponent->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.nodeID.type == cdntExternal
+                ? *destComponent->getNode(dest.nodeID.nodeID.index)
+                : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             destNode.setValue0DC(sumU);
         }
@@ -1336,15 +1336,15 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.index);
                 sumRfh += srcNode.getFDC() * src.weight;
                 sumRdh += srcNode.getDDC() * src.weight;
 
             }
 
-            NodeVariable& destNode = dest.isExternal 
-                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex) 
-                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.type == cdntExternal
+                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeID.index)
+                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
                 
             crvt dH = destNode.getDDC();
             truncationError += square(dH - sumRdh);
@@ -1365,37 +1365,37 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
                 // getting the starting component
 
                 ComponentBase* srcComponent = src.isDestLevel
-                    ? coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get()
-                    : components[componentGroup.fineCells[src.srcComponentIndex[0]]].get();
+                    ? coarse.components[componentGroup.coarseCells[src.nodeID.componentID[0]]].get()
+                    : components[componentGroup.fineCells[src.nodeID.componentID[0]]].get();
 
                 // going through the chain
 
-                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
                 }
 
                 // adding the weighted node value
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.nodeID.index);
                 sumRfh += srcNode.getFDC() * src.weight;
                 sumRdh += srcNode.getDDC() * src.weight;
             }
 
             // finding the destination component: the starting component
 
-            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.destComponentIndex[0]]].get();
+            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.nodeID.componentID[0]]].get();
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
             }
 
             // setting the voltage
 
-            NodeVariable& destNode = dest.isExternal
-                ? *destComponent->getNode(dest.nodeIndex)
-                : *destComponent->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.nodeID.type == cdntExternal
+                ? *destComponent->getNode(dest.nodeID.nodeID.index)
+                : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             crvt dH = destNode.getDDC();
             truncationError += square(dH - sumRdh);
@@ -1454,14 +1454,14 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
 
                 ComponentBase* srcComponent = src.isDestLevel ? coarse.components[componentGroup.coarseCells[src.srcIndex]].get() : components[componentGroup.fineCells[src.srcIndex]].get();
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
 
             }
 
-            NodeVariable& destNode = dest.isExternal
-                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeIndex)
-                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.type == cdntExternal
+                ? *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getNode(dest.nodeID.index)
+                : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
 
             crvt uH = destNode.getValue0DC();
             destNode.setDNonConcurrentDC(uH - sumU);
@@ -1480,36 +1480,36 @@ void ComponentSubCircuit::uHMinusRestrictUhToDHNCDC(const FineCoarseConnectionDe
                 // getting the starting component
 
                 ComponentBase* srcComponent = src.isDestLevel
-                    ? coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get()
-                    : components[componentGroup.fineCells[src.srcComponentIndex[0]]].get();
+                    ? coarse.components[componentGroup.coarseCells[src.nodeID.componentID[0]]].get()
+                    : components[componentGroup.fineCells[src.nodeID.componentID[0]]].get();
 
                 // going through the chain
 
-                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
                 }
 
                 // adding the weighted node value
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.nodeID.index);
                 sumU += srcNode.getValue0DC() * src.weight;
             }
 
             // finding the destination component: the starting component
 
-            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.destComponentIndex[0]]].get();
+            ComponentBase* destComponent = coarse.components[componentGroup.coarseCells[dest.nodeID.componentID[0]]].get();
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
             }
 
             // setting the voltage
 
-            NodeVariable& destNode = dest.isExternal
-                ? *destComponent->getNode(dest.nodeIndex)
-                : *destComponent->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.nodeID.type == cdntExternal
+                ? *destComponent->getNode(dest.nodeID.nodeID.index)
+                : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             crvt uH = destNode.getValue0DC();
             destNode.setDNonConcurrentDC(uH - sumU);
@@ -1565,13 +1565,13 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
 
                 ComponentBase* srcComponent = src.isDestLevel ? components[componentGroup.fineCells[src.srcIndex]].get() : coarse.components[componentGroup.coarseCells[src.srcIndex]].get();
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.index);
                 sumTemp += srcNode.getDNonConcurrentDC() * src.weight;
             }
 
-            NodeVariable& destNode = dest.isExternal
-                ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeIndex)
-                : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.type == cdntExternal
+                ? *components[componentGroup.fineCells[dest.destIndex]]->getNode(dest.nodeID.index)
+                : *components[componentGroup.fineCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
 
             destNode.incValue0DC(sumTemp);
         }
@@ -1589,36 +1589,36 @@ void ComponentSubCircuit::prolongateDHNCAddToUhDC(const FineCoarseConnectionDesc
                 // getting the starting component
 
                 ComponentBase* srcComponent = src.isDestLevel
-                    ? components[componentGroup.fineCells[src.srcComponentIndex[0]]].get()
-                    : coarse.components[componentGroup.coarseCells[src.srcComponentIndex[0]]].get();
+                    ? components[componentGroup.fineCells[src.nodeID.componentID[0]]].get()
+                    : coarse.components[componentGroup.coarseCells[src.nodeID.componentID[0]]].get();
 
                 // going through the chain
 
-                for (uns i = 1; i < src.srcComponentIndex.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.srcComponentIndex[i]].get();
+                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
                 }
 
                 // adding the weighted node value
 
-                const NodeVariable& srcNode = src.isExternal ? *srcComponent->getNode(src.nodeIndex) : *srcComponent->getInternalNode(src.nodeIndex);
+                const NodeVariable& srcNode = src.nodeID.nodeID.type == cdntExternal ? *srcComponent->getNode(src.nodeID.nodeID.index) : *srcComponent->getInternalNode(src.nodeID.nodeID.index);
                 sumTemp += srcNode.getDNonConcurrentDC() * src.weight;
             }
 
             // finding the destination component: the starting component
 
-            ComponentBase* destComponent = components[componentGroup.fineCells[dest.destComponentIndex[0]]].get();
+            ComponentBase* destComponent = components[componentGroup.fineCells[dest.nodeID.componentID[0]]].get();
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.destComponentIndex.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.destComponentIndex[i]].get();
+            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
             }
 
             // setting the voltage
 
-            NodeVariable& destNode = dest.isExternal
-                ? *destComponent->getNode(dest.nodeIndex)
-                : *destComponent->getInternalNode(dest.nodeIndex);
+            NodeVariable& destNode = dest.nodeID.nodeID.type == cdntExternal
+                ? *destComponent->getNode(dest.nodeID.nodeID.index)
+                : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             destNode.incValue0DC(sumTemp);
         }
