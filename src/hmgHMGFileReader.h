@@ -569,7 +569,18 @@ struct HMGFileMultiGrid : HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
+        iStream.add(new IsDefMultigridInstruction(isReplacer, multigridIndex, (uns)localNodeRestrictionTypes.size(), (uns)localNodeProlongationTypes.size(), (uns)levels.size()));
+        
+        for (uns i = 0; i < localNodeRestrictionTypes.size(); i++)
+            localNodeRestrictionTypes[i].toInstructionStream(iStream, true, i);
 
+        for (uns i = 0; i < localNodeProlongationTypes.size(); i++)
+            localNodeProlongationTypes[i].toInstructionStream(iStream, false, i);
+
+        for (const auto& level : levels)
+            level.toInstructionStream(iStream);
+
+        iStream.add(new IsEndDefInstruction(sitMultigrid, multigridIndex));
     }
 };
 

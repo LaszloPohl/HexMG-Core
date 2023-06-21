@@ -2414,7 +2414,7 @@ class CircuitStorage {
     //***********************************************************************
     std::vector<std::unique_ptr<Probe>> probes;
     std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
-    std::vector<hmgMultigrid> multigrids;
+    std::vector<std::unique_ptr<hmgMultigrid>> multiGrids;
     Simulation sim;
     hmgSaver saver;
     std::thread saverThread;
@@ -2609,6 +2609,7 @@ class CircuitStorage {
 
     //***********************************************************************
     void processSunredTreeInstructions(IsInstruction*& first, uns currentTree);
+    void processMultigridInstructions(IsInstruction*& first, uns currentMg);
     void processRailsInstructions(IsInstruction*& first);
     void processProbesInstructions(IsInstruction*& first, uns currentProbe);
     void processSaveInstructions(IsInstruction*& first, std::vector<uns>& probeIndex);

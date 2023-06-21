@@ -93,6 +93,34 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitSunredLevel:                    isImpossibleInstruction = true; break;
             case sitSunredReduction:                isImpossibleInstruction = true; break;
+            case sitMultigrid: {
+                    IsDefMultigridInstruction* pAct = static_cast<IsDefMultigridInstruction*>(act);
+
+                    if (pAct->index == multiGrids.size()) {
+                        multiGrids.push_back(std::make_unique<hmgMultigrid>());
+                    }
+                    else {
+                        if (pAct->index > multiGrids.size())
+                            multiGrids.resize(pAct->index + 1);
+                        multiGrids[pAct->index] = std::make_unique<hmgMultigrid>();
+                    }
+
+                    multiGrids[pAct->index]->localNodeRestrictionTypes.reserve(pAct->nLocalNodeRestrictionTypes);
+                    multiGrids[pAct->index]->localNodeProlongationTypes.reserve(pAct->nLocalNodeProlongationTypes);
+                    multiGrids[pAct->index]->levels.reserve(pAct->nLevels);
+
+                    processMultigridInstructions(first, pAct->index);
+                }
+                break;
+            case sitMgLocals:                       isImpossibleInstruction = true; break;
+            case sitMgLocalSimple:                  isImpossibleInstruction = true; break;
+            case sitMgOneLocalSimple:               isImpossibleInstruction = true; break;
+            case sitMgRecursiveInstr:               isImpossibleInstruction = true; break;
+            case sitMgOneRecursiveInstr:            isImpossibleInstruction = true; break;
+            case sitMgFineCoarse:                   isImpossibleInstruction = true; break;
+            case sitMgNodeInstruction:              isImpossibleInstruction = true; break;
+            case sitMgOne:                          isImpossibleInstruction = true; break;
+            case sitMgComponentGroup:               isImpossibleInstruction = true; break;
             case sitRails: {
                     IsDefRailsInstruction* pAct = static_cast<IsDefRailsInstruction*>(act);
                     Rails::resize(pAct->nRailValues + 1);
@@ -100,6 +128,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     Rails::reset();
                 }
                 break;
+            case sitRailValue:                      isImpossibleInstruction = true; break;
             case sitRailRange:                      isImpossibleInstruction = true; break;
             case sitNodeValue:                      isImpossibleInstruction = true; break;
             case sitParameterValue:                 isImpossibleInstruction = true; break;
@@ -196,6 +225,77 @@ void CircuitStorage::processSunredTreeInstructions(IsInstruction*& first, uns cu
         if(isNotFinished && first == nullptr)
             throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "The instruction stream has ended during sunred tree definition.");
     }
+}
+
+
+//***********************************************************************
+void CircuitStorage::processMultigridInstructions(IsInstruction*& first, uns currentMg) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during sunred tree definition.");
+    hmgMultigrid& mg = *multiGrids[currentMg];
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitMgLocals: {
+                    IsDefMultigridLocalProlongationOrRestrictionInstructionsInstruction* pAct = static_cast<IsDefMultigridLocalProlongationOrRestrictionInstructionsInstruction*>(act);
+                    
+                    if (pAct->isRestrict) {
+                        if (pAct->index == mg.localNodeRestrictionTypes.size()) {
+                            mg.localNodeRestrictionTypes.push_back(LocalProlongationOrRestrictionInstructions());
+                        }
+                        else {
+                            if (pAct->index > mg.localNodeRestrictionTypes.size())
+                                mg.localNodeRestrictionTypes.resize(pAct->index + 1);
+                            mg.localNodeRestrictionTypes[pAct->index] = LocalProlongationOrRestrictionInstructions();
+                        }
+                    }
+                    else {
+                        if (pAct->index == mg.localNodeProlongationTypes.size()) {
+                            mg.localNodeProlongationTypes.push_back(LocalProlongationOrRestrictionInstructions());
+                        }
+                        else {
+                            if (pAct->index > mg.localNodeProlongationTypes.size())
+                                mg.localNodeProlongationTypes.resize(pAct->index + 1);
+                            mg.localNodeProlongationTypes[pAct->index] = LocalProlongationOrRestrictionInstructions();
+                        }
+                    }
+                    
+                    LocalProlongationOrRestrictionInstructions& instr = pAct->isRestrict ? mg.localNodeRestrictionTypes[pAct->index] : mg.localNodeProlongationTypes[pAct->index];
+
+                    instr.processInstructions(first);
+                }
+                break;
+            case sitMgFineCoarse: {
+                    IsDefMultigridFineCoarseConnectionInstruction* pAct = static_cast<IsDefMultigridFineCoarseConnectionInstruction*>(act);
+
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitMultigrid)
+                        throw hmgExcept("CircuitStorage::processMultigridInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("CircuitStorage::processMultigridInstructions", "%u is not a sunred tree instruction", act->instruction);
+        }
+
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during sunred tree definition.");
+    }
+}
+
+
+//***********************************************************************
+void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstruction*& first) {
+//***********************************************************************
+
 }
 
 

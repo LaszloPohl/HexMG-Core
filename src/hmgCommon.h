@@ -123,6 +123,10 @@ enum StreamInstructionType {
 
     sitComponentInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
 
+    sitMultigrid, sitMgLocals, sitMgLocalSimple, sitMgOneLocalSimple,
+    sitMgRecursiveInstr, sitMgOneRecursiveInstr, sitMgFineCoarse,
+    sitMgNodeInstruction, sitMgOne, sitMgComponentGroup,
+
     sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
 
     sitProbe, sitProbeNode, sitRun, sitFunction, sitExpressionAtom, sitUns,
@@ -282,6 +286,7 @@ struct RunData {
     bool isPre = false; // successive approximation
     bool isDT = false;  // TIMESTEP: T or DT
     bool isTau = false; // fTau is f or tau (f=1/(2*PI*TAU))
+    bool isMultigrid = false;
     uns iterNumSPD = 0; // DC/TIMESTEP: number of iteration steps, if 0 => until convergence; TIMECONST: STEP PER DECADE
     rvt err = 0.0001;
     rvt fTauDtT = 1;

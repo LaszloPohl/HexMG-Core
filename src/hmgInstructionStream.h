@@ -175,6 +175,126 @@ struct IsDefSunredReductionInstruction: public IsInstruction {
 
 
 //***********************************************************************
+struct IsDefMultigridInstruction: public IsInstruction {
+//***********************************************************************
+    uns index = 0;
+    uns nLocalNodeRestrictionTypes = 0;
+    uns nLocalNodeProlongationTypes = 0;
+    uns nLevels = 0;
+    bool isReplace = false;
+    IsDefMultigridInstruction(bool isReplace_, uns index_, uns nLocalNodeRestrictionTypes_, uns nLocalNodeProlongationTypes_, uns nLevels_)
+        :IsInstruction{ sitMultigrid }, isReplace{ isReplace_ }, index{ index_ }, nLocalNodeRestrictionTypes{ nLocalNodeRestrictionTypes_ }, nLocalNodeProlongationTypes{ nLocalNodeProlongationTypes_ }, nLevels{ nLevels_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMultigridLocalProlongationOrRestrictionInstructionsInstruction: public IsInstruction {
+//***********************************************************************
+    uns index = 0;
+    uns nSimpleNodes = 0;
+    uns nDeepNodes = 0;
+    bool isRestrict = false;
+    IsDefMultigridLocalProlongationOrRestrictionInstructionsInstruction(uns index_, bool isRestrictionType, uns nSimpleNods, uns nDeepNods)
+        :IsInstruction{ sitMgLocals }, index{ index_ }, isRestrict{ isRestrictionType }, nSimpleNodes{ nSimpleNods }, nDeepNodes{ nDeepNods } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgLocalNodeInstruction : public IsInstruction {
+//***********************************************************************
+    uns destIndex = 0;
+    uns nInstructions = 0;
+    SimpleInterfaceNodeID nodeID;
+    IsDefMgLocalNodeInstruction(uns destIndx, const SimpleInterfaceNodeID& nodeID_, uns nInstrs)
+        :IsInstruction{ sitMgLocalSimple }, destIndex{ destIndx }, nodeID{ nodeID_ }, nInstructions{ nInstrs } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgOneLocalNodeInstruction : public IsInstruction {
+//***********************************************************************
+    bool isDestLevel = false;
+    uns srcIndex = 0;
+    SimpleInterfaceNodeID nodeID;
+    rvt weight = 0.5;
+    IsDefMgOneLocalNodeInstruction(bool isDestLevel_, uns srcIndex_, const SimpleInterfaceNodeID& nodeID_, rvt weight_)
+        :IsInstruction{ sitMgOneLocalSimple }, isDestLevel{ isDestLevel_ }, srcIndex{ srcIndex_ }, nodeID{ nodeID_ }, weight{ weight_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgRecursiveInstruction : public IsInstruction {
+//***********************************************************************
+    SimpleInterfaceNodeID nodeID;
+    uns compDepth = 0;
+    uns nInstr = 0;
+    IsDefMgRecursiveInstruction(const SimpleInterfaceNodeID& nodeID_, uns compDepth_, uns nInstr_)
+        :IsInstruction{ sitMgRecursiveInstr }, nodeID{ nodeID_ }, compDepth{ compDepth_ }, nInstr{ nInstr_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgOneRecursiveInstruction : public IsInstruction {
+//***********************************************************************
+    bool isDestLevel = false;
+    uns compDepth = 0;
+    SimpleInterfaceNodeID nodeID;
+    rvt weight = 0.5; // inst.isDestLevel, inst.nodeID.nodeID, (uns)inst.nodeID.componentID.size(), inst.weight
+    IsDefMgOneRecursiveInstruction(bool isDestLevel_, const SimpleInterfaceNodeID& nodeID_, uns compDepth_, rvt weight_)
+        :IsInstruction{ sitMgOneRecursiveInstr }, isDestLevel{ isDestLevel_ }, nodeID{ nodeID_ }, compDepth{ compDepth_ }, weight{ weight_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMultigridFineCoarseConnectionInstruction : public IsInstruction {
+//***********************************************************************
+    uns indexFineFullCircuit = unsMax;
+    uns indexCoarseFullCircuit = unsMax;
+    uns nGlobalNodeRestrictions = 0;
+    uns nGlobalNodeProlongations = 0;
+    uns nComponentGroups = 0;
+    IsDefMultigridFineCoarseConnectionInstruction(uns indexFineFullCircuit_, uns indexCoarseFullCircuit_, uns nGlobalNodeRestrictions_, uns nGlobalNodeProlongations_, uns nComponentGroups_)
+        :IsInstruction{ sitMgFineCoarse }, indexFineFullCircuit{ indexFineFullCircuit_ }, indexCoarseFullCircuit{ indexCoarseFullCircuit_ }, 
+        nGlobalNodeRestrictions{ nGlobalNodeRestrictions_ }, nGlobalNodeProlongations{ nGlobalNodeProlongations_ }, nComponentGroups{ nComponentGroups_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgNodeInstruction : public IsInstruction {
+//***********************************************************************
+    SimpleInterfaceNodeID nodeID;
+    uns nInstr = 0;
+    IsDefMgNodeInstruction(const SimpleInterfaceNodeID& nodeID_, uns nInstr_)
+        :IsInstruction{ sitMgNodeInstruction }, nodeID{ nodeID_ }, nInstr{ nInstr_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMgOneInstruction : public IsInstruction {
+//***********************************************************************
+    uns srcIndex = 0;
+    SimpleInterfaceNodeID nodeID;
+    rvt weight = 0.5;
+    IsDefMgOneInstruction(uns srcIndex_, const SimpleInterfaceNodeID& nodeID_, rvt weight_)
+        :IsInstruction{ sitMgOne }, srcIndex{ srcIndex_ }, nodeID{ nodeID_ }, weight{ weight_ } {}
+};
+
+
+//***********************************************************************
+struct IsDefMultigridComponentGroupInstruction : public IsInstruction {
+//***********************************************************************
+    bool isCopy = true;
+    uns localRestrictionIndex = 0;
+    uns localProlongationIndex = 0;
+    uns nFineCells = 0;
+    uns nCoarseCells = 0;
+    IsDefMultigridComponentGroupInstruction(bool isCopy_, uns localRestrictionIndex_, uns localProlongationIndex_, uns nFineCells_, uns nCoarseCells_)
+        :IsInstruction{ sitMgComponentGroup }, isCopy{ isCopy_ }, localRestrictionIndex{ localRestrictionIndex_ },
+        localProlongationIndex{ localProlongationIndex_ }, nFineCells{ nFineCells_ }, nCoarseCells{ nCoarseCells_ } {}
+};
+
+
+//***********************************************************************
 struct IsDefRailsInstruction: public IsInstruction {
 //***********************************************************************
     uns rails = 0;

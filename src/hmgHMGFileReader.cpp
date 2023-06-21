@@ -918,10 +918,16 @@ void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     // fullCircuitID
 
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-    try { data.fullCircuitID = globalNames.fullCircuitNames.at(token); }
-    catch (const std::out_of_range&) {
-        throw hmgExcept("HMGFileRun::Read", "unrecognised full circuit name (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    if (globalNames.fullCircuitNames.contains(token)) {
+        data.fullCircuitID = globalNames.fullCircuitNames[token];
+        data.isMultigrid = false;
     }
+    else if (globalNames.multigridNames.contains(token)) {
+        data.fullCircuitID = globalNames.multigridNames[token];
+        data.isMultigrid = true;
+    }
+    else
+        throw hmgExcept("HMGFileRun::Read", "unrecognised full circuit name or multigrid name (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
     // analysisType
 
