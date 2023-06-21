@@ -559,7 +559,7 @@ struct HMGFileMultiGrid : HMGFileListItem {
     HMGFileMultiGrid* pParent = nullptr; // if this is a replacer, parent is the replaced object
     std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
     std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
-    std::vector<FineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
+    std::vector<InterfaceFineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
     //***********************************************************************
 
     //***********************************************************************

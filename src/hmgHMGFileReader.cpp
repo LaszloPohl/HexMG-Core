@@ -1200,6 +1200,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
             throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .SUNREDTREE definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
         lineToken.init(line);
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        uns code = 0;
         if (strcmp(token, ".LEVEL") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             uns lvl = 0;
@@ -1209,7 +1210,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                 throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".LEVEL number must be >0 and < %u, %s arrived in %s, line %u: %s", maxRails, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             if (levels.size() < lvl)
                 levels.resize(lvl);
-            FineCoarseConnectionDescription& level = levels[lvl - 1];
+            InterfaceFineCoarseConnectionDescription& level = levels[lvl - 1];
 
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if (strcmp(token, "COARSE") != 0)
@@ -1228,6 +1229,8 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
             catch (const std::out_of_range&) {
                 throw hmgExcept("HMGFileCreate::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             }
+            HMGFileModelDescription* coarseFullCircuit = globalNames.modelData[globalNames.fullCircuitData[level.indexCoarseFullCircuit]->modelID];
+            HMGFileModelDescription* fineFullCircuit = globalNames.modelData[globalNames.fullCircuitData[level.indexFineFullCircuit]->modelID];
 
             bool isLevelNotEnded = true;
             do {
@@ -1236,14 +1239,105 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                 lineToken.init(line);
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-                if (strcmp(token, ".GLOBALRESTRICTION") == 0) {
+                if (strcmpC(token, ".GLOBALRESTRICTION", 1, code) == 0 || strcmpC(token, ".GLOBALPROLONGATION", 2, code) == 0) {
+                    if (code == 1)  level.globalNodeRestrictions.emplace_back(InterfaceNodeInstruction());
+                    else            level.globalNodeProlongations.emplace_back(InterfaceNodeInstruction());
+                    InterfaceNodeInstruction& instr = code == 1 ? level.globalNodeRestrictions.back() : level.globalNodeProlongations.back();
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (!textToSimpleInterfaceNodeID(token, instr.nodeID))
+                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if(instr.nodeID.type != nvtNInternal && instr.nodeID.type != nvtCInternal)
+                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "in .GLOBALRESTRICTION and .GLOBALPROLONGATION only internal node types (N and C) allowed, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    
+                    bool isRestrictionProlongationNotEnded = true;
+                    do {
+                        if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .%s definition, missing .END in %s", code == 1 ? "GLOBALRESTRICTION" : "GLOBALPROLONGATION", reader.getFileName(lineInfo).c_str());
+                        lineToken.init(line);
+                        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-                }
-                else if (strcmp(token, ".GLOBALPROLONGATION") == 0) {
+                        if (strcmp(token, "SRC") == 0) {
+                            DeepInterfaceNodeID pnid;
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (!globalNames.textToDeepInterfaceNodeID(token, code == 1 ? level.indexFineFullCircuit : level.indexCoarseFullCircuit, pnid))
+                                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
+                            rvt weight;
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (!spiceTextToRvt(token, weight))
+                                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised weight value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+                            instr.instr.push_back({ pnid.componentID.size() == 0 ? unsMax : (uns)pnid.componentID[0], pnid.nodeID, weight });
+                        }
+                        else if (strcmp(token, ".END") == 0) {
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (strcmp(token, code == 1 ? "GLOBALRESTRICTION" : "GLOBALPROLONGATION") != 0)
+                                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END %s expected, %s arrived in %s, line %u: %s", code == 1 ? "GLOBALRESTRICTION" : "GLOBALPROLONGATION", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            // I'm lazy, I don't check the node name
+                            isRestrictionProlongationNotEnded = false;
+                        }
+                        else
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+                    } while (isRestrictionProlongationNotEnded);
                 }
                 else if (strcmp(token, ".COMPONENTGROUP") == 0) {
+                    level.componentGroups.emplace_back(ComponentGroup());
+                    ComponentGroup& cg = level.componentGroups.back();
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (lineToken.isSepEOL && strcmp(token, "COPY") == 0) {
+                        cg.isCopy = true;
+                    }
+                    else {
+                        cg.isCopy = false;
+                        
+                        if (!globalNames.localRestrictionTypeNames.contains(token))
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unknown LOCALRESTRICTIONTYPE: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                        cg.localRestrictionIndex = globalNames.localRestrictionTypeNames[token];
+                        
+                        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                        
+                        if (!globalNames.localProlongationTypeNames.contains(token))
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unknown LOCALPROLONGATIONTYPE: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                        cg.localRestrictionIndex = globalNames.localProlongationTypeNames[token];
+                    }
 
+                    bool isComponentGroupNotEnded = true;
+                    do {
+                        if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "incomplete .COMPONENTGROUP definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
+                        lineToken.init(line);
+                        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+                        if (strcmp(token, "FINE") == 0) {
+                            while (!lineToken.isSepEOL) {
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                if(!fineFullCircuit->instanceListIndex.contains(token))
+                                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unknown component name: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                
+                                cg.fineCells.push_back(fineFullCircuit->instanceListIndex[token]);
+                            }
+                        }
+                        else if (strcmp(token, "COARSE") == 0) {
+                            while (!lineToken.isSepEOL) {
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                if (!coarseFullCircuit->instanceListIndex.contains(token))
+                                    throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unknown component name: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+                                cg.coarseCells.push_back(coarseFullCircuit->instanceListIndex[token]);
+                            }
+                        }
+                        else if (strcmp(token, ".END") == 0) {
+                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (strcmp(token, "COMPONENTGROUP") != 0)
+                                throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END COMPONENTGROUP expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            isComponentGroupNotEnded = false;
+                        }
+                        else
+                            throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+                    } while (isComponentGroupNotEnded);
                 }
                 else if (strcmp(token, ".END") == 0) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1259,10 +1353,10 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised token in .LEVEL group (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             } while (isLevelNotEnded);
         }
-        else if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0 || strcmp(token, ".LOCALPROLONGATIONTYPE") == 0) {
+        else if (strcmpC(token, ".LOCALRESTRICTIONTYPE", 1, code) == 0 || strcmpC(token, ".LOCALPROLONGATIONTYPE", 2, code) == 0) {
             bool isRestrict = false;
             uns lrtIndex = 0;
-            if (strcmp(token, ".LOCALRESTRICTIONTYPE") == 0) {
+            if (code == 1) {
                 isRestrict = true;
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 if (globalNames.localRestrictionTypeNames.contains(token))
@@ -1297,14 +1391,9 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     isToPush = recursive.nodeID.nodeID.type != nvtNone;
                     isDestNode = true;
                 }
-                else if (strcmp(token, "SRC") == 0) {
+                else if (strcmpC(token, "SRC", 1, code) == 0 || strcmpC(token, "DEST", 2, code) == 0) {
                     recursive.instr.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions::OneRecursiveInstruction());
-                    recursive.instr.back().isDestLevel = false;
-                    isSrcDest = true;
-                }
-                else if (strcmp(token, "DEST") == 0) {
-                    recursive.instr.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions::OneRecursiveInstruction());
-                    recursive.instr.back().isDestLevel = true;
+                    recursive.instr.back().isDestLevel = code == 2;
                     isSrcDest = true;
                 }
                 else if (strcmp(token, ".END") == 0) {

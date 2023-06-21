@@ -98,6 +98,19 @@ struct NodeInstruction {
 
 
 //***********************************************************************
+struct InterfaceNodeInstruction {
+//***********************************************************************
+    struct OneInstruction {
+        uns srcComponentIndex = unsMax; // if unsMax => global node
+        SimpleInterfaceNodeID nodeID;
+        rvt weight = 0.5;
+    };
+    SimpleInterfaceNodeID nodeID;
+    std::vector<OneInstruction> instr; // sum weight should be 1
+};
+
+
+//***********************************************************************
 struct ComponentGroup {
 //***********************************************************************
     std::vector<uns> fineCells;     // index in the fine->components vector
@@ -116,6 +129,17 @@ struct FineCoarseConnectionDescription {
     std::vector<ComponentGroup> componentGroups;
     std::vector<NodeInstruction> globalNodeRestrictions;
     std::vector<NodeInstruction> globalNodeProlongations;
+};
+
+
+//***********************************************************************
+struct InterfaceFineCoarseConnectionDescription {
+//***********************************************************************
+    uns indexFineFullCircuit = unsMax;
+    uns indexCoarseFullCircuit = unsMax;
+    std::vector<ComponentGroup> componentGroups;
+    std::vector<InterfaceNodeInstruction> globalNodeRestrictions;
+    std::vector<InterfaceNodeInstruction> globalNodeProlongations;
 };
 
 

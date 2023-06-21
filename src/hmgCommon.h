@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <cstring>
 //***********************************************************************
 
 
@@ -225,6 +226,16 @@ inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
         v[index] = x;
         return false;
     }
+}
+
+
+//***********************************************************************
+inline int strcmpC(const char* str1, const char* str2, uns code, uns& retCode) {
+//***********************************************************************
+    int res = strcmp(str1, str2);
+    if (res == 0)
+        retCode = code;
+    return res;
 }
 
 
