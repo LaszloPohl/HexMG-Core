@@ -37,6 +37,7 @@ class ComponentAndControllerModelBase {
 //***********************************************************************
     friend class CircuitStorage;
     friend class ComponentDefinition;
+    friend struct FineCoarseConnectionDescription;
     //***********************************************************************
     // number of nodes
     // these cannot be changed, this is the interface of a component
@@ -267,6 +268,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
     friend class ComponentSubCircuit;
     friend class CircuitStorage;
     friend class ComponentDefinition;
+    friend struct FineCoarseConnectionDescription;
     //***********************************************************************
 
     //***********************************************************************

@@ -42,41 +42,6 @@ struct LocalProlongationOrRestrictionInstructions {
         uns destIndex = 0;       // index Prolongation: in ComponentGroup::fineCells, Restriction: in ComponentGroup::coarseCells
         CDNode nodeID;           // cdntInternal and cdntExternal allowed
         std::vector<OneLocalInstruction> instr; // sum weight should be 1
-    };
-    struct OneRecursiveInstruction {
-        bool isDestLevel = false;// using an already calculated external node in the destination level
-        DeepCDNodeID nodeID;
-        rvt weight = 0.5;
-    };
-    struct RecursiveInstruction {
-        DeepCDNodeID nodeID;
-        std::vector<OneRecursiveInstruction> instr; // sum weight should be 1
-    };
-
-    std::vector<LocalNodeInstruction> destComponentsNodes;
-    std::vector<RecursiveInstruction> deepDestComponentNodes; // subckt => subckt => ... => subckt => component => internal node
-
-    void processInstructions(IsInstruction*& first);
-};
-
-
-//***********************************************************************
-struct InterfaceLocalProlongationOrRestrictionInstructions {
-//***********************************************************************
-    //***********************************************************************
-    struct OneLocalInstruction {
-    //***********************************************************************
-        bool isDestLevel = false;       // using an already calculated external node in the destination level
-        uns srcIndex = 0;               // index Prolongation: in ComponentGroup::coarseCells (isFine == false) or ComponentGroup::fineCells (isFine == true), Restriction: in ComponentGroup::fineCells
-        SimpleInterfaceNodeID nodeID;   // cdntInternal and cdntExternal allowed
-        rvt weight = 0.5;
-    };
-    //***********************************************************************
-    struct LocalNodeInstruction {
-    //***********************************************************************
-        uns destIndex = 0;              // index Prolongation: in ComponentGroup::fineCells, Restriction: in ComponentGroup::coarseCells
-        SimpleInterfaceNodeID nodeID;   // cdntInternal and cdntExternal allowed
-        std::vector<OneLocalInstruction> instr; // sum weight should be 1
 
         //***********************************************************************
         void toInstructionStream(InstructionStream& iStream) const {
@@ -87,17 +52,13 @@ struct InterfaceLocalProlongationOrRestrictionInstructions {
             iStream.add(new IsEndDefInstruction(sitMgLocalSimple, 0));
         }
     };
-    //***********************************************************************
     struct OneRecursiveInstruction {
-    //***********************************************************************
-        bool isDestLevel = false;       // using an already calculated external node in the destination level
-        DeepInterfaceNodeID nodeID;
+        bool isDestLevel = false;// using an already calculated external node in the destination level
+        DeepCDNodeID nodeID;
         rvt weight = 0.5;
     };
-    //***********************************************************************
     struct RecursiveInstruction {
-    //***********************************************************************
-        DeepInterfaceNodeID nodeID;
+        DeepCDNodeID nodeID;
         std::vector<OneRecursiveInstruction> instr; // sum weight should be 1
 
         //***********************************************************************
@@ -111,13 +72,14 @@ struct InterfaceLocalProlongationOrRestrictionInstructions {
                 for (uns compID : inst.nodeID.componentID)
                     iStream.add(new IsUnsInstruction(compID));
             }
-            iStream.add(new IsEndDefInstruction(sitMgLocalSimple, 0));
+            iStream.add(new IsEndDefInstruction(sitMgRecursiveInstr, 0));
         }
     };
-    //***********************************************************************
+
     std::vector<LocalNodeInstruction> destComponentsNodes;
     std::vector<RecursiveInstruction> deepDestComponentNodes; // subckt => subckt => ... => subckt => component => internal node
-    //***********************************************************************
+
+    void processInstructions(IsInstruction*& first);
 
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream, bool isRestrictionType, uns index) const {
@@ -162,9 +124,9 @@ struct InterfaceNodeInstruction {
     //***********************************************************************
 
     //***********************************************************************
-    void toInstructionStream(InstructionStream& iStream) const {
+    void toInstructionStream(InstructionStream& iStream, bool isRestrict) const {
     //***********************************************************************
-        iStream.add(new IsDefMgNodeInstruction(nodeID, (uns)instr.size()));
+        iStream.add(new IsDefMgNodeInstruction(isRestrict, nodeID, (uns)instr.size()));
         for (const auto& inst : instr) {
             iStream.add(new IsDefMgOneInstruction(inst.srcComponentIndex, inst.nodeID, inst.weight));
         }
@@ -205,6 +167,8 @@ struct FineCoarseConnectionDescription {
     std::vector<ComponentGroup> componentGroups;
     std::vector<NodeInstruction> globalNodeRestrictions;
     std::vector<NodeInstruction> globalNodeProlongations;
+
+    void processInstructions(IsInstruction*& first);
 };
 
 
@@ -225,9 +189,9 @@ struct InterfaceFineCoarseConnectionDescription {
         iStream.add(new IsDefMultigridFineCoarseConnectionInstruction(indexFineFullCircuit,
             indexCoarseFullCircuit, (uns)globalNodeRestrictions.size(), (uns)globalNodeProlongations.size(), (uns)componentGroups.size()));
         for (const auto& nodes : globalNodeRestrictions)
-            nodes.toInstructionStream(iStream);
+            nodes.toInstructionStream(iStream, true);
         for (const auto& nodes : globalNodeProlongations)
-            nodes.toInstructionStream(iStream);
+            nodes.toInstructionStream(iStream, false);
         for (const auto& group : componentGroups)
             group.toInstructionStream(iStream);
         iStream.add(new IsEndDefInstruction(sitMgFineCoarse, 0));

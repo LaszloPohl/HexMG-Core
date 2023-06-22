@@ -1471,6 +1471,7 @@ class ComponentSubCircuit final : public ComponentBase {
     friend class hmgSunred;
     friend class SunredTreeNode;
     friend class CircuitStorage;
+    friend struct FineCoarseConnectionDescription;
     //***********************************************************************
     std::vector<std::unique_ptr<ComponentBase>> components;
     std::vector<std::unique_ptr<Controller>> controllers;
@@ -2401,6 +2402,7 @@ inline ComponentAndControllerBase* ModelSubCircuit::makeComponent(const Componen
 //***********************************************************************
 class CircuitStorage {
 //***********************************************************************
+    friend class Simulation;
 
     //***********************************************************************
     struct Probe {

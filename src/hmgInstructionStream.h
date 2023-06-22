@@ -204,8 +204,8 @@ struct IsDefMgLocalNodeInstruction : public IsInstruction {
 //***********************************************************************
     uns destIndex = 0;
     uns nInstructions = 0;
-    SimpleInterfaceNodeID nodeID;
-    IsDefMgLocalNodeInstruction(uns destIndx, const SimpleInterfaceNodeID& nodeID_, uns nInstrs)
+    CDNode nodeID;
+    IsDefMgLocalNodeInstruction(uns destIndx, const CDNode& nodeID_, uns nInstrs)
         :IsInstruction{ sitMgLocalSimple }, destIndex{ destIndx }, nodeID{ nodeID_ }, nInstructions{ nInstrs } {}
 };
 
@@ -215,9 +215,9 @@ struct IsDefMgOneLocalNodeInstruction : public IsInstruction {
 //***********************************************************************
     bool isDestLevel = false;
     uns srcIndex = 0;
-    SimpleInterfaceNodeID nodeID;
+    CDNode nodeID;
     rvt weight = 0.5;
-    IsDefMgOneLocalNodeInstruction(bool isDestLevel_, uns srcIndex_, const SimpleInterfaceNodeID& nodeID_, rvt weight_)
+    IsDefMgOneLocalNodeInstruction(bool isDestLevel_, uns srcIndex_, const CDNode& nodeID_, rvt weight_)
         :IsInstruction{ sitMgOneLocalSimple }, isDestLevel{ isDestLevel_ }, srcIndex{ srcIndex_ }, nodeID{ nodeID_ }, weight{ weight_ } {}
 };
 
@@ -225,10 +225,10 @@ struct IsDefMgOneLocalNodeInstruction : public IsInstruction {
 //***********************************************************************
 struct IsDefMgRecursiveInstruction : public IsInstruction {
 //***********************************************************************
-    SimpleInterfaceNodeID nodeID;
+    CDNode nodeID;
     uns compDepth = 0;
     uns nInstr = 0;
-    IsDefMgRecursiveInstruction(const SimpleInterfaceNodeID& nodeID_, uns compDepth_, uns nInstr_)
+    IsDefMgRecursiveInstruction(const CDNode& nodeID_, uns compDepth_, uns nInstr_)
         :IsInstruction{ sitMgRecursiveInstr }, nodeID{ nodeID_ }, compDepth{ compDepth_ }, nInstr{ nInstr_ } {}
 };
 
@@ -238,9 +238,9 @@ struct IsDefMgOneRecursiveInstruction : public IsInstruction {
 //***********************************************************************
     bool isDestLevel = false;
     uns compDepth = 0;
-    SimpleInterfaceNodeID nodeID;
+    CDNode nodeID;
     rvt weight = 0.5; // inst.isDestLevel, inst.nodeID.nodeID, (uns)inst.nodeID.componentID.size(), inst.weight
-    IsDefMgOneRecursiveInstruction(bool isDestLevel_, const SimpleInterfaceNodeID& nodeID_, uns compDepth_, rvt weight_)
+    IsDefMgOneRecursiveInstruction(bool isDestLevel_, const CDNode& nodeID_, uns compDepth_, rvt weight_)
         :IsInstruction{ sitMgOneRecursiveInstr }, isDestLevel{ isDestLevel_ }, nodeID{ nodeID_ }, compDepth{ compDepth_ }, weight{ weight_ } {}
 };
 
@@ -262,10 +262,11 @@ struct IsDefMultigridFineCoarseConnectionInstruction : public IsInstruction {
 //***********************************************************************
 struct IsDefMgNodeInstruction : public IsInstruction {
 //***********************************************************************
+    bool isRestrict = false;
     SimpleInterfaceNodeID nodeID;
     uns nInstr = 0;
-    IsDefMgNodeInstruction(const SimpleInterfaceNodeID& nodeID_, uns nInstr_)
-        :IsInstruction{ sitMgNodeInstruction }, nodeID{ nodeID_ }, nInstr{ nInstr_ } {}
+    IsDefMgNodeInstruction(bool isRestrict_, const SimpleInterfaceNodeID& nodeID_, uns nInstr_)
+        :IsInstruction{ sitMgNodeInstruction }, isRestrict{ isRestrict_ }, nodeID{ nodeID_ }, nInstr{ nInstr_ } {}
 };
 
 

@@ -214,7 +214,7 @@ void CircuitStorage::processSunredTreeInstructions(IsInstruction*& first, uns cu
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitSunredTree)
-                        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("CircuitStorage::processSunredTreeInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
@@ -233,7 +233,7 @@ void CircuitStorage::processMultigridInstructions(IsInstruction*& first, uns cur
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
-        throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during sunred tree definition.");
+        throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during multigrid definition.");
     hmgMultigrid& mg = *multiGrids[currentMg];
     while (isNotFinished) {
         IsInstruction* act = first;
@@ -266,28 +266,45 @@ void CircuitStorage::processMultigridInstructions(IsInstruction*& first, uns cur
                     
                     LocalProlongationOrRestrictionInstructions& instr = pAct->isRestrict ? mg.localNodeRestrictionTypes[pAct->index] : mg.localNodeProlongationTypes[pAct->index];
 
+                    instr.destComponentsNodes.clear();
+                    instr.deepDestComponentNodes.clear();
+                    instr.destComponentsNodes.reserve(pAct->nSimpleNodes);
+                    instr.deepDestComponentNodes.reserve(pAct->nDeepNodes);
+
                     instr.processInstructions(first);
                 }
                 break;
             case sitMgFineCoarse: {
                     IsDefMultigridFineCoarseConnectionInstruction* pAct = static_cast<IsDefMultigridFineCoarseConnectionInstruction*>(act);
+                    mg.levels.push_back(FineCoarseConnectionDescription());
+                    FineCoarseConnectionDescription& fccd = mg.levels.back();
 
+                    fccd.indexFineFullCircuit = pAct->indexFineFullCircuit;
+                    fccd.indexCoarseFullCircuit = pAct->indexCoarseFullCircuit;
+                    fccd.componentGroups.clear();
+                    fccd.globalNodeRestrictions.clear();
+                    fccd.globalNodeProlongations.clear();
+                    fccd.componentGroups.reserve(pAct->nComponentGroups);
+                    fccd.globalNodeRestrictions.reserve(pAct->nGlobalNodeRestrictions);
+                    fccd.globalNodeProlongations.reserve(pAct->nGlobalNodeProlongations);
+
+                    fccd.processInstructions(first);
                 }
                 break;
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitMultigrid)
-                        throw hmgExcept("CircuitStorage::processMultigridInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("CircuitStorage::processMultigridInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
         default:
-            throw hmgExcept("CircuitStorage::processMultigridInstructions", "%u is not a sunred tree instruction", act->instruction);
+            throw hmgExcept("CircuitStorage::processMultigridInstructions", "%u is not a multigrid instruction", act->instruction);
         }
 
         delete act;
         if(isNotFinished && first == nullptr)
-            throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during sunred tree definition.");
+            throw hmgExcept("CircuitStorage::processMultigridInstructions", "The instruction stream has ended during multigrid definition.");
     }
 }
 
@@ -295,7 +312,278 @@ void CircuitStorage::processMultigridInstructions(IsInstruction*& first, uns cur
 //***********************************************************************
 void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstruction*& first) {
 //***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitMgLocalSimple: {
+                    IsDefMgLocalNodeInstruction* pAct = static_cast<IsDefMgLocalNodeInstruction*>(act);
+                    destComponentsNodes.emplace_back(LocalNodeInstruction());
+                    LocalNodeInstruction& instr = destComponentsNodes.back();
+                    instr.destIndex = pAct->destIndex;
+                    instr.nodeID = pAct->nodeID;
+                    instr.instr.reserve(pAct->nInstructions);
+                    cuns nInstructions = pAct->nInstructions;
 
+                    delete act;
+                    if (first == nullptr)
+                        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+                    
+                    act = first;
+                    first = first->next;
+                    while (act->instruction == sitMgOneLocalSimple) {
+                        IsDefMgOneLocalNodeInstruction* pAct = static_cast<IsDefMgOneLocalNodeInstruction*>(act);
+                        instr.instr.push_back({ pAct->isDestLevel, pAct->srcIndex, pAct->nodeID, pAct->weight });
+                        delete act;
+                        if (first == nullptr)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+                        act = first;
+                        first = first->next;
+                    }
+                    if (act->instruction == sitEndInstruction) {
+                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                        if (pAct->whatEnds != sitMgLocalSimple)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        if(instr.instr.size() != nInstructions)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u instruction expected, %u arrived", nInstructions, (uns)instr.instr.size());
+                    }
+                    else
+                        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u is not a local restriction / prolongation instruction", act->instruction);
+                }
+                break;
+            case sitMgRecursiveInstr: {
+                    IsDefMgRecursiveInstruction* pAct = static_cast<IsDefMgRecursiveInstruction*>(act);
+                    deepDestComponentNodes.emplace_back(RecursiveInstruction());
+                    RecursiveInstruction& instr = deepDestComponentNodes.back();
+                    instr.nodeID.nodeID = pAct->nodeID;
+                    instr.nodeID.componentID.reserve(pAct->compDepth);
+                    instr.instr.reserve(pAct->nInstr);
+                    cuns nInstructions = pAct->nInstr;
+                    cuns compDepth = pAct->compDepth;
+
+                    delete act;
+                    if (first == nullptr)
+                        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+
+                    act = first;
+                    first = first->next;
+                    while (act->instruction == sitMgOneRecursiveInstr || act->instruction == sitUns) {
+                        if (act->instruction == sitMgOneRecursiveInstr) {
+                            IsDefMgOneRecursiveInstruction* pAct = static_cast<IsDefMgOneRecursiveInstruction*>(act);
+                            instr.instr.emplace_back(OneRecursiveInstruction());
+                            OneRecursiveInstruction& one = instr.instr.back();
+                            one.isDestLevel = pAct->isDestLevel;
+                            one.weight = pAct->weight;
+                            one.nodeID.nodeID = pAct->nodeID;
+                            one.nodeID.componentID.reserve(pAct->compDepth);
+                            cuns oneCompDept = pAct->compDepth;
+
+                            delete act;
+                            if (first == nullptr)
+                                throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+
+                            act = first;
+                            first = first->next;
+                            while (act->instruction == sitUns) {
+                                IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                                one.nodeID.componentID.push_back(pAct->data);
+                                delete act;
+                                if (first == nullptr)
+                                    throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+                                act = first;
+                                first = first->next;
+                            }
+                            if (act->instruction == sitEndInstruction) {
+                                IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                                if (pAct->whatEnds != sitMgRecursiveInstr)
+                                    throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                                if (one.nodeID.componentID.size() != oneCompDept)
+                                    throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u component depth expected, %u arrived", oneCompDept, (uns)one.nodeID.componentID.size());
+                            }
+                            else
+                                throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u is not a local restriction / prolongation instruction", act->instruction);
+                        }
+                        else {
+                            IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                            instr.nodeID.componentID.push_back(pAct->data);
+                            delete act;
+                            if (first == nullptr)
+                                throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+                            act = first;
+                            first = first->next;
+                        }
+                    }
+                    if (act->instruction == sitEndInstruction) {
+                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                        if (pAct->whatEnds != sitMgRecursiveInstr)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        if (instr.instr.size() != nInstructions)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u instruction expected, %u arrived", nInstructions, (uns)instr.instr.size());
+                        if (instr.nodeID.componentID.size() != compDepth)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u component depth expected, %u arrived", compDepth, (uns)instr.nodeID.componentID.size());
+                    }
+                    else
+                        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u is not a local restriction / prolongation instruction", act->instruction);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitMgLocals)
+                        throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u is not a local restriction / prolongation instruction", act->instruction);
+        }
+
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
+    }
+}
+
+
+//***********************************************************************
+void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    InternalNodeVarSizePack dummyInternalPack;
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitMgNodeInstruction: {
+                    IsDefMgNodeInstruction* pAct = static_cast<IsDefMgNodeInstruction*>(act);
+                    
+                    if (pAct->isRestrict)
+                        globalNodeRestrictions.emplace_back(NodeInstruction());
+                    else
+                        globalNodeProlongations.emplace_back(NodeInstruction());
+                    NodeInstruction& instr = pAct->isRestrict ? globalNodeRestrictions.back() : globalNodeProlongations.back();
+
+                    ComponentSubCircuit& destSubckt = *gc.fullCircuitInstances[pAct->isRestrict ? indexCoarseFullCircuit : indexFineFullCircuit].component;
+                    ComponentSubCircuit& srcSubckt  = *gc.fullCircuitInstances[pAct->isRestrict ? indexFineFullCircuit : indexCoarseFullCircuit].component;
+                    CDNode dNode = SimpleInterfaceNodeID2CDNode(pAct->nodeID, destSubckt.pModel->externalNs, static_cast<const ModelSubCircuit*>(destSubckt.pModel)->internalNs);
+                    if(dNode.type != cdntInternal)
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%s destination node must be internal", pAct->isRestrict ? ".GLOBALRESTRICTION" : ".GLOBALPROLONGATION");
+                    instr.destNodeIndex = dNode.index;
+                    instr.instr.reserve(pAct->nInstr);
+                    cuns nInstr = pAct->nInstr;
+                    bool isRestrict = pAct->isRestrict;
+
+                    delete act;
+                    if (first == nullptr)
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+
+                    act = first;
+                    first = first->next;
+                    while (act->instruction == sitMgOne) {
+                        IsDefMgOneInstruction* pAct = static_cast<IsDefMgOneInstruction*>(act);
+
+                        const ComponentBase* component = pAct->srcIndex == unsMax ? &srcSubckt : srcSubckt.components[pAct->srcIndex].get();
+                        const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+
+                        CDNode sNode = SimpleInterfaceNodeID2CDNode(pAct->nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs);
+                        if (sNode.type != cdntInternal)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%s SRC node must be internal", isRestrict ? ".GLOBALRESTRICTION" : ".GLOBALPROLONGATION");
+
+                        instr.instr.push_back({ pAct->srcIndex, sNode.index, pAct->weight });
+
+                        delete act;
+                        if (first == nullptr)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+                        act = first;
+                        first = first->next;
+                    }
+                    if (act->instruction == sitEndInstruction) {
+                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                        if (pAct->whatEnds != sitMgNodeInstruction)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        if (instr.instr.size() != nInstr)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u instruction expected, %u arrived", nInstr, (uns)instr.instr.size());
+                    }
+                    else
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u is not a global restriction / prolongation instruction", act->instruction);
+                }
+                break;
+            case sitMgComponentGroup: {
+                    IsDefMultigridComponentGroupInstruction* pAct = static_cast<IsDefMultigridComponentGroupInstruction*>(act);
+
+                    componentGroups.emplace_back(ComponentGroup());
+                    ComponentGroup& cg = componentGroups.back();
+
+                    cg.isCopy = pAct->isCopy;
+                    cg.localRestrictionIndex = pAct->localRestrictionIndex;
+                    cg.localProlongationIndex = pAct->localProlongationIndex;
+                    cg.fineCells.resize(pAct->nFineCells);
+                    cg.coarseCells.resize(pAct->nCoarseCells);
+
+                    delete act;
+                    if (first == nullptr)
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+
+                    act = first;
+                    first = first->next;
+
+                    for (uns i = 0; i < cg.fineCells.size(); i++) {
+                        if(act->instruction != sitUns)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "Not enough fine cell sent to the component group.");
+                        IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                        cg.fineCells[i] = pAct->data;
+
+                        delete act;
+                        if (first == nullptr)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+                        act = first;
+                        first = first->next;
+                    }
+
+                    for (uns i = 0; i < cg.coarseCells.size(); i++) {
+                        if (act->instruction != sitUns)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "Not enough coarse cell sent to the component group.");
+                        IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                        cg.coarseCells[i] = pAct->data;
+
+                        delete act;
+                        if (first == nullptr)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+                        act = first;
+                        first = first->next;
+                    }
+
+                    if (act->instruction == sitEndInstruction) {
+                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                        if (pAct->whatEnds != sitMgComponentGroup)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                    }
+                    else
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u is not a global restriction / prolongation instruction", act->instruction);
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitMgFineCoarse)
+                        throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+        default:
+            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u is not a .LEVEL (.GLOBALRESTRICTION, .GLOBALPROLONGATION, .COMPONENTGROUP) instruction", act->instruction);
+        }
+
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
+    }
 }
 
 
@@ -318,7 +606,7 @@ void CircuitStorage::processRailsInstructions(IsInstruction*& first) {
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitRails)
-                        throw hmgExcept("CircuitStorage::processRailsInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("CircuitStorage::processRailsInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
@@ -368,7 +656,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitProbe)
-                        throw hmgExcept("CircuitStorage::processProbesInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("CircuitStorage::processProbesInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
@@ -401,7 +689,7 @@ void CircuitStorage::processSaveInstructions(IsInstruction*& first, std::vector<
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitSave)
-                        throw hmgExcept("CircuitStorage::processSaveInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("CircuitStorage::processSaveInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
@@ -460,7 +748,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitDefModelSubcircuit)
-                        throw hmgExcept("ModelSubCircuit::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("ModelSubCircuit::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;
@@ -498,7 +786,7 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitComponentInstance)
-                        throw hmgExcept("ComponentDefinition::processInstructions", "illegal ending instruction type (%u) in global level", pAct->whatEnds);
+                        throw hmgExcept("ComponentDefinition::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
                 }
                 break;

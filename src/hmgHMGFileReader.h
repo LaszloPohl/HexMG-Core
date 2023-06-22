@@ -238,6 +238,21 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
 
 
 //***********************************************************************
+inline bool textToCDNode(const char* text, CDNode& result) {
+//***********************************************************************
+    uns pos = 0;
+    SimpleInterfaceNodeID tmp;
+    if (!textToSimpleInterfaceNodeID(text, pos, tmp))
+        return false;
+    if (tmp.type != nvtIO && tmp.type != nvtNInternal)
+        return false;
+    result.index = tmp.index;
+    result.type = tmp.type == nvtIO ? cdntExternal : cdntInternal;
+    return true;
+}
+
+
+//***********************************************************************
 class ReadALine {
 //***********************************************************************
     bool is_open, is_EOF;
@@ -347,6 +362,8 @@ struct GlobalHMGFileNames {
     //***********************************************************************
     bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
     bool textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest);
+    bool textToDeepCDNodeID(char* token, uns fullCircuitIndex, DeepCDNodeID& dest);
+    bool textRawToDeepCDNodeID(char* token, DeepCDNodeID& dest);
     //***********************************************************************
 };
 
@@ -557,8 +574,8 @@ struct HMGFileMultiGrid : HMGFileListItem {
     bool isReplacer = false;
     std::string fullName;
     HMGFileMultiGrid* pParent = nullptr; // if this is a replacer, parent is the replaced object
-    std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
-    std::vector<InterfaceLocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeRestrictionTypes;
+    std::vector<LocalProlongationOrRestrictionInstructions> localNodeProlongationTypes;
     std::vector<InterfaceFineCoarseConnectionDescription> levels; // 0 is the coarsest multigrid level, sunred level is not included because these are the destination levels
     //***********************************************************************
 

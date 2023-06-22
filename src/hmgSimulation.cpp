@@ -99,6 +99,11 @@ void Simulation::runAC() {
 //***********************************************************************
 void Simulation::run(const RunData& runData) {
 //***********************************************************************
+    if (runData.isMultigrid) {
+        CircuitStorage& gc = CircuitStorage::getInstance();
+        gc.multiGrids[runData.fullCircuitID]->solveDC();
+        return;
+    }
     analysisType = runData.analysisType;
     err = runData.err;
     fullCircuitID = runData.fullCircuitID;

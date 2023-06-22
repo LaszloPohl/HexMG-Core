@@ -311,8 +311,8 @@ struct SimulationToSaveData {
 
 
 //***********************************************************************
-enum CDNodeType { cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected }; // unconnected: only for ONodes
-struct CDNode { CDNodeType type = cdntExternal; uns index = 0; };
+enum CDNodeType { cdntNone, cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected }; // unconnected: only for ONodes
+struct CDNode { CDNodeType type = cdntNone; uns index = 0; }; // ! default type must be cdntNone!
 enum CDParamType { cdptValue, cdptGlobalVariable, cdptLocalVariable, cdptParam, cdptInternalNode, cdptExternalNode };
 struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt value = rvt0; };
 //***********************************************************************

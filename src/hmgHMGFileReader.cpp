@@ -319,6 +319,41 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
 
 
 //***********************************************************************
+bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, DeepCDNodeID& dest) {
+//***********************************************************************
+    dest.componentID.clear();
+    if (strcmp(token, "0") == 0) {
+        dest.nodeID.index = unsMax;
+        return true;
+    }
+    uns componentIndex = 0;
+    HMGFileModelDescription* currentComponent = modelData[fullCircuitData[fullCircuitIndex]->modelID];
+    while (true) {
+        uns i = 0;
+        while (token[i] != '\0' && token[i] != '.')
+            i++;
+        if (token[i] == '.') {
+            token[i] = '\0';
+            if (currentComponent == nullptr)
+                return false;
+            uns ci = currentComponent->instanceListIndex[token];
+            dest.componentID.push_back(ci);
+            HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+            currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
+            token[i] = '.';
+            componentIndex++;
+            token += i + 1;
+        }
+        else {
+            if (!textToCDNode(token, dest.nodeID))
+                return false;
+            return true;
+        }
+    }
+}
+
+
+//***********************************************************************
 bool GlobalHMGFileNames::textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest) {
 //***********************************************************************
     dest.componentID.clear();
@@ -337,6 +372,32 @@ bool GlobalHMGFileNames::textRawToDeepInterfaceNodeID(char* token, DeepInterface
         }
         else {
             if (!textToSimpleInterfaceNodeID(token, dest.nodeID))
+                return false;
+            return true;
+        }
+    }
+}
+
+
+//***********************************************************************
+bool GlobalHMGFileNames::textRawToDeepCDNodeID(char* token, DeepCDNodeID& dest) {
+//***********************************************************************
+    dest.componentID.clear();
+    while (true) {
+        uns i = 0;
+        while (token[i] != '\0' && token[i] != '.')
+            i++;
+        if (token[i] == '.') {
+            token[i] = '\0';
+            uns ci = 0;
+            if (sscanf_s(token, "%u", &ci) != 1)
+                return false;
+            dest.componentID.push_back(ci);
+            token[i] = '.';
+            token += i + 1;
+        }
+        else {
+            if (!textToCDNode(token, dest.nodeID))
                 return false;
             return true;
         }
@@ -1369,7 +1430,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALRESTRICTIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 lrtIndex = (uns)globalNames.localRestrictionTypeNames.size();
                 globalNames.localRestrictionTypeNames[token] = lrtIndex;
-                localNodeRestrictionTypes.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions());
+                localNodeRestrictionTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
             }
             else {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1377,12 +1438,12 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     throw hmgExcept("HMGFileMultiGrid::Read", ".LOCALPROLONGATIONTYPE %s redefinition in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 lrtIndex = (uns)globalNames.localProlongationTypeNames.size();
                 globalNames.localProlongationTypeNames[token] = lrtIndex;
-                localNodeProlongationTypes.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions());
+                localNodeProlongationTypes.emplace_back(LocalProlongationOrRestrictionInstructions());
             }
 
-            InterfaceLocalProlongationOrRestrictionInstructions& rest = isRestrict ? localNodeRestrictionTypes.back() : localNodeProlongationTypes.back();
+            LocalProlongationOrRestrictionInstructions& rest = isRestrict ? localNodeRestrictionTypes.back() : localNodeProlongationTypes.back();
             bool isRestrictionProlongationNotEnded = true;
-            InterfaceLocalProlongationOrRestrictionInstructions::RecursiveInstruction recursive;
+            LocalProlongationOrRestrictionInstructions::RecursiveInstruction recursive;
             bool isDeep = false;
             do {
                 if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
@@ -1394,16 +1455,16 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                 bool isDestNode = false;
                 bool isSrcDest = false;
                 if (strcmp(token, ".DESTNODE") == 0) {
-                    isToPush = recursive.nodeID.nodeID.type != nvtNone;
+                    isToPush = recursive.nodeID.nodeID.type != cdntNone;
                     isDestNode = true;
                 }
                 else if (strcmpC(token, "SRC", 1, code) == 0 || strcmpC(token, "DEST", 2, code) == 0) {
-                    recursive.instr.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions::OneRecursiveInstruction());
+                    recursive.instr.emplace_back(LocalProlongationOrRestrictionInstructions::OneRecursiveInstruction());
                     recursive.instr.back().isDestLevel = code == 2;
                     isSrcDest = true;
                 }
                 else if (strcmp(token, ".END") == 0) {
-                    isToPush = recursive.nodeID.nodeID.type != nvtNone;
+                    isToPush = recursive.nodeID.nodeID.type != cdntNone;
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (strcmp(token, isRestrict ? "LOCALRESTRICTIONTYPE" : "LOCALPROLONGATIONTYPE") != 0)
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", ".END %s expected, %s arrived in %s, line %u: %s", isRestrict ? "LOCALRESTRICTIONTYPE" : "LOCALPROLONGATIONTYPE", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -1422,7 +1483,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                         rest.deepDestComponentNodes.push_back(std::move(recursive));
                     }
                     else {
-                        rest.destComponentsNodes.emplace_back(InterfaceLocalProlongationOrRestrictionInstructions::LocalNodeInstruction());
+                        rest.destComponentsNodes.emplace_back(LocalProlongationOrRestrictionInstructions::LocalNodeInstruction());
                         auto& dest = rest.destComponentsNodes.back();
                         dest.destIndex = recursive.nodeID.componentID[0];
                         dest.nodeID = recursive.nodeID.nodeID;
@@ -1432,15 +1493,15 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     }
                 }
                 if (isDestNode) {
-                    recursive = InterfaceLocalProlongationOrRestrictionInstructions::RecursiveInstruction();
+                    recursive = LocalProlongationOrRestrictionInstructions::RecursiveInstruction();
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if (!globalNames.textRawToDeepInterfaceNodeID(token, recursive.nodeID))
+                    if (!globalNames.textRawToDeepCDNodeID(token, recursive.nodeID))
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     isDeep = recursive.nodeID.componentID.size() > 1;
                 }
                 if (isSrcDest) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if (!globalNames.textRawToDeepInterfaceNodeID(token, recursive.instr.back().nodeID))
+                    if (!globalNames.textRawToDeepCDNodeID(token, recursive.instr.back().nodeID))
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     isDeep = isDeep || recursive.instr.back().nodeID.componentID.size() > 1;
 
