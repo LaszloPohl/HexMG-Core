@@ -99,15 +99,40 @@ void Simulation::runAC() {
 //***********************************************************************
 void Simulation::run(const RunData& runData) {
 //***********************************************************************
-    if (runData.isMultigrid) {
-        CircuitStorage& gc = CircuitStorage::getInstance();
-        gc.multiGrids[runData.fullCircuitID]->solveDC();
-        return;
-    }
+
     analysisType = runData.analysisType;
     err = runData.err;
     fullCircuitID = runData.fullCircuitID;
     dtValue = rvt0;
+
+    // ******************************************************************
+    // MULTIGRID
+    // ******************************************************************
+
+    if (runData.isMultigrid) {
+
+        if (runData.isInitial)
+            SimControl::setInitialDC();
+        else
+            SimControl::setFinalDC();
+        // TODO: runData.isPre
+        timeFreqValue = rvt0;
+        dtValue = rvt0;
+
+        CircuitStorage& gc = CircuitStorage::getInstance();
+        gc.multiGrids[runData.fullCircuitID]->solveDC(); // fullCircuitID used as choosing the multigrid (in most cases only one multigrid is defined => fullCircuitID == 0
+        std::cout << std::endl;
+
+        gc.fullCircuitInstances[1].component->printNodeValueDC(0);
+        std::cout << std::endl;
+        gc.fullCircuitInstances[0].component->printNodeValueDC(0);
+        return;
+    }
+
+    // ******************************************************************
+    // END MULTIGRID
+    // ******************************************************************
+
     if ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial)) {
         SimControl::setInitialDC();
         // TODO: runData.isPre

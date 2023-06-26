@@ -1367,7 +1367,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                         
                         if (!globalNames.localProlongationTypeNames.contains(token))
                             throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unknown LOCALPROLONGATIONTYPE: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                        cg.localRestrictionIndex = globalNames.localProlongationTypeNames[token];
+                        cg.localProlongationIndex = globalNames.localProlongationTypeNames[token];
                     }
 
                     bool isComponentGroupNotEnded = true;

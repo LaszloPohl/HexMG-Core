@@ -1477,7 +1477,9 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
     // contained components
 
-    for (const auto& componentGroup : connections.componentGroups) {
+//    for (const auto& componentGroup : connections.componentGroups) {
+    for (uns i = 0; i < connections.componentGroups.size(); i++) {
+        const auto& componentGroup = connections.componentGroups[i];
 
         // the same cell in both levels
 
@@ -1494,8 +1496,10 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
         // top level components
         
-        for (const auto& dest : instructions.destComponentsNodes) {
-            
+//        for (const auto& dest : instructions.destComponentsNodes) {
+        for (uns j = 0; j < instructions.destComponentsNodes.size(); j++) {
+            const auto& dest = instructions.destComponentsNodes[j];
+
             rvt sumU = rvt0;
             
             for (const auto& src : dest.instr) {
