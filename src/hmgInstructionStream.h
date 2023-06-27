@@ -439,6 +439,15 @@ struct IsRunInstruction: public IsInstruction {
 
 
 //***********************************************************************
+struct IsSetInstruction: public IsInstruction {
+//***********************************************************************
+    DeepInterfaceNodeID nodeID;  // contains the FullCircuitID !
+    rvt value;
+    IsSetInstruction(const DeepInterfaceNodeID& node, rvt value_) :IsInstruction{ sitSet }, nodeID{ node }, value{ value_ } {}
+};
+
+
+//***********************************************************************
 struct IsSaveInstruction: public IsInstruction {
 //***********************************************************************
     bool isRaw = false;

@@ -319,6 +319,49 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
 
 
 //***********************************************************************
+bool GlobalHMGFileNames::textToDeepInterfaceVarID(char* token, DeepInterfaceNodeID& dest) {
+// dest constains the full circuit ID
+//***********************************************************************
+    dest.componentID.clear();
+    if (strcmp(token, "0") == 0) {
+        dest.nodeID.index = unsMax;
+        return true;
+    }
+    uns componentIndex = 0;
+    HMGFileModelDescription* currentComponent = nullptr;
+    while (true) {
+        uns i = 0;
+        while (token[i] != '\0' && token[i] != '.')
+            i++;
+        if (token[i] == '.') {
+            token[i] = '\0';
+            if (currentComponent == nullptr) {
+                if (!dest.componentID.empty() || !fullCircuitNames.contains(token))
+                    return false;
+                uns fullCircuitIndex = fullCircuitNames[token];
+                dest.componentID.push_back(fullCircuitIndex);
+                currentComponent = modelData[fullCircuitData[fullCircuitIndex]->modelID];
+            }
+            else {
+                uns ci = currentComponent->instanceListIndex[token];
+                dest.componentID.push_back(ci);
+                HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+                currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
+            }
+            token[i] = '.';
+            componentIndex++;
+            token += i + 1;
+        }
+        else {
+            if (!textToSimpleInterfaceNodeID(token, dest.nodeID))
+                return false;
+            return true;
+        }
+    }
+}
+
+
+//***********************************************************************
 bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, DeepCDNodeID& dest) {
 //***********************************************************************
     dest.componentID.clear();
@@ -503,7 +546,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", externalNs.nNormalONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", externalNs.nForwardedONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nControlInternalNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VAR", internalNs.nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VI", internalNs.nInternalVars));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
             lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1099,6 +1142,37 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
 
 //***********************************************************************
+void HMGFileSet::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read Set head
+
+    lineToken.init(line);
+    char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".SET") != 0)
+        throw hmgExcept("HMGFileSet::Read", ".SET expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // var ID
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (!globalNames.textToDeepInterfaceVarID(token, varID))
+        throw hmgExcept("HMGFileSet::Read", "unrecognised variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    if (varID.nodeID.type != nvtVarInternal && varID.nodeID.type != nvtVarGlobal)
+        throw hmgExcept("HMGFileSet::Read", "not a variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+    // value
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    if (!spiceTextToRvt(token, value))
+        throw hmgExcept("HMGFileSet::Read", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+}
+
+
+//***********************************************************************
 void HMGFileSunredTree::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
@@ -1586,6 +1660,11 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 HMGFileSave* pSave = new HMGFileSave;
                 itemList.push_back(pSave);
                 pSave->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".SET") == 0) {
+                HMGFileSet* pSet = new HMGFileSet;
+                itemList.push_back(pSet);
+                pSet->Read(reader, line, lineInfo);
             }
             else if (strcmp(token, ".END") == 0) {
                 isStop = true;

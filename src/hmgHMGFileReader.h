@@ -161,12 +161,7 @@ inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleI
                 return false;
             break;
         case 'G':
-            if (text[position + 1] == 'V' && text[position + 2] == 'A' && text[position + 3] == 'R') {
-                result.type = nvtVarGlobal;
-                if (sscanf_s(&text[position + 4], "%u", &result.index) != 1)
-                    return false;
-            }
-            else if (text[position + 1] == 'N' && text[position + 2] == 'D') {
+            if (text[position + 1] == 'N' && text[position + 2] == 'D') {
                 result.type = nvtGND;
             }
             else
@@ -212,10 +207,10 @@ inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleI
                 return false;
             break;
         case 'V':
-            if (text[position + 1] != 'A' || text[position + 2] != 'R')
+            if (text[position + 1] != 'I' && text[position + 1] != 'G')
                 return false;
-            result.type = nvtVarInternal;
-            if (sscanf_s(&text[position + 3], "%u", &result.index) != 1)
+            result.type = text[position + 1] == 'I' ? nvtVarInternal : nvtVarGlobal;
+            if (sscanf_s(&text[position + 2], "%u", &result.index) != 1)
                 return false;
             break;
         default:
@@ -362,6 +357,7 @@ struct GlobalHMGFileNames {
     //***********************************************************************
     bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
     bool textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest);
+    bool textToDeepInterfaceVarID(char* token, DeepInterfaceNodeID& dest);
     bool textToDeepCDNodeID(char* token, uns fullCircuitIndex, DeepCDNodeID& dest);
     bool textRawToDeepCDNodeID(char* token, DeepCDNodeID& dest);
     //***********************************************************************
@@ -678,6 +674,24 @@ struct HMGFileRun: HMGFileListItem {
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
         iStream.add(new IsRunInstruction(data));
+    }
+};
+
+
+//***********************************************************************
+struct HMGFileSet: HMGFileListItem {
+//***********************************************************************
+    //***********************************************************************
+    DeepInterfaceNodeID varID; // contains the FullCircuitID !
+    rvt value = rvt0;
+    //***********************************************************************
+
+    //***********************************************************************
+    void Read(ReadALine&, char*, LineInfo&);
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+        iStream.add(new IsSetInstruction(varID, value));
     }
 };
 

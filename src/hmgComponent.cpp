@@ -160,6 +160,41 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitExpressionAtom:                 isImpossibleInstruction = true; break;
             case sitUns:                            isImpossibleInstruction = true; break;
+            case sitSet: {
+                    IsSetInstruction* pAct = static_cast<IsSetInstruction*>(act);
+                    if (pAct->nodeID.nodeID.type == nvtVarGlobal) {
+                        NodeVariable* poi = vectorForcedGet(globalVariables, pAct->nodeID.nodeID.index).get();
+                        if (poi == nullptr) {
+                            globalVariables[pAct->nodeID.nodeID.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
+                            poi = globalVariables[pAct->nodeID.nodeID.index].get();
+                            poi->setDefaultValueIndex(0, true);
+                        }
+                        poi->setValueDC(pAct->value);
+                    }
+                    else if (pAct->nodeID.nodeID.type == nvtVarInternal) {
+                        if (pAct->nodeID.componentID.size() == 0)
+                            throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: missing full circuit ID");
+                        if(pAct->nodeID.componentID[0] >= fullCircuitInstances.size())
+                            throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: invalid full circuit ID (%u)", pAct->nodeID.componentID[0]);
+                        ComponentSubCircuit* subckt = fullCircuitInstances[pAct->nodeID.componentID[0]].component.get();
+                        for (uns i = 1; i < pAct->nodeID.componentID.size(); i++) {
+                            if (subckt->components.size() <= pAct->nodeID.componentID[i])
+                                throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: invalid component index (%u), the subcircuit contains only %u components.", 
+                                    pAct->nodeID.componentID[i], (uns)subckt->components.size());
+                            subckt = dynamic_cast<ComponentSubCircuit*>(subckt->components[pAct->nodeID.componentID[i]].get());
+                            if (subckt == nullptr)
+                                throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: only subcircuits can have internal variables");
+                        }
+                        cuns offset = subckt->pModel->getN_InternalNodes();
+                        cuns index = offset + pAct->nodeID.nodeID.index;
+                        if (subckt->nInternalNodesAndVars <= index)
+                            throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: trying to set a non-existent internal variable (%u)", pAct->nodeID.nodeID.index);
+                        subckt->internalNodesAndVars[index].setValueDC(pAct->value);
+                    }
+                    else
+                        throw hmgExcept("CircuitStorage::processInstructions", ".SET: only variables can be set.");
+            }
+                break;
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitNothing)
@@ -896,6 +931,9 @@ void ComponentSubCircuit::buildOrReplace() {
     nInternalNodesAndVars = nUnconnectedOnodeIndex + nUnconnectedONode;
     internalNodesAndVars = new NodeVariable[nInternalNodesAndVars];
 
+    for (uns i = 0; i < model.internalNs.nInternalVars; i++)
+        internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + i].setDefaultValueIndex(0, true);
+
     for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
         if (externalNodes[i] == nullptr)
             externalNodes[i] = &internalNodesAndVars[nUnconnectedOnodeIndex++];
@@ -955,7 +993,12 @@ void ComponentSubCircuit::buildOrReplace() {
                     par.value = cdp.value;
                     break;
                 case CDParamType::cdptGlobalVariable:
-                    par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
+                    par.var = vectorForcedGet(CircuitStorage::getInstance().globalVariables, cdp.index).get();
+                    if (par.var == nullptr) {
+                        CircuitStorage::getInstance().globalVariables[cdp.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
+                        par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
+                    }
+                    par.var->setDefaultValueIndex(0, true);
                     break;
                 case CDParamType::cdptLocalVariable:
                     par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];

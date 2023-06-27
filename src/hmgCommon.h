@@ -130,6 +130,7 @@ enum StreamInstructionType {
     sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
 
     sitProbe, sitProbeNode, sitRun, sitFunction, sitExpressionAtom, sitUns,
+    sitSet,
 
     sitEndInstruction
 };
@@ -230,6 +231,20 @@ inline bool vectorForcedSet(std::vector<T>& v, const T& x, size_t index) {
         v[index] = x;
         return false;
     }
+}
+
+
+//***********************************************************************
+template<typename T>
+inline T& vectorForcedGet(std::vector<T>& v, size_t index) {
+//***********************************************************************
+    if (index > v.size()) {
+        v.resize(index + 1); // zeros the new elements
+    }
+    else if (index == v.size()) {
+        v.emplace_back(T());
+    }
+    return v[index];
 }
 
 
