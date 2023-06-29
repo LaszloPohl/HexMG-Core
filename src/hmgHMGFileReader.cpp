@@ -1751,36 +1751,36 @@ void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokeni
 //***********************************************************************
     for (uns i = 0; i < nPar; i++) {
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        HgmCustomFunctionModel::ParameterIdentifier id;
+        ParameterIdentifier id;
         if (token[0] == 'R' && token[1] == 'E' && token[2] == 'T') { // ! indexField[0] = ret
-            id.parType = HgmCustomFunctionModel::ptParam;
+            id.parType = ptParam;
             id.parIndex = 0;
         }
         else if (token[0] == 'F' && token[1] == 'R' && token[2] == 'E' && token[3] == 'T') { // ! indexField[0] = ret
-            id.parType = HgmCustomFunctionModel::ptPrev;
+            id.parType = ptPrev;
             id.parIndex = 0;
         }
         else {
             if (token[0] == 'P')
-                id.parType = HgmCustomFunctionModel::ptParam;
+                id.parType = ptParam;
             else if (token[0] == 'V')
-                id.parType = HgmCustomFunctionModel::ptLocalVar;
+                id.parType = ptLocalVar;
             else if (token[0] == 'F')
-                id.parType = HgmCustomFunctionModel::ptPrev;
+                id.parType = ptPrev;
             else
                 throw hmgExcept("HMGFileFunction::ReadParams", "unknown parameter type, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             
             if (sscanf_s(token + 1, "%u", &id.parIndex) != 1)
                 throw hmgExcept("HMGFileFunction::ReadParams", "not a number, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             
-            if (id.parType == HgmCustomFunctionModel::ptParam && id.parIndex >= nParams)
+            if (id.parType == ptParam && id.parIndex >= nParams)
                 throw hmgExcept("HMGFileFunction::ReadParams", "parameter index >= number of parameters in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-            if (id.parType == HgmCustomFunctionModel::ptLocalVar && id.parIndex >= nInternalVars)
+            if (id.parType == ptLocalVar && id.parIndex >= nInternalVars)
                 throw hmgExcept("HMGFileFunction::ReadParams", "variable index >= number of variables in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
             // ! indexField[0] = ret, indexField[1] = work field starts, indexField[2...nParam+2-1] = params !
 
-            if (id.parType == HgmCustomFunctionModel::ptParam || id.parType == HgmCustomFunctionModel::ptPrev)
+            if (id.parType == ptParam || id.parType == ptPrev)
                 id.parIndex += 2;
         }
         dest.parameters.push_back(id);

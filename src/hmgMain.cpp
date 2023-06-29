@@ -522,36 +522,36 @@ void probaSzimulacio4() {
 	funcModel.nParams = 2;
 	funcModel.nLocal = 1;
 
-	HgmCustomFunctionModel::ParameterIdentifier parId;
-	HgmCustomFunctionModel::LineDescription lineDesc;
+	ParameterIdentifier parId;
+	LineDescription lineDesc;
 
 	// U*U
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	funcModel.lines.push_back(lineDesc);
 
 	// (U*U)*G
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 3;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	funcModel.lines.push_back(lineDesc);
 
 	NodeConnectionInstructions functionSources; // Model_Function_Controlled_I_with_const_G ctor moves it !
@@ -630,7 +630,7 @@ void probaSzimulacio4() {
 
 
 //***********************************************************************
-int main(int n, const char** params) {
+int main_1(int n, const char** params) {
 //***********************************************************************
 	try {
 		HmgFileReader reader;
@@ -708,7 +708,7 @@ int main() {
 
 
 //***********************************************************************
-int main_1() {
+int main() {
 //***********************************************************************
 
 	//SpiceExpression se;
@@ -725,60 +725,60 @@ int main_1() {
 	HmgF_opMul fsqr;
 	rvt wf[3] = { 0.0, 1.0, 3.5 };
 	uns par[4] = { 0, 3, 1, 2 };
-	fsqr.evaluate(par, wf, nullptr);
-	std::cout << "\n" << fsqr.devive(par, wf, nullptr, 2) << std::endl;
-	std::cout << wf[0] << "\n" << std::endl;
+	fsqr.evaluate(par, wf, nullptr, LineDescription());
+	std::cout << "\nDERIVED: " << fsqr.devive(par, wf, nullptr, 2, LineDescription()) << std::endl;
+	std::cout << "RET: " << wf[0] << "\n" << std::endl;
 
 	HgmCustomFunctionModel fvModel;
 	fvModel.nParams = 4;
 	fvModel.nLocal = 3;
 
-	HgmCustomFunctionModel::ParameterIdentifier parId;
-	HgmCustomFunctionModel::LineDescription lineDesc;
+	ParameterIdentifier parId;
+	LineDescription lineDesc;
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 3;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futSqrt].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 1;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 4;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpPlus].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 1;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 5;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
 	HmgF_CustomFunction fuggveny(fvModel);
@@ -802,10 +802,10 @@ int main_1() {
 	workField[3] = 9.0;
 	workField[4] = 2.0;
 
-	fuggveny.evaluate(&indexField[0], &workField[0], nullptr);
+	fuggveny.evaluate(&indexField[0], &workField[0], nullptr, LineDescription());
 
-	std::cout << "\n" << fuggveny.devive(&indexField[0], &workField[0], nullptr, 2) << std::endl;
-	std::cout << workField[0] << "\n" << std::endl;
+	std::cout << "\nDERIVED: " << fuggveny.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription()) << std::endl;
+	std::cout << "RET: " << workField[0] << "\n" << std::endl;
 
 	HgmFunctionStorage::namelessCustomFunctions.push_back(std::make_unique<HmgF_CustomFunction>(fvModel));
 
@@ -814,41 +814,41 @@ int main_1() {
 	fvModel2.nLocal = 2;
 
 	lineDesc.pFunction = HgmFunctionStorage::namelessCustomFunctions[0].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 2;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 3;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 4;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 5;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel2.lines.push_back(lineDesc);
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 1;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 6;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel2.lines.push_back(lineDesc);
 
 	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futSqrt].get();
-	lineDesc.parIndex.clear();
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptParam;
+	lineDesc.parameters.clear();
+	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;
-	lineDesc.parIndex.push_back(parId);
-	parId.parType = HgmCustomFunctionModel::ParameterType::ptLocalVar;
+	lineDesc.parameters.push_back(parId);
+	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 1;
-	lineDesc.parIndex.push_back(parId);
+	lineDesc.parameters.push_back(parId);
 	fvModel2.lines.push_back(lineDesc);
 
 	HmgF_CustomFunction fuggveny2(fvModel2);
@@ -874,9 +874,9 @@ int main_1() {
 	workField[4] = 2.0;
 	workField[5] = 5.0;
 
-	fuggveny2.evaluate(&indexField[0], &workField[0], nullptr);
+	fuggveny2.evaluate(&indexField[0], &workField[0], nullptr, LineDescription());
 
-	std::cout << "\nvvvvvvvvv\n\n" << fuggveny2.devive(&indexField[0], &workField[0], nullptr, 2) << std::endl;
+	std::cout << "\nvvvvvvvvv\n\n" << fuggveny2.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription()) << std::endl;
 	std::cout << workField[0] << "\n" << std::endl;
 
 

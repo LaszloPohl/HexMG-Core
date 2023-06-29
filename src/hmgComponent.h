@@ -1244,7 +1244,7 @@ public:
                     break;
             }
         }
-        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this);
+        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription());
         componentValue.setValueDC(workField[0]);
     }
     //***********************************************************************
@@ -1257,7 +1257,7 @@ public:
         crvt G = x == 0 ? pars[0].get() : x == 1 ? -pars[0].get() : rvt0;
         const Model_Function_Controlled_I_with_const_G& model = static_cast<const Model_Function_Controlled_I_with_const_G&>(*pModel);
         crvt dFv_per_dUi = x < model.nodeToFunctionParam.size() && model.nodeToFunctionParam[x] != unsMax
-            ? model.controlFunction->devive(&model.indexField[0], &workField[0], const_cast<Component_Function_Controlled_I_with_const_G*>(this), model.nodeToFunctionParam[x])
+            ? model.controlFunction->devive(&model.indexField[0], &workField[0], const_cast<Component_Function_Controlled_I_with_const_G*>(this), model.nodeToFunctionParam[x], LineDescription())
             : rvt0;
         return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
     }
@@ -1319,7 +1319,7 @@ public:
 
 
 //***********************************************************************
-inline int HmgF_Load_ControlledI_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Load_ControlledI_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     workField[index[0]] = static_cast<const Component_Function_Controlled_I_with_const_G*>(owner)->externalNodes[nodeIndex]->getStepStartDC();
     return 0;
@@ -1389,7 +1389,7 @@ public:
     void evaluate_and_storeNodes() noexcept {
     //***********************************************************************
         const ModelController& model = static_cast<const ModelController&>(*pModel);
-        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this);
+        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription());
         for (uns i = 0; i < model.functionSources.destinations.size(); i++) {
             const NodeConnectionInstructions::Destination& dest = model.functionSources.destinations[i];
             externalNodes[dest.destNodeIndex]->setValueDC(workField[dest.srcParamIndex]); // srcParamIndex == 0 => return, >0 => par
@@ -1415,7 +1415,7 @@ public:
 
 
 //***********************************************************************
-inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     workField[index[0]] = static_cast<const Controller*>(owner)->externalNodes[nodeIndex]->getStepStartDC();
     return 0;
@@ -1423,7 +1423,7 @@ inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workF
 
 
 //***********************************************************************
-inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getStepStartDC();
     return 0;
@@ -1431,7 +1431,7 @@ inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workF
 
 
 //***********************************************************************
-inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getValueDC();
     return 0;
@@ -1439,7 +1439,7 @@ inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField
 
 
 //***********************************************************************
-inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     static_cast<Controller*>(owner)->mVars[varIndex].setValueDC(workField[index[0]]);
     return 0;
@@ -1447,7 +1447,7 @@ inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField,
 
 
 //***********************************************************************
-inline int HmgF_Set_Controller_mVar_ValueFromStepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept {
+inline int HmgF_Set_Controller_mVar_ValueFromStepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     static_cast<Controller*>(owner)->mVars[varIndex].setValueFromStepStartDC();
     return 0;
@@ -2417,6 +2417,7 @@ class CircuitStorage {
     std::vector<std::unique_ptr<Probe>> probes;
     std::vector<std::unique_ptr<hmgSunred::ReductionTreeInstructions>> sunredTrees;
     std::vector<std::unique_ptr<hmgMultigrid>> multiGrids;
+    std::vector<std::unique_ptr<HmgFunction>> functions;
     Simulation sim;
     hmgSaver saver;
     std::thread saverThread;
@@ -2615,6 +2616,7 @@ class CircuitStorage {
     void processRailsInstructions(IsInstruction*& first);
     void processProbesInstructions(IsInstruction*& first, uns currentProbe);
     void processSaveInstructions(IsInstruction*& first, std::vector<uns>& probeIndex);
+    void processFunctionInstructions(IsInstruction*& first, uns functionIndex, uns nParams, uns nVars, uns nCallInstructions);
     //***********************************************************************
 
 public:

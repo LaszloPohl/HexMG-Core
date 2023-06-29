@@ -165,8 +165,10 @@ enum StreamInstructionType {
 
     sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
 
-    sitProbe, sitProbeNode, sitRun, sitFunction, sitExpressionAtom, sitUns,
+    sitProbe, sitProbeNode, sitRun, sitUns, sitRvt,
     sitSet,
+
+    sitFunction, sitFunctionCall, sitFunctionParID,
 
     sitEndInstruction
 };

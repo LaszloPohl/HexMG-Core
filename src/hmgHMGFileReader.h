@@ -635,7 +635,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
         fileFunctionType type = fftInvalid;
         uns customIndex;                                                        // if type == fftCustom => index in globalNames.functionNames
-        std::vector<HgmCustomFunctionModel::ParameterIdentifier> parameters;
+        std::vector<ParameterIdentifier> parameters;
         std::vector<rvt> values;                                                // function parameter values for _PWL
         rvt value = rvt0;                                                       // function parameter value for _CONST
         uns labelID = 0;                                                        // for jump instructions
@@ -669,7 +669,15 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-
+        iStream.add(new IsFunctionInstruction(functionIndex, nParams, nInternalVars, (uns)instructions.size()));
+        for (const auto& line : instructions) {
+            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelID, (uns)line.parameters.size(), (uns)line.values.size()));
+            for (const auto& par : line.parameters)
+                iStream.add(new IsFunctionParIDInstruction(par));
+            for (const auto& val : line.values)
+                iStream.add(new IsRvtInstruction(val));
+        }
+        iStream.add(new IsEndDefInstruction(sitFunction, 0));
     }
 };
 

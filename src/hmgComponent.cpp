@@ -154,12 +154,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     sim.run(pAct->data);
                 }
                 break;
-            case sitFunction: {
-                    TODO("sitFunction");
-                }
-                break;
-            case sitExpressionAtom:                 isImpossibleInstruction = true; break;
             case sitUns:                            isImpossibleInstruction = true; break;
+            case sitRvt:                            isImpossibleInstruction = true; break;
             case sitSet: {
                     IsSetInstruction* pAct = static_cast<IsSetInstruction*>(act);
                     if (pAct->nodeID.nodeID.type == nvtVarGlobal) {
@@ -193,8 +189,15 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     }
                     else
                         throw hmgExcept("CircuitStorage::processInstructions", ".SET: only variables can be set.");
-            }
+                }
                 break;
+            case sitFunction: {
+                    IsFunctionInstruction* pAct = static_cast<IsFunctionInstruction*>(act);
+                    processFunctionInstructions(first, pAct->functionIndex, pAct->nParams, pAct->nVars, pAct->nCallInstructions);
+                }
+                break;
+            case sitFunctionCall:                   isImpossibleInstruction = true; break;
+            case sitFunctionParID:                  isImpossibleInstruction = true; break;
             case sitEndInstruction: {
                     IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
                     if(pAct->whatEnds != sitNothing)
@@ -831,6 +834,54 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
         delete act;
         if(isNotFinished && first == nullptr)
             throw hmgExcept("ComponentDefinition::processInstructions", "The instruction stream has ended during component instance definition.");
+    }
+}
+
+
+//***********************************************************************
+void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns functionIndex, uns nParams, uns nVars, uns nCallInstructions) {
+//***********************************************************************
+    bool isNotFinished = true;
+    if (isNotFinished && first == nullptr)
+        throw hmgExcept("CircuitStorage::processFunctionInstructions", "The instruction stream has ended during sunred tree definition.");
+
+    HgmCustomFunctionModel fvModel;
+    fvModel.nParams = nParams;
+    fvModel.nLocal = nVars;
+
+    while (isNotFinished) {
+        IsInstruction* act = first;
+        first = first->next;
+        switch (act->instruction) {
+            case sitNothing: break;
+            case sitRvt: {
+                    IsRvtInstruction* pAct = static_cast<IsRvtInstruction*>(act);
+
+                }
+                break;
+            case sitFunctionCall: {
+                    IsFunctionCallInstruction* pAct = static_cast<IsFunctionCallInstruction*>(act);
+
+                }
+                break;
+            case sitFunctionParID: {
+                    IsFunctionParIDInstruction* pAct = static_cast<IsFunctionParIDInstruction*>(act);
+
+                }
+                break;
+            case sitEndInstruction: {
+                    IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
+                    if(pAct->whatEnds != sitFunction)
+                        throw hmgExcept("CircuitStorage::processFunctionInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                    isNotFinished = false;
+                }
+                break;
+            default:
+                throw hmgExcept("CircuitStorage::processFunctionInstructions", "%u is not a function definition instruction", act->instruction);
+        }
+        delete act;
+        if(isNotFinished && first == nullptr)
+            throw hmgExcept("CircuitStorage::processFunctionInstructions", "The instruction stream has ended during function definition.");
     }
 }
 

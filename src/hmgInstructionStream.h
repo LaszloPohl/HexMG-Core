@@ -17,6 +17,7 @@
 #include <string>
 #include "hmgException.h"
 #include "hmgCommon.h"
+#include "hmgFunction.hpp"
 //***********************************************************************
 
 
@@ -394,14 +395,6 @@ struct IsParameterValueInstruction: public IsInstruction {
 
 
 //***********************************************************************
-struct IsFunctionInstruction: public IsInstruction {
-//***********************************************************************
-    unsigned index, size;
-    IsFunctionInstruction(unsigned indx, unsigned siz) :IsInstruction{ sitFunction }, index{ indx }, size{ siz }{}
-};
-
-
-//***********************************************************************
 struct IsCreateInstruction: public IsInstruction {
 //***********************************************************************
     uns fullCircuitIndex = 0;
@@ -467,6 +460,48 @@ struct IsUnsInstruction: public IsInstruction {
 //***********************************************************************
     uns data;
     IsUnsInstruction(uns Data) :IsInstruction{ sitUns }, data{ Data }{}
+};
+
+
+//***********************************************************************
+struct IsRvtInstruction: public IsInstruction {
+//***********************************************************************
+    rvt data;
+    IsRvtInstruction(rvt Data) :IsInstruction{ sitRvt }, data{ Data }{}
+};
+
+
+//***********************************************************************
+struct IsFunctionInstruction: public IsInstruction {
+//***********************************************************************
+    uns functionIndex = 0;
+    uns nParams = 0;
+    uns nVars = 0;
+    uns nCallInstructions = 0;
+    IsFunctionInstruction(uns index, uns nParams_, uns nVars_, uns nCallInstructions_)
+        :IsInstruction{ sitFunction }, functionIndex{ index }, nParams{ nParams_ }, nVars{ nVars_ }, nCallInstructions{ nCallInstructions_ } {}
+};
+
+
+//***********************************************************************
+struct IsFunctionCallInstruction : public IsInstruction {
+//***********************************************************************
+    fileFunctionType type = fftInvalid;
+    uns customIndex;                        // if type == fftCustom
+    rvt value = rvt0;                       // if the function have 1 value
+    uns labelID = unsMax;                   // in case of jump instructions
+    uns nParameters = 0;
+    uns nValues = 0;                        // if more tna one rvt value belongs to the function (now only _PWL)
+    IsFunctionCallInstruction(fileFunctionType type_, uns customIndex_, rvt value_, uns labelID_, uns nParams_, uns nValues_)
+        :IsInstruction{ sitFunctionCall }, type{ type_ }, customIndex{ customIndex_ }, value{ value_ }, labelID{ labelID_ }, nParameters{ nParams_ }, nValues{ nValues_ } {}
+};
+
+
+//***********************************************************************
+struct IsFunctionParIDInstruction: public IsInstruction {
+//***********************************************************************
+    ParameterIdentifier id;
+    IsFunctionParIDInstruction(ParameterIdentifier ID) :IsInstruction{ sitFunctionParID }, id{ ID }{}
 };
 
 
