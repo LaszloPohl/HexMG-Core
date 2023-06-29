@@ -497,7 +497,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
 //***********************************************************************
     LineTokenizer lineToken;
 
-    // read subcircuit head (if not the global circuit is readed)
+    // read subcircuit head
 
     lineToken.init(line);
     const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -546,7 +546,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", externalNs.nNormalONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", externalNs.nForwardedONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nControlInternalNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "VI", internalNs.nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", internalNs.nInternalVars));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
             lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1605,6 +1605,385 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
 
 
 //***********************************************************************
+struct FileFunctionNameID {
+//***********************************************************************
+    const char* functionName = nullptr;
+    fileFunctionType id = fftInvalid;
+};
+
+
+//***********************************************************************
+FileFunctionNameID fftNameID[] = {
+//***********************************************************************
+    { "CONST",	fft_CONST },
+    { "C_PI",	fft_C_PI },
+    { "C_2PI",	fft_C_2PI },
+    { "C_PI2",	fft_C_PI2 },
+    { "C_E",	fft_C_E },
+    { "C_T0",	fft_C_T0 },
+    { "C_K",	fft_C_K },
+    { "C_Q",	fft_C_Q },
+    { "ADD",	fft_ADD },
+    { "SUB",	fft_SUB },
+    { "MUL",	fft_MUL },
+    { "DIV",	fft_DIV },
+    { "NEG",	fft_NEG },
+    { "INV",	fft_INV },
+    { "SQRT",	fft_SQRT },
+    { "POW",	fft_POW },
+    { "EXP",	fft_EXP },
+    { "NEXP",	fft_NEXP },
+    { "IEXP",	fft_IEXP },
+    { "INEXP",	fft_INEXP },
+    { "NIEXP",	fft_INEXP }, // !
+    { "LN",	    fft_LN },
+    { "LOG",	fft_LOG },
+    { "ABS",	fft_ABS },
+    { "ASIN",	fft_ASIN },
+    { "ACOS",	fft_ACOS },
+    { "ATAN",	fft_ATAN },
+    { "ASINH",	fft_ASINH },
+    { "ACOSH",	fft_ACOSH },
+    { "ATANH",	fft_ATANH },
+    { "SIN",	fft_SIN },
+    { "COS",	fft_COS },
+    { "TAN",	fft_TAN },
+    { "SINH",	fft_SINH },
+    { "COSH",	fft_COSH },
+    { "TANH",	fft_TANH },
+    { "RATIO",	fft_RATIO },
+    { "PWL",	fft_PWL },
+    { "GT",	    fft_GT },
+    { "ST", 	fft_ST },
+    { "GE",	    fft_GE },
+    { "SE",	    fft_SE },
+    { "EQ",	    fft_EQ },
+    { "NEQ",	fft_NEQ },
+    { "GT0",	fft_GT0 },
+    { "ST0",	fft_ST0 },
+    { "GE0",	fft_GE0 },
+    { "SE0",	fft_SE0 },
+    { "EQ0",	fft_EQ0 },
+    { "NEQ0",	fft_NEQ0 },
+    { "AND",	fft_AND },
+    { "OR",	    fft_OR },
+    { "NOT",	fft_NOT },
+    { "JMP",	fft_JMP },
+    { "JGT",	fft_JGT },
+    { "JST",	fft_JST },
+    { "JGE",	fft_JGE },
+    { "JSE",	fft_JSE },
+    { "JEQ",	fft_JEQ },
+    { "JNEQ",	fft_JNEQ },
+    { "JGT0",	fft_JGT0 },
+    { "JST0",	fft_JST0 },
+    { "JGE0",	fft_JGE0 },
+    { "JSE0",	fft_JSE0 },
+    { "JEQ0",	fft_JEQ0 },
+    { "JNEQ0",	fft_JNEQ0 },
+    { "CPY",	fft_CPY },
+    { "CGT",	fft_CGT },
+    { "CST",	fft_CST },
+    { "CGE",	fft_CGE },
+    { "CSE",	fft_CSE },
+    { "CEQ",	fft_CEQ },
+    { "CNEQ",	fft_CNEQ },
+    { "CGT0",	fft_CGT0 },
+    { "CST0",	fft_CST0 },
+    { "CGE0",	fft_CGE0 },
+    { "CSE0",	fft_CSE0 },
+    { "CEQ0",	fft_CEQ0 },
+    { "CNEQ0",	fft_CNEQ0 },
+    { "TGT",	fft_TGT },
+    { "TST",	fft_TST },
+    { "TGE",	fft_TGE },
+    { "TSE",	fft_TSE },
+    { "TEQ",	fft_TEQ },
+    { "TNEQ",	fft_TNEQ },
+    { "TGT0",	fft_TGT0 },
+    { "TST0",	fft_TST0 },
+    { "TGE0",	fft_TGE0 },
+    { "TSE0",	fft_TSE0 },
+    { "TEQ0",	fft_TEQ0 },
+    { "TNEQ0",	fft_TNEQ0 },
+    { "UNIT",	fft_UNIT },
+    { "URAMP",	fft_URAMP },
+    { "TIME",	fft_TIME },
+    { "DT",	    fft_DT },
+    { "FREQ",	fft_FREQ },
+    { "GND",	fft_GND },
+    { "RAIL",	fft_RAIL}
+};
+
+
+//***********************************************************************
+fileFunctionType identifyFileFunctionType(const char* functionName) {
+//***********************************************************************
+    if (*functionName == '_')
+        functionName++;
+    for (const auto& pair : fftNameID)
+        if (strcmp(functionName, pair.functionName) == 0)
+            return pair.id;
+    return fftInvalid;
+}
+
+
+//***********************************************************************
+void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    for (uns i = 0; i < nPar; i++) {
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        HgmCustomFunctionModel::ParameterIdentifier id;
+        if (token[0] == 'R' && token[1] == 'E' && token[2] == 'T') { // ! indexField[0] = ret
+            id.parType = HgmCustomFunctionModel::ptParam;
+            id.parIndex = 0;
+        }
+        else if (token[0] == 'F' && token[1] == 'R' && token[2] == 'E' && token[3] == 'T') { // ! indexField[0] = ret
+            id.parType = HgmCustomFunctionModel::ptPrev;
+            id.parIndex = 0;
+        }
+        else {
+            if (token[0] == 'P')
+                id.parType = HgmCustomFunctionModel::ptParam;
+            else if (token[0] == 'V')
+                id.parType = HgmCustomFunctionModel::ptLocalVar;
+            else if (token[0] == 'F')
+                id.parType = HgmCustomFunctionModel::ptPrev;
+            else
+                throw hmgExcept("HMGFileFunction::ReadParams", "unknown parameter type, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            
+            if (sscanf_s(token + 1, "%u", &id.parIndex) != 1)
+                throw hmgExcept("HMGFileFunction::ReadParams", "not a number, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            
+            if (id.parType == HgmCustomFunctionModel::ptParam && id.parIndex >= nParams)
+                throw hmgExcept("HMGFileFunction::ReadParams", "parameter index >= number of parameters in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (id.parType == HgmCustomFunctionModel::ptLocalVar && id.parIndex >= nInternalVars)
+                throw hmgExcept("HMGFileFunction::ReadParams", "variable index >= number of variables in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+            // ! indexField[0] = ret, indexField[1] = work field starts, indexField[2...nParam+2-1] = params !
+
+            if (id.parType == HgmCustomFunctionModel::ptParam || id.parType == HgmCustomFunctionModel::ptPrev)
+                id.parIndex += 2;
+        }
+        dest.parameters.push_back(id);
+    }
+}
+
+
+//***********************************************************************
+void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
+//***********************************************************************
+    LineTokenizer lineToken;
+
+    // read function head
+
+    lineToken.init(line);
+    const char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // check line
+
+    if (strcmp(token, ".FUNCTION") != 0)
+        throw hmgExcept("HMGFileFunction::Read", ".FUNCTION expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+    // read model name
+
+    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    if (globalNames.functionNames.contains(token))
+        throw hmgExcept("HMGFileFunction::Read", ".FUNCTION %s redefinition in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    functionIndex = (uns)globalNames.functionNames.size();
+    globalNames.functionNames[token] = functionIndex;
+    vectorForcedSet(globalNames.functionData, this, functionIndex);
+
+    // read variable and parameter numbers
+
+    if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+        throw hmgExcept("HMGFileFunction::Read", "P/V=number expected, %s arrived in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    while (!lineToken.isSepEOL) {
+        if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", nParams));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", nInternalVars));
+        else
+            throw hmgExcept("HMGFileFunction::Read", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+            throw hmgExcept("HMGFileFunction::Read", "simple node name expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+    }
+
+    // read function lines
+
+    bool isFunctionNotEnded = true;
+
+    do {
+        if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
+            throw hmgExcept("HMGFileFunction::Read", "incomplete .FUNCTION definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
+        
+        lineToken.init(line);
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        
+        if (strcmp(token, ".END") == 0) {
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "FUNCTION") != 0)
+                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!globalNames.functionNames.contains(token))
+                throw hmgExcept("HMGFileFunction::Read", "END .FUNCTION %s: unknown function name in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (globalNames.functionNames[token] != functionIndex)
+                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION %s: wrong function name in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            isFunctionNotEnded = false;
+        }
+        else {
+
+            // label
+
+            if (labels.contains(token))
+                throw hmgExcept("HMGFileFunction::Read", "%s label redefinition in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            labels[token] = (uns)labels.size();
+            
+            // called function
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            instructions.emplace_back(FunctionDescription());
+            FunctionDescription& func = instructions.back();
+            if (token[0] == '_') { // built in function
+                func.type = identifyFileFunctionType(token);
+                if(func.type == fftInvalid)
+                    throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                switch (func.type) {
+                    case fft_CONST:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_C_PI:
+                    case fft_C_2PI:
+                    case fft_C_PI2:
+                    case fft_C_E:
+                    case fft_C_T0:
+                    case fft_C_K:
+                    case fft_C_Q:       ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+
+                    case fft_ADD:
+                    case fft_SUB:
+                    case fft_MUL:
+                    case fft_DIV:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
+                    case fft_NEG:
+                    case fft_INV:
+                    case fft_SQRT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_POW:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case fft_EXP:
+                    case fft_NEXP:
+                    case fft_IEXP:
+                    case fft_INEXP:
+                    case fft_LN:        ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_LOG:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
+                    case fft_ABS:
+                    case fft_ASIN:
+                    case fft_ACOS:
+                    case fft_ATAN:
+                    case fft_ASINH:
+                    case fft_ACOSH:
+                    case fft_ATANH:
+                    case fft_SIN:
+                    case fft_COS:
+                    case fft_TAN:
+                    case fft_SINH:
+                    case fft_COSH:
+                    case fft_TANH:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_RATIO:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+
+                    case fft_PWL: {
+                            ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                            rvt x, y;
+                            while (!lineToken.isSepEOL) {
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                if (!spiceTextToRvt(token, x))
+                                    throw hmgExcept("HMGFileFunction::Read", "x value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                if(lineToken.isSepEOL)
+                                    throw hmgExcept("HMGFileFunction::Read", "unexpected end of line: y value is missing in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                if (!spiceTextToRvt(token, y))
+                                    throw hmgExcept("HMGFileFunction::Read", "y value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                func.values.push_back(x);
+                                func.values.push_back(y);
+                            }
+                        }
+                        break;
+
+                    case fft_GT:
+                    case fft_ST:
+                    case fft_GE:
+                    case fft_SE:
+                    case fft_EQ:
+                    case fft_NEQ:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
+                    case fft_GT0:
+                    case fft_ST0:
+                    case fft_GE0:
+                    case fft_SE0:
+                    case fft_EQ0:
+                    case fft_NEQ0:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_AND:
+                    case fft_OR:        ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
+                    case fft_NOT:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case fft_JMP:
+                    case fft_JGT:
+                    case fft_JST:
+                    case fft_JGE:
+                    case fft_JSE:
+                    case fft_JEQ:
+                    case fft_JNEQ:
+                    case fft_JGT0:
+                    case fft_JST0:
+                    case fft_JGE0:
+                    case fft_JSE0:
+                    case fft_JEQ0:
+                    case fft_JNEQ0:
+                    case fft_CPY:
+                    case fft_CGT:
+                    case fft_CST:
+                    case fft_CGE:
+                    case fft_CSE:
+                    case fft_CEQ:
+                    case fft_CNEQ:
+                    case fft_CGT0:
+                    case fft_CST0:
+                    case fft_CGE0:
+                    case fft_CSE0:
+                    case fft_CEQ0:
+                    case fft_CNEQ0:
+                    case fft_TGT:
+                    case fft_TST:
+                    case fft_TGE:
+                    case fft_TSE:
+                    case fft_TEQ:
+                    case fft_TNEQ:
+                    case fft_TGT0:
+                    case fft_TST0:
+                    case fft_TGE0:
+                    case fft_TSE0:
+                    case fft_TEQ0:
+                    case fft_TNEQ0:
+                    case fft_UNIT:
+                    case fft_URAMP:
+                    case fft_TIME:
+                    case fft_DT:
+                    case fft_FREQ:
+                    case fft_GND:
+                    case fft_RAIL:
+                }
+            }
+            else { // custom function
+
+            }
+        }
+    } while (isFunctionNotEnded);
+}
+
+
+//***********************************************************************
 void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     bool isStop = false;
@@ -1645,6 +2024,11 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 HMGFileRails* pRails = new HMGFileRails;
                 itemList.push_back(pRails);
                 pRails->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".FUNCTION") == 0) {
+                HMGFileFunction* pFunction = new HMGFileFunction;
+                itemList.push_back(pFunction);
+                pFunction->Read(reader, line, lineInfo);
             }
             else if (strcmp(token, ".CREATE") == 0) {
                 HMGFileCreate* pCreate = new HMGFileCreate;

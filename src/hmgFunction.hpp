@@ -243,20 +243,6 @@ public:
 
 
 //***********************************************************************
-class HmgF_sqare final : public HmgFunction{
-//***********************************************************************
-public:
-    HmgF_sqare() : HmgFunction{ 1, 3, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner)const noexcept override { 
-        crvt value = workField[index[2]]; 
-        workField[index[0]] = value * value; 
-        return 0; 
-    }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
 class HmgF_opPlus final : public HmgFunction{
 //***********************************************************************
 public:
@@ -287,7 +273,6 @@ class HgmCustomFunctionModel {
 //***********************************************************************
 public:
     //***********************************************************************
-    //enum FunctionType { ftBuiltInFunction, ftGlobalFunction, ftLocalFunction };
     enum ParameterType { ptParam, ptLocalVar, ptPrev }; // prev: index field of the previous function (or the owner function, if no previous)
     //***********************************************************************
     struct ParameterIdentifier{
@@ -420,7 +405,6 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::futOpPlus] = std::make_unique<HmgF_opPlus>();
     builtInFunctions[builtInFunctionType::futOpMul] = std::make_unique<HmgF_opMul>();
     builtInFunctions[builtInFunctionType::futSqrt] = std::make_unique<HmgF_sqrt>();
-    builtInFunctions[builtInFunctionType::futSquare] = std::make_unique<HmgF_sqare>();
 }
 
 

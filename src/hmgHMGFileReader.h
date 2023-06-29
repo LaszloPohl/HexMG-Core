@@ -21,6 +21,7 @@
 #include "hmgCommon.h"
 #include "hmgInstructionStream.h"
 #include "hmgMultigridTypes.h"
+#include "hmgFunction.hpp"
 //***********************************************************************
 
 
@@ -207,11 +208,16 @@ inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleI
                 return false;
             break;
         case 'V':
-            if (text[position + 1] != 'I' && text[position + 1] != 'G')
-                return false;
-            result.type = text[position + 1] == 'I' ? nvtVarInternal : nvtVarGlobal;
-            if (sscanf_s(&text[position + 2], "%u", &result.index) != 1)
-                return false;
+            if (text[position + 1] == 'G') {
+                result.type = nvtVarGlobal;
+                if (sscanf_s(&text[position + 2], "%u", &result.index) != 1)
+                    return false;
+            }
+            else {
+                result.type = nvtVarInternal;
+                if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+                    return false;
+            }
             break;
         default:
             return false;
@@ -342,6 +348,7 @@ struct HMGFileSunredTree;
 struct HMGFileModelDescription;
 struct HMGFileProbe;
 struct HMGFileCreate;
+struct HMGFileFunction;
 //***********************************************************************
 
 
@@ -354,6 +361,7 @@ struct GlobalHMGFileNames {
     std::vector<HMGFileModelDescription*> modelData;
     std::vector<HMGFileProbe*> probeData;
     std::vector<HMGFileCreate*> fullCircuitData;
+    std::vector<HMGFileFunction*> functionData;
     //***********************************************************************
     bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
     bool textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest);
@@ -371,6 +379,20 @@ struct HMGFileListItem {
     inline static uns globalNRails = 0; // for checking
     virtual ~HMGFileListItem() {}
     virtual void toInstructionStream(InstructionStream& iStream) = 0;
+    //***********************************************************************
+    bool readNodeOrParNumber(const char* line, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo, const char* typeLiteral, uns& destVar) const{
+    //***********************************************************************
+        if (strcmp(lineToken.getActToken(), typeLiteral) == 0) {
+            if (lineToken.isSepEOL)
+                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, end of line arrived (%s) in %s, line %u", typeLiteral, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
+                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(lineToken.getActToken(), "%u", &destVar) != 1)
+                throw hmgExcept("HMGFileModelDescription::Read", "%s=number is not a number, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            return true;
+        }
+        return false;
+    }
 };
 
 
@@ -488,20 +510,6 @@ struct HMGFileModelDescription: HMGFileListItem {
         else                             iStream.add(new IsEndDefInstruction(sitDefModelController, modelIndex));
     }
     //***********************************************************************
-    bool readNodeOrParNumber(const char* line, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo, const char* typeLiteral, uns& destVar) const{
-    //***********************************************************************
-        if (strcmp(lineToken.getActToken(), typeLiteral) == 0) {
-            if (lineToken.isSepEOL)
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, end of line arrived (%s) in %s, line %u", typeLiteral, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (sscanf_s(lineToken.getActToken(), "%u", &destVar) != 1)
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number is not a number, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            return true;
-        }
-        return false;
-    }
-    //***********************************************************************
     bool checkNodeValidity(SimpleInterfaceNodeID id) const noexcept{
     //***********************************************************************
         switch(id.type){
@@ -615,6 +623,37 @@ struct HMGFileRails: HMGFileListItem {
         for (const auto& val : railValues)
             iStream.add(new IsDefRailValueInstruction(val.first, val.second));
         iStream.add(new IsEndDefInstruction(sitRails, 0));
+    }
+};
+
+
+//***********************************************************************
+struct HMGFileFunction: HMGFileListItem {
+//***********************************************************************
+    //***********************************************************************
+    struct FunctionDescription {
+    //***********************************************************************
+        fileFunctionType type = fftInvalid;
+        uns customIndex;                                                        // if type == fftCustom => index in globalNames.functionNames
+        std::vector<HgmCustomFunctionModel::ParameterIdentifier> parameters;
+        std::vector<rvt> values;                                                // function parameter values for _CONST and _PWL
+        uns labelID = 0;                                                        // for jump instructions
+    };
+    //***********************************************************************
+    uns functionIndex = 0;
+    uns nParams = 0;
+    uns nInternalVars = 0;
+    std::map<std::string, uns> labels;
+    std::vector<FunctionDescription> instructions;
+    //***********************************************************************
+
+    //***********************************************************************
+    void Read(ReadALine&, char*, LineInfo&);
+    void ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo);
+    //***********************************************************************
+    void toInstructionStream(InstructionStream& iStream)override {
+    //***********************************************************************
+
     }
 };
 

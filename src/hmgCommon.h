@@ -94,13 +94,45 @@ enum builtInFunctionType {
     futOpPlus, futOpMinus, futOpMul, futOpDiv, futOpNegativeSign,
     futOpGreater, futOpSmaller, futOpGrEq, futOpSmEq, futOpEqual,
     futOpNonEqual, futOpAnd, futOpOr, futOpNot,
-    futInv, futSqrt, futSquare, futPow, futExp, futLn, futLog, futAbs,
+    futInv, futSqrt, futPow, futExp, futLn, futLog, futAbs,
     futAsin, futAcos, futAtan, futAsinh, futAcosh, futAtanh,
     futSin, futCos, futTan, futSinh, futCosh, futTanh,
     futRatio, futPwl, futQcnl, futUnit, futUramp,
     futSize // futSize have to be the last one
 };
 //***********************************************************************
+
+
+//***********************************************************************
+enum fileFunctionType {
+//***********************************************************************
+    fftInvalid, fftCustom,
+    
+    fft_CONST, fft_C_PI, fft_C_2PI, fft_C_PI2, fft_C_E, fft_C_T0, fft_C_K,
+    fft_C_Q,
+    
+    fft_ADD, fft_SUB, fft_MUL, fft_DIV, fft_NEG, fft_INV, fft_SQRT,
+    fft_POW, fft_EXP, fft_NEXP, fft_IEXP, fft_INEXP, fft_LN, fft_LOG,
+    fft_ABS, fft_ASIN,fft_ACOS, fft_ATAN, fft_ASINH, fft_ACOSH, fft_ATANH,
+    fft_SIN, fft_COS, fft_TAN, fft_SINH, fft_COSH, fft_TANH,
+    fft_RATIO, fft_PWL,
+    
+    fft_GT, fft_ST, fft_GE, fft_SE, fft_EQ, fft_NEQ, fft_GT0, fft_ST0,
+    fft_GE0, fft_SE0, fft_EQ0, fft_NEQ0, fft_AND, fft_OR, fft_NOT,
+    
+    fft_JMP, fft_JGT, fft_JST, fft_JGE, fft_JSE, fft_JEQ, fft_JNEQ,
+    fft_JGT0, fft_JST0, fft_JGE0, fft_JSE0, fft_JEQ0, fft_JNEQ0,
+    
+    fft_CPY, fft_CGT, fft_CST, fft_CGE, fft_CSE, fft_CEQ, fft_CNEQ,
+    fft_CGT0, fft_CST0, fft_CGE0, fft_CSE0, fft_CEQ0, fft_CNEQ0,
+    
+    fft_TGT, fft_TST, fft_TGE, fft_TSE, fft_TEQ, fft_TNEQ,
+    fft_TGT0, fft_TST0, fft_TGE0, fft_TSE0, fft_TEQ0, fft_TNEQ0,
+    
+    fft_UNIT, fft_URAMP, fft_TIME, fft_DT, fft_FREQ, fft_GND, fft_RAIL,
+
+    fftSize
+};
 
 
 //***********************************************************************
