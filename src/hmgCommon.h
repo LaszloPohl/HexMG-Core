@@ -111,11 +111,14 @@ enum fileFunctionType {
     fft_CONST, fft_C_PI, fft_C_2PI, fft_C_PI2, fft_C_E, fft_C_T0, fft_C_K,
     fft_C_Q,
     
-    fft_ADD, fft_SUB, fft_MUL, fft_DIV, fft_NEG, fft_INV, fft_SQRT,
-    fft_POW, fft_EXP, fft_NEXP, fft_IEXP, fft_INEXP, fft_LN, fft_LOG,
+    fft_ADD, fft_SUB, fft_MUL, fft_DIV, fft_ADDC, fft_SUBC, fft_MULC, fft_DIVC,
+    fft_CADD, fft_CSUB, fft_CMUL, fft_CDIV,
+    fft_NEG, fft_INV, fft_SQRT, fft_POW, fft_POWC, fft_CPOW,
+    fft_EXP, fft_NEXP, fft_IEXP, fft_INEXP, fft_LN, fft_LOG, fft_CLOG,
     fft_ABS, fft_ASIN,fft_ACOS, fft_ATAN, fft_ASINH, fft_ACOSH, fft_ATANH,
     fft_SIN, fft_COS, fft_TAN, fft_SINH, fft_COSH, fft_TANH,
-    fft_RATIO, fft_PWL,
+    fft_RATIO, fft_PWL, fft_DERIV, fft_DERIVC, fft_VLENGTH2, fft_VLENGTH3,
+    fft_DISTANCE2, fft_DISTANCE3,
     
     fft_GT, fft_ST, fft_GE, fft_SE, fft_EQ, fft_NEQ, fft_GT0, fft_ST0,
     fft_GE0, fft_SE0, fft_EQ0, fft_NEQ0, fft_AND, fft_OR, fft_NOT,
@@ -129,7 +132,8 @@ enum fileFunctionType {
     fft_TGT, fft_TST, fft_TGE, fft_TSE, fft_TEQ, fft_TNEQ,
     fft_TGT0, fft_TST0, fft_TGE0, fft_TSE0, fft_TEQ0, fft_TNEQ0,
     
-    fft_UNIT, fft_URAMP, fft_TIME, fft_DT, fft_FREQ, fft_GND, fft_RAIL,
+    fft_UNIT, fft_UNITT, fft_URAMP, fft_TIME, fft_DT, fft_FREQ, fft_GND,
+    fft_RAIL,
 
     fftSize
 };

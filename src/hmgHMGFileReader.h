@@ -636,8 +636,10 @@ struct HMGFileFunction: HMGFileListItem {
         fileFunctionType type = fftInvalid;
         uns customIndex;                                                        // if type == fftCustom => index in globalNames.functionNames
         std::vector<HgmCustomFunctionModel::ParameterIdentifier> parameters;
-        std::vector<rvt> values;                                                // function parameter values for _CONST and _PWL
+        std::vector<rvt> values;                                                // function parameter values for _PWL
+        rvt value = rvt0;                                                       // function parameter value for _CONST
         uns labelID = 0;                                                        // for jump instructions
+        std::string labelName;                                                  // first read only the name of the label beacuse forward jumping is possible
     };
     //***********************************************************************
     uns functionIndex = 0;
@@ -650,6 +652,20 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
     void ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo);
+    //***********************************************************************
+    void ReadLabel(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo) {
+    //***********************************************************************
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        dest.labelName = token;
+        dest.labelID = unsMax;
+    }
+    //***********************************************************************
+    void ReadValue(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
+    //***********************************************************************
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (!spiceTextToRvt(token, dest.value))
+            throw hmgExcept("HMGFileFunction::ReadValue", "value is not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************

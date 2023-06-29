@@ -1627,10 +1627,20 @@ FileFunctionNameID fftNameID[] = {
     { "SUB",	fft_SUB },
     { "MUL",	fft_MUL },
     { "DIV",	fft_DIV },
+    { "ADDC",	fft_ADDC },
+    { "SUBC",	fft_SUBC },
+    { "MULC",	fft_MULC },
+    { "DIVC",	fft_DIVC },
+    { "CADD",	fft_CADD },
+    { "CSUB",	fft_CSUB },
+    { "CMUL",	fft_CMUL },
+    { "CDIV",	fft_CDIV },
     { "NEG",	fft_NEG },
     { "INV",	fft_INV },
     { "SQRT",	fft_SQRT },
     { "POW",	fft_POW },
+    { "POWC",	fft_POWC },
+    { "CPOW",	fft_CPOW },
     { "EXP",	fft_EXP },
     { "NEXP",	fft_NEXP },
     { "IEXP",	fft_IEXP },
@@ -1638,6 +1648,7 @@ FileFunctionNameID fftNameID[] = {
     { "NIEXP",	fft_INEXP }, // !
     { "LN",	    fft_LN },
     { "LOG",	fft_LOG },
+    { "CLOG",	fft_CLOG },
     { "ABS",	fft_ABS },
     { "ASIN",	fft_ASIN },
     { "ACOS",	fft_ACOS },
@@ -1653,6 +1664,12 @@ FileFunctionNameID fftNameID[] = {
     { "TANH",	fft_TANH },
     { "RATIO",	fft_RATIO },
     { "PWL",	fft_PWL },
+    { "DERIV",	fft_DERIV },
+    { "DERIVC",	fft_DERIVC },
+    { "VLENGTH2",	fft_VLENGTH2 },
+    { "VLENGTH3",	fft_VLENGTH3 },
+    { "DISTANCE2",	fft_DISTANCE2 },
+    { "DISTANCE3",	fft_DISTANCE3 },
     { "GT",	    fft_GT },
     { "ST", 	fft_ST },
     { "GE",	    fft_GE },
@@ -1707,6 +1724,7 @@ FileFunctionNameID fftNameID[] = {
     { "TEQ0",	fft_TEQ0 },
     { "TNEQ0",	fft_TNEQ0 },
     { "UNIT",	fft_UNIT },
+    { "UNITT",	fft_UNITT },
     { "URAMP",	fft_URAMP },
     { "TIME",	fft_TIME },
     { "DT",	    fft_DT },
@@ -1848,8 +1866,9 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 if(func.type == fftInvalid)
                     throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 switch (func.type) {
-                    case fft_CONST:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
-
+                    case fft_CONST:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
                     case fft_C_PI:
                     case fft_C_2PI:
                     case fft_C_PI2:
@@ -1863,11 +1882,31 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case fft_MUL:
                     case fft_DIV:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
 
+                    case fft_ADDC:
+                    case fft_SUBC:
+                    case fft_MULC:
+                    case fft_DIVC:      ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case fft_CADD:
+                    case fft_CSUB:
+                    case fft_CMUL:
+                    case fft_CDIV:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
                     case fft_NEG:
                     case fft_INV:
                     case fft_SQRT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
                     case fft_POW:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case fft_POWC:      ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case fft_CPOW:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
                     case fft_EXP:
                     case fft_NEXP:
                     case fft_IEXP:
@@ -1875,6 +1914,10 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case fft_LN:        ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
                     case fft_LOG:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case fft_CLOG:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
 
                     case fft_ABS:
                     case fft_ASIN:
@@ -1908,6 +1951,14 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                             }
                         }
                         break;
+                    case fft_DERIV:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case fft_DERIVC:    ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case fft_VLENGTH2:  ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case fft_VLENGTH3:  ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case fft_DISTANCE2: ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case fft_DISTANCE3: ReadParams(func, 7, lineToken, reader, line, lineInfo); break;
 
                     case fft_GT:
                     case fft_ST:
@@ -1928,58 +1979,93 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
                     case fft_NOT:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_JMP:
+                    case fft_JMP:       ReadLabel(func, lineToken, reader, lineInfo); break;
                     case fft_JGT:
                     case fft_JST:
                     case fft_JGE:
                     case fft_JSE:
                     case fft_JEQ:
-                    case fft_JNEQ:
+                    case fft_JNEQ:      ReadLabel(func, lineToken, reader, lineInfo);
+                                        ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                                        break;
+
                     case fft_JGT0:
                     case fft_JST0:
                     case fft_JGE0:
                     case fft_JSE0:
                     case fft_JEQ0:
-                    case fft_JNEQ0:
-                    case fft_CPY:
+                    case fft_JNEQ0:     ReadLabel(func, lineToken, reader, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo); 
+                                        break;
+
+                    case fft_CPY:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
                     case fft_CGT:
                     case fft_CST:
                     case fft_CGE:
                     case fft_CSE:
                     case fft_CEQ:
-                    case fft_CNEQ:
+                    case fft_CNEQ:      ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+
                     case fft_CGT0:
                     case fft_CST0:
                     case fft_CGE0:
                     case fft_CSE0:
                     case fft_CEQ0:
-                    case fft_CNEQ0:
+                    case fft_CNEQ0:     ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
                     case fft_TGT:
                     case fft_TST:
                     case fft_TGE:
                     case fft_TSE:
                     case fft_TEQ:
-                    case fft_TNEQ:
+                    case fft_TNEQ:      ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+
                     case fft_TGT0:
                     case fft_TST0:
                     case fft_TGE0:
                     case fft_TSE0:
                     case fft_TEQ0:
-                    case fft_TNEQ0:
-                    case fft_UNIT:
-                    case fft_URAMP:
+                    case fft_TNEQ0:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+
+                    case fft_UNIT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case fft_UNITT:     ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case fft_URAMP:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
                     case fft_TIME:
                     case fft_DT:
                     case fft_FREQ:
-                    case fft_GND:
-                    case fft_RAIL:
+                    case fft_GND:       ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case fft_RAIL:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    default:
+                        throw hmgExcept("HMGFileFunction::Read", "unknown built in function type ID (%u) in %s, line %u: %s", func.type, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
             }
             else { // custom function
+                
+                if (!globalNames.functionNames.contains(token))
+                    throw hmgExcept("HMGFileFunction::Read", "unknown function name %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                
+                func.type = fftCustom;
+                func.customIndex = globalNames.functionNames[token];
 
+                cuns nPar = globalNames.functionData[func.customIndex]->nParams;
+
+                ReadParams(func, nPar, lineToken, reader, line, lineInfo);
             }
         }
     } while (isFunctionNotEnded);
+
+    // jump labels to ID
+
+    for (uns i = 0; i < instructions.size(); i++) {
+        FunctionDescription& func = instructions[i];
+        if (func.labelID == unsMax) {
+            if (!labels.contains(func.labelName))
+                throw hmgExcept("HMGFileFunction::Read", "%s jump label missing in %s function", func.labelName.c_str(), token); // token contains the function name
+            func.labelID = labels[func.labelName];
+        }
+    }
 }
 
 
