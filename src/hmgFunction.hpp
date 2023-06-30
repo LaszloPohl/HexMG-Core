@@ -49,7 +49,7 @@ struct LineDescription {
     rvt value = rvt0;
     std::vector<ParameterIdentifier> parameters;    // parameters[0] is the return
     std::vector<rvt> moreValues;                    // _PWL uses
-    int jumpValue = 0;
+    int jumpVGValue = 0;                            // jump value or global variable index
 };
 
 
@@ -98,8 +98,6 @@ public:
     HgmFunctionStorage(const HgmFunctionStorage&) = delete;
     HgmFunctionStorage& operator=(const HgmFunctionStorage&) = delete;
     inline static std::vector<std::unique_ptr<HmgFunction>> builtInFunctions;
-    inline static std::vector<std::unique_ptr<HmgFunction>> globalCustomFunctions;
-    inline static std::vector<std::unique_ptr<HmgFunction>> namelessCustomFunctions;
     //***********************************************************************
     static HgmFunctionStorage& getInstance() { // singleton
     //***********************************************************************
@@ -1172,7 +1170,7 @@ class HmgBuiltInFunction_JMP final : public HmgFunction{
 public:
     HmgBuiltInFunction_JMP() : HmgFunction{ 0, 2, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return line.jumpValue;
+        return line.jumpVGValue;
     }
 };
 
@@ -1183,7 +1181,7 @@ class HmgBuiltInFunction_JGT final : public HmgFunction {
 public:
     HmgBuiltInFunction_JGT() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] > workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] > workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1194,7 +1192,7 @@ class HmgBuiltInFunction_JST final : public HmgFunction{
 public:
     HmgBuiltInFunction_JST() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] < workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] < workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1205,7 +1203,7 @@ class HmgBuiltInFunction_JGE final : public HmgFunction{
 public:
     HmgBuiltInFunction_JGE() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] >= workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] >= workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1216,7 +1214,7 @@ class HmgBuiltInFunction_JSE final : public HmgFunction{
 public:
     HmgBuiltInFunction_JSE() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] <= workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] <= workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1227,7 +1225,7 @@ class HmgBuiltInFunction_JEQ final : public HmgFunction{
 public:
     HmgBuiltInFunction_JEQ() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] == workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] == workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1238,7 +1236,7 @@ class HmgBuiltInFunction_JNEQ final : public HmgFunction{
 public:
     HmgBuiltInFunction_JNEQ() : HmgFunction{ 2, 4, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] != workField[index[3]] ? line.jumpValue : 0;
+        return workField[index[2]] != workField[index[3]] ? line.jumpVGValue : 0;
     }
 };
 
@@ -1249,7 +1247,7 @@ class HmgBuiltInFunction_JGT0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JGT0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] > rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] > rvt0 ? line.jumpVGValue : 0;
     }
 };
 
@@ -1260,7 +1258,7 @@ class HmgBuiltInFunction_JST0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JST0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] < rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] < rvt0 ? line.jumpVGValue : 0;
     }
 };
 
@@ -1271,7 +1269,7 @@ class HmgBuiltInFunction_JGE0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JGE0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] >= rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] >= rvt0 ? line.jumpVGValue : 0;
     }
 };
 
@@ -1282,7 +1280,7 @@ class HmgBuiltInFunction_JSE0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JSE0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] <= rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] <= rvt0 ? line.jumpVGValue : 0;
     }
 };
 
@@ -1293,7 +1291,7 @@ class HmgBuiltInFunction_JEQ0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JEQ0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] == rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] == rvt0 ? line.jumpVGValue : 0;
     }
 };
 
@@ -1304,7 +1302,7 @@ class HmgBuiltInFunction_JNEQ0 final : public HmgFunction {
 public:
     HmgBuiltInFunction_JNEQ0() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        return workField[index[2]] != rvt0 ? line.jumpValue : 0;
+        return workField[index[2]] != rvt0 ? line.jumpVGValue : 0;
     }
 };
 

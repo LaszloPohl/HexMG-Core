@@ -60,7 +60,7 @@ int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndC
 int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    gc.globalVariables[line.jumpValue]->setValueDC(workField[index[2]]);
+    gc.globalVariables[line.jumpVGValue]->setValueDC(workField[index[2]]);
     return 0;
 }
 
@@ -69,7 +69,7 @@ int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAnd
 int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    workField[index[0]] = gc.globalVariables[line.jumpValue]->getValueDC();
+    workField[index[0]] = gc.globalVariables[line.jumpVGValue]->getValueDC();
     return 0;
 }
 
@@ -906,6 +906,12 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
     HgmCustomFunctionModel fvModel;
     fvModel.nParams = nParams;
     fvModel.nLocal = nVars;
+    fvModel.lines.reserve(nCallInstructions);
+
+    ParameterIdentifier parId;
+    LineDescription lineDesc;
+
+    // recursive call is not allowed because HmgF_CustomFunction::init() allocates memory for all contained function calls
 
     while (isNotFinished) {
         IsInstruction* act = first;
@@ -914,17 +920,47 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
             case sitNothing: break;
             case sitRvt: {
                     IsRvtInstruction* pAct = static_cast<IsRvtInstruction*>(act);
-
+                    lineDesc.moreValues.push_back(pAct->data);
                 }
                 break;
             case sitFunctionCall: {
                     IsFunctionCallInstruction* pAct = static_cast<IsFunctionCallInstruction*>(act);
+                    
+                    if (lineDesc.pFunction != nullptr)
+                        fvModel.lines.push_back(std::move(lineDesc)); // storing the previous line
 
+                    if (pAct->type == biftCustom) {
+                        if (pAct->customIndex >= functions.size())
+                            throw hmgExcept("CircuitStorage::processFunctionInstructions", "invalid custom function ID (%u)", pAct->customIndex);
+                        lineDesc.pFunction = functions[pAct->customIndex].get();
+                        if(lineDesc.pFunction == nullptr)
+                            throw hmgExcept("CircuitStorage::processFunctionInstructions", "missing custom function (%u)", pAct->customIndex);
+                    }
+                    else {
+                        lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[pAct->type].get();
+                    }
+
+                    lineDesc.value = pAct->value;
+                    lineDesc.parameters.clear();
+                    if (pAct->nParameters > 0)
+                        lineDesc.parameters.reserve(pAct->nValues);
+                    lineDesc.moreValues.clear();
+                    if (pAct->nValues > 0)
+                        lineDesc.moreValues.reserve(pAct->nValues);
+
+                    if (pAct->type == bift_SETVG || pAct->type == bift_GETVG) { // global variable index
+                        lineDesc.jumpVGValue = (int)pAct->labelVGID;
+                    }
+                    else { // jump label (always set but only jump intructions use the value)
+                        if (pAct->labelVGID >= nCallInstructions)
+                            throw hmgExcept("CircuitStorage::processFunctionInstructions", "jump address is not in the function (address: %u, function calls: %u)", pAct->labelVGID, nCallInstructions);
+                        lineDesc.jumpVGValue = (int)pAct->labelVGID - (int)fvModel.lines.size(); // converting to relative address
+                    }
                 }
                 break;
             case sitFunctionParID: {
                     IsFunctionParIDInstruction* pAct = static_cast<IsFunctionParIDInstruction*>(act);
-
+                    lineDesc.parameters.push_back(pAct->id);
                 }
                 break;
             case sitEndInstruction: {
@@ -932,6 +968,9 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
                     if(pAct->whatEnds != sitFunction)
                         throw hmgExcept("CircuitStorage::processFunctionInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
                     isNotFinished = false;
+
+                    if (lineDesc.pFunction != nullptr)
+                        fvModel.lines.push_back(std::move(lineDesc)); // storing the last line
                 }
                 break;
             default:
@@ -940,6 +979,15 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
         delete act;
         if(isNotFinished && first == nullptr)
             throw hmgExcept("CircuitStorage::processFunctionInstructions", "The instruction stream has ended during function definition.");
+    }
+
+    if (functionIndex == functions.size()) {
+        functions.push_back(std::make_unique<HmgF_CustomFunction>(fvModel));
+    }
+    else {
+        if (functionIndex > functions.size())
+            functions.resize(functionIndex + 1);
+        functions[functionIndex] = std::make_unique<HmgF_CustomFunction>(fvModel);
     }
 }
 

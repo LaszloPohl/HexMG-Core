@@ -630,7 +630,7 @@ void probaSzimulacio4() {
 
 
 //***********************************************************************
-int main_1(int n, const char** params) {
+int main(int n, const char** params) {
 //***********************************************************************
 	try {
 		HmgFileReader reader;
@@ -708,7 +708,7 @@ int main() {
 
 
 //***********************************************************************
-int main() {
+int main_1() {
 //***********************************************************************
 
 	//SpiceExpression se;
@@ -807,13 +807,14 @@ int main() {
 	std::cout << "\nDERIVED: " << fuggveny.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription()) << std::endl;
 	std::cout << "RET: " << workField[0] << "\n" << std::endl;
 
-	HgmFunctionStorage::namelessCustomFunctions.push_back(std::make_unique<HmgF_CustomFunction>(fvModel));
+	std::vector<std::unique_ptr<HmgFunction>> namelessCustomFunctions;
+	namelessCustomFunctions.push_back(std::make_unique<HmgF_CustomFunction>(fvModel));
 
 	HgmCustomFunctionModel fvModel2;
 	fvModel2.nParams = 5;
 	fvModel2.nLocal = 2;
 
-	lineDesc.pFunction = HgmFunctionStorage::namelessCustomFunctions[0].get();
+	lineDesc.pFunction = namelessCustomFunctions[0].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;

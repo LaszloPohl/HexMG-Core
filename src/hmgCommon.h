@@ -166,13 +166,6 @@ enum StreamInstructionType {
 
 
 //***********************************************************************
-enum ControlInstructionType {
-//***********************************************************************
-    citNothing, citAnalysis, citRepaceComponetType, citSave
-};
-
-
-//***********************************************************************
 enum ProbeType {
 //***********************************************************************
     ptV, ptI, ptVSum, ptVAverage, ptISum, ptIAverage
@@ -217,15 +210,6 @@ struct ParameterInstance {
 //***********************************************************************
     SimpleInterfaceNodeID param; // if a parameter is forwarded, this is the index of the parameter in the input param list, otherwise 0
     rvt value = rvt0; // if a value is given, paramIndex=0
-};
-
-
-//***********************************************************************
-enum BuiltInComponentTemplateType {
-//***********************************************************************
-    bicttCustom, bictt_R, bictt_RD, bictt_C, bictt_OPEN, bictt_V, bictt_VR,
-    bictt_I, bictt_IR, bictt_HYS, bictt_PCC,
-    bictt_RM, bictt_CM // resistor and capacitor with semiconductor model
 };
 
 
