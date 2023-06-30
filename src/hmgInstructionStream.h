@@ -486,14 +486,14 @@ struct IsFunctionInstruction: public IsInstruction {
 //***********************************************************************
 struct IsFunctionCallInstruction : public IsInstruction {
 //***********************************************************************
-    fileFunctionType type = fftInvalid;
-    uns customIndex;                        // if type == fftCustom
+    builtInFunctionType type = biftInvalid;
+    uns customIndex;                        // if type == biftCustom
     rvt value = rvt0;                       // if the function have 1 value
-    uns labelID = unsMax;                   // in case of jump instructions
+    uns labelVGID = unsMax;                 // in case of jump instructions, also the index of the global variable
     uns nParameters = 0;
     uns nValues = 0;                        // if more tna one rvt value belongs to the function (now only _PWL)
-    IsFunctionCallInstruction(fileFunctionType type_, uns customIndex_, rvt value_, uns labelID_, uns nParams_, uns nValues_)
-        :IsInstruction{ sitFunctionCall }, type{ type_ }, customIndex{ customIndex_ }, value{ value_ }, labelID{ labelID_ }, nParameters{ nParams_ }, nValues{ nValues_ } {}
+    IsFunctionCallInstruction(builtInFunctionType type_, uns customIndex_, rvt value_, uns labelVGID_, uns nParams_, uns nValues_)
+        :IsInstruction{ sitFunctionCall }, type{ type_ }, customIndex{ customIndex_ }, value{ value_ }, labelVGID{ labelVGID_ }, nParameters{ nParams_ }, nValues{ nValues_ } {}
 };
 
 

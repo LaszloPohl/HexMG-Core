@@ -633,12 +633,12 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
     struct FunctionDescription {
     //***********************************************************************
-        fileFunctionType type = fftInvalid;
-        uns customIndex;                                                        // if type == fftCustom => index in globalNames.functionNames
+        builtInFunctionType type = biftInvalid;
+        uns customIndex;                                                        // if type == biftCustom => index in globalNames.functionNames
         std::vector<ParameterIdentifier> parameters;
         std::vector<rvt> values;                                                // function parameter values for _PWL
         rvt value = rvt0;                                                       // function parameter value for _CONST
-        uns labelID = 0;                                                        // for jump instructions
+        uns labelVGID = 0;                                                      // for jump instructions, also the index of the global variable
         std::string labelName;                                                  // first read only the name of the label beacuse forward jumping is possible
     };
     //***********************************************************************
@@ -657,7 +657,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         dest.labelName = token;
-        dest.labelID = unsMax;
+        dest.labelVGID = unsMax;
     }
     //***********************************************************************
     void ReadValue(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
@@ -667,11 +667,20 @@ struct HMGFileFunction: HMGFileListItem {
             throw hmgExcept("HMGFileFunction::ReadValue", "value is not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
     //***********************************************************************
+    void ReadVG(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
+    //***********************************************************************
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (token[0] != 'V' || token[1] != 'G')
+            throw hmgExcept("HMGFileFunction::ReadVG", "global variable name (VG) expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        if (sscanf_s(token + 2, "%u", &dest.labelVGID) != 1)
+            throw hmgExcept("HMGFileFunction::ReadVG", "global variable name (VG) expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+    //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
         iStream.add(new IsFunctionInstruction(functionIndex, nParams, nInternalVars, (uns)instructions.size()));
         for (const auto& line : instructions) {
-            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelID, (uns)line.parameters.size(), (uns)line.values.size()));
+            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelVGID, (uns)line.parameters.size(), (uns)line.values.size()));
             for (const auto& par : line.parameters)
                 iStream.add(new IsFunctionParIDInstruction(par));
             for (const auto& val : line.values)

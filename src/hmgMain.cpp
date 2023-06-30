@@ -527,7 +527,7 @@ void probaSzimulacio4() {
 
 	// U*U
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
@@ -541,7 +541,7 @@ void probaSzimulacio4() {
 
 	// (U*U)*G
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;
@@ -736,7 +736,7 @@ int main() {
 	ParameterIdentifier parId;
 	LineDescription lineDesc;
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 0;
 	lineDesc.parameters.push_back(parId);
@@ -747,7 +747,7 @@ int main() {
 	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futSqrt].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_SQRT].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 1;
@@ -757,7 +757,7 @@ int main() {
 	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpPlus].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_ADD].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 2;
@@ -768,7 +768,7 @@ int main() {
 	lineDesc.parameters.push_back(parId);
 	fvModel.lines.push_back(lineDesc);
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;
@@ -829,7 +829,7 @@ int main() {
 	lineDesc.parameters.push_back(parId);
 	fvModel2.lines.push_back(lineDesc);
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futOpMul].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptLocalVar;
 	parId.parIndex = 1;
@@ -841,7 +841,7 @@ int main() {
 	lineDesc.parameters.push_back(parId);
 	fvModel2.lines.push_back(lineDesc);
 
-	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[futSqrt].get();
+	lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_SQRT].get();
 	lineDesc.parameters.clear();
 	parId.parType = ParameterType::ptParam;
 	parId.parIndex = 0;

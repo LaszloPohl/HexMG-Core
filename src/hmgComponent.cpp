@@ -17,6 +17,64 @@ namespace nsHMG {
 
 
 //***********************************************************************
+int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    workField[index[0]] = SimControl::timeStepStop.getValueDC() > rvt0 ? rvt1 : rvt0;
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    workField[index[0]] = SimControl::timeStepStop.getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    workField[index[0]] = SimControl::dt.getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    workField[index[0]] = SimControl::getFrequency();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    workField[index[0]] = Rails::V[(uns)workField[index[2]]]->rail.getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    gc.globalVariables[line.jumpValue]->setValueDC(workField[index[2]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+//***********************************************************************
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    workField[index[0]] = gc.globalVariables[line.jumpValue]->getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
 bool CircuitStorage::processInstructions(IsInstruction*& first) {
 //***********************************************************************
     bool isNotFinished = true;

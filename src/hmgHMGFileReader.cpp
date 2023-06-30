@@ -1608,141 +1608,142 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
 struct FileFunctionNameID {
 //***********************************************************************
     const char* functionName = nullptr;
-    fileFunctionType id = fftInvalid;
+    builtInFunctionType id = biftInvalid;
 };
 
 
 //***********************************************************************
-FileFunctionNameID fftNameID[] = {
+FileFunctionNameID biftNameID[] = {
 //***********************************************************************
-    { "CONST",	fft_CONST },
-    { "C_PI",	fft_C_PI },
-    { "C_2PI",	fft_C_2PI },
-    { "C_PI2",	fft_C_PI2 },
-    { "C_E",	fft_C_E },
-    { "C_T0",	fft_C_T0 },
-    { "C_K",	fft_C_K },
-    { "C_Q",	fft_C_Q },
-    { "ADD",	fft_ADD },
-    { "SUB",	fft_SUB },
-    { "MUL",	fft_MUL },
-    { "DIV",	fft_DIV },
-    { "ADDC",	fft_ADDC },
-    { "SUBC",	fft_SUBC },
-    { "MULC",	fft_MULC },
-    { "DIVC",	fft_DIVC },
-    { "CADD",	fft_CADD },
-    { "CSUB",	fft_CSUB },
-    { "CMUL",	fft_CMUL },
-    { "CDIV",	fft_CDIV },
-    { "NEG",	fft_NEG },
-    { "INV",	fft_INV },
-    { "SQRT",	fft_SQRT },
-    { "POW",	fft_POW },
-    { "POWC",	fft_POWC },
-    { "CPOW",	fft_CPOW },
-    { "EXP",	fft_EXP },
-    { "NEXP",	fft_NEXP },
-    { "IEXP",	fft_IEXP },
-    { "INEXP",	fft_INEXP },
-    { "NIEXP",	fft_INEXP }, // !
-    { "LN",	    fft_LN },
-    { "LOG",	fft_LOG },
-    { "CLOG",	fft_CLOG },
-    { "ABS",	fft_ABS },
-    { "ASIN",	fft_ASIN },
-    { "ACOS",	fft_ACOS },
-    { "ATAN",	fft_ATAN },
-    { "ASINH",	fft_ASINH },
-    { "ACOSH",	fft_ACOSH },
-    { "ATANH",	fft_ATANH },
-    { "SIN",	fft_SIN },
-    { "COS",	fft_COS },
-    { "TAN",	fft_TAN },
-    { "SINH",	fft_SINH },
-    { "COSH",	fft_COSH },
-    { "TANH",	fft_TANH },
-    { "RATIO",	fft_RATIO },
-    { "PWL",	fft_PWL },
-    { "DERIV",	fft_DERIV },
-    { "DERIVC",	fft_DERIVC },
-    { "VLENGTH2",	fft_VLENGTH2 },
-    { "VLENGTH3",	fft_VLENGTH3 },
-    { "DISTANCE2",	fft_DISTANCE2 },
-    { "DISTANCE3",	fft_DISTANCE3 },
-    { "GT",	    fft_GT },
-    { "ST", 	fft_ST },
-    { "GE",	    fft_GE },
-    { "SE",	    fft_SE },
-    { "EQ",	    fft_EQ },
-    { "NEQ",	fft_NEQ },
-    { "GT0",	fft_GT0 },
-    { "ST0",	fft_ST0 },
-    { "GE0",	fft_GE0 },
-    { "SE0",	fft_SE0 },
-    { "EQ0",	fft_EQ0 },
-    { "NEQ0",	fft_NEQ0 },
-    { "AND",	fft_AND },
-    { "OR",	    fft_OR },
-    { "NOT",	fft_NOT },
-    { "JMP",	fft_JMP },
-    { "JGT",	fft_JGT },
-    { "JST",	fft_JST },
-    { "JGE",	fft_JGE },
-    { "JSE",	fft_JSE },
-    { "JEQ",	fft_JEQ },
-    { "JNEQ",	fft_JNEQ },
-    { "JGT0",	fft_JGT0 },
-    { "JST0",	fft_JST0 },
-    { "JGE0",	fft_JGE0 },
-    { "JSE0",	fft_JSE0 },
-    { "JEQ0",	fft_JEQ0 },
-    { "JNEQ0",	fft_JNEQ0 },
-    { "CPY",	fft_CPY },
-    { "CGT",	fft_CGT },
-    { "CST",	fft_CST },
-    { "CGE",	fft_CGE },
-    { "CSE",	fft_CSE },
-    { "CEQ",	fft_CEQ },
-    { "CNEQ",	fft_CNEQ },
-    { "CGT0",	fft_CGT0 },
-    { "CST0",	fft_CST0 },
-    { "CGE0",	fft_CGE0 },
-    { "CSE0",	fft_CSE0 },
-    { "CEQ0",	fft_CEQ0 },
-    { "CNEQ0",	fft_CNEQ0 },
-    { "TGT",	fft_TGT },
-    { "TST",	fft_TST },
-    { "TGE",	fft_TGE },
-    { "TSE",	fft_TSE },
-    { "TEQ",	fft_TEQ },
-    { "TNEQ",	fft_TNEQ },
-    { "TGT0",	fft_TGT0 },
-    { "TST0",	fft_TST0 },
-    { "TGE0",	fft_TGE0 },
-    { "TSE0",	fft_TSE0 },
-    { "TEQ0",	fft_TEQ0 },
-    { "TNEQ0",	fft_TNEQ0 },
-    { "UNIT",	fft_UNIT },
-    { "UNITT",	fft_UNITT },
-    { "URAMP",	fft_URAMP },
-    { "TIME",	fft_TIME },
-    { "DT",	    fft_DT },
-    { "FREQ",	fft_FREQ },
-    { "GND",	fft_GND },
-    { "RAIL",	fft_RAIL}
+    { "CONST",	bift_CONST },
+    { "C_PI",	bift_C_PI },
+    { "C_2PI",	bift_C_2PI },
+    { "C_PI2",	bift_C_PI2 },
+    { "C_E",	bift_C_E },
+    { "C_T0",	bift_C_T0 },
+    { "C_K",	bift_C_K },
+    { "C_Q",	bift_C_Q },
+    { "ADD",	bift_ADD },
+    { "SUB",	bift_SUB },
+    { "MUL",	bift_MUL },
+    { "DIV",	bift_DIV },
+    { "ADDC",	bift_ADDC },
+    { "SUBC",	bift_SUBC },
+    { "MULC",	bift_MULC },
+    { "DIVC",	bift_DIVC },
+    { "CADD",	bift_CADD },
+    { "CSUB",	bift_CSUB },
+    { "CMUL",	bift_CMUL },
+    { "CDIV",	bift_CDIV },
+    { "NEG",	bift_NEG },
+    { "INV",	bift_INV },
+    { "SQRT",	bift_SQRT },
+    { "POW",	bift_POW },
+    { "POWC",	bift_POWC },
+    { "CPOW",	bift_CPOW },
+    { "EXP",	bift_EXP },
+    { "NEXP",	bift_NEXP },
+    { "IEXP",	bift_IEXP },
+    { "INEXP",	bift_INEXP },
+    { "NIEXP",	bift_INEXP }, // !
+    { "LN",	    bift_LN },
+    { "LOG",	bift_LOG },
+    { "CLOG",	bift_CLOG },
+    { "ABS",	bift_ABS },
+    { "ASIN",	bift_ASIN },
+    { "ACOS",	bift_ACOS },
+    { "ATAN",	bift_ATAN },
+    { "ASINH",	bift_ASINH },
+    { "ACOSH",	bift_ACOSH },
+    { "ATANH",	bift_ATANH },
+    { "SIN",	bift_SIN },
+    { "COS",	bift_COS },
+    { "TAN",	bift_TAN },
+    { "SINH",	bift_SINH },
+    { "COSH",	bift_COSH },
+    { "TANH",	bift_TANH },
+    { "RATIO",	bift_RATIO },
+    { "PWL",	bift_PWL },
+    { "DERIV",	bift_DERIV },
+    { "DERIVC",	bift_DERIVC },
+    { "VLENGTH2",	bift_VLENGTH2 },
+    { "VLENGTH3",	bift_VLENGTH3 },
+    { "DISTANCE2",	bift_DISTANCE2 },
+    { "DISTANCE3",	bift_DISTANCE3 },
+    { "GT",	    bift_GT },
+    { "ST", 	bift_ST },
+    { "GE",	    bift_GE },
+    { "SE",	    bift_SE },
+    { "EQ",	    bift_EQ },
+    { "NEQ",	bift_NEQ },
+    { "GT0",	bift_GT0 },
+    { "ST0",	bift_ST0 },
+    { "GE0",	bift_GE0 },
+    { "SE0",	bift_SE0 },
+    { "EQ0",	bift_EQ0 },
+    { "NEQ0",	bift_NEQ0 },
+    { "AND",	bift_AND },
+    { "OR",	    bift_OR },
+    { "NOT",	bift_NOT },
+    { "JMP",	bift_JMP },
+    { "JGT",	bift_JGT },
+    { "JST",	bift_JST },
+    { "JGE",	bift_JGE },
+    { "JSE",	bift_JSE },
+    { "JEQ",	bift_JEQ },
+    { "JNEQ",	bift_JNEQ },
+    { "JGT0",	bift_JGT0 },
+    { "JST0",	bift_JST0 },
+    { "JGE0",	bift_JGE0 },
+    { "JSE0",	bift_JSE0 },
+    { "JEQ0",	bift_JEQ0 },
+    { "JNEQ0",	bift_JNEQ0 },
+    { "CPY",	bift_CPY },
+    { "CGT",	bift_CGT },
+    { "CST",	bift_CST },
+    { "CGE",	bift_CGE },
+    { "CSE",	bift_CSE },
+    { "CEQ",	bift_CEQ },
+    { "CNEQ",	bift_CNEQ },
+    { "CGT0",	bift_CGT0 },
+    { "CST0",	bift_CST0 },
+    { "CGE0",	bift_CGE0 },
+    { "CSE0",	bift_CSE0 },
+    { "CEQ0",	bift_CEQ0 },
+    { "CNEQ0",	bift_CNEQ0 },
+    { "TGT",	bift_TGT },
+    { "TST",	bift_TST },
+    { "TGE",	bift_TGE },
+    { "TSE",	bift_TSE },
+    { "TEQ",	bift_TEQ },
+    { "TNEQ",	bift_TNEQ },
+    { "TGT0",	bift_TGT0 },
+    { "TST0",	bift_TST0 },
+    { "TGE0",	bift_TGE0 },
+    { "TSE0",	bift_TSE0 },
+    { "TEQ0",	bift_TEQ0 },
+    { "TNEQ0",	bift_TNEQ0 },
+    { "UNIT",	bift_UNIT },
+    { "UNITT",	bift_UNITT },
+    { "URAMP",	bift_URAMP },
+    { "TIME",	bift_TIME },
+    { "DT",	    bift_DT },
+    { "FREQ",	bift_FREQ },
+    { "RAIL",	bift_RAIL },
+    { "SETVG",	bift_SETVG },
+    { "GETVG",	bift_GETVG }
 };
 
 
 //***********************************************************************
-fileFunctionType identifyFileFunctionType(const char* functionName) {
+builtInFunctionType identifyFileFunctionType(const char* functionName) {
 //***********************************************************************
     if (*functionName == '_')
         functionName++;
-    for (const auto& pair : fftNameID)
+    for (const auto& pair : biftNameID)
         if (strcmp(functionName, pair.functionName) == 0)
             return pair.id;
-    return fftInvalid;
+    return biftInvalid;
 }
 
 
@@ -1863,79 +1864,79 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
             FunctionDescription& func = instructions.back();
             if (token[0] == '_') { // built in function
                 func.type = identifyFileFunctionType(token);
-                if(func.type == fftInvalid)
+                if(func.type == biftInvalid)
                     throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 switch (func.type) {
-                    case fft_CONST:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CONST:    ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case fft_C_PI:
-                    case fft_C_2PI:
-                    case fft_C_PI2:
-                    case fft_C_E:
-                    case fft_C_T0:
-                    case fft_C_K:
-                    case fft_C_Q:       ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case bift_C_PI:
+                    case bift_C_2PI:
+                    case bift_C_PI2:
+                    case bift_C_E:
+                    case bift_C_T0:
+                    case bift_C_K:
+                    case bift_C_Q:      ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
 
-                    case fft_ADD:
-                    case fft_SUB:
-                    case fft_MUL:
-                    case fft_DIV:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_ADD:
+                    case bift_SUB:
+                    case bift_MUL:
+                    case bift_DIV:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
 
-                    case fft_ADDC:
-                    case fft_SUBC:
-                    case fft_MULC:
-                    case fft_DIVC:      ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_ADDC:
+                    case bift_SUBC:
+                    case bift_MULC:
+                    case bift_DIVC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case fft_CADD:
-                    case fft_CSUB:
-                    case fft_CMUL:
-                    case fft_CDIV:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
-                                        ReadValue(func, lineToken, reader, line, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
-                                        break;
-                    case fft_NEG:
-                    case fft_INV:
-                    case fft_SQRT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
-
-                    case fft_POW:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case fft_POWC:      ReadParams(func, 2, lineToken, reader, line, lineInfo);
-                                        ReadValue(func, lineToken, reader, line, lineInfo);
-                                        break;
-                    case fft_CPOW:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CADD:
+                    case bift_CSUB:
+                    case bift_CMUL:
+                    case bift_CDIV:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         break;
-                    case fft_EXP:
-                    case fft_NEXP:
-                    case fft_IEXP:
-                    case fft_INEXP:
-                    case fft_LN:        ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_NEG:
+                    case bift_INV:
+                    case bift_SQRT:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_LOG:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case fft_CLOG:      ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_POW:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_POWC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_CPOW:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_EXP:
+                    case bift_NEXP:
+                    case bift_IEXP:
+                    case bift_INEXP:
+                    case bift_LN:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case bift_LOG:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_CLOG:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         break;
 
-                    case fft_ABS:
-                    case fft_ASIN:
-                    case fft_ACOS:
-                    case fft_ATAN:
-                    case fft_ASINH:
-                    case fft_ACOSH:
-                    case fft_ATANH:
-                    case fft_SIN:
-                    case fft_COS:
-                    case fft_TAN:
-                    case fft_SINH:
-                    case fft_COSH:
-                    case fft_TANH:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_ABS:
+                    case bift_ASIN:
+                    case bift_ACOS:
+                    case bift_ATAN:
+                    case bift_ASINH:
+                    case bift_ACOSH:
+                    case bift_ATANH:
+                    case bift_SIN:
+                    case bift_COS:
+                    case bift_TAN:
+                    case bift_SINH:
+                    case bift_COSH:
+                    case bift_TANH:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_RATIO:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_RATIO:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
 
-                    case fft_PWL: {
+                    case bift_PWL: {
                             ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
                             rvt x, y;
                             while (!lineToken.isSepEOL) {
@@ -1951,92 +1952,98 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                             }
                         }
                         break;
-                    case fft_DERIV:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
-                    case fft_DERIVC:    ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                    case bift_DERIV:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_DERIVC:   ReadParams(func, 3, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case fft_VLENGTH2:  ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case fft_VLENGTH3:  ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
-                    case fft_DISTANCE2: ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
-                    case fft_DISTANCE3: ReadParams(func, 7, lineToken, reader, line, lineInfo); break;
+                    case bift_VLENGTH2: ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_VLENGTH3: ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_DISTANCE2:ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case bift_DISTANCE3:ReadParams(func, 7, lineToken, reader, line, lineInfo); break;
 
-                    case fft_GT:
-                    case fft_ST:
-                    case fft_GE:
-                    case fft_SE:
-                    case fft_EQ:
-                    case fft_NEQ:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_GT:
+                    case bift_ST:
+                    case bift_GE:
+                    case bift_SE:
+                    case bift_EQ:
+                    case bift_NEQ:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
 
-                    case fft_GT0:
-                    case fft_ST0:
-                    case fft_GE0:
-                    case fft_SE0:
-                    case fft_EQ0:
-                    case fft_NEQ0:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_GT0:
+                    case bift_ST0:
+                    case bift_GE0:
+                    case bift_SE0:
+                    case bift_EQ0:
+                    case bift_NEQ0:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_AND:
-                    case fft_OR:        ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_AND:
+                    case bift_OR:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
 
-                    case fft_NOT:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_NOT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_JMP:       ReadLabel(func, lineToken, reader, lineInfo); break;
-                    case fft_JGT:
-                    case fft_JST:
-                    case fft_JGE:
-                    case fft_JSE:
-                    case fft_JEQ:
-                    case fft_JNEQ:      ReadLabel(func, lineToken, reader, lineInfo);
+                    case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo); break;
+                    case bift_JGT:
+                    case bift_JST:
+                    case bift_JGE:
+                    case bift_JSE:
+                    case bift_JEQ:
+                    case bift_JNEQ:     ReadLabel(func, lineToken, reader, lineInfo);
                                         ReadParams(func, 2, lineToken, reader, line, lineInfo); 
                                         break;
 
-                    case fft_JGT0:
-                    case fft_JST0:
-                    case fft_JGE0:
-                    case fft_JSE0:
-                    case fft_JEQ0:
-                    case fft_JNEQ0:     ReadLabel(func, lineToken, reader, lineInfo);
+                    case bift_JGT0:
+                    case bift_JST0:
+                    case bift_JGE0:
+                    case bift_JSE0:
+                    case bift_JEQ0:
+                    case bift_JNEQ0:    ReadLabel(func, lineToken, reader, lineInfo);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo); 
                                         break;
 
-                    case fft_CPY:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_CPY:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_CGT:
-                    case fft_CST:
-                    case fft_CGE:
-                    case fft_CSE:
-                    case fft_CEQ:
-                    case fft_CNEQ:      ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_CGT:
+                    case bift_CST:
+                    case bift_CGE:
+                    case bift_CSE:
+                    case bift_CEQ:
+                    case bift_CNEQ:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
 
-                    case fft_CGT0:
-                    case fft_CST0:
-                    case fft_CGE0:
-                    case fft_CSE0:
-                    case fft_CEQ0:
-                    case fft_CNEQ0:     ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_CGT0:
+                    case bift_CST0:
+                    case bift_CGE0:
+                    case bift_CSE0:
+                    case bift_CEQ0:
+                    case bift_CNEQ0:    ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
 
-                    case fft_TGT:
-                    case fft_TST:
-                    case fft_TGE:
-                    case fft_TSE:
-                    case fft_TEQ:
-                    case fft_TNEQ:      ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case bift_TGT:
+                    case bift_TST:
+                    case bift_TGE:
+                    case bift_TSE:
+                    case bift_TEQ:
+                    case bift_TNEQ:     ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
 
-                    case fft_TGT0:
-                    case fft_TST0:
-                    case fft_TGE0:
-                    case fft_TSE0:
-                    case fft_TEQ0:
-                    case fft_TNEQ0:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_TGT0:
+                    case bift_TST0:
+                    case bift_TGE0:
+                    case bift_TSE0:
+                    case bift_TEQ0:
+                    case bift_TNEQ0:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
 
-                    case fft_UNIT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
-                    case fft_UNITT:     ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
-                    case fft_URAMP:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_UNIT:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_UNITT:    ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case bift_URAMP:    ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case fft_TIME:
-                    case fft_DT:
-                    case fft_FREQ:
-                    case fft_GND:       ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
-                    case fft_RAIL:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_TIME:
+                    case bift_DT:
+                    case bift_FREQ:
+                    case bift_RAIL:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+
+                    case bift_SETVG:    ReadVG(func, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_GETVG:    ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadVG(func, lineToken, reader, line, lineInfo);
+                                        break;
                     default:
                         throw hmgExcept("HMGFileFunction::Read", "unknown built in function type ID (%u) in %s, line %u: %s", func.type, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
@@ -2046,7 +2053,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 if (!globalNames.functionNames.contains(token))
                     throw hmgExcept("HMGFileFunction::Read", "unknown function name %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 
-                func.type = fftCustom;
+                func.type = biftCustom;
                 func.customIndex = globalNames.functionNames[token];
 
                 cuns nPar = globalNames.functionData[func.customIndex]->nParams;
@@ -2060,10 +2067,10 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     for (uns i = 0; i < instructions.size(); i++) {
         FunctionDescription& func = instructions[i];
-        if (func.labelID == unsMax) {
+        if (func.labelVGID == unsMax) {
             if (!labels.contains(func.labelName))
                 throw hmgExcept("HMGFileFunction::Read", "%s jump label missing in %s function", func.labelName.c_str(), token); // token contains the function name
-            func.labelID = labels[func.labelName];
+            func.labelVGID = labels[func.labelName];
         }
     }
 }

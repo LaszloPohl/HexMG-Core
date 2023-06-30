@@ -90,52 +90,43 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1,
 
 //***********************************************************************
 enum builtInFunctionType {
-    futInvalid, futCustom,
-    futOpPlus, futOpMinus, futOpMul, futOpDiv, futOpNegativeSign,
-    futOpGreater, futOpSmaller, futOpGrEq, futOpSmEq, futOpEqual,
-    futOpNonEqual, futOpAnd, futOpOr, futOpNot,
-    futInv, futSqrt, futPow, futExp, futLn, futLog, futAbs,
-    futAsin, futAcos, futAtan, futAsinh, futAcosh, futAtanh,
-    futSin, futCos, futTan, futSinh, futCosh, futTanh,
-    futRatio, futPwl, futQcnl, futUnit, futUramp,
-    futSize // futSize have to be the last one
-};
 //***********************************************************************
+    biftInvalid, biftCustom,
+    
+    bift_CONST, bift_C_PI, bift_C_2PI, bift_C_PI2, bift_C_E, bift_C_T0, 
+    bift_C_K, bift_C_Q,
+    
+    bift_ADD, bift_SUB, bift_MUL, bift_DIV, bift_ADDC, bift_SUBC,
+    bift_MULC, bift_DIVC,
+    bift_CADD, bift_CSUB, bift_CMUL, bift_CDIV,
+    bift_NEG, bift_INV, bift_SQRT, bift_POW, bift_POWC, bift_CPOW,
+    bift_EXP, bift_NEXP, bift_IEXP, bift_INEXP, bift_LN, bift_LOG,
+    bift_CLOG,
+    bift_ABS, bift_ASIN,bift_ACOS, bift_ATAN, bift_ASINH, bift_ACOSH,
+    bift_ATANH,
+    bift_SIN, bift_COS, bift_TAN, bift_SINH, bift_COSH, bift_TANH,
+    bift_RATIO, bift_PWL, bift_DERIV, bift_DERIVC, bift_VLENGTH2,
+    bift_VLENGTH3, bift_DISTANCE2, bift_DISTANCE3,
+    
+    bift_GT, bift_ST, bift_GE, bift_SE, bift_EQ, bift_NEQ, bift_GT0, 
+    bift_ST0, bift_GE0, bift_SE0, bift_EQ0, bift_NEQ0, bift_AND,
+    bift_OR, bift_NOT,
+    
+    bift_JMP, bift_JGT, bift_JST, bift_JGE, bift_JSE, bift_JEQ, bift_JNEQ,
+    bift_JGT0, bift_JST0, bift_JGE0, bift_JSE0, bift_JEQ0, bift_JNEQ0,
+    
+    bift_CPY, bift_CGT, bift_CST, bift_CGE, bift_CSE, bift_CEQ, bift_CNEQ,
+    bift_CGT0, bift_CST0, bift_CGE0, bift_CSE0, bift_CEQ0, bift_CNEQ0,
+    
+    bift_TGT, bift_TST, bift_TGE, bift_TSE, bift_TEQ, bift_TNEQ,
+    bift_TGT0, bift_TST0, bift_TGE0, bift_TSE0, bift_TEQ0, bift_TNEQ0,
+    
+    bift_UNIT, bift_UNITT, bift_URAMP, bift_TIME, bift_DT, bift_FREQ,
+    bift_RAIL,
 
+    bift_SETVG, bift_GETVG,
 
-//***********************************************************************
-enum fileFunctionType {
-//***********************************************************************
-    fftInvalid, fftCustom,
-    
-    fft_CONST, fft_C_PI, fft_C_2PI, fft_C_PI2, fft_C_E, fft_C_T0, fft_C_K,
-    fft_C_Q,
-    
-    fft_ADD, fft_SUB, fft_MUL, fft_DIV, fft_ADDC, fft_SUBC, fft_MULC, fft_DIVC,
-    fft_CADD, fft_CSUB, fft_CMUL, fft_CDIV,
-    fft_NEG, fft_INV, fft_SQRT, fft_POW, fft_POWC, fft_CPOW,
-    fft_EXP, fft_NEXP, fft_IEXP, fft_INEXP, fft_LN, fft_LOG, fft_CLOG,
-    fft_ABS, fft_ASIN,fft_ACOS, fft_ATAN, fft_ASINH, fft_ACOSH, fft_ATANH,
-    fft_SIN, fft_COS, fft_TAN, fft_SINH, fft_COSH, fft_TANH,
-    fft_RATIO, fft_PWL, fft_DERIV, fft_DERIVC, fft_VLENGTH2, fft_VLENGTH3,
-    fft_DISTANCE2, fft_DISTANCE3,
-    
-    fft_GT, fft_ST, fft_GE, fft_SE, fft_EQ, fft_NEQ, fft_GT0, fft_ST0,
-    fft_GE0, fft_SE0, fft_EQ0, fft_NEQ0, fft_AND, fft_OR, fft_NOT,
-    
-    fft_JMP, fft_JGT, fft_JST, fft_JGE, fft_JSE, fft_JEQ, fft_JNEQ,
-    fft_JGT0, fft_JST0, fft_JGE0, fft_JSE0, fft_JEQ0, fft_JNEQ0,
-    
-    fft_CPY, fft_CGT, fft_CST, fft_CGE, fft_CSE, fft_CEQ, fft_CNEQ,
-    fft_CGT0, fft_CST0, fft_CGE0, fft_CSE0, fft_CEQ0, fft_CNEQ0,
-    
-    fft_TGT, fft_TST, fft_TGE, fft_TSE, fft_TEQ, fft_TNEQ,
-    fft_TGT0, fft_TST0, fft_TGE0, fft_TSE0, fft_TEQ0, fft_TNEQ0,
-    
-    fft_UNIT, fft_UNITT, fft_URAMP, fft_TIME, fft_DT, fft_FREQ, fft_GND,
-    fft_RAIL,
-
-    fftSize
+    biftSize
 };
 
 
