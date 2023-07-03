@@ -504,6 +504,8 @@ public:
     //***********************************************************************
     void math_add(const vektor & v1, const vektor & v2) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (n == 0)
+            return;
         is_equal_error(v1.n, v2.n, "vektor::add v1.n!=v2.n");
         is_equal_error(this->n, v2.n, "vektor::add this->n!=input.n ");
         for (unsigned i = 0; i < n; i++)
@@ -515,6 +517,8 @@ public:
     //***********************************************************************
     void math_sub(const vektor & v1, const vektor & v2) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (n == 0)
+            return;
         is_equal_error(v1.n, v2.n, "vektor::sub v1.n!=v2.n");
         is_equal_error(this->n, v2.n, "vektor::sub this->n!=input.n ");
         for (unsigned i = 0; i < n; i++)

@@ -45,7 +45,19 @@ void Simulation::runDC() {
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
     else {
-
+        CircuitStorage& gc = CircuitStorage::getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
+        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
+        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
+        gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
+        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationDC(true);
+        gc.fullCircuitInstances[fullCircuitID].component->acceptStepDC();
+        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
+        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
+        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+        std::cout << std::endl;
+        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
     wasDC = true;
 }

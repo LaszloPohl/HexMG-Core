@@ -130,6 +130,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 }
                 break;
             case sitComponentInstance:              isImpossibleInstruction = true; break;
+            case sitFunctionControlledComponentInstance: isImpossibleInstruction = true; break;
             case sitSunredTree: {
                     IsDefSunredInstruction* pAct = static_cast<IsDefSunredInstruction*>(act);
 
@@ -815,10 +816,88 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
 
                     std::unique_ptr<ComponentDefinition> cd = std::make_unique<ComponentDefinition>();
 
-                    cd->isBuiltIn = pAct->isBuiltIn;
+                    cd->modelType = pAct->isBuiltIn ? cmtBuiltIn : cmtCustom;
                     cd->isDefaultRail = pAct->isDefaultRail;
                     cd->defaultValueRailIndex = pAct->defaultValueRailIndex;
                     cd->modelIndex = pAct->modelIndex;
+                    cd->nodesConnectedTo.reserve(pAct->nNodes);
+                    cd->params.reserve(pAct->nParams);
+
+                    cd->processInstructions(first, *this);
+
+                    std::vector<std::unique_ptr<ComponentDefinition>>& instanceStorage = pAct->isController ? controllers : components;
+
+                    if (pAct->instanceIndex == instanceStorage.size()) {
+                        instanceStorage.push_back(std::move(cd));
+                    }
+                    else {
+                        if (pAct->instanceIndex > instanceStorage.size())
+                            instanceStorage.resize(pAct->instanceIndex + 1);
+                        instanceStorage[pAct->instanceIndex] = std::move(cd);
+                    }
+                }
+                break;
+            case sitFunctionControlledComponentInstance: {
+                    IsFunctionControlledComponentInstanceInstruction* pAct = static_cast<IsFunctionControlledComponentInstanceInstruction*>(act);
+
+                    CircuitStorage& gc = CircuitStorage::getInstance();
+
+                    ExternalConnectionSizePack xns;
+
+                    if (pAct->modelIndex == bimFunc_Controlled_IG) {
+                        xns.nIONodes = 2;
+                        xns.nNormalINodes = pAct->nIN;
+                        xns.nControlINodes = pAct->nCIN;
+                        xns.nNormalONodes = 0;
+                        xns.nForwardedONodes = 0;
+                        xns.nParams = 1 + pAct->nPar;
+                    }
+                    else
+                        throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
+
+                    NodeConnectionInstructions functionSources;
+
+                    for (uns i = 0; i < pAct->nFunctionParams; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during MODEL SUBCIRCUIT definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitNodeValue)
+                            throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => function parameter expected %u arrived", (uns)fact->instruction);
+                        IsNodeValueInstruction* pfAct = static_cast<IsNodeValueInstruction*>(fact);
+                        NodeConnectionInstructions::Source src;
+                        if (pfAct->nodeID.type == nvtParam) {
+                            src.sourceType = NodeConnectionInstructions::SourceType::sParam;
+                            src.sourceIndex = pfAct->nodeID.index;
+                        }
+                        else {
+                            CDNode cdn = SimpleInterfaceNodeID2CDNode(pfAct->nodeID, xns, internalNs); // internalNs is only a dummy because internal nodes of the component are not allowed to connect to the function (no reason in principle just I don't see why would it be needed)
+                            if (cdn.type != cdntExternal)
+                                throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => only external type node or parameter enabled as function parameter, %u found", (uns)pfAct->nodeID.type);
+                            src.sourceType = NodeConnectionInstructions::SourceType::sExternalNodeValue;
+                            src.sourceIndex = cdn.index;
+                        }
+                        functionSources.sources.push_back(src);
+
+                        delete fact;
+                    }
+
+                    if (pAct->modelIndex == bimFunc_Controlled_IG) {
+                        std::unique_ptr<Model_Function_Controlled_I_with_const_G> mf;
+                        HmgFunction* fv = pAct->isFunctionBuiltIn
+                            ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
+                            : gc.functions[pAct->functionIndex].get();
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_G>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, fv));
+                    }
+                    else
+                        throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
+
+                    std::unique_ptr<ComponentDefinition> cd = std::make_unique<ComponentDefinition>();
+
+                    cd->modelType = cmtFunctionControlledBuiltIn;
+                    cd->isDefaultRail = pAct->isDefaultRail;
+                    cd->defaultValueRailIndex = pAct->defaultValueRailIndex;
+                    cd->modelIndex = (uns)(gc.functionControlledBuiltInModels.size() - 1);
                     cd->nodesConnectedTo.reserve(pAct->nNodes);
                     cd->params.reserve(pAct->nParams);
 
@@ -1116,9 +1195,13 @@ void ComponentSubCircuit::buildOrReplace() {
     for (siz i = 0; i < nComponent; i++) {
         const ComponentDefinition& cDef = *model.components[i];
         uns defNodeIndex = cDef.isDefaultRail ? cDef.defaultValueRailIndex : this->defaultNodeValueIndex;
-        const ComponentAndControllerModelBase* iModel = cDef.isBuiltIn
+        const ComponentAndControllerModelBase* iModel = cDef.modelType == cmtBuiltIn
             ? CircuitStorage::getInstance().builtInModels[cDef.modelIndex].get()
-            : CircuitStorage::getInstance().models[cDef.modelIndex].get();
+            : (
+                cDef.modelType == cmtCustom 
+                ? CircuitStorage::getInstance().models[cDef.modelIndex].get()
+                : CircuitStorage::getInstance().functionControlledBuiltInModels[cDef.modelIndex].get()
+            );
         components[i] = std::unique_ptr<ComponentBase>(static_cast<ComponentBase*>(iModel->makeComponent(&cDef, defNodeIndex)));
     }
 

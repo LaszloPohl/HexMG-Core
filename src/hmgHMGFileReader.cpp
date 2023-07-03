@@ -21,6 +21,149 @@ namespace nsHMG {
 
 
 //***********************************************************************
+struct FileFunctionNameID {
+//***********************************************************************
+    const char* functionName = nullptr;
+    builtInFunctionType id = biftInvalid;
+};
+
+
+//***********************************************************************
+FileFunctionNameID biftNameID[] = {
+//***********************************************************************
+    { "CONST",	bift_CONST },
+    { "C_PI",	bift_C_PI },
+    { "C_2PI",	bift_C_2PI },
+    { "C_PI2",	bift_C_PI2 },
+    { "C_E",	bift_C_E },
+    { "C_T0",	bift_C_T0 },
+    { "C_K",	bift_C_K },
+    { "C_Q",	bift_C_Q },
+    { "ADD",	bift_ADD },
+    { "SUB",	bift_SUB },
+    { "MUL",	bift_MUL },
+    { "DIV",	bift_DIV },
+    { "ADDC",	bift_ADDC },
+    { "SUBC",	bift_SUBC },
+    { "MULC",	bift_MULC },
+    { "DIVC",	bift_DIVC },
+    { "CADD",	bift_CADD },
+    { "CSUB",	bift_CSUB },
+    { "CMUL",	bift_CMUL },
+    { "CDIV",	bift_CDIV },
+    { "NEG",	bift_NEG },
+    { "INV",	bift_INV },
+    { "SQRT",	bift_SQRT },
+    { "POW",	bift_POW },
+    { "POWC",	bift_POWC },
+    { "CPOW",	bift_CPOW },
+    { "EXP",	bift_EXP },
+    { "NEXP",	bift_NEXP },
+    { "IEXP",	bift_IEXP },
+    { "INEXP",	bift_INEXP },
+    { "NIEXP",	bift_INEXP }, // !
+    { "LN",	    bift_LN },
+    { "LOG",	bift_LOG },
+    { "CLOG",	bift_CLOG },
+    { "ABS",	bift_ABS },
+    { "ASIN",	bift_ASIN },
+    { "ACOS",	bift_ACOS },
+    { "ATAN",	bift_ATAN },
+    { "ASINH",	bift_ASINH },
+    { "ACOSH",	bift_ACOSH },
+    { "ATANH",	bift_ATANH },
+    { "SIN",	bift_SIN },
+    { "COS",	bift_COS },
+    { "TAN",	bift_TAN },
+    { "SINH",	bift_SINH },
+    { "COSH",	bift_COSH },
+    { "TANH",	bift_TANH },
+    { "RATIO",	bift_RATIO },
+    { "PWL",	bift_PWL },
+    { "DERIV",	bift_DERIV },
+    { "DERIVC",	bift_DERIVC },
+    { "VLENGTH2",	bift_VLENGTH2 },
+    { "VLENGTH3",	bift_VLENGTH3 },
+    { "DISTANCE2",	bift_DISTANCE2 },
+    { "DISTANCE3",	bift_DISTANCE3 },
+    { "GT",	    bift_GT },
+    { "ST", 	bift_ST },
+    { "GE",	    bift_GE },
+    { "SE",	    bift_SE },
+    { "EQ",	    bift_EQ },
+    { "NEQ",	bift_NEQ },
+    { "GT0",	bift_GT0 },
+    { "ST0",	bift_ST0 },
+    { "GE0",	bift_GE0 },
+    { "SE0",	bift_SE0 },
+    { "EQ0",	bift_EQ0 },
+    { "NEQ0",	bift_NEQ0 },
+    { "AND",	bift_AND },
+    { "OR",	    bift_OR },
+    { "NOT",	bift_NOT },
+    { "JMP",	bift_JMP },
+    { "JGT",	bift_JGT },
+    { "JST",	bift_JST },
+    { "JGE",	bift_JGE },
+    { "JSE",	bift_JSE },
+    { "JEQ",	bift_JEQ },
+    { "JNEQ",	bift_JNEQ },
+    { "JGT0",	bift_JGT0 },
+    { "JST0",	bift_JST0 },
+    { "JGE0",	bift_JGE0 },
+    { "JSE0",	bift_JSE0 },
+    { "JEQ0",	bift_JEQ0 },
+    { "JNEQ0",	bift_JNEQ0 },
+    { "CPY",	bift_CPY },
+    { "CGT",	bift_CGT },
+    { "CST",	bift_CST },
+    { "CGE",	bift_CGE },
+    { "CSE",	bift_CSE },
+    { "CEQ",	bift_CEQ },
+    { "CNEQ",	bift_CNEQ },
+    { "CGT0",	bift_CGT0 },
+    { "CST0",	bift_CST0 },
+    { "CGE0",	bift_CGE0 },
+    { "CSE0",	bift_CSE0 },
+    { "CEQ0",	bift_CEQ0 },
+    { "CNEQ0",	bift_CNEQ0 },
+    { "TGT",	bift_TGT },
+    { "TST",	bift_TST },
+    { "TGE",	bift_TGE },
+    { "TSE",	bift_TSE },
+    { "TEQ",	bift_TEQ },
+    { "TNEQ",	bift_TNEQ },
+    { "TGT0",	bift_TGT0 },
+    { "TST0",	bift_TST0 },
+    { "TGE0",	bift_TGE0 },
+    { "TSE0",	bift_TSE0 },
+    { "TEQ0",	bift_TEQ0 },
+    { "TNEQ0",	bift_TNEQ0 },
+    { "UNIT",	bift_UNIT },
+    { "UNITT",	bift_UNITT },
+    { "URAMP",	bift_URAMP },
+    { "TIME",	bift_TIME },
+    { "DT",	    bift_DT },
+    { "FREQ",	bift_FREQ },
+    { "RAIL",	bift_RAIL },
+    { "SETVG",	bift_SETVG },
+    { "GETVG",	bift_GETVG }
+};
+
+
+//***********************************************************************
+builtInFunctionType identifyFileFunctionType(const char* functionName) {
+//***********************************************************************
+    if (*functionName == '_')
+        functionName++;
+    for (const auto& pair : biftNameID)
+        if (strcmp(functionName, pair.functionName) == 0)
+            return pair.id;
+    return biftInvalid;
+}
+
+
+//***********************************************************************
 std::string getPath(const std::string& fileNameWithPath) {
 //***********************************************************************
     size_t separator = fileNameWithPath.length(); // points to the terminating zero
@@ -673,14 +816,14 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
             pxline->modelIndex = unsMax;
 
-            uns nodenum = 2, parnum = 1, funcnum = 0;
+            uns nodenum = 2, parnum = 1;
             uns startONodes = unsMax, stopONodes = unsMax;
             if (strcmp(token, "MODEL") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 pxline->isBuiltIn = false;
                 try { pxline->modelIndex = globalNames.modelNames.at(token); }
                 catch (const std::out_of_range&) {
-                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
                 const HMGFileModelDescription& mod = *globalNames.modelData[pxline->modelIndex];
                 nodenum = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes + mod.externalNs.nNormalONodes + mod.externalNs.nForwardedONodes;
@@ -691,15 +834,58 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     stopONodes = startONodes + mod.externalNs.nNormalONodes - 1;
                 }
             }
-            else if (strcmp(token,  "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
-            else if (strcmp(token, "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2; parnum = 2; }
-            else if (strcmp(token,  "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
-            else if (strcmp(token, "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2; parnum = 2; }
-            else if (strcmp(token,  "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
-            else if (strcmp(token, "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2; parnum = 2; }
-            else if (strcmp(token,  "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1; parnum = 4; }
-            else if (strcmp(token, "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2; parnum = 5; }
-            else if (strcmp(token, "VI") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVI;  parnum = 5; startONodes = 2; stopONodes = 2; }
+            else if (strcmp(token,   "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
+            else if (strcmp(token,  "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2; parnum = 2; }
+            else if (strcmp(token,   "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
+            else if (strcmp(token,  "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2; parnum = 2; }
+            else if (strcmp(token,   "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
+            else if (strcmp(token,  "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2; parnum = 2; }
+            else if (strcmp(token,   "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1; parnum = 4; }
+            else if (strcmp(token,  "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2; parnum = 5; }
+            else if (strcmp(token,  "VI") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVI;  parnum = 5; startONodes = 2; stopONodes = 2; }
+            else if (strcmp(token, "FCI") == 0) { 
+                pxline->isBuiltIn = true; 
+                pxline->modelIndex = bimFunc_Controlled_IG;
+                pxline->isFunctionControlled = true;
+                bool isNotFinished = true;
+                do {
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN",   pxline->nIN));
+                    else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN",  pxline->nCin));
+                    else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P",    pxline->nPar));
+                    else if (strcmp(lineToken.getActToken(), "F") == 0) {
+                        token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                        if (token[0] == '_') { // built in function
+                            pxline->isFunctionBuiltIn = true;
+                            pxline->functionIndex = identifyFileFunctionType(token);
+                            if (pxline->functionIndex == biftInvalid)
+                                throw hmgExcept("HMGFileFunction::ReadOrReplaceBodySubcircuit", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                        }
+                        else {
+                            pxline->isFunctionBuiltIn = false;
+
+                            if (!globalNames.functionNames.contains(token))
+                                throw hmgExcept("HMGFileFunction::ReadOrReplaceBodySubcircuit", "unknown function name %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+                            pxline->functionIndex = globalNames.functionNames[token];
+
+                            cuns nPar = globalNames.functionData[pxline->functionIndex]->nParams;
+
+                            for (uns i = 0; i < nPar; i++) {
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                pxline->functionParams.emplace_back(SimpleInterfaceNodeID());
+                                if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back()))
+                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                        }
+                        nodenum = 2 + pxline->nIN + pxline->nCin;
+                        parnum = 1 + pxline->nPar;
+                        isNotFinished = false;
+                    }
+                    else
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                } while (isNotFinished);
+            }
             // don't forget to set pxline->isController if needed !
             // don't forget to set startONodes and stopONodes if there are normal O nodes !
 
@@ -710,10 +896,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     pxline->nodes.emplace_back(SimpleInterfaceNodeID());
                     if (!textToSimpleInterfaceNodeID(token, pxline->nodes.back()))
-                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     if (pxline->nodes.back().type == nvtUnconnected) {
                         if(startONodes == unsMax || i < startONodes || i > stopONodes)
-                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "NONE node connection allowed only for normal output nodes (OUT) in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "NONE node connection allowed only for normal output nodes (OUT) in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     }
                 }
                 for (uns i = 0; i < parnum; i++) {
@@ -736,11 +922,11 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                             if (isalpha(token[0])) { // parameter / variable / node
                                 if (!textToSimpleInterfaceNodeID(token, pxline->params[index].param))
-                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                             }
                             else { // value
                                 if (!spiceTextToRvt(token, pxline->params[index].value))
-                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                             }
                             continue;
                         }
@@ -748,19 +934,16 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     // this part cannot be put in else section ! (see above):
                     if (isalpha(token[0])) { // parameter / variable / node
                         if (!textToSimpleInterfaceNodeID(token, pxline->params[i].param))
-                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     }
                     else { // value
                         if (!spiceTextToRvt(token, pxline->params[i].value))
-                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised value (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     }
-                }
-                for (uns i = 0; i < funcnum; i++) {
-                    TODO("Read function calls");
                 }
             }
             else
-                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised component type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised component type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
             if (!lineToken.isSepEOL) {
                 bool isDefRail = (strcmp(token, "DEFAULTRAIL") == 0);
@@ -772,25 +955,25 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     SimpleInterfaceNodeID rail;
                     if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
-                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     pxline->isDefaultRail = true;
                     pxline->defaultValueRailIndex = rail.index;
                 }
                 else
-                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised line ending (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised line ending (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             }
 
             // controller instance or node instance => setting instance index
 
             if (pxline->isController) {
                 if (controllerInstanceNameIndex.contains(instanceName))
-                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 pxline->instanceIndex = (uns)controllerInstanceNameIndex.size();
                 controllerInstanceNameIndex[instanceName] = pxline->instanceIndex;
             }
             else {
                 if (componentInstanceNameIndex.contains(instanceName))
-                    throw hmgExcept("HMGFileModelDescription::Read", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "%s redefinition in %s, line %u: %s", instanceName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 pxline->instanceIndex = (uns)componentInstanceNameIndex.size();
                 componentInstanceNameIndex[instanceName] = pxline->instanceIndex;
             }
@@ -1601,149 +1784,6 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
         else
             throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     } while (isMultigridNotEnded);
-}
-
-
-//***********************************************************************
-struct FileFunctionNameID {
-//***********************************************************************
-    const char* functionName = nullptr;
-    builtInFunctionType id = biftInvalid;
-};
-
-
-//***********************************************************************
-FileFunctionNameID biftNameID[] = {
-//***********************************************************************
-    { "CONST",	bift_CONST },
-    { "C_PI",	bift_C_PI },
-    { "C_2PI",	bift_C_2PI },
-    { "C_PI2",	bift_C_PI2 },
-    { "C_E",	bift_C_E },
-    { "C_T0",	bift_C_T0 },
-    { "C_K",	bift_C_K },
-    { "C_Q",	bift_C_Q },
-    { "ADD",	bift_ADD },
-    { "SUB",	bift_SUB },
-    { "MUL",	bift_MUL },
-    { "DIV",	bift_DIV },
-    { "ADDC",	bift_ADDC },
-    { "SUBC",	bift_SUBC },
-    { "MULC",	bift_MULC },
-    { "DIVC",	bift_DIVC },
-    { "CADD",	bift_CADD },
-    { "CSUB",	bift_CSUB },
-    { "CMUL",	bift_CMUL },
-    { "CDIV",	bift_CDIV },
-    { "NEG",	bift_NEG },
-    { "INV",	bift_INV },
-    { "SQRT",	bift_SQRT },
-    { "POW",	bift_POW },
-    { "POWC",	bift_POWC },
-    { "CPOW",	bift_CPOW },
-    { "EXP",	bift_EXP },
-    { "NEXP",	bift_NEXP },
-    { "IEXP",	bift_IEXP },
-    { "INEXP",	bift_INEXP },
-    { "NIEXP",	bift_INEXP }, // !
-    { "LN",	    bift_LN },
-    { "LOG",	bift_LOG },
-    { "CLOG",	bift_CLOG },
-    { "ABS",	bift_ABS },
-    { "ASIN",	bift_ASIN },
-    { "ACOS",	bift_ACOS },
-    { "ATAN",	bift_ATAN },
-    { "ASINH",	bift_ASINH },
-    { "ACOSH",	bift_ACOSH },
-    { "ATANH",	bift_ATANH },
-    { "SIN",	bift_SIN },
-    { "COS",	bift_COS },
-    { "TAN",	bift_TAN },
-    { "SINH",	bift_SINH },
-    { "COSH",	bift_COSH },
-    { "TANH",	bift_TANH },
-    { "RATIO",	bift_RATIO },
-    { "PWL",	bift_PWL },
-    { "DERIV",	bift_DERIV },
-    { "DERIVC",	bift_DERIVC },
-    { "VLENGTH2",	bift_VLENGTH2 },
-    { "VLENGTH3",	bift_VLENGTH3 },
-    { "DISTANCE2",	bift_DISTANCE2 },
-    { "DISTANCE3",	bift_DISTANCE3 },
-    { "GT",	    bift_GT },
-    { "ST", 	bift_ST },
-    { "GE",	    bift_GE },
-    { "SE",	    bift_SE },
-    { "EQ",	    bift_EQ },
-    { "NEQ",	bift_NEQ },
-    { "GT0",	bift_GT0 },
-    { "ST0",	bift_ST0 },
-    { "GE0",	bift_GE0 },
-    { "SE0",	bift_SE0 },
-    { "EQ0",	bift_EQ0 },
-    { "NEQ0",	bift_NEQ0 },
-    { "AND",	bift_AND },
-    { "OR",	    bift_OR },
-    { "NOT",	bift_NOT },
-    { "JMP",	bift_JMP },
-    { "JGT",	bift_JGT },
-    { "JST",	bift_JST },
-    { "JGE",	bift_JGE },
-    { "JSE",	bift_JSE },
-    { "JEQ",	bift_JEQ },
-    { "JNEQ",	bift_JNEQ },
-    { "JGT0",	bift_JGT0 },
-    { "JST0",	bift_JST0 },
-    { "JGE0",	bift_JGE0 },
-    { "JSE0",	bift_JSE0 },
-    { "JEQ0",	bift_JEQ0 },
-    { "JNEQ0",	bift_JNEQ0 },
-    { "CPY",	bift_CPY },
-    { "CGT",	bift_CGT },
-    { "CST",	bift_CST },
-    { "CGE",	bift_CGE },
-    { "CSE",	bift_CSE },
-    { "CEQ",	bift_CEQ },
-    { "CNEQ",	bift_CNEQ },
-    { "CGT0",	bift_CGT0 },
-    { "CST0",	bift_CST0 },
-    { "CGE0",	bift_CGE0 },
-    { "CSE0",	bift_CSE0 },
-    { "CEQ0",	bift_CEQ0 },
-    { "CNEQ0",	bift_CNEQ0 },
-    { "TGT",	bift_TGT },
-    { "TST",	bift_TST },
-    { "TGE",	bift_TGE },
-    { "TSE",	bift_TSE },
-    { "TEQ",	bift_TEQ },
-    { "TNEQ",	bift_TNEQ },
-    { "TGT0",	bift_TGT0 },
-    { "TST0",	bift_TST0 },
-    { "TGE0",	bift_TGE0 },
-    { "TSE0",	bift_TSE0 },
-    { "TEQ0",	bift_TEQ0 },
-    { "TNEQ0",	bift_TNEQ0 },
-    { "UNIT",	bift_UNIT },
-    { "UNITT",	bift_UNITT },
-    { "URAMP",	bift_URAMP },
-    { "TIME",	bift_TIME },
-    { "DT",	    bift_DT },
-    { "FREQ",	bift_FREQ },
-    { "RAIL",	bift_RAIL },
-    { "SETVG",	bift_SETVG },
-    { "GETVG",	bift_GETVG }
-};
-
-
-//***********************************************************************
-builtInFunctionType identifyFileFunctionType(const char* functionName) {
-//***********************************************************************
-    if (*functionName == '_')
-        functionName++;
-    for (const auto& pair : biftNameID)
-        if (strcmp(functionName, pair.functionName) == 0)
-            return pair.id;
-    return biftInvalid;
 }
 
 

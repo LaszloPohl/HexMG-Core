@@ -84,7 +84,13 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 //***********************************************************************
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
     bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
-    bimtConst_V_Controlled_I, bimtGirator, bimtConstVI, bimtSize }; // bimtSize have to be the last one
+    bimtConst_V_Controlled_I, bimtGirator, bimtConstVI, 
+    bimFunc_Controlled_IG, bimtSize }; // bimtSize have to be the last one
+//***********************************************************************
+
+
+//***********************************************************************
+enum componentModelType { cmtBuiltIn, cmtCustom, cmtFunctionControlledBuiltIn };
 //***********************************************************************
 
 
@@ -148,7 +154,8 @@ enum StreamInstructionType {
 
     sitDefModelSubcircuit, sitDefModelController,
 
-    sitComponentInstance, sitSunredTree, sitSunredLevel, sitSunredReduction,
+    sitComponentInstance, sitFunctionControlledComponentInstance, 
+    sitSunredTree, sitSunredLevel, sitSunredReduction,
 
     sitMultigrid, sitMgLocals, sitMgLocalSimple, sitMgOneLocalSimple,
     sitMgRecursiveInstr, sitMgOneRecursiveInstr, sitMgFineCoarse,

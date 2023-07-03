@@ -370,6 +370,34 @@ struct IsComponentInstanceInstruction : public IsInstruction {
 
 
 //***********************************************************************
+struct IsFunctionControlledComponentInstanceInstruction : public IsInstruction {
+//***********************************************************************
+    uns instanceIndex = 0; // component index or controller index
+    uns modelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
+
+    bool isDefaultRail = false;
+    bool isController = false;
+    bool isBuiltIn = false;
+    uns nNodes = 0;
+    uns nParams = 0;
+    uns defaultValueRailIndex = 0;
+
+    uns nIN = 0;
+    uns nCIN = 0;
+    uns nPar = 0;
+    bool isFunctionBuiltIn = false;
+    uns functionIndex = 0;
+    uns nFunctionParams = 0;
+
+    IsFunctionControlledComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar,
+        uns nIN_, uns nCIN_, uns nPar_, bool isFunctionBuiltIn_, uns functionIndex_, uns nFunctionParams_)
+        :IsInstruction{ sitFunctionControlledComponentInstance }, instanceIndex{ index }, modelIndex{ modelIndex_ }, isDefaultRail{ isDefRail },
+        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, defaultValueRailIndex{ defRail },
+        nIN{ nIN_ }, nCIN{ nCIN_ }, nPar{ nPar_ }, isFunctionBuiltIn{ isFunctionBuiltIn_ }, functionIndex{ functionIndex_ }, nFunctionParams{ nFunctionParams_ } {}
+};
+
+
+//***********************************************************************
 struct IsRailNodeRangeInstruction: public IsInstruction {
 //***********************************************************************
     ForcedNodeDef forcedNodeRange;

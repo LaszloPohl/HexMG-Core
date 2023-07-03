@@ -100,6 +100,8 @@ public:
     //***********************************************************************
     bool refresh_unsafe(const matrix& src) {
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return false;
         if (is_symm != src.is_symm || row != src.row || col != src.col)
             throw hmgExcept("matrix::refresh_unsafe(matrix)", "src and dest matrix sizes are different");
         return t.refresh_unsafe(src.t);
@@ -211,6 +213,8 @@ public:
     void math_mul_t_unsafe(const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // Not lay-proof.
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.row, row,     "math_mul_t row row");
         is_equal_error(b_t.row, col,   "math_mul_t row col");
         is_equal_error(a.col, b_t.col, "math_mul_t col col");
@@ -283,6 +287,8 @@ public:
     void math_mul_t_safe(const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // about 4% slower than the pointer version, but it works on a layed matrix
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.row, row,     "math_mul_t row row");
         is_equal_error(b_t.row, col,   "math_mul_t row col");
         is_equal_error(a.col, b_t.col, "math_mul_t col col");
@@ -448,6 +454,8 @@ public:
     void math_nmul_t_safe(const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // also runs on a layed matrix, giving -1 times the multiplication
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.row, row,     "math_nmul_t row row");
         is_equal_error(b_t.row, col,   "math_nmul_t row col");
         is_equal_error(a.col, b_t.col, "math_nmul_t col col");
@@ -613,6 +621,8 @@ public:
     void math_add_mul_t_unsafe(const matrix & c, const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // Not lay-proof.
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(c.col, col,     "math_add_mul_t col");
         is_equal_error(c.row, row,     "math_add_mul_t row");
         is_equal_error(a.row, row,     "math_add_mul_t row row");
@@ -688,6 +698,8 @@ public:
     void math_add_mul_t_safe(const matrix & c, const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // about 4% slower than the pointer version, but it works on a layed matrix
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.row, row,     "math_add_mul_t_ row row");
         is_equal_error(b_t.row, col,   "math_add_mul_t_ row col");
         is_equal_error(a.col, b_t.col, "math_add_mul_t_ col col");
@@ -858,6 +870,8 @@ public:
     void math_sub_mul_t_safe(const matrix & c, const matrix & a, const matrix & b_t) noexcept(!hmgVErrorCheck) {
     // also works on a layed matrix, *this = c - a * b_t 
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.row, row,     "math_sub_mul_t row row");
         is_equal_error(b_t.row, col,   "math_sub_mul_t row col");
         is_equal_error(a.col, b_t.col, "math_sub_mul_t col col");
@@ -1027,6 +1041,8 @@ public:
     //***********************************************************************
     void transp(const matrix & a) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.col, row, "matrix::transp col-row");
         is_equal_error(a.row, col, "matrix::transp row-col");
         is_true_error(is_symm, "matrix::transp", "symmetrical matrix not allowed");
@@ -1040,6 +1056,8 @@ public:
     void copy(const matrix & a) noexcept(!hmgVErrorCheck) {
     // also works on a layed matrix
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(a.col, col, "matrix::copy col-col");
         is_equal_error(a.row, row, "matrix::copy row-row");
         is_true_error(is_symm, "matrix::copy", "symmetrical matrix not allowed");
@@ -1060,6 +1078,8 @@ public:
     void copy_from_symm_to_nonsymm(const matrix& src) noexcept(!hmgVErrorCheck) {
     // also works on a layed matrix
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(src.col, col, "matrix::copy_from_symm_to_nonsymm col-col");
         is_equal_error(src.row, row, "matrix::copy_from_symm_to_nonsymm row-row");
         is_true_error(is_symm || !src.is_symm, "matrix::copy_from_symm_to_nonsymm", "symmetrical src and non-symmetrical dest required");
@@ -1359,6 +1379,8 @@ public:
     //***********************************************************************
     friend inline void math_mul(vektor<datatype> & dest, const matrix & src1, const vektor<datatype> & src2) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (dest.size() == 0)
+            return;
         is_equal_error(dest.size(), src1.get_row(), "vektor math_mul size");
         is_true_error(src1.is_symm, "matrix::math_mul vektor", "symmetrical matrix not allowed");
         for (unsigned i = 0; i < dest.size(); i++)
@@ -1369,6 +1391,8 @@ public:
     //***********************************************************************
     friend inline void math_add_mul(vektor<datatype> & dest, const vektor<datatype> & tobeadded, const matrix & src1, const vektor<datatype> & src2) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (dest.size() == 0)
+            return;
         is_equal_error(dest.size(), tobeadded.size(), "vektor math_add_mul size");
         is_equal_error(dest.size(), src1.get_row(), "vektor math_mul size");
         is_true_error(src1.is_symm, "matrix::math_add_mul vektor", "symmetrical matrix not allowed");
@@ -1380,6 +1404,8 @@ public:
     //***********************************************************************
     friend inline void math_add_mul_symm(vektor<datatype> & dest, const vektor<datatype> & tobeadded, const matrix & src1, const vektor<datatype> & src2) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (dest.size() == 0)
+            return;
         is_equal_error(dest.size(), tobeadded.size(), "vektor math_add_mul size");
         is_equal_error(dest.size(), src1.get_row(), "vektor math_mul size");
         is_true_error(!src1.is_symm, "matrix::math_add_mul_symm vektor", "nonsymmetrical matrix not allowed");
@@ -1401,6 +1427,8 @@ public:
     // without pivoting
     // Not laying-proof
     //****************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(row, col, "matrix::math_inv_np");
         is_true_error(is_symm, "matrix::math_ninv_np_", "symmetrical matrix not allowed");
 
@@ -1453,6 +1481,8 @@ public:
     void math_ninv_np_blokk_2x2() noexcept(!hmgVErrorCheck) {
     // without pivoting
     //****************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(row, col, "matrix::math_ninv_np_blokk_2x2");
         is_true_error(is_symm, "matrix::math_ninv_np_blokk_2x2", "symmetrical matrix not allowed");
 
@@ -1817,6 +1847,8 @@ public:
     void math_ninv_np/*_blokk_4x4*/() noexcept(!hmgVErrorCheck) {
     // without pivoting
     //****************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(row, col, "matrix::math_ninv_np");
         is_true_error(is_symm, "matrix::math_ninv_np", "symmetrical matrix not allowed");
 
@@ -2103,6 +2135,8 @@ public:
     // with pivoting
     // Not laying-proof
     //****************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_equal_error(row, col, "matrix::math_inv_p");
         is_true_error(is_symm, "matrix::math_ninv_p", "symmetrical matrix not allowed");
 
@@ -2196,6 +2230,8 @@ public:
     //***********************************************************************
     void identity() noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(is_symm, "matrix::identity", "symmetrical matrix not allowed");
         t.zero();
         for (unsigned i = 0; i < row; i++)
@@ -2206,6 +2242,8 @@ public:
     void math_1_ninv_mul(matrix & yb, const matrix & xa) noexcept {
     // yb is 1x1, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         const datatype nzb = datatype(-1) / yb.rows[0][0];
         yb.rows[0][0] = nzb;
         for (unsigned i = 0; i < col; i++)
@@ -2216,6 +2254,8 @@ public:
     void math_1_ninv_mulT(matrix & yb, const matrix & xat) noexcept {
     // yb is 1x1, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         const datatype nzb = datatype(-1) / yb.rows[0][0];
         yb.rows[0][0] = nzb;
         for (unsigned i = 0; i < col; i++)
@@ -2226,6 +2266,8 @@ public:
     void math_2_ninv_mul(matrix & yb, const matrix & xa) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2254,6 +2296,8 @@ public:
     void math_2_ninv_mulT(matrix & yb, const matrix & xat) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2280,6 +2324,8 @@ public:
     void math_2_ninv_mul_symm(matrix & yb, const matrix & xa) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, stored whole symmetrical, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2306,6 +2352,8 @@ public:
     void math_2_ninv_mul_symmT(matrix & yb, const matrix & xat) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, stored whole symmetrical, this is inverted and puts zb*xa inside itself
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2332,6 +2380,8 @@ public:
     void math_1_add_mul(const matrix & ya, const matrix & xb, const matrix & nzbxa) noexcept(!hmgVErrorCheck) {
     // xb is 1 column, nzbxa is 1 row
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(ya.is_symm || is_symm, "matrix::math_1_add_mul", "symmetrical matrix not allowed");
         for (unsigned i = 0; i < row; i++) {
             const datatype xbe = xb.rows[i][0];
@@ -2344,6 +2394,8 @@ public:
     void math_1_add_mul_symm(const matrix & ya, const matrix & xb, const matrix & nzbxa) noexcept(!hmgVErrorCheck) {
     // xb is 1 column, nzbxa is 1 row
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(!ya.is_symm || !is_symm, "matrix::math_1_add_mul_symm", "nonsymmetrical matrix not allowed");
         for (unsigned i = 0; i < row; i++) {
             const datatype xbe = xb.rows[i][0];
@@ -2356,6 +2408,8 @@ public:
     void math_2_add_mul(const matrix & ya, const matrix & xb, const matrix & nzbxa) noexcept(!hmgVErrorCheck) {
     // xb is 2 column, nzbxa is 2 row
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(ya.is_symm || is_symm, "matrix::math_2_add_mul", "symmetrical matrix not allowed");
         const vektor<datatype> & nzbxa0 = nzbxa.rows[0];
         const vektor<datatype> & nzbxa1 = nzbxa.rows[1];
@@ -2371,6 +2425,8 @@ public:
     void math_2_add_mul_symm(const matrix & ya, const matrix & xb, const matrix & nzbxa) noexcept(!hmgVErrorCheck) {
     // xb is 2 column, nzbxa is 2 row
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(!ya.is_symm || !is_symm, "matrix::math_2_add_mul_symm", "symmetrical matrix not allowed");
         const vektor<datatype> & nzbxa0 = nzbxa.rows[0];
         const vektor<datatype> & nzbxa1 = nzbxa.rows[1];
@@ -2436,6 +2492,8 @@ public:
     void math_symm_ninv_of_nonsymm() noexcept(!hmgVErrorCheck) {
     // The symmetric matrix is stored in a non-symmetric form, it can also be layed
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(is_symm, "math_symm_ninv_of_nonsymm_rafektetett", "only nonsymmetrically stored symmetrical matrix allowed");
 #define NEWSUBSTITUTOR 32
 
@@ -2489,6 +2547,8 @@ public:
     void symmetrize_from_upper() noexcept(!hmgVErrorCheck) {
     // Copy the upper triangle of a non-symmetric matrix to the lower one
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(is_symm, "symmetrize_from_upper", "only nonsymmetrically stored symmetrical matrix allowed");
         is_equal_error(row, col, "matrix::symmetrize_from_upper");
         for (unsigned i = 1; i < col; i++)
@@ -2500,6 +2560,8 @@ public:
     //***********************************************************************
     void math_add_mul_t_symm(const matrix & ya, const matrix & xb, const matrix & nzbxat) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(!is_symm || !ya.is_symm, "matrix::math_add_mul_t_symm", "symmetrical matrix required");
         is_equal_error(ya.col, col, "math_add_mul_t_symm col");
         is_equal_error(xb.row, row, "math_add_mul_t_symm row row");
@@ -2752,6 +2814,8 @@ public:
     //***********************************************************************
     void math_sub_mul_t_symm_in_nonsymm(const matrix & c, const matrix & a, const matrix & b, bool is_symmetrize_needed) noexcept(!hmgVErrorCheck) {
     //***********************************************************************
+        if (col == 0 || row == 0)
+            return;
         is_true_error(is_symm || c.is_symm, "matrix::math_sub_mul_t_symm_in_nonsymm", "nonsymmetrical matrix required");
         is_equal_error(c.col, col, "math_sub_mul_t_symm_in_nonsymm col");
         is_equal_error(a.row, row, "math_sub_mul_t_symm_in_nonsymm row row");

@@ -109,68 +109,6 @@ public:
 
 
 //***********************************************************************
-class HmgF_Const final : public HmgFunction{
-//***********************************************************************
-    crvt value;
-public:
-    HmgF_Const(rvt value_) : HmgFunction{ 0, 2, 0 }, value{ value_ } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override { workField[index[0]] = value; return 0; }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_If1 final : public HmgFunction{
-// if ret is true, caller executes the next function, else it is skipped.
-//***********************************************************************
-public:
-    HmgF_If1() : HmgFunction{ 0, 2, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override { return workField[index[0]] != rvt0 ? 0 : 1; }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_Else1 final : public HmgFunction{
-// if ret is false, caller executes the next function, else it is skipped.
-//***********************************************************************
-public:
-    HmgF_Else1() : HmgFunction{ 0, 2, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override { return workField[index[0]] == rvt0 ? 0 : 1; }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_IfValue1 final : public HmgFunction{
-// if par1 is true, ret = par2
-//***********************************************************************
-public:
-    HmgF_IfValue1() : HmgFunction{ 2, 4, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        if (workField[index[2]] != rvt0)
-            workField[index[0]] = workField[index[3]];
-        return 0; 
-    }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_IfValue2 final : public HmgFunction{
-// if par1 is true, ret = par2 else ret = par3
-//***********************************************************************
-public:
-    HmgF_IfValue2() : HmgFunction{ 3, 5, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        workField[index[0]] = (workField[index[2]] != rvt0) ? workField[index[3]] : workField[index[4]];
-        return 0;
-    }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
 class HmgF_IfR final : public HmgFunction{
 // if par1 is true, ret = par2 and forces the caller to return
 //***********************************************************************
@@ -251,42 +189,6 @@ class HmgF_Set_Controller_mVar_ValueFromStepStart final : public HmgFunction{
 public:
     HmgF_Set_Controller_mVar_ValueFromStepStart(uns varIndex_) : HmgFunction{ 0, 2, 0 }, varIndex{ varIndex_ } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override; // in hmgComponent.h
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_sqrt final : public HmgFunction{
-//***********************************************************************
-public:
-    HmgF_sqrt() : HmgFunction{ 1, 3, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override { workField[index[0]] = sqrt(workField[index[2]]); return 0; }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_opPlus final : public HmgFunction{
-//***********************************************************************
-public:
-    HmgF_opPlus() : HmgFunction{ 2, 4, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        workField[index[0]] = workField[index[2]] + workField[index[3]]; 
-        return 0; 
-    }
-    void fillIndexField(uns* indexField)const noexcept override {}
-};
-
-
-//***********************************************************************
-class HmgF_opMul final : public HmgFunction{
-//***********************************************************************
-public:
-    HmgF_opMul() : HmgFunction{ 2, 4, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
-        workField[index[0]] = workField[index[2]] * workField[index[3]]; 
-        return 0;
-    }
     void fillIndexField(uns* indexField)const noexcept override {}
 };
 

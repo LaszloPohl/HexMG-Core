@@ -2403,6 +2403,7 @@ inline ComponentAndControllerBase* ModelSubCircuit::makeComponent(const Componen
 class CircuitStorage {
 //***********************************************************************
     friend class Simulation;
+    friend class ModelSubCircuit;
 
     //***********************************************************************
     struct Probe {
@@ -2440,6 +2441,7 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtConst_V_Controlled_I] = std::make_unique<ModelConst_V_Controlled_I_1>();
         builtInModels[builtInModelType::bimtGirator] = std::make_unique<ModelGirator>();
         builtInModels[builtInModelType::bimtConstVI] = std::make_unique<ModelConstVI>();
+        builtInModels[builtInModelType::bimFunc_Controlled_IG] = std::unique_ptr<Model_Function_Controlled_I_with_const_G>(nullptr);
         saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }
 
@@ -2634,6 +2636,7 @@ public:
     std::vector<std::unique_ptr<NodeVariable>> globalVariables;
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> models; // all models are stored globally, controller models also included
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
+    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> functionControlledBuiltInModels; // core gives the ID number and not the client application / file reader as in case of the custom models
     //***********************************************************************
     struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
     std::vector<FullCircuit> fullCircuitInstances;
@@ -2666,9 +2669,13 @@ public:
 //***********************************************************************
 inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :def{ def_ },
     pModel{ static_cast<ComponentAndControllerModelBase*>(
-        def_->isBuiltIn 
+        def_->modelType == cmtBuiltIn  
             ? CircuitStorage::getInstance().builtInModels[def_->modelIndex].get()
-            : CircuitStorage::getInstance().models[def_->modelIndex].get()
+            : (
+                def_->modelType == cmtCustom 
+                    ? CircuitStorage::getInstance().models[def_->modelIndex].get()
+                    : CircuitStorage::getInstance().functionControlledBuiltInModels[def_->modelIndex].get()
+            )
         ) }, defaultNodeValueIndex{ defaultNodeValueIndex_ } {
 //***********************************************************************
     if (pModel->canBeNonlinear())

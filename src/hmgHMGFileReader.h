@@ -409,14 +409,37 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     bool isBuiltIn = false;
     uns defaultValueRailIndex = 0;
     //***********************************************************************
+    // function controlled component:
+    bool isFunctionControlled = false;
+    uns nIN = 0;
+    uns nCin = 0;
+    uns nPar = 0;
+    bool isFunctionBuiltIn = false;
+    uns functionIndex = 0;
+    std::vector<SimpleInterfaceNodeID> functionParams;
+    //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size()));
-        for(const auto& node : nodes)
-            iStream.add(new IsNodeValueInstruction(node));
-        for (const auto& param : params)
-            iStream.add(new IsParameterValueInstruction(param));
-        iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex));
+        if(isFunctionControlled){
+            iStream.add(new IsFunctionControlledComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, 
+                defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), nIN, nCin, nPar, 
+                isFunctionBuiltIn, functionIndex, (uns)functionParams.size()));
+            for (const auto& fparam : functionParams)
+                iStream.add(new IsNodeValueInstruction(fparam));
+            for (const auto& node : nodes)
+                iStream.add(new IsNodeValueInstruction(node));
+            for (const auto& param : params)
+                iStream.add(new IsParameterValueInstruction(param));
+            iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex)); // ! sitComponentInstance (ComponentDefinition::processInstructions() expects sitComponentInstance)
+        }
+        else {
+            iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size()));
+            for (const auto& node : nodes)
+                iStream.add(new IsNodeValueInstruction(node));
+            for (const auto& param : params)
+                iStream.add(new IsParameterValueInstruction(param));
+            iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex));
+        }
     }
 };
 

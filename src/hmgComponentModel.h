@@ -37,6 +37,7 @@ class ComponentAndControllerModelBase {
 //***********************************************************************
     friend class CircuitStorage;
     friend class ComponentDefinition;
+    friend class ModelSubCircuit;
     friend struct FineCoarseConnectionDescription;
     //***********************************************************************
     // number of nodes
@@ -72,7 +73,8 @@ class ComponentDefinition final {
 // Instantiation instruction for a Component
 //***********************************************************************
 public:
-    bool isBuiltIn = false, isDefaultRail = false;
+    bool isDefaultRail = false;
+    componentModelType modelType = cmtCustom;
     uns modelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
     uns defaultValueRailIndex = 0;
     std::vector<CDNode> nodesConnectedTo;
@@ -204,13 +206,13 @@ class Model_Function_Controlled_I_with_const_G final : public ComponentAndContro
 //***********************************************************************
 public:
     NodeConnectionInstructions functionSources;
-    std::unique_ptr<HmgFunction> controlFunction;
+    HmgFunction* controlFunction = nullptr;
     std::vector<uns> indexField;
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
     Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
-        NodeConnectionInstructions functionSources_, std::unique_ptr<HmgFunction> controlFunction_)
+        NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
         :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ } },
-        functionSources{ std::move(functionSources_) }, controlFunction{ std::move(controlFunction_) } {
+        functionSources{ std::move(functionSources_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
             indexField[1] = controlFunction->getN_Param() + 1;

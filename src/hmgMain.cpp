@@ -31,7 +31,7 @@ using std::milli;
 //***********************************************************************
 void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntExternal;
@@ -47,7 +47,7 @@ void setR(std::unique_ptr<ComponentDefinition>& cd, uns externalIndex, rvt G) {
 //***********************************************************************
 void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -69,7 +69,7 @@ void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 //***********************************************************************
 void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd, 1, T0, G0);
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstVI;
 	cd->nodesConnectedTo.resize(3);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -95,7 +95,7 @@ void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd
 //***********************************************************************
 void setIStep(std::unique_ptr<ComponentDefinition>& cd, uns intNode, rvt Idc0, rvt Idc, rvt Iac, rvt Phi) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstI_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -118,7 +118,7 @@ void setIStep(std::unique_ptr<ComponentDefinition>& cd, uns intNode, rvt Idc0, r
 void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns groundIndex) {
 //***********************************************************************
 	cd->setDefaultValueRailIndex(groundIndex);
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -134,7 +134,7 @@ void setR0(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns nodeIndex, uns g
 //***********************************************************************
 void setC0(std::unique_ptr<ComponentDefinition>& cd, rvt C) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstC_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -150,7 +150,7 @@ void setC0(std::unique_ptr<ComponentDefinition>& cd, rvt C) {
 //***********************************************************************
 void setGirator0(std::unique_ptr<ComponentDefinition>& cd) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtGirator;
 	cd->nodesConnectedTo.resize(4);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -173,7 +173,7 @@ void setGirator0(std::unique_ptr<ComponentDefinition>& cd) {
 void setDissipator(std::unique_ptr<ComponentDefinition>& cd, uns componentModelIndex, rvt G, rvt Gsrc, uns nodeIndex, uns groundIndex, uns srcIndex) {
 //***********************************************************************
 	cd->setDefaultValueRailIndex(groundIndex);
-	cd->isBuiltIn = false;
+	cd->modelType = cmtCustom;
 	cd->modelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(3);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -193,7 +193,7 @@ void setDissipator(std::unique_ptr<ComponentDefinition>& cd, uns componentModelI
 //***********************************************************************
 void setCell(std::unique_ptr<ComponentDefinition>& cd, uns componentModelIndex, uns nodeNum, uns index1, uns index2 = 0, uns index3 = 0, uns index4 = 0) {
 //***********************************************************************
-	cd->isBuiltIn = false;
+	cd->modelType = cmtCustom;
 	cd->modelIndex = componentModelIndex;
 	cd->nodesConnectedTo.resize(nodeNum);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -321,7 +321,7 @@ void runStepNoPrintDC() {
 //***********************************************************************
 void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex = 0, uns groundIndex = 1) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -337,7 +337,7 @@ void setRinternal(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalI
 //***********************************************************************
 void setRinternal2(std::unique_ptr<ComponentDefinition>& cd, rvt G, uns internalIndex1, uns internalIndex2) {
 //***********************************************************************
-	cd->isBuiltIn = true;
+	cd->modelType = cmtBuiltIn;
 	cd->modelIndex = builtInModelType::bimtConstG_1;
 	cd->nodesConnectedTo.resize(2);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
@@ -567,7 +567,8 @@ void probaSzimulacio4() {
 
 	// (uns nNormalINodes_, uns nControlINodes_, uns nParams_, NodeConnectionInstructions functionSources_, const HmgFunction& controlFunction_)
 
-	mf = make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, functionSources, std::make_unique<HmgF_CustomFunction>(funcModel));
+	std::unique_ptr<HmgF_CustomFunction> fp = std::make_unique<HmgF_CustomFunction>(funcModel);
+	mf = make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, functionSources, fp.get());
 	cuns funcIIndex = (uns)gc.models.size();
 	gc.models.push_back(std::move(mf)); // 0
 
@@ -632,12 +633,13 @@ void probaSzimulacio4() {
 //***********************************************************************
 int main(int n, const char** params) {
 //***********************************************************************
+	Rails::resize(1);
 	try {
 		HmgFileReader reader;
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_2.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_3.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");
@@ -722,7 +724,7 @@ int main_1() {
 
 	CircuitStorage& gc = CircuitStorage::getInstance();
 
-	HmgF_opMul fsqr;
+	HmgBuiltInFunction_SQRT fsqr;
 	rvt wf[3] = { 0.0, 1.0, 3.5 };
 	uns par[4] = { 0, 3, 1, 2 };
 	fsqr.evaluate(par, wf, nullptr, LineDescription());
@@ -928,7 +930,7 @@ int main_1() {
 */
 
 	const auto startTime_proba = high_resolution_clock::now();
-	//probaSzimulacioMg2();
+	probaSzimulacio4();
 	const auto endTime_proba = high_resolution_clock::now();
 
 	duration<double> time_span = duration_cast<duration<double>>(endTime_proba - startTime_proba);
