@@ -74,7 +74,7 @@ public:
         rvt* workField = const_cast<rvt*>(cworkField); // changes and restores so no change
         crvt value = workField[index[0]];
         crvt var = workField[index[variableIndex]];
-        crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9);
+        crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9) + 1.0e-20;
         workField[index[variableIndex]] += dx;
         evaluate(index, workField, owner, line);
         crvt ret = (workField[index[0]] - value) / dx;

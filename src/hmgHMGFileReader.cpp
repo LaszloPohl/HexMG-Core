@@ -913,13 +913,16 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         break;
                     if (pxline->modelIndex == bimtConstI_1 || pxline->modelIndex == bimtConstI_2) {
                         uns index = parnum;
+                        bool isNextNeeded = true;
                         if (     strcmp(token, "DC0") == 0) index = 0;
                         else if (strcmp(token, "DC")  == 0) index = 1;
                         else if (strcmp(token, "AC")  == 0) index = 2;
                         else if (strcmp(token, "PHI") == 0) index = 3;
                         else if (strcmp(token, "MUL") == 0) index = 4; // for bimtConstI_1 index = 4 == parnum => the error is handled in the next if-else section => it cannot be in an else branch
+                        else if (i == 0 || i == 1) { index = 1 - i; isNextNeeded = false; } // ! The oreder is DC DC0 if nameless!
                         if (index < parnum) {
-                            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                            if (isNextNeeded)
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                             if (isalpha(token[0])) { // parameter / variable / node
                                 if (!textToSimpleInterfaceNodeID(token, pxline->params[index].param))
                                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
