@@ -639,7 +639,7 @@ int main(int n, const char** params) {
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_3.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_6.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

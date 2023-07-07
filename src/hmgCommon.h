@@ -127,6 +127,21 @@ enum builtInFunctionType {
     bift_TGT, bift_TST, bift_TGE, bift_TSE, bift_TEQ, bift_TNEQ,
     bift_TGT0, bift_TST0, bift_TGE0, bift_TSE0, bift_TEQ0, bift_TNEQ0,
     
+    bift_CGTC, bift_CSTC, bift_CGEC, bift_CSEC, bift_CEQC, bift_CNEQC,
+    bift_CGT0C, bift_CST0C, bift_CGE0C, bift_CSE0C, bift_CEQ0C, bift_CNEQ0C,
+
+    bift_JMPR, bift_JGTR, bift_JSTR, bift_JGER, bift_JSER, bift_JEQR, bift_JNEQR,
+    bift_JGT0R, bift_JST0R, bift_JGE0R, bift_JSE0R, bift_JEQ0R, bift_JNEQ0R,
+
+    bift_CGTR, bift_CSTR, bift_CGER, bift_CSER, bift_CEQR, bift_CNEQR,
+    bift_CGT0R, bift_CST0R, bift_CGE0R, bift_CSE0R, bift_CEQ0R, bift_CNEQ0R,
+
+    bift_TGTR, bift_TSTR, bift_TGER, bift_TSER, bift_TEQR, bift_TNEQR,
+    bift_TGT0R, bift_TST0R, bift_TGE0R, bift_TSE0R, bift_TEQ0R, bift_TNEQ0R,
+
+    bift_CGTCR, bift_CSTCR, bift_CGECR, bift_CSECR, bift_CEQCR, bift_CNEQCR,
+    bift_CGT0CR, bift_CST0CR, bift_CGE0CR, bift_CSE0CR, bift_CEQ0CR, bift_CNEQ0CR,
+
     bift_UNIT, bift_UNITT, bift_URAMP, bift_TIME, bift_DT, bift_FREQ,
     bift_RAIL,
 

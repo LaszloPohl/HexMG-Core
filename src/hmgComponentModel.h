@@ -243,15 +243,13 @@ class ModelController final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     NodeConnectionInstructions functionSources;
-    std::unique_ptr<HmgFunction> controlFunction;
+    HmgFunction* controlFunction = nullptr;
     std::vector<uns> indexField;
     uns nMVars;
     ModelController(uns nControlINodes_, uns nControlONodes_, uns nMVars_, uns nParams_,
-        NodeConnectionInstructions functionSources_, std::unique_ptr<HmgFunction> controlFunction_)
+        NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
         :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ } }, // O nodes of the Controller are defined as normal O nodes
-        nMVars{ nMVars_ }, functionSources {
-        std::move(functionSources_)
-    }, controlFunction{ std::move(controlFunction_) } {
+        nMVars{ nMVars_ }, functionSources { std::move(functionSources_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
             indexField[1] = controlFunction->getN_Param() + 1;

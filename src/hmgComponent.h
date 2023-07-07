@@ -1337,7 +1337,7 @@ class Controller final : public ComponentAndControllerBase {
     NodeVariable* mVars = nullptr;
     uns nmVars = 0;
     std::vector<NodeVariable*> externalNodes;
-    std::vector<Param> pars; // pars[0] is G
+    std::vector<Param> pars;
     std::vector<rvt> workField;
 public:
     //***********************************************************************

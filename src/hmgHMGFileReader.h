@@ -669,6 +669,7 @@ struct HMGFileFunction: HMGFileListItem {
     uns nParams = 0;
     uns nInternalVars = 0;
     std::map<std::string, uns> labels;
+    std::map<rvt, uns> constants; // constant, variable index
     std::vector<FunctionDescription> instructions;
     //***********************************************************************
 

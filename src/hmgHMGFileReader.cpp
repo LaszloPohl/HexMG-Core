@@ -32,6 +32,7 @@ struct FileFunctionNameID {
 FileFunctionNameID biftNameID[] = {
 //***********************************************************************
     { "CONST",	bift_CONST },
+    { "CPYC",	bift_CONST },   // the same
     { "C_PI",	bift_C_PI },
     { "C_2PI",	bift_C_2PI },
     { "C_PI2",	bift_C_PI2 },
@@ -61,7 +62,7 @@ FileFunctionNameID biftNameID[] = {
     { "NEXP",	bift_NEXP },
     { "IEXP",	bift_IEXP },
     { "INEXP",	bift_INEXP },
-    { "NIEXP",	bift_INEXP }, // !
+    { "NIEXP",	bift_INEXP },   // !
     { "LN",	    bift_LN },
     { "LOG",	bift_LOG },
     { "CLOG",	bift_CLOG },
@@ -139,6 +140,67 @@ FileFunctionNameID biftNameID[] = {
     { "TSE0",	bift_TSE0 },
     { "TEQ0",	bift_TEQ0 },
     { "TNEQ0",	bift_TNEQ0 },
+    { "CGTC",	bift_CGTC },
+    { "CSTC",	bift_CSTC },
+    { "CGEC",	bift_CGEC },
+    { "CSEC",	bift_CSEC },
+    { "CEQC",	bift_CEQC },
+    { "CNEQC",	bift_CNEQC },
+    { "CGT0C",	bift_CGT0C },
+    { "CST0C",	bift_CST0C },
+    { "CGE0C",	bift_CGE0C },
+    { "CSE0C",	bift_CSE0C },
+    { "CEQ0C",	bift_CEQ0C },
+    { "CNEQ0C",	bift_CNEQ0C },
+    { "RETURN",	bift_JMPR },
+    { "RGT",	bift_JGTR },
+    { "RST",	bift_JSTR },
+    { "RGE",	bift_JGER },
+    { "RSE",	bift_JSER },
+    { "REQ",	bift_JEQR },
+    { "RNEQ",	bift_JNEQR },
+    { "RGT0",	bift_JGT0R },
+    { "RST0",	bift_JST0R },
+    { "RGE0",	bift_JGE0R },
+    { "RSE0",	bift_JSE0R },
+    { "REQ0",	bift_JEQ0R },
+    { "RNEQ0",	bift_JNEQ0R },
+    { "CGTR",	bift_CGTR },
+    { "CSTR",	bift_CSTR },
+    { "CGER",	bift_CGER },
+    { "CSER",	bift_CSER },
+    { "CEQR",	bift_CEQR },
+    { "CNEQR",	bift_CNEQR },
+    { "CGT0R",	bift_CGT0R },
+    { "CST0R",	bift_CST0R },
+    { "CGE0R",	bift_CGE0R },
+    { "CSE0R",	bift_CSE0R },
+    { "CEQ0R",	bift_CEQ0R },
+    { "CNEQ0R",	bift_CNEQ0R },
+    { "TGTR",	bift_TGTR },
+    { "TSTR",	bift_TSTR },
+    { "TGER",	bift_TGER },
+    { "TSER",	bift_TSER },
+    { "TEQR",	bift_TEQR },
+    { "TNEQR",	bift_TNEQR },
+    { "TGT0R",	bift_TGT0R },
+    { "TST0R",	bift_TST0R },
+    { "TGE0R",	bift_TGE0R },
+    { "TSE0R",	bift_TSE0R },
+    { "TEQ0R",	bift_TEQ0R },
+    { "TNEQ0R",	bift_TNEQ0R },
+    { "CGTCR",	bift_CGTCR },
+    { "CSTCR",	bift_CSTCR },
+    { "CGECR",	bift_CGECR },
+    { "CSECR",	bift_CSECR },
+    { "CEQCR",	bift_CEQCR },
+    { "CNEQCR",	bift_CNEQCR },
+    { "CGT0CR",	bift_CGT0CR },
+    { "CST0CR",	bift_CST0CR },
+    { "CGE0CR",	bift_CGE0CR },
+    { "CSE0CR",	bift_CSE0CR },
+    { "CEQ0CR",	bift_CEQ0CR },
+    { "CNEQ0CR",bift_CNEQ0CR },
     { "UNIT",	bift_UNIT },
     { "UNITT",	bift_UNITT },
     { "URAMP",	bift_URAMP },
@@ -1796,7 +1858,21 @@ void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokeni
     for (uns i = 0; i < nPar; i++) {
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         ParameterIdentifier id;
-        if (token[0] == 'R' && token[1] == 'E' && token[2] == 'T') { // ! indexField[0] = ret
+        if (token[0] == '+' || token[0] == '-' || token[0] == '.' || isdigit(token[0])) {
+            rvt constant = rvt0;
+            if (!spiceTextToRvt(token, constant))
+                throw hmgExcept("HMGFileFunction::ReadParams", "value is not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            id.parType = ptLocalVar;
+            if (constants.contains(constant)) {
+                id.parIndex = constants[constant];
+            }
+            else {
+                constants[constant] = nInternalVars;
+                id.parIndex = nInternalVars;
+                nInternalVars++;
+            }
+        }
+        else if (token[0] == 'R' && token[1] == 'E' && token[2] == 'T') { // ! indexField[0] = ret
             id.parType = ptParam;
             id.parIndex = 0;
         }
@@ -2106,6 +2182,29 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         }
     } while (isFunctionNotEnded);
 
+    // inserting the consts az constant instructions at the begein of the function
+
+    if (constants.size() != 0) {
+        std::vector<FunctionDescription> copyInstr;
+        for (const auto& [key, value] : constants) {
+            copyInstr.emplace_back(FunctionDescription());
+            FunctionDescription& func = copyInstr.back();
+            func.type = bift_CONST;
+            ParameterIdentifier id;
+            id.parType = ptLocalVar;
+            id.parIndex = value;
+            func.parameters.push_back(id);
+            func.value = key;
+        }
+        copyInstr.insert(
+            copyInstr.end(),
+            std::make_move_iterator(instructions.begin()),
+            std::make_move_iterator(instructions.end())
+        );
+        instructions.clear();
+        instructions.swap(copyInstr);
+    }
+
     // jump labels to ID
 
     for (uns i = 0; i < instructions.size(); i++) {
@@ -2113,7 +2212,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         if (func.labelVGID == unsMax) {
             if (!labels.contains(func.labelName))
                 throw hmgExcept("HMGFileFunction::Read", "%s jump label missing in %s function", func.labelName.c_str(), token); // token contains the function name
-            func.labelVGID = labels[func.labelName];
+            func.labelVGID = labels[func.labelName] + (uns)constants.size(); // if there are inserted constant intructions, the labels are shifted
         }
     }
 }
