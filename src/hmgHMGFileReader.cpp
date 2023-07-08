@@ -2148,6 +2148,84 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_TEQ0:
                     case bift_TNEQ0:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
 
+                    case bift_CGTC:
+                    case bift_CSTC:
+                    case bift_CGEC:
+                    case bift_CSEC:
+                    case bift_CEQC:
+                    case bift_CNEQC:    ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_CGT0C:
+                    case bift_CST0C:
+                    case bift_CGE0C:
+                    case bift_CSE0C:
+                    case bift_CEQ0C:
+                    case bift_CNEQ0C:   ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+
+                    case bift_JMPR:     break;
+                    case bift_JGTR:
+                    case bift_JSTR:
+                    case bift_JGER:
+                    case bift_JSER:
+                    case bift_JEQR:
+                    case bift_JNEQR:    ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                                        break;
+                    case bift_JGT0R:
+                    case bift_JST0R:
+                    case bift_JGE0R:
+                    case bift_JSE0R:
+                    case bift_JEQ0R:
+                    case bift_JNEQ0R:   ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                                        break;
+
+                    case bift_CGTR:
+                    case bift_CSTR:
+                    case bift_CGER:
+                    case bift_CSER:
+                    case bift_CEQR:
+                    case bift_CNEQR:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+
+                    case bift_CGT0R:
+                    case bift_CST0R:
+                    case bift_CGE0R:
+                    case bift_CSE0R:
+                    case bift_CEQ0R:
+                    case bift_CNEQ0R:   ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+
+                    case bift_TGTR:
+                    case bift_TSTR:
+                    case bift_TGER:
+                    case bift_TSER:
+                    case bift_TEQR:
+                    case bift_TNEQR:    ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+
+                    case bift_TGT0R:
+                    case bift_TST0R:
+                    case bift_TGE0R:
+                    case bift_TSE0R:
+                    case bift_TEQ0R:
+                    case bift_TNEQ0R:   ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+
+                    case bift_CGTCR:
+                    case bift_CSTCR:
+                    case bift_CGECR:
+                    case bift_CSECR:
+                    case bift_CEQCR:
+                    case bift_CNEQCR:   ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_CGT0CR:
+                    case bift_CST0CR:
+                    case bift_CGE0CR:
+                    case bift_CSE0CR:
+                    case bift_CEQ0CR:
+                    case bift_CNEQ0CR:  ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadValue(func, lineToken, reader, line, lineInfo);
+                                        break;
+
                     case bift_UNIT:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
                     case bift_UNITT:    ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
                     case bift_URAMP:    ReadParams(func, 2, lineToken, reader, line, lineInfo); break;

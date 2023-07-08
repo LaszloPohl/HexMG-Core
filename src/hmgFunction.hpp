@@ -1522,6 +1522,809 @@ public:
 
 
 //***********************************************************************
+class HmgBuiltInFunction_CGTC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGTC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSTC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSTC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGEC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGEC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSEC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSEC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQC() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != workField[index[3]])
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGT0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGT0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CST0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CST0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGE0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGE0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSE0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSE0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQ0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQ0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQ0C final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQ0C() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != rvt0)
+            workField[index[0]] = line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JMPR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JMPR() : HmgFunction{ 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return returnInstructionID;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JGTR final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JGTR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] > workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JSTR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JSTR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] < workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JGER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JGER() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] >= workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JSER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JSER() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] <= workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JEQR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] == workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JNEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JNEQR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] != workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JGT0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JGT0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] > rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JST0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JST0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] < rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JGE0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JGE0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] >= rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JSE0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JSE0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] <= rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JEQ0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JEQ0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] == rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_JNEQ0R final : public HmgFunction {
+//***********************************************************************
+public:
+    HmgBuiltInFunction_JNEQ0R() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        return workField[index[2]] != rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGTR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGTR() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSTR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSTR() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGER() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSER() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQR() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQR() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != workField[index[3]]) {
+            workField[index[0]] = workField[index[4]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGT0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGT0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CST0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CST0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGE0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGE0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSE0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSE0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQ0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQ0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQ0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQ0R() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != rvt0) {
+            workField[index[0]] = workField[index[3]];
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TGTR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TGTR() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] > workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] > workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TSTR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TSTR() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] < workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] < workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TGER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TGER() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] >= workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] >= workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TSER final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TSER() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] <= workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] <= workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TEQR() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] == workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] == workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TNEQR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TNEQR() : HmgFunction{ 4, 6, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] != workField[index[3]] ? workField[index[4]] : workField[index[5]];
+        return workField[index[2]] != workField[index[3]] ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TGT0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TGT0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] > rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] > rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TST0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TST0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] < rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] < rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TGE0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TGE0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] >= rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] >= rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TSE0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TSE0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] <= rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] <= rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TEQ0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TEQ0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] == rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] == rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TNEQ0R final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TNEQ0R() : HmgFunction{ 3, 5, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] != rvt0 ? workField[index[3]] : workField[index[4]];
+        return workField[index[2]] != rvt0 ? returnInstructionID : 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGTCR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGTCR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > workField[index[3]]) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSTCR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSTCR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < workField[index[3]]){
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGECR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGECR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= workField[index[3]]) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSECR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSECR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= workField[index[3]]) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQCR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQCR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == workField[index[3]]) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQCR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQCR() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != workField[index[3]]) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGT0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGT0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] > rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CST0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CST0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] < rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CGE0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CGE0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] >= rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CSE0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CSE0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] <= rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEQ0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEQ0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] == rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CNEQ0CR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CNEQ0CR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        if (workField[index[2]] != rvt0) {
+            workField[index[0]] = line.value;
+            return returnInstructionID;
+        }
+        return 0;
+    }
+};
+
+
+//***********************************************************************
 class HmgBuiltInFunction_UNIT final : public HmgFunction{
 //***********************************************************************
 public:
@@ -1703,7 +2506,7 @@ public:
             int jumpValue = line.pFunction->evaluate(indexField + base, workField, owner, line);
             if (jumpValue != 0) { // jump instruction
                 if (jumpValue == returnInstructionID) // return instruction
-                    return false;
+                    return 0;
                 if (jumpValue < 0) { // jump back
                     while (jumpValue != 0) {
                         i--;
@@ -1838,6 +2641,67 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_TSE0] = std::make_unique<HmgBuiltInFunction_TSE0>();
     builtInFunctions[builtInFunctionType::bift_TEQ0] = std::make_unique<HmgBuiltInFunction_TEQ0>();
     builtInFunctions[builtInFunctionType::bift_TNEQ0] = std::make_unique<HmgBuiltInFunction_TNEQ0>();
+    builtInFunctions[builtInFunctionType::bift_CGTC] = std::make_unique<HmgBuiltInFunction_CGTC>();
+    builtInFunctions[builtInFunctionType::bift_CSTC] = std::make_unique<HmgBuiltInFunction_CSTC>();
+    builtInFunctions[builtInFunctionType::bift_CGEC] = std::make_unique<HmgBuiltInFunction_CGEC>();
+    builtInFunctions[builtInFunctionType::bift_CSEC] = std::make_unique<HmgBuiltInFunction_CSEC>();
+    builtInFunctions[builtInFunctionType::bift_CEQC] = std::make_unique<HmgBuiltInFunction_CEQC>();
+    builtInFunctions[builtInFunctionType::bift_CNEQC] = std::make_unique<HmgBuiltInFunction_CNEQC>();
+    builtInFunctions[builtInFunctionType::bift_CGT0C] = std::make_unique<HmgBuiltInFunction_CGT0C>();
+    builtInFunctions[builtInFunctionType::bift_CST0C] = std::make_unique<HmgBuiltInFunction_CST0C>();
+    builtInFunctions[builtInFunctionType::bift_CGE0C] = std::make_unique<HmgBuiltInFunction_CGE0C>();
+    builtInFunctions[builtInFunctionType::bift_CSE0C] = std::make_unique<HmgBuiltInFunction_CSE0C>();
+    builtInFunctions[builtInFunctionType::bift_CEQ0C] = std::make_unique<HmgBuiltInFunction_CEQ0C>();
+    builtInFunctions[builtInFunctionType::bift_CNEQ0C] = std::make_unique<HmgBuiltInFunction_CNEQ0C>();
+    builtInFunctions[builtInFunctionType::bift_JMPR] = std::make_unique<HmgBuiltInFunction_JMPR>();
+    builtInFunctions[builtInFunctionType::bift_JGTR] = std::make_unique<HmgBuiltInFunction_JGTR>();
+    builtInFunctions[builtInFunctionType::bift_JSTR] = std::make_unique<HmgBuiltInFunction_JSTR>();
+    builtInFunctions[builtInFunctionType::bift_JGER] = std::make_unique<HmgBuiltInFunction_JGER>();
+    builtInFunctions[builtInFunctionType::bift_JSER] = std::make_unique<HmgBuiltInFunction_JSER>();
+    builtInFunctions[builtInFunctionType::bift_JEQR] = std::make_unique<HmgBuiltInFunction_JEQR>();
+    builtInFunctions[builtInFunctionType::bift_JNEQR] = std::make_unique<HmgBuiltInFunction_JNEQR>();
+    builtInFunctions[builtInFunctionType::bift_JGT0R] = std::make_unique<HmgBuiltInFunction_JGT0R>();
+    builtInFunctions[builtInFunctionType::bift_JST0R] = std::make_unique<HmgBuiltInFunction_JST0R>();
+    builtInFunctions[builtInFunctionType::bift_JGE0R] = std::make_unique<HmgBuiltInFunction_JGE0R>();
+    builtInFunctions[builtInFunctionType::bift_JSE0R] = std::make_unique<HmgBuiltInFunction_JSE0R>();
+    builtInFunctions[builtInFunctionType::bift_JEQ0R] = std::make_unique<HmgBuiltInFunction_JEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_JNEQ0R] = std::make_unique<HmgBuiltInFunction_JNEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_CGTR] = std::make_unique<HmgBuiltInFunction_CGTR>();
+    builtInFunctions[builtInFunctionType::bift_CSTR] = std::make_unique<HmgBuiltInFunction_CSTR>();
+    builtInFunctions[builtInFunctionType::bift_CGER] = std::make_unique<HmgBuiltInFunction_CGER>();
+    builtInFunctions[builtInFunctionType::bift_CSER] = std::make_unique<HmgBuiltInFunction_CSER>();
+    builtInFunctions[builtInFunctionType::bift_CEQR] = std::make_unique<HmgBuiltInFunction_CEQR>();
+    builtInFunctions[builtInFunctionType::bift_CNEQR] = std::make_unique<HmgBuiltInFunction_CNEQR>();
+    builtInFunctions[builtInFunctionType::bift_CGT0R] = std::make_unique<HmgBuiltInFunction_CGT0R>();
+    builtInFunctions[builtInFunctionType::bift_CST0R] = std::make_unique<HmgBuiltInFunction_CST0R>();
+    builtInFunctions[builtInFunctionType::bift_CGE0R] = std::make_unique<HmgBuiltInFunction_CGE0R>();
+    builtInFunctions[builtInFunctionType::bift_CSE0R] = std::make_unique<HmgBuiltInFunction_CSE0R>();
+    builtInFunctions[builtInFunctionType::bift_CEQ0R] = std::make_unique<HmgBuiltInFunction_CEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_CNEQ0R] = std::make_unique<HmgBuiltInFunction_CNEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_TGTR] = std::make_unique<HmgBuiltInFunction_TGTR>();
+    builtInFunctions[builtInFunctionType::bift_TSTR] = std::make_unique<HmgBuiltInFunction_TSTR>();
+    builtInFunctions[builtInFunctionType::bift_TGER] = std::make_unique<HmgBuiltInFunction_TGER>();
+    builtInFunctions[builtInFunctionType::bift_TSER] = std::make_unique<HmgBuiltInFunction_TSER>();
+    builtInFunctions[builtInFunctionType::bift_TEQR] = std::make_unique<HmgBuiltInFunction_TEQR>();
+    builtInFunctions[builtInFunctionType::bift_TNEQR] = std::make_unique<HmgBuiltInFunction_TNEQR>();
+    builtInFunctions[builtInFunctionType::bift_TGT0R] = std::make_unique<HmgBuiltInFunction_TGT0R>();
+    builtInFunctions[builtInFunctionType::bift_TST0R] = std::make_unique<HmgBuiltInFunction_TST0R>();
+    builtInFunctions[builtInFunctionType::bift_TGE0R] = std::make_unique<HmgBuiltInFunction_TGE0R>();
+    builtInFunctions[builtInFunctionType::bift_TSE0R] = std::make_unique<HmgBuiltInFunction_TSE0R>();
+    builtInFunctions[builtInFunctionType::bift_TEQ0R] = std::make_unique<HmgBuiltInFunction_TEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_TNEQ0R] = std::make_unique<HmgBuiltInFunction_TNEQ0R>();
+    builtInFunctions[builtInFunctionType::bift_CGTCR] = std::make_unique<HmgBuiltInFunction_CGTCR>();
+    builtInFunctions[builtInFunctionType::bift_CSTCR] = std::make_unique<HmgBuiltInFunction_CSTCR>();
+    builtInFunctions[builtInFunctionType::bift_CGECR] = std::make_unique<HmgBuiltInFunction_CGECR>();
+    builtInFunctions[builtInFunctionType::bift_CSECR] = std::make_unique<HmgBuiltInFunction_CSECR>();
+    builtInFunctions[builtInFunctionType::bift_CEQCR] = std::make_unique<HmgBuiltInFunction_CEQCR>();
+    builtInFunctions[builtInFunctionType::bift_CNEQCR] = std::make_unique<HmgBuiltInFunction_CNEQCR>();
+    builtInFunctions[builtInFunctionType::bift_CGT0CR] = std::make_unique<HmgBuiltInFunction_CGT0CR>();
+    builtInFunctions[builtInFunctionType::bift_CST0CR] = std::make_unique<HmgBuiltInFunction_CST0CR>();
+    builtInFunctions[builtInFunctionType::bift_CGE0CR] = std::make_unique<HmgBuiltInFunction_CGE0CR>();
+    builtInFunctions[builtInFunctionType::bift_CSE0CR] = std::make_unique<HmgBuiltInFunction_CSE0CR>();
+    builtInFunctions[builtInFunctionType::bift_CEQ0CR] = std::make_unique<HmgBuiltInFunction_CEQ0CR>();
+    builtInFunctions[builtInFunctionType::bift_CNEQ0CR] = std::make_unique<HmgBuiltInFunction_CNEQ0CR>();
     builtInFunctions[builtInFunctionType::bift_UNIT] = std::make_unique<HmgBuiltInFunction_UNIT>();
     builtInFunctions[builtInFunctionType::bift_UNITT] = std::make_unique<HmgBuiltInFunction_UNITT>();
     builtInFunctions[builtInFunctionType::bift_URAMP] = std::make_unique<HmgBuiltInFunction_URAMP>();
