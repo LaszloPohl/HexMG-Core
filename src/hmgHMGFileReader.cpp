@@ -44,14 +44,24 @@ FileFunctionNameID biftNameID[] = {
     { "SUB",	bift_SUB },
     { "MUL",	bift_MUL },
     { "DIV",	bift_DIV },
+    { "IDIV",	bift_IDIV },
+    { "MOD",	bift_MOD },
+    { "TRUNC",	bift_TRUNC },
+    { "ROUND",	bift_ROUND },
+    { "CEIL",	bift_CEIL },
+    { "FLOOR",	bift_FLOOR },
     { "ADDC",	bift_ADDC },
     { "SUBC",	bift_SUBC },
     { "MULC",	bift_MULC },
     { "DIVC",	bift_DIVC },
+    { "IDIVC",	bift_IDIVC },
+    { "MODC",	bift_MODC },
     { "CADD",	bift_CADD },
     { "CSUB",	bift_CSUB },
     { "CMUL",	bift_CMUL },
     { "CDIV",	bift_CDIV },
+    { "CIDIV",	bift_CIDIV },
+    { "CMOD",	bift_CMOD },
     { "NEG",	bift_NEG },
     { "INV",	bift_INV },
     { "SQRT",	bift_SQRT },
@@ -2000,18 +2010,28 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_ADD:
                     case bift_SUB:
                     case bift_MUL:
-                    case bift_DIV:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_DIV:
+                    case bift_IDIV:
+                    case bift_MOD:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_TRUNC:
+                    case bift_ROUND:
+                    case bift_CEIL:
+                    case bift_FLOOR:    ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
                     case bift_ADDC:
                     case bift_SUBC:
                     case bift_MULC:
-                    case bift_DIVC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_DIVC:
+                    case bift_IDIVC:
+                    case bift_MODC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_CADD:
                     case bift_CSUB:
                     case bift_CMUL:
-                    case bift_CDIV:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CDIV:                    
+                    case bift_CIDIV:
+                    case bift_CMOD:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         break;

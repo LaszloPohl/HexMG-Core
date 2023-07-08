@@ -102,9 +102,10 @@ enum builtInFunctionType {
     bift_CONST, bift_C_PI, bift_C_2PI, bift_C_PI2, bift_C_E, bift_C_T0, 
     bift_C_K, bift_C_Q,
     
-    bift_ADD, bift_SUB, bift_MUL, bift_DIV, bift_ADDC, bift_SUBC,
-    bift_MULC, bift_DIVC,
-    bift_CADD, bift_CSUB, bift_CMUL, bift_CDIV,
+    bift_ADD, bift_SUB, bift_MUL, bift_DIV, bift_IDIV, bift_MOD, 
+    bift_TRUNC, bift_ROUND, bift_CEIL, bift_FLOOR, 
+    bift_ADDC, bift_SUBC, bift_MULC, bift_DIVC, bift_IDIVC, bift_MODC,
+    bift_CADD, bift_CSUB, bift_CMUL, bift_CDIV, bift_CIDIV, bift_CMOD,
     bift_NEG, bift_INV, bift_SQRT, bift_POW, bift_POWC, bift_CPOW,
     bift_EXP, bift_NEXP, bift_IEXP, bift_INEXP, bift_LN, bift_LOG,
     bift_CLOG,

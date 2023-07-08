@@ -346,6 +346,78 @@ public:
 
 
 //***********************************************************************
+class HmgBuiltInFunction_IDIV final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_IDIV() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = trunc(workField[index[2]] / workField[index[3]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_MOD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_MOD() : HmgFunction{ 2, 4, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] - trunc(workField[index[2]] / workField[index[3]]) * workField[index[3]];
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_TRUNC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_TRUNC() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = trunc(workField[index[2]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ROUND final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ROUND() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = round(workField[index[2]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CEIL final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CEIL() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = ceil(workField[index[2]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_FLOOR final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_FLOOR() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = floor(workField[index[2]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
 class HmgBuiltInFunction_ADDC final : public HmgFunction{
 //***********************************************************************
 public:
@@ -394,6 +466,30 @@ public:
 
 
 //***********************************************************************
+class HmgBuiltInFunction_IDIVC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_IDIVC() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = trunc(workField[index[2]] / line.value);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_MODC final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_MODC() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = workField[index[2]] - trunc(workField[index[2]] / line.value) * line.value;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
 class HmgBuiltInFunction_CADD final : public HmgFunction{
 //***********************************************************************
 public:
@@ -436,6 +532,30 @@ public:
     HmgBuiltInFunction_CDIV() : HmgFunction{ 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
         workField[index[0]] = line.value / workField[index[2]];
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CIDIV final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CIDIV() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = trunc(line.value / workField[index[2]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_CMOD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_CMOD() : HmgFunction{ 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override {
+        workField[index[0]] = line.value - trunc(line.value / workField[index[2]]) * workField[index[2]];
         return 0;
     }
 };
@@ -2546,14 +2666,24 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_SUB] = std::make_unique<HmgBuiltInFunction_SUB>();
     builtInFunctions[builtInFunctionType::bift_MUL] = std::make_unique<HmgBuiltInFunction_MUL>();
     builtInFunctions[builtInFunctionType::bift_DIV] = std::make_unique<HmgBuiltInFunction_DIV>();
+    builtInFunctions[builtInFunctionType::bift_IDIV] = std::make_unique<HmgBuiltInFunction_IDIV>();
+    builtInFunctions[builtInFunctionType::bift_MOD] = std::make_unique<HmgBuiltInFunction_MOD>();
+    builtInFunctions[builtInFunctionType::bift_TRUNC] = std::make_unique<HmgBuiltInFunction_TRUNC>();
+    builtInFunctions[builtInFunctionType::bift_ROUND] = std::make_unique<HmgBuiltInFunction_ROUND>();
+    builtInFunctions[builtInFunctionType::bift_CEIL] = std::make_unique<HmgBuiltInFunction_CEIL>();
+    builtInFunctions[builtInFunctionType::bift_FLOOR] = std::make_unique<HmgBuiltInFunction_FLOOR>();
     builtInFunctions[builtInFunctionType::bift_ADDC] = std::make_unique<HmgBuiltInFunction_ADDC>();
     builtInFunctions[builtInFunctionType::bift_SUBC] = std::make_unique<HmgBuiltInFunction_SUBC>();
     builtInFunctions[builtInFunctionType::bift_MULC] = std::make_unique<HmgBuiltInFunction_MULC>();
     builtInFunctions[builtInFunctionType::bift_DIVC] = std::make_unique<HmgBuiltInFunction_DIVC>();
+    builtInFunctions[builtInFunctionType::bift_IDIVC] = std::make_unique<HmgBuiltInFunction_IDIVC>();
+    builtInFunctions[builtInFunctionType::bift_MODC] = std::make_unique<HmgBuiltInFunction_MODC>();
     builtInFunctions[builtInFunctionType::bift_CADD] = std::make_unique<HmgBuiltInFunction_CADD>();
     builtInFunctions[builtInFunctionType::bift_CSUB] = std::make_unique<HmgBuiltInFunction_CSUB>();
     builtInFunctions[builtInFunctionType::bift_CMUL] = std::make_unique<HmgBuiltInFunction_CMUL>();
     builtInFunctions[builtInFunctionType::bift_CDIV] = std::make_unique<HmgBuiltInFunction_CDIV>();
+    builtInFunctions[builtInFunctionType::bift_CIDIV] = std::make_unique<HmgBuiltInFunction_CIDIV>();
+    builtInFunctions[builtInFunctionType::bift_CMOD] = std::make_unique<HmgBuiltInFunction_CMOD>();
     builtInFunctions[builtInFunctionType::bift_NEG] = std::make_unique<HmgBuiltInFunction_NEG>();
     builtInFunctions[builtInFunctionType::bift_INV] = std::make_unique<HmgBuiltInFunction_INV>();
     builtInFunctions[builtInFunctionType::bift_SQRT] = std::make_unique<HmgBuiltInFunction_SQRT>();
