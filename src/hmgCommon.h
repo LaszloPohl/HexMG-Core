@@ -204,7 +204,8 @@ struct ExternalConnectionSizePack {
     uns nNormalONodes = 0;
     uns nForwardedONodes = 0;
     uns nParams = 0;
-    void zero() { nIONodes = nNormalINodes = nControlINodes = nNormalONodes = nForwardedONodes = nParams = 0; }
+    uns nComponentT = 0;
+    void zero() { nIONodes = nNormalINodes = nControlINodes = nNormalONodes = nForwardedONodes = nParams = nComponentT = 0; }
 };
 
 
@@ -341,6 +342,15 @@ struct RunData {
     uns iterNumSPD = 0; // DC/TIMESTEP: number of iteration steps, if 0 => until convergence; TIMECONST: STEP PER DECADE
     rvt err = 0.0001;
     rvt fTauDtT = 1;
+};
+
+
+//***********************************************************************
+struct ComponentIndex {
+//***********************************************************************
+    uns index = 0;
+    bool isController = false;
+    bool isForwarded = false;  // if true, isController is meaningless (we don't know what the sender function sent)
 };
 
 

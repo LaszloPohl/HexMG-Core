@@ -762,6 +762,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", externalNs.nForwardedONodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nControlInternalNodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", internalNs.nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT", externalNs.nComponentT));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
             lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -888,7 +889,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
             pxline->modelIndex = unsMax;
 
-            uns nodenum = 2, parnum = 1;
+            uns nodenum = 2, parnum = 1, compnum = 0;
             uns startONodes = unsMax, stopONodes = unsMax;
             if (strcmp(token, "MODEL") == 0) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -900,6 +901,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 const HMGFileModelDescription& mod = *globalNames.modelData[pxline->modelIndex];
                 nodenum = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes + mod.externalNs.nNormalONodes + mod.externalNs.nForwardedONodes;
                 parnum = mod.externalNs.nParams;
+                compnum = mod.externalNs.nComponentT;
                 pxline->isController = mod.modelType == hfmtController;
                 if (mod.externalNs.nNormalONodes != 0) {
                     startONodes = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes;
@@ -925,6 +927,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN",   pxline->nIN));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN",  pxline->nCin));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P",    pxline->nPar));
+                    else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT",   pxline->nCT));
                     else if (strcmp(lineToken.getActToken(), "F") == 0) {
                         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                         if (token[0] == '_') { // built in function
@@ -940,6 +943,26 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                                 throw hmgExcept("HMGFileFunction::ReadOrReplaceBodySubcircuit", "unknown function name %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
                             pxline->functionIndex = globalNames.functionNames[token];
+
+                            cuns nCT = globalNames.functionData[pxline->functionIndex]->nComponentParams;
+
+                            for (uns i = 0; i < nCT; i++) {
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                uns CTIndex = 0;
+                                if (strcmp(token, "_THIS") == 0) {
+                                    CTIndex = unsMax;
+                                }
+                                else {
+                                    if (token[0] != 'C' || token[1] != 'T')
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "CT expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    uns start = 2;
+                                    if (token[2] == 'S' || token[2] == 'C')
+                                        start = 3;
+                                    if (sscanf_s(token + start, "%u", &CTIndex) != 1)
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised CT index (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                }
+                                pxline->functionComponentParams.push_back(CTIndex);
+                            }
 
                             cuns nPar = globalNames.functionData[pxline->functionIndex]->nParams;
 
@@ -961,9 +984,39 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             // don't forget to set pxline->isController if needed !
             // don't forget to set startONodes and stopONodes if there are normal O nodes !
 
-            // read nodes and parameters
+            // read component parameters, nodes and parameters
             
             if (pxline->modelIndex != unsMax) {
+                for (uns i = 0; i < compnum; i++) {
+                    token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    uns CTIndex = 0;
+                    bool isCTController = false;
+                    bool isCTForwarded = false;
+                    if (strcmp(token, "_THIS") == 0) {
+                        CTIndex = unsMax;
+                    }
+                    else if (componentInstanceNameIndex.contains(token)) {
+                        CTIndex = componentInstanceNameIndex[token];
+                    }
+                    else if (controllerInstanceNameIndex.contains(token)) {
+                        CTIndex = controllerInstanceNameIndex[token];
+                        isCTController = true;
+                    }
+                    else if (token[0] == 'C' || token[1] == 'T') {
+                        uns start = 2;
+                        if (token[2] == 'S') {
+                            start = 3;
+                        }
+                        else if (token[2] == 'C')
+                            start = 3;
+                        isCTForwarded = true;
+                        if (sscanf_s(token + start, "%u", &CTIndex) != 1)
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised CT index (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    }
+                    else
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "CT expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    pxline->componentParams.push_back({ CTIndex, isCTController, isCTForwarded });
+                }
                 for (uns i = 0; i < nodenum; i++) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     pxline->nodes.emplace_back(SimpleInterfaceNodeID());
@@ -1950,6 +2003,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     while (!lineToken.isSepEOL) {
         if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", nParams));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT", nComponentParams));
         else
             throw hmgExcept("HMGFileFunction::Read", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))

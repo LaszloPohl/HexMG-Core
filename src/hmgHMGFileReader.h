@@ -402,6 +402,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     uns instanceIndex = 0; // component index or controller index
 
     uns modelIndex = 0; // modelNames, BuiltInComponentTemplateType
+    std::vector<ComponentIndex> componentParams;   // unsMax means _THIS
     std::vector<SimpleInterfaceNodeID> nodes;
     std::vector<ParameterInstance> params;
     bool isDefaultRail = false;
@@ -414,8 +415,10 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     uns nIN = 0;
     uns nCin = 0;
     uns nPar = 0;
+    uns nCT = 0;
     bool isFunctionBuiltIn = false;
     uns functionIndex = 0;
+    std::vector<uns> functionComponentParams;   // unsMax means _THIS
     std::vector<SimpleInterfaceNodeID> functionParams;
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
@@ -668,6 +671,7 @@ struct HMGFileFunction: HMGFileListItem {
     uns functionIndex = 0;
     uns nParams = 0;
     uns nInternalVars = 0;
+    uns nComponentParams = 0;
     std::map<std::string, uns> labels;
     std::map<rvt, uns> constants; // constant, variable index
     std::vector<FunctionDescription> instructions;

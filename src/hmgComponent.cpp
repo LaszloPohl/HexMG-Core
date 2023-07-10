@@ -851,6 +851,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         xns.nNormalONodes = 0;
                         xns.nForwardedONodes = 0;
                         xns.nParams = 1 + pAct->nPar;
+                        xns.nComponentT = 0;
                     }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
