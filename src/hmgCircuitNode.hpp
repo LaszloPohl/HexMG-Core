@@ -139,6 +139,7 @@ struct NodeVariable {
     void setValueDC(rvt val)noexcept { valueDC = val; v = rvt0; }
     void setValue0DC(rvt val)noexcept { valueDC = val; }
     void incValue0DC(rvt val)noexcept { valueDC += val; }
+    void setStepStartDC(rvt val)noexcept { stepStartDC = val; }
     void setDDC(rvt d_)noexcept { d.store(d_, isConcurrent, isGnd); }
     void setFDC(rvt f_)noexcept { f = f_; }
     void setYiiDC(rvt y)noexcept { yii.store(y, isConcurrent, isGnd); }

@@ -219,7 +219,23 @@ FileFunctionNameID biftNameID[] = {
     { "FREQ",	bift_FREQ },
     { "RAIL",	bift_RAIL },
     { "SETVG",	bift_SETVG },
-    { "GETVG",	bift_GETVG }
+    { "GETVG",	bift_GETVG },
+    { "LOAD",	    bift_LOAD },
+    { "LOADD",	    bift_LOADD },
+    { "LOADI",	    bift_LOADI },
+    { "LOADSTS",	bift_LOADSTS },
+    { "STORE",	    bift_STORE },
+    { "STORED",	    bift_STORED },
+    { "INCD",	    bift_INCD },
+    { "STORESTS",	bift_STORESTS },
+    { "ILOAD",	    bift_ILOAD },
+    { "ILOADD",	    bift_ILOADD },
+    { "ILOADI",	    bift_ILOADI },
+    { "ILOADSTS",	bift_ILOADSTS },
+    { "ISTORE",	    bift_ISTORE },
+    { "ISTORED",	bift_ISTORED },
+    { "IINCD",	    bift_IINCD },
+    { "ISTORESTS",	bift_ISTORESTS }
 };
 
 
@@ -955,10 +971,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                                 else {
                                     if (token[0] != 'C' || token[1] != 'T')
                                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "CT expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                                    uns start = 2;
-                                    if (token[2] == 'S' || token[2] == 'C')
-                                        start = 3;
-                                    if (sscanf_s(token + start, "%u", &CTIndex) != 1)
+                                    if (sscanf_s(token + 2, "%u", &CTIndex) != 1)
                                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised CT index (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 }
                                 pxline->functionComponentParams.push_back(CTIndex);
@@ -1003,14 +1016,8 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         isCTController = true;
                     }
                     else if (token[0] == 'C' || token[1] == 'T') {
-                        uns start = 2;
-                        if (token[2] == 'S') {
-                            start = 3;
-                        }
-                        else if (token[2] == 'C')
-                            start = 3;
                         isCTForwarded = true;
-                        if (sscanf_s(token + start, "%u", &CTIndex) != 1)
+                        if (sscanf_s(token + 2, "%u", &CTIndex) != 1)
                             throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised CT index (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     }
                     else
@@ -2315,6 +2322,32 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_GETVG:    ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         ReadVG(func, lineToken, reader, line, lineInfo);
                                         break;
+                    case bift_LOAD:
+                    case bift_LOADD:
+                    case bift_LOADI:
+                    case bift_LOADSTS:  ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                                        break;
+                    case bift_STORE:
+                    case bift_STORED:
+                    case bift_INCD:
+                    case bift_STORESTS: ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_ILOAD:
+                    case bift_ILOADD:
+                    case bift_ILOADI:
+                    case bift_ILOADSTS: ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        break;
+                    case bift_ISTORE:
+                    case bift_ISTORED:
+                    case bift_IINCD:
+                    case bift_ISTORESTS:ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                                        ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        break;
+
                     default:
                         throw hmgExcept("HMGFileFunction::Read", "unknown built in function type ID (%u) in %s, line %u: %s", func.type, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
@@ -2361,10 +2394,10 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     for (uns i = 0; i < instructions.size(); i++) {
         FunctionDescription& func = instructions[i];
-        if (func.labelVGID == unsMax) {
+        if (func.labelXID == unsMax) {
             if (!labels.contains(func.labelName))
                 throw hmgExcept("HMGFileFunction::Read", "%s jump label missing in %s function", func.labelName.c_str(), token); // token contains the function name
-            func.labelVGID = labels[func.labelName] + (uns)constants.size(); // if there are inserted constant intructions, the labels are shifted
+            func.labelXID = labels[func.labelName] + (uns)constants.size(); // if there are inserted constant intructions, the labels are shifted
         }
     }
 }

@@ -90,6 +90,17 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1,
 
 
 //***********************************************************************
+enum ComponentAndControllerModelType {
+//***********************************************************************
+    ccmt_ConstR_1, ccmt_ConstR_2, ccmt_ConstG_1, ccmt_ConstG_2,
+    ccmt_ConstC_1, ccmt_ConstC_2, ccmt_ConstI_1, ccmt_ConstI_2,
+    ccmt_Const_V_Controlled_I_1,  ccmt_Girator,  ccmt_ConstVI,
+    ccmt_Function_Controlled_I_with_const_G, ccmt_Controller,
+    ccmt_SubCircuit
+};
+
+
+//***********************************************************************
 enum componentModelType { cmtBuiltIn, cmtCustom, cmtFunctionControlledBuiltIn };
 //***********************************************************************
 
@@ -147,6 +158,10 @@ enum builtInFunctionType {
     bift_RAIL,
 
     bift_SETVG, bift_GETVG,
+    bift_LOAD, bift_LOADD, bift_LOADI, bift_LOADSTS, bift_STORE, bift_STORED,
+    bift_INCD, bift_STORESTS,
+    bift_ILOAD, bift_ILOADD, bift_ILOADI,bift_ILOADSTS,  bift_ISTORE, bift_ISTORED,
+    bift_IINCD, bift_ISTORESTS,
 
     biftSize
 };
@@ -372,7 +387,7 @@ struct SimulationToSaveData {
 
 
 //***********************************************************************
-enum CDNodeType { cdntNone, cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected }; // unconnected: only for ONodes
+enum CDNodeType { cdntNone, cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntVar, cdntUnconnected }; // unconnected: only for ONodes, var: for functions
 struct CDNode { CDNodeType type = cdntNone; uns index = 0; }; // ! default type must be cdntNone!
 enum CDParamType { cdptValue, cdptGlobalVariable, cdptLocalVariable, cdptParam, cdptInternalNode, cdptExternalNode };
 struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt value = rvt0; };

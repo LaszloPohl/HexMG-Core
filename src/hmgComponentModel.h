@@ -35,18 +35,16 @@ class ComponentAndControllerModelBase {
 // Type definition of the component, this is instantiated as Component
 // e.g. a subcircuit description or built in types (R, C, etc.)
 //***********************************************************************
-    friend class CircuitStorage;
-    friend class ComponentDefinition;
-    friend class ModelSubCircuit;
-    friend struct FineCoarseConnectionDescription;
+public:
     //***********************************************************************
     // number of nodes
     // these cannot be changed, this is the interface of a component
     const ExternalConnectionSizePack externalNs;
+    const ComponentAndControllerModelType modelType;
     //***********************************************************************
-public:
-    ComponentAndControllerModelBase(ExternalConnectionSizePack Ns_)
-        : externalNs{ Ns_ } {}
+
+    ComponentAndControllerModelBase(ExternalConnectionSizePack Ns_, ComponentAndControllerModelType modelType_)
+        : externalNs{ Ns_ }, modelType{ modelType_ } {}
     virtual ~ComponentAndControllerModelBase() = default;
     virtual ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const = 0;
     uns getN_IO_Nodes()const noexcept { return externalNs.nIONodes; }
@@ -60,8 +58,9 @@ public:
     uns getN_Params()const noexcept { return externalNs.nParams; }
     virtual uns getN_NormalInternalNodes()const noexcept { return 0; }
     virtual uns getN_InternalNodes()const noexcept { return 0; }
-    bool isController()const noexcept { return externalNs.nIONodes + externalNs.nNormalINodes == 0; }
+    bool isController()const noexcept { return modelType == ccmt_Controller; }
     virtual bool canBeNonlinear()const noexcept = 0;
+    bool SimpleInterfaceNodeID2CDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept;
 };
 
 
@@ -90,7 +89,7 @@ class ModelConstR_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
+    ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstR_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -101,7 +100,7 @@ class ModelConstR_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
+    ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstR_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -112,7 +111,7 @@ class ModelConstG_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
+    ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstG_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -123,7 +122,7 @@ class ModelConstG_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
+    ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstG_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -133,7 +132,7 @@ public:
 class ModelConstC_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 } } {}
+    ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstC_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -143,7 +142,7 @@ public:
 class ModelConstC_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 } } {}
+    ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstC_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -153,7 +152,7 @@ public:
 class ModelConstI_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4 } } {}
+    ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4 }, ccmt_ConstI_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -163,7 +162,7 @@ public:
 class ModelConstI_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5 } } {}
+    ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5 }, ccmt_ConstI_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -173,7 +172,7 @@ public:
 class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4 } } {}
+    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4 }, ccmt_Const_V_Controlled_I_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -183,7 +182,7 @@ public:
 class ModelGirator final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2 } } {}
+    ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2 }, ccmt_Girator } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -193,7 +192,7 @@ public:
 class ModelConstVI final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 } } {}
+    ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 }, ccmt_ConstVI } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }
@@ -211,7 +210,7 @@ public:
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
     Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
         NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ } },
+        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ }, ccmt_Function_Controlled_I_with_const_G },
         functionSources{ std::move(functionSources_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
@@ -248,7 +247,7 @@ public:
     uns nMVars;
     ModelController(uns nControlINodes_, uns nControlONodes_, uns nMVars_, uns nParams_,
         NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ } }, // O nodes of the Controller are defined as normal O nodes
+        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ }, ccmt_Controller }, // O nodes of the Controller are defined as normal O nodes
         nMVars{ nMVars_ }, functionSources { std::move(functionSources_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
@@ -265,6 +264,7 @@ public:
 //***********************************************************************
 class ModelSubCircuit final : public ComponentAndControllerModelBase {
 //***********************************************************************
+    friend class ComponentAndControllerModelBase;
     friend class ComponentSubCircuit;
     friend class CircuitStorage;
     friend class ComponentDefinition;
@@ -295,7 +295,7 @@ public:
 
     //***********************************************************************
     ModelSubCircuit(ExternalConnectionSizePack Ns_, InternalNodeVarSizePack internalNs_, bool defaultInternalNodeIsConcurrent_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
-        : ComponentAndControllerModelBase{ Ns_ }, internalNs{ internalNs_ }, solutionType{ solutionType_ }, srTreeInstructions{ srTree } {
+        : ComponentAndControllerModelBase{ Ns_, ccmt_SubCircuit }, internalNs{ internalNs_ }, solutionType{ solutionType_ }, srTreeInstructions{ srTree } {
     //***********************************************************************
         internalNodeIsConcurrent.resize(internalNs_.nNormalInternalNodes, defaultInternalNodeIsConcurrent_);
     }
@@ -323,6 +323,64 @@ public:
     bool canBeNonlinear()const noexcept override { return false; } // can contain nonlinear components but this is just a container
     //***********************************************************************
 };
+
+
+//***********************************************************************
+bool ComponentAndControllerModelBase::SimpleInterfaceNodeID2CDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept{
+//***********************************************************************
+    uns delta = 0;
+    switch (src.type) {
+        case nvtIO:
+            dest.type = CDNodeType::cdntExternal;
+            break;
+        case nvtIN:
+            dest.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes;
+            break;
+        case nvtCIN:
+            dest.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes;
+            break;
+        case nvtOUT:
+            dest.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+            break;
+        case nvtFWOUT:
+            dest.type = CDNodeType::cdntExternal;
+            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
+            break;
+        case nvtNInternal:
+            if (modelType != ccmt_SubCircuit)
+                return false;
+            dest.type = CDNodeType::cdntInternal;
+            break;
+        case nvtCInternal:
+            if (modelType != ccmt_SubCircuit)
+                return false;
+            dest.type = CDNodeType::cdntInternal;
+            delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNormalInternalNodes;
+            break;
+        case nvtVarInternal:
+            if (modelType != ccmt_SubCircuit || modelType != ccmt_Controller)
+                return false;
+            dest.type = CDNodeType::cdntVar;
+            break;
+        case nvtRail:
+            dest.type = CDNodeType::cdntRail;
+            break;
+        case nvtGND:
+            dest.type = CDNodeType::cdntGnd;
+            break;
+        case nvtUnconnected:
+            dest.type = CDNodeType::cdntUnconnected;
+            break;
+        default:
+            return false;
+    }
+    dest.index = src.index + delta;
+    return true;
+}
+
 
 
 //***********************************************************************

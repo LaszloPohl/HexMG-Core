@@ -60,7 +60,7 @@ int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndC
 int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    gc.globalVariables[line.jumpVGValue]->setValueDC(workField[index[2]]);
+    gc.globalVariables[line.xSrc.index]->setValueDC(workField[index[2]]);
     return 0;
 }
 
@@ -69,7 +69,7 @@ int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAnd
 int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    workField[index[0]] = gc.globalVariables[line.jumpVGValue]->getValueDC();
+    workField[index[0]] = gc.globalVariables[line.xSrc.index]->getValueDC();
     return 0;
 }
 
@@ -1028,14 +1028,9 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
                     if (pAct->nValues > 0)
                         lineDesc.moreValues.reserve(pAct->nValues);
 
-                    if (pAct->type == bift_SETVG || pAct->type == bift_GETVG) { // global variable index
-                        lineDesc.jumpVGValue = (int)pAct->labelVGID;
-                    }
-                    else { // jump label (always set but only jump intructions use the value)
-                        if (pAct->labelVGID >= nCallInstructions)
-                            throw hmgExcept("CircuitStorage::processFunctionInstructions", "jump address is not in the function (address: %u, function calls: %u)", pAct->labelVGID, nCallInstructions);
-                        lineDesc.jumpVGValue = (int)pAct->labelVGID - (int)fvModel.lines.size(); // converting to relative address
-                    }
+                    lineDesc.jumpValue = (int)pAct->labelXID - (int)fvModel.lines.size(); // converting to relative address
+                    lineDesc.CTid = pAct->labelXID;
+                    lineDesc.xSrc = pAct->xSrc;
                 }
                 break;
             case sitFunctionParID: {
@@ -1218,7 +1213,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     : cdn.type == CDNodeType::cdntExternal ? externalNodes[cdn.index]
                     : cdn.type == CDNodeType::cdntRail ? &Rails::V[cdn.index].get()->rail
                     : cdn.type == CDNodeType::cdntGnd ? &Rails::V[defaultNodeValueIndex].get()->rail
-                    : nullptr // unconnected node, never gets here
+                    : nullptr // unconnected node or var, never gets here
                 );
             }
         }

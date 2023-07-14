@@ -139,111 +139,98 @@ inline bool spiceTextToRvt(const char* text,rvt& value) {
 
 
 //***********************************************************************
-inline bool textToSimpleInterfaceNodeID(const char* text, uns& position, SimpleInterfaceNodeID& result) {
+inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result, bool isNodeN = true) {
 //***********************************************************************
-    switch (text[position]) {
+    switch (text[0]) {
         case 'C':
-            if (text[position + 1] == 'I' || text[position + 2] == 'N') {
+            if (text[1] == 'I' || text[2] == 'N') {
                 result.type = nvtCIN;
-                if (sscanf_s(&text[position + 3], "%u", &result.index) != 1)
+                if (isNodeN && sscanf_s(&text[3], "%u", &result.index) != 1)
                     return false;
             }
             else {
                 result.type = nvtCInternal;
-                if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                     return false;
             }
             break;
         case 'F':
-            if (text[position + 1] != 'W' || text[position + 2] != 'O' || text[position + 3] != 'U' || text[position + 4] != 'T')
+            if (text[1] != 'W' || text[2] != 'O' || text[3] != 'U' || text[4] != 'T')
                 return false;
             result.type = nvtFWOUT;
-            if (sscanf_s(&text[position + 5], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[5], "%u", &result.index) != 1)
                 return false;
             break;
         case 'G':
-            if (text[position + 1] == 'N' && text[position + 2] == 'D') {
+            if (text[1] == 'N' && text[2] == 'D') {
                 result.type = nvtGND;
             }
             else
                 return false;
             break;
         case 'I':
-            if (text[position + 1] != 'N')
+            if (text[1] != 'N')
                 return false;
             result.type = nvtIN;
-            if (sscanf_s(&text[position + 2], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
                 return false;
             break;
         case 'N':
-            if (text[position + 1] == 'O' && text[position + 2] == 'N' && text[position + 3] == 'E') {
+            if (text[1] == 'O' && text[2] == 'N' && text[3] == 'E') {
                 result.type = nvtUnconnected; // ! nvtNone is used for other purposes
             }
             else {
                 result.type = nvtNInternal;
-                if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                     return false;
             }
             break;
         case 'O':
-            if (text[position + 1] != 'U' || text[position + 2] != 'T')
+            if (text[1] != 'U' || text[2] != 'T')
                 return false;
             result.type = nvtOUT;
-            if (sscanf_s(&text[position + 3], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[3], "%u", &result.index) != 1)
                 return false;
             break;
         case 'P':
             result.type = nvtParam;
-            if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
         case 'R':
             result.type = nvtRail;
-            if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
         case 'X':
             result.type = nvtIO;
-            if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
         case 'V':
-            if (text[position + 1] == 'G') {
+            if (text[1] == 'G') {
                 result.type = nvtVarGlobal;
-                if (sscanf_s(&text[position + 2], "%u", &result.index) != 1)
+                if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
                     return false;
             }
             else {
                 result.type = nvtVarInternal;
-                if (sscanf_s(&text[position + 1], "%u", &result.index) != 1)
+                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                     return false;
             }
             break;
         default:
             return false;
     }
-    while (isupper(text[position]))
-        position++;
-    while (isdigit(text[position]))
-        position++;
     return true;
-}
-
-
-//***********************************************************************
-inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result) {
-//***********************************************************************
-    uns pos = 0;
-    return textToSimpleInterfaceNodeID(text, pos, result);
 }
 
 
 //***********************************************************************
 inline bool textToCDNode(const char* text, CDNode& result) {
 //***********************************************************************
-    uns pos = 0;
     SimpleInterfaceNodeID tmp;
-    if (!textToSimpleInterfaceNodeID(text, pos, tmp))
+    if (!textToSimpleInterfaceNodeID(text, tmp))
         return false;
     if (tmp.type != nvtIO && tmp.type != nvtNInternal)
         return false;
@@ -664,7 +651,8 @@ struct HMGFileFunction: HMGFileListItem {
         std::vector<ParameterIdentifier> parameters;
         std::vector<rvt> values;                                                // function parameter values for _PWL
         rvt value = rvt0;                                                       // function parameter value for _CONST
-        uns labelVGID = 0;                                                      // for jump instructions, also the index of the global variable
+        uns labelXID = 0;                                                       // for jump instructions, also the index of the external source, e.g. CT6.X2 => labelXID = 6, xSrc = { nvtIO, 2 }
+        SimpleInterfaceNodeID xSrc;                                             // nodeID of the external source
         std::string labelName;                                                  // first read only the name of the label beacuse forward jumping is possible
     };
     //***********************************************************************
@@ -685,7 +673,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         dest.labelName = token;
-        dest.labelVGID = unsMax;
+        dest.labelXID = unsMax;
     }
     //***********************************************************************
     void ReadValue(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
@@ -700,15 +688,40 @@ struct HMGFileFunction: HMGFileListItem {
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (token[0] != 'V' || token[1] != 'G')
             throw hmgExcept("HMGFileFunction::ReadVG", "global variable name (VG) expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-        if (sscanf_s(token + 2, "%u", &dest.labelVGID) != 1)
+        if (sscanf_s(token + 2, "%u", &dest.labelXID) != 1)
             throw hmgExcept("HMGFileFunction::ReadVG", "global variable name (VG) expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    }
+    //***********************************************************************
+    void ReadNodeVariable(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo, bool isNodeN) {
+    //***********************************************************************
+        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        if (token[0] == 'V' && token[1] == 'G') {
+            dest.xSrc.type = nvtVarGlobal;
+            if (isNodeN)
+                if (sscanf_s(token + 2, "%u", &dest.xSrc.index) != 1)
+                    throw hmgExcept("HMGFileFunction::ReadNodeVariable", "VG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (token[0] == 'C' && token[1] == 'T') {
+            char* token2 = token + 2;
+            if (sscanf_s(token2, "%u", &dest.labelXID) != 1)
+                throw hmgExcept("HMGFileFunction::ReadNodeVariable", "CT name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            while (*token2 != '.' && *token2 != 0)
+                token2++;
+            if (*token2 == 0)
+                throw hmgExcept("HMGFileFunction::ReadNodeVariable", "missing node name after CT: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            token2++;
+            if (!textToSimpleInterfaceNodeID(token2, dest.xSrc, isNodeN))
+                throw hmgExcept("HMGFileFunction::ReadNodeVariable", "unrecognized node ID: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else
+            throw hmgExcept("HMGFileFunction::ReadNodeVariable", "unrecognized node name: %s (CT or VG expected) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
         iStream.add(new IsFunctionInstruction(functionIndex, nParams, nInternalVars, (uns)instructions.size()));
         for (const auto& line : instructions) {
-            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelVGID, (uns)line.parameters.size(), (uns)line.values.size()));
+            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelXID, line.xSrc, (uns)line.parameters.size(), (uns)line.values.size()));
             for (const auto& par : line.parameters)
                 iStream.add(new IsFunctionParIDInstruction(par));
             for (const auto& val : line.values)

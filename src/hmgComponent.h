@@ -1563,7 +1563,7 @@ public:
                                 ntc.push_back(i);
                         }
                     }
-                    // ground and unconnected nodes ignored
+                    // ground, var and unconnected nodes ignored
                 }
             }
         }
