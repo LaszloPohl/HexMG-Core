@@ -126,7 +126,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 }
                 break;
             case sitDefModelController: {
-                    
+                    TODO("controller");
                 }
                 break;
             case sitComponentInstance:              isImpossibleInstruction = true; break;
@@ -191,6 +191,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitRailRange:                      isImpossibleInstruction = true; break;
             case sitNodeValue:                      isImpossibleInstruction = true; break;
             case sitParameterValue:                 isImpossibleInstruction = true; break;
+            case sitComponentIndex:                 isImpossibleInstruction = true; break;
             case sitProbe: {
                     IsProbeInstruction* pAct = static_cast<IsProbeInstruction*>(act);
                     if (pAct->probeIndex == probes.size()) {
@@ -822,6 +823,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                     cd->modelIndex = pAct->modelIndex;
                     cd->nodesConnectedTo.reserve(pAct->nNodes);
                     cd->params.reserve(pAct->nParams);
+                    cd->componentParams.reserve(pAct->nComponentParams);
 
                     cd->processInstructions(first, *this);
 
@@ -883,12 +885,27 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         delete fact;
                     }
 
+                    std::vector<uns> functionComponentParams;
+
+                    for (uns i = 0; i < pAct->nFunctionComponentParams; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("ModelSubCircuit::processInstructions", "The instruction stream has ended during MODEL SUBCIRCUIT definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitUns)
+                            throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => function component parameter expected %u arrived", (uns)fact->instruction);
+                        IsUnsInstruction* pfAct = static_cast<IsUnsInstruction*>(fact);
+                        functionComponentParams.push_back(pfAct->data);
+
+                        delete fact;
+                    }
+
                     if (pAct->modelIndex == bimFunc_Controlled_IG) {
                         std::unique_ptr<Model_Function_Controlled_I_with_const_G> mf;
                         HmgFunction* fv = pAct->isFunctionBuiltIn
                             ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
                             : gc.functions[pAct->functionIndex].get();
-                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_G>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, fv));
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_G>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
                     }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
@@ -901,6 +918,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                     cd->modelIndex = (uns)(gc.functionControlledBuiltInModels.size() - 1);
                     cd->nodesConnectedTo.reserve(pAct->nNodes);
                     cd->params.reserve(pAct->nParams);
+                    cd->componentParams.reserve(pAct->nComponentParams);
 
                     cd->processInstructions(first, *this);
 
@@ -957,6 +975,11 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
             case sitParameterValue: {
                     IsParameterValueInstruction* pAct = static_cast<IsParameterValueInstruction*>(act);
                     params.push_back(ParameterInstance2CDParam(pAct->param, container.externalNs, container.internalNs));
+                }
+                break;
+            case sitComponentIndex: {
+                    IsComponentIndexInstruction* pAct = static_cast<IsComponentIndexInstruction*>(act);
+                    componentParams.push_back(pAct->ci);
                 }
                 break;
             case sitEndInstruction: {
@@ -1201,7 +1224,26 @@ void ComponentSubCircuit::buildOrReplace() {
         components[i] = std::unique_ptr<ComponentBase>(static_cast<ComponentBase*>(iModel->makeComponent(&cDef, defNodeIndex)));
     }
 
-    // setting external nodes and parameters of the contained components
+    csiz nControllers = model.controllers.size();
+    controllers.resize(nControllers);
+    for (siz i = 0; i < nControllers; i++) {
+        const ComponentDefinition& cDef = *model.controllers[i];
+        uns defNodeIndex = cDef.isDefaultRail ? cDef.defaultValueRailIndex : this->defaultNodeValueIndex;
+        const ComponentAndControllerModelBase* iModel = cDef.modelType == cmtBuiltIn
+            ? CircuitStorage::getInstance().builtInModels[cDef.modelIndex].get()
+            : (
+                cDef.modelType == cmtCustom
+                ? CircuitStorage::getInstance().models[cDef.modelIndex].get()
+                : nullptr // a controller 
+            );
+        if (iModel == nullptr)
+            throw hmgExcept("ComponentSubCircuit::buildOrReplace", "Invalid controller type.");
+        controllers[i] = std::unique_ptr<Controller>(dynamic_cast<Controller*>(iModel->makeComponent(&cDef, defNodeIndex)));
+        if (controllers[i].get() == nullptr)
+            throw hmgExcept("ComponentSubCircuit::buildOrReplace", "controllers[%u] is not a controller.", i);
+    }
+
+    // setting external nodes, parameters and component parameters (CT) of the contained components
 
     for (siz i = 0; i < nComponent; i++) {
         ComponentBase& comp = *components[i].get();
@@ -1250,6 +1292,32 @@ void ComponentSubCircuit::buildOrReplace() {
                     break;
             }
             comp.setParam(j,par);
+        }
+    }
+
+    for (siz i = 0; i < nComponent; i++) {
+        ComponentBase& comp = *components[i].get();
+        for (siz j = 0; j < comp.def->componentParams.size(); j++) {
+            const ComponentIndex& cpi = comp.def->componentParams[j];
+            ComponentAndControllerBase* pComp = cpi.isForwarded
+                                                ? componentParams[cpi.index] 
+                                                : (cpi.isController 
+                                                    ? static_cast<ComponentAndControllerBase*>(controllers[cpi.index].get()) 
+                                                    : cpi.index == unsMax ? this : static_cast<ComponentAndControllerBase*>(components[cpi.index].get()));
+            comp.setComponentParam(j, pComp);
+        }
+    }
+
+    for (siz i = 0; i < nControllers; i++) {
+        Controller& cont = *controllers[i].get();
+        for (siz j = 0; j < cont.def->componentParams.size(); j++) {
+            const ComponentIndex& cpi = cont.def->componentParams[j];
+            ComponentAndControllerBase* pComp = cpi.isForwarded
+                ? componentParams[cpi.index]
+                : (cpi.isController
+                    ? static_cast<ComponentAndControllerBase*>(controllers[cpi.index].get())
+                    : cpi.index == unsMax ? this : static_cast<ComponentAndControllerBase*>(components[cpi.index].get()));
+            cont.setComponentParam(j, pComp);
         }
     }
 

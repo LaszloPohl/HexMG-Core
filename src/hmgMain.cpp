@@ -568,7 +568,7 @@ void probaSzimulacio4() {
 	// (uns nNormalINodes_, uns nControlINodes_, uns nParams_, NodeConnectionInstructions functionSources_, const HmgFunction& controlFunction_)
 
 	std::unique_ptr<HmgF_CustomFunction> fp = std::make_unique<HmgF_CustomFunction>(funcModel);
-	mf = make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, functionSources, fp.get());
+	mf = make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, functionSources, std::vector<uns>(), fp.get());
 	cuns funcIIndex = (uns)gc.models.size();
 	gc.models.push_back(std::move(mf)); // 0
 
@@ -639,7 +639,7 @@ int main(int n, const char** params) {
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_6.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_7.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

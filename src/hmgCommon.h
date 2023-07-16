@@ -193,6 +193,7 @@ enum StreamInstructionType {
     sitMgNodeInstruction, sitMgOne, sitMgComponentGroup,
 
     sitRails, sitRailValue, sitRailRange, sitNodeValue, sitParameterValue,
+    sitComponentIndex,
 
     sitProbe, sitProbeNode, sitRun, sitUns, sitRvt,
     sitSet,

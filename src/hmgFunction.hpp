@@ -2528,8 +2528,8 @@ public:
 class HmgBuiltInFunction_LOAD final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_LOAD() : HmgFunction{ 1, 3, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override;
+    HmgBuiltInFunction_LOAD() : HmgFunction{ 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept override { return 0; }
 };
 
 
@@ -2853,7 +2853,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_SETVG] = std::make_unique<HmgBuiltInFunction_SETVG>();
     builtInFunctions[builtInFunctionType::bift_GETVG] = std::make_unique<HmgBuiltInFunction_GETVG>();
     builtInFunctions[builtInFunctionType::bift_LOAD]    = std::make_unique<HmgBuiltInFunction_LOAD>();
-    builtInFunctions[builtInFunctionType::bift_LOADD]   = std::make_unique<HmgBuiltInFunction_LOADD>();
+/*    builtInFunctions[builtInFunctionType::bift_LOADD] = std::make_unique<HmgBuiltInFunction_LOADD>();
     builtInFunctions[builtInFunctionType::bift_LOADI]   = std::make_unique<HmgBuiltInFunction_LOADI>();
     builtInFunctions[builtInFunctionType::bift_LOADSTS] = std::make_unique<HmgBuiltInFunction_LOADSTS>();
     builtInFunctions[builtInFunctionType::bift_STORE]   = std::make_unique<HmgBuiltInFunction_STORE>();
@@ -2868,7 +2868,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_ISTORED] = std::make_unique<HmgBuiltInFunction_ISTORED>();
     builtInFunctions[builtInFunctionType::bift_IINCD]   = std::make_unique<HmgBuiltInFunction_IINCD>();
     builtInFunctions[builtInFunctionType::bift_ISTORESTS] = std::make_unique<HmgBuiltInFunction_ISTORESTS>();
-}
+*/}
 
 
 //***********************************************************************

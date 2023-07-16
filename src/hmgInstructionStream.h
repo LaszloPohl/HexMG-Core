@@ -361,11 +361,12 @@ struct IsComponentInstanceInstruction : public IsInstruction {
     bool isBuiltIn = false;
     uns nNodes = 0;
     uns nParams = 0;
+    uns nComponentParams = 0;
     uns defaultValueRailIndex = 0;
 
-    IsComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar)
+    IsComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar, uns nComponentParams_)
         :IsInstruction{ sitComponentInstance }, instanceIndex{ index }, modelIndex{ modelIndex_ }, isDefaultRail{ isDefRail }, 
-        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, defaultValueRailIndex{ defRail } {}
+        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, nComponentParams{ nComponentParams_ }, defaultValueRailIndex{ defRail } {}
 };
 
 
@@ -380,6 +381,7 @@ struct IsFunctionControlledComponentInstanceInstruction : public IsInstruction {
     bool isBuiltIn = false;
     uns nNodes = 0;
     uns nParams = 0;
+    uns nComponentParams = 0;
     uns defaultValueRailIndex = 0;
 
     uns nIN = 0;
@@ -388,12 +390,14 @@ struct IsFunctionControlledComponentInstanceInstruction : public IsInstruction {
     bool isFunctionBuiltIn = false;
     uns functionIndex = 0;
     uns nFunctionParams = 0;
+    uns nFunctionComponentParams = 0;
 
-    IsFunctionControlledComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar,
-        uns nIN_, uns nCIN_, uns nPar_, bool isFunctionBuiltIn_, uns functionIndex_, uns nFunctionParams_)
+    IsFunctionControlledComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar, uns nComponentParams_,
+        uns nIN_, uns nCIN_, uns nPar_, bool isFunctionBuiltIn_, uns functionIndex_, uns nFunctionParams_, uns nFunctionComponentParams_)
         :IsInstruction{ sitFunctionControlledComponentInstance }, instanceIndex{ index }, modelIndex{ modelIndex_ }, isDefaultRail{ isDefRail },
-        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, defaultValueRailIndex{ defRail },
-        nIN{ nIN_ }, nCIN{ nCIN_ }, nPar{ nPar_ }, isFunctionBuiltIn{ isFunctionBuiltIn_ }, functionIndex{ functionIndex_ }, nFunctionParams{ nFunctionParams_ } {}
+        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, nComponentParams{ nComponentParams_ }, defaultValueRailIndex{ defRail },
+        nIN{ nIN_ }, nCIN{ nCIN_ }, nPar{ nPar_ }, isFunctionBuiltIn{ isFunctionBuiltIn_ }, functionIndex{ functionIndex_ }, nFunctionParams{ nFunctionParams_ },
+        nFunctionComponentParams{ nFunctionComponentParams_ } {}
 };
 
 
@@ -419,6 +423,14 @@ struct IsParameterValueInstruction: public IsInstruction {
 //***********************************************************************
     ParameterInstance param;
     IsParameterValueInstruction(const ParameterInstance& par) :IsInstruction{ sitParameterValue }, param{ par }{}
+};
+
+
+//***********************************************************************
+struct IsComponentIndexInstruction: public IsInstruction {
+//***********************************************************************
+    ComponentIndex ci;
+    IsComponentIndexInstruction(const ComponentIndex& ci_) :IsInstruction{ sitComponentIndex }, ci{ ci_ }{}
 };
 
 

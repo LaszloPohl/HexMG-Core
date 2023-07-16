@@ -60,7 +60,7 @@ public:
     virtual uns getN_InternalNodes()const noexcept { return 0; }
     bool isController()const noexcept { return modelType == ccmt_Controller; }
     virtual bool canBeNonlinear()const noexcept = 0;
-    bool SimpleInterfaceNodeID2CDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept;
+    bool SimpleInterfaceNodeIDToCDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept;
 };
 
 
@@ -78,6 +78,7 @@ public:
     uns defaultValueRailIndex = 0;
     std::vector<CDNode> nodesConnectedTo;
     std::vector<CDParam> params;
+    std::vector<ComponentIndex> componentParams;
 
     void setDefaultValueRailIndex(uns defaultValueRailIndex_) noexcept { defaultValueRailIndex = defaultValueRailIndex_; isDefaultRail = true; }
     void processInstructions(IsInstruction*& first, const ModelSubCircuit& container);
@@ -205,13 +206,14 @@ class Model_Function_Controlled_I_with_const_G final : public ComponentAndContro
 //***********************************************************************
 public:
     NodeConnectionInstructions functionSources;
+    std::vector<uns> functionComponentParams;   // unsMax means _THIS
     HmgFunction* controlFunction = nullptr;
     std::vector<uns> indexField;
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
     Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
-        NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
+        NodeConnectionInstructions functionSources_, std::vector<uns>&& functionComponentParams_, HmgFunction* controlFunction_)
         :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ }, ccmt_Function_Controlled_I_with_const_G },
-        functionSources{ std::move(functionSources_) }, controlFunction{ controlFunction_ } {
+            functionSources{ std::move(functionSources_) }, functionComponentParams{ std::move(functionComponentParams_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
             indexField[1] = controlFunction->getN_Param() + 1;
@@ -226,7 +228,7 @@ public:
                 if (src.sourceType == NodeConnectionInstructions::SourceType::sExternalNodeValue && src.sourceIndex < nodeToFunctionParam.size())
                     nodeToFunctionParam[src.sourceIndex] = i + 2;
             }
-        }
+    }
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return true; }
 };
@@ -326,7 +328,7 @@ public:
 
 
 //***********************************************************************
-bool ComponentAndControllerModelBase::SimpleInterfaceNodeID2CDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept{
+inline bool ComponentAndControllerModelBase::SimpleInterfaceNodeIDToCDNode(CDNode& dest, const SimpleInterfaceNodeID& src)const noexcept{
 //***********************************************************************
     uns delta = 0;
     switch (src.type) {
@@ -361,7 +363,7 @@ bool ComponentAndControllerModelBase::SimpleInterfaceNodeID2CDNode(CDNode& dest,
             delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNormalInternalNodes;
             break;
         case nvtVarInternal:
-            if (modelType != ccmt_SubCircuit || modelType != ccmt_Controller)
+            if (modelType != ccmt_SubCircuit && modelType != ccmt_Controller)
                 return false;
             dest.type = CDNodeType::cdntVar;
             break;

@@ -103,6 +103,7 @@ public:
     //***********************************************************************
     ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
+    virtual bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept = 0;
     //***********************************************************************
 
     //***********************************************************************
@@ -141,7 +142,6 @@ public:
     virtual NodeVariable* getInternalNode(siz nodeIndex) noexcept = 0;
     virtual void setNode(siz nodeIndex, NodeVariable* pNode) noexcept = 0;
     virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
-    virtual Param& getParam(siz parIndex) noexcept = 0;
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
     //***********************************************************************
     virtual const NodeVariable& getComponentCurrent() const noexcept = 0;
@@ -224,6 +224,7 @@ public:
     }
     //***********************************************************************
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
@@ -334,7 +335,6 @@ public:
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(rvt1 / param.get()); }
     //***********************************************************************
@@ -354,7 +354,6 @@ public:
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
-    Param& getParam(siz parIndex) noexcept override final { return (parIndex == 0) ? param1 : param2; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(rvt1 / (param1.get() * param2.get())); }
     //***********************************************************************
@@ -374,7 +373,6 @@ public:
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param.get()); }
     //***********************************************************************
@@ -394,7 +392,6 @@ public:
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
-    Param& getParam(siz parIndex) noexcept override final { return (parIndex == 0) ? param1 : param2; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param1.get() * param2.get()); }
     //***********************************************************************
@@ -481,7 +478,6 @@ public:
     using ComponentConstC::ComponentConstC;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -504,7 +500,6 @@ public:
     using ComponentConstC::ComponentConstC;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
-    Param& getParam(siz parIndex) noexcept override final { return (parIndex == 0) ? param1 : param2; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -548,7 +543,6 @@ public:
     using ComponentConstI::ComponentConstI;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param[parIndex]; }
     //************************** AC / DC functions *******************************
     void calculateCurrent(bool isDC) noexcept override {
     //***********************************************************************
@@ -593,7 +587,6 @@ public:
     using ComponentConstI::ComponentConstI;
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param[parIndex]; }
     //************************** AC / DC functions *******************************
     void calculateCurrent(bool isDC) noexcept override {
     //***********************************************************************
@@ -642,9 +635,9 @@ public:
     }
     //***********************************************************************
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override final { return param[parIndex]; }
     //************************** AC / DC functions *******************************
     void resetNodes(bool isDC) noexcept override final {}
     void deleteD(bool isDC) noexcept override final {}
@@ -791,9 +784,9 @@ public:
     }
     //***********************************************************************
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
@@ -935,9 +928,9 @@ public:
     }
     //***********************************************************************
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override { return param[parIndex]; }
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
@@ -1158,6 +1151,8 @@ class Component_Function_Controlled_I_with_const_G final : public RealComponent 
     friend class HmgF_Load_ControlledI_Node_StepStart;
     std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars; // pars[0] is G
+    std::vector<ComponentAndControllerBase*> componentParams;
+    std::vector<ComponentAndControllerBase*> functionComponentParams;
     std::vector<rvt> workField;
     cplx IAC = cplx0;
 public:
@@ -1168,6 +1163,7 @@ public:
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "Component_Function_Controlled_I_with_const_G::Component_Function_Controlled_I_with_const_G");
         externalNodes.resize(def->nodesConnectedTo.size());
         pars.resize(def->params.size());
+        componentParams.resize(def->componentParams.size());
         const Model_Function_Controlled_I_with_const_G* pM = dynamic_cast<const Model_Function_Controlled_I_with_const_G*>(pModel);
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
@@ -1179,8 +1175,9 @@ public:
     //***********************************************************************
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override { return pars[parIndex]; }
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
@@ -1223,7 +1220,17 @@ public:
     //************************** DC functions *******************************
     void acceptIterationDC(bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
-    void buildOrReplace() override {}
+    //***********************************************************************
+    void buildOrReplace() override {
+    //***********************************************************************
+        const Model_Function_Controlled_I_with_const_G* pMod = static_cast<const Model_Function_Controlled_I_with_const_G*>(pModel);
+        csiz siz = pMod->functionComponentParams.size();
+        functionComponentParams.resize(siz);
+        for (uns i = 0; i < siz; i++) {
+            cuns index = pMod->functionComponentParams[i];
+            functionComponentParams[i] = index == unsMax ? this : componentParams[index];
+        }
+    }
     //***********************************************************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -1338,6 +1345,7 @@ class Controller final : public ComponentAndControllerBase {
     uns nmVars = 0;
     std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars;
+    std::vector<ComponentAndControllerBase*> componentParams;
     std::vector<rvt> workField;
 public:
     //***********************************************************************
@@ -1347,6 +1355,7 @@ public:
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "Controller::Controller");
         externalNodes.resize(def->nodesConnectedTo.size());
         pars.resize(def->params.size());
+        componentParams.resize(def->componentParams.size());
         const ModelController* pM = dynamic_cast<const ModelController*>(pModel);
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
         delete[] mVars;
@@ -1362,6 +1371,9 @@ public:
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
     NodeVariable* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
     void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
+    //***********************************************************************
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    //***********************************************************************
     Param& getParam(siz parIndex) noexcept { return pars[parIndex]; }
     //***********************************************************************
     void loadNodesAndParamsToFunction() noexcept {
@@ -1479,6 +1491,7 @@ class ComponentSubCircuit final : public ComponentBase {
     std::vector<cplx> externalCurrents;
     NodeVariable* internalNodesAndVars = nullptr;
     std::vector<Param> pars;
+    std::vector<ComponentAndControllerBase*> componentParams;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
     std::unique_ptr<SubCircuitFullMatrixReductorAC> sfmrAC;
     uns nInternalNodesAndVars = 0;
@@ -1504,6 +1517,7 @@ public:
         externalNodes.resize(def->nodesConnectedTo.size());
         externalCurrents.resize(pModel->getN_IO_Nodes());
         pars.resize(def->params.size());
+        componentParams.resize(def->componentParams.size());
     }
     //***********************************************************************
     ~ComponentSubCircuit() { delete[] internalNodesAndVars; }
@@ -1519,7 +1533,8 @@ public:
     }
     //***********************************************************************
     void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
-    Param& getParam(siz parIndex) noexcept override { return pars[parIndex]; }
+    //***********************************************************************
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //************************** AC / DC functions *******************************
     bool isJacobianMXSymmetrical(bool isDC)const noexcept override {
     //***********************************************************************

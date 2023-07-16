@@ -988,6 +988,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         }
                         nodenum = 2 + pxline->nIN + pxline->nCin;
                         parnum = 1 + pxline->nPar;
+                        compnum = pxline->nCT;
                         isNotFinished = false;
                     }
                     else

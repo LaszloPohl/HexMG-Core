@@ -371,11 +371,11 @@ struct HMGFileListItem {
     //***********************************************************************
         if (strcmp(lineToken.getActToken(), typeLiteral) == 0) {
             if (lineToken.isSepEOL)
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, end of line arrived (%s) in %s, line %u", typeLiteral, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                throw hmgExcept("HMGFileListItem::Read", "%s=number expected, end of line arrived (%s) in %s, line %u", typeLiteral, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if (!lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number expected, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                throw hmgExcept("HMGFileListItem::Read", "%s=number expected, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if (sscanf_s(lineToken.getActToken(), "%u", &destVar) != 1)
-                throw hmgExcept("HMGFileModelDescription::Read", "%s=number is not a number, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                throw hmgExcept("HMGFileListItem::Read", "%s=number is not a number, %s arrived (%s) in %s, line %u", typeLiteral, lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             return true;
         }
         return false;
@@ -402,7 +402,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     uns nIN = 0;
     uns nCin = 0;
     uns nPar = 0;
-    uns nCT = 0;
+    uns nCT = 0;                    // nCT and componentParams.size() must be the same at the end of reading => no need to send both to the instruction stream
     bool isFunctionBuiltIn = false;
     uns functionIndex = 0;
     std::vector<uns> functionComponentParams;   // unsMax means _THIS
@@ -412,22 +412,28 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     //***********************************************************************
         if(isFunctionControlled){
             iStream.add(new IsFunctionControlledComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, 
-                defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), nIN, nCin, nPar, 
-                isFunctionBuiltIn, functionIndex, (uns)functionParams.size()));
+                defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), (uns)componentParams.size(), nIN, nCin, nPar,
+                isFunctionBuiltIn, functionIndex, (uns)functionParams.size(), (uns)functionComponentParams.size()));
             for (const auto& fparam : functionParams)
                 iStream.add(new IsNodeValueInstruction(fparam));
+            for (const auto& num : functionComponentParams)
+                iStream.add(new IsUnsInstruction(num));
             for (const auto& node : nodes)
                 iStream.add(new IsNodeValueInstruction(node));
             for (const auto& param : params)
                 iStream.add(new IsParameterValueInstruction(param));
+            for (const auto& cp : componentParams)
+                iStream.add(new IsComponentIndexInstruction(cp));
             iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex)); // ! sitComponentInstance (ComponentDefinition::processInstructions() expects sitComponentInstance)
         }
         else {
-            iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size()));
+            iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), (uns)componentParams.size()));
             for (const auto& node : nodes)
                 iStream.add(new IsNodeValueInstruction(node));
             for (const auto& param : params)
                 iStream.add(new IsParameterValueInstruction(param));
+            for (const auto& cp : componentParams)
+                iStream.add(new IsComponentIndexInstruction(cp));
             iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex));
         }
     }
@@ -479,41 +485,6 @@ struct HMGFileModelDescription: HMGFileListItem {
             forcedNodeRange.isExternal = startC.type == cdntExternal;
             forcedNodeRange.nodeStartIndex = startC.index;
             forcedNodeRange.nodeStopIndex  = stopC.index;
-            /*
-            uns delta = 0;
-            switch (src.type) {
-                case nvtIO:
-                    forcedNodeRange.isExternal = true;
-                    break;
-                case nvtIN:
-                    forcedNodeRange.isExternal = true;
-                    delta = externalNs.nIONodes;
-                    break;
-                case nvtCIN:
-                    forcedNodeRange.isExternal = true;
-                    delta = externalNs.nIONodes + externalNs.nNormalINodes;
-                    break;
-                case nvtOUT:
-                    forcedNodeRange.isExternal = true;
-                    delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
-                    break;
-                case nvtFWOUT:
-                    forcedNodeRange.isExternal = true;
-                    delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
-                    break;
-                case nvtNInternal:
-                    forcedNodeRange.isExternal = false;
-                    break;
-                case nvtCInternal:
-                    forcedNodeRange.isExternal = false;
-                    delta = internalNs.nNormalInternalNodes;
-                    break;
-                default:
-                throw hmgExcept("HMGFileModelDescription::toInstructionStream", "DEFAULTRAIL/DEFAULTRAILRANGE: not a node type (%u) connecting to R%u, range: %u-%u", src.type, src.rail, src.start_index, src.stop_index);
-            }
-            forcedNodeRange.nodeStartIndex = src.start_index + delta;
-            forcedNodeRange.nodeStopIndex = src.stop_index + delta;
-            */
             iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
         }
         for (size_t i = 0; i < instanceList.size(); i++) {
