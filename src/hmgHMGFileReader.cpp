@@ -2361,8 +2361,11 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 func.type = biftCustom;
                 func.customIndex = globalNames.functionNames[token];
 
-                cuns nPar = globalNames.functionData[func.customIndex]->nParams;
+                HMGFileFunction* f = globalNames.functionData[func.customIndex];
+                cuns nCompPar = f->nComponentParams;
+                cuns nPar = f->nParams;
 
+                ReadComponentParams(func, nCompPar, lineToken, reader, line, lineInfo);
                 ReadParams(func, nPar, lineToken, reader, line, lineInfo);
             }
         }

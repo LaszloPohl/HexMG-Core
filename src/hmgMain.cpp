@@ -727,8 +727,8 @@ int main_1() {
 	HmgBuiltInFunction_SQRT fsqr;
 	rvt wf[3] = { 0.0, 1.0, 3.5 };
 	uns par[4] = { 0, 3, 1, 2 };
-	fsqr.evaluate(par, wf, nullptr, LineDescription());
-	std::cout << "\nDERIVED: " << fsqr.devive(par, wf, nullptr, 2, LineDescription()) << std::endl;
+	fsqr.evaluate(par, wf, nullptr, LineDescription(), nullptr);
+	std::cout << "\nDERIVED: " << fsqr.devive(par, wf, nullptr, 2, LineDescription(), nullptr) << std::endl;
 	std::cout << "RET: " << wf[0] << "\n" << std::endl;
 
 	HgmCustomFunctionModel fvModel;
@@ -804,9 +804,9 @@ int main_1() {
 	workField[3] = 9.0;
 	workField[4] = 2.0;
 
-	fuggveny.evaluate(&indexField[0], &workField[0], nullptr, LineDescription());
+	fuggveny.evaluate(&indexField[0], &workField[0], nullptr, LineDescription(), nullptr);
 
-	std::cout << "\nDERIVED: " << fuggveny.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription()) << std::endl;
+	std::cout << "\nDERIVED: " << fuggveny.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription(), nullptr) << std::endl;
 	std::cout << "RET: " << workField[0] << "\n" << std::endl;
 
 	std::vector<std::unique_ptr<HmgFunction>> namelessCustomFunctions;
@@ -877,9 +877,9 @@ int main_1() {
 	workField[4] = 2.0;
 	workField[5] = 5.0;
 
-	fuggveny2.evaluate(&indexField[0], &workField[0], nullptr, LineDescription());
+	fuggveny2.evaluate(&indexField[0], &workField[0], nullptr, LineDescription(), nullptr);
 
-	std::cout << "\nvvvvvvvvv\n\n" << fuggveny2.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription()) << std::endl;
+	std::cout << "\nvvvvvvvvv\n\n" << fuggveny2.devive(&indexField[0], &workField[0], nullptr, 2, LineDescription(), nullptr) << std::endl;
 	std::cout << workField[0] << "\n" << std::endl;
 
 

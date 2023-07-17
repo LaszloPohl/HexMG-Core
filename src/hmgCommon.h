@@ -56,6 +56,7 @@ inline constexpr int returnInstructionID = 1'000'000'000;
 inline constexpr uns unsMax = ~uns(0);
 inline constexpr uns externalNodeFlag = uns(1 << 30);
 inline constexpr uns maxRails = 1'048'576;
+inline constexpr uns maxComponentPar = 12;
 //***********************************************************************
 
 

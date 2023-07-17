@@ -17,7 +17,7 @@ namespace nsHMG {
 
 
 //***********************************************************************
-int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::timeStepStop.getValueDC() > rvt0 ? rvt1 : rvt0;
     return 0;
@@ -25,7 +25,7 @@ int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::timeStepStop.getValueDC();
     return 0;
@@ -33,7 +33,7 @@ int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::dt.getValueDC();
     return 0;
@@ -41,7 +41,7 @@ int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndCon
 
 
 //***********************************************************************
-int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::getFrequency();
     return 0;
@@ -49,7 +49,7 @@ int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = Rails::V[(uns)workField[index[2]]]->rail.getValueDC();
     return 0;
@@ -57,7 +57,7 @@ int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
     gc.globalVariables[line.xSrc.index]->setValueDC(workField[index[2]]);
@@ -66,10 +66,31 @@ int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line)const noexcept {
+int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
     workField[index[0]] = gc.globalVariables[line.xSrc.index]->getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_LOAD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    if (line.xSrc.type == nvtVarGlobal) {
+        CircuitStorage& gc = CircuitStorage::getInstance();
+        workField[index[0]] = gc.globalVariables[line.xSrc.index]->getValueDC();
+    }
+    else {
+        switch (line.xSrc.type) {
+            case nvtIO:
+                workField[index[0]] = static_cast<ComponentBase*>(pComponentParams[0])->getNode(line.xSrc.index)->getValueDC(); // controllers don't have IO nodes
+                break;
+            case nvtNInternal:
+                workField[index[0]] = static_cast<ComponentBase*>(pComponentParams[0])->getInternalNode(line.xSrc.index)->getValueDC();
+                break;ezt még rendbe kell rakni => ne it legyen, hanem, a ComponentAndControllerBase--nek legyen egy node lekérõ függvénye, ami simpleNodeID-t kér
+        }
+    }
     return 0;
 }
 
@@ -253,7 +274,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitFunction: {
                     IsFunctionInstruction* pAct = static_cast<IsFunctionInstruction*>(act);
-                    processFunctionInstructions(first, pAct->functionIndex, pAct->nParams, pAct->nVars, pAct->nCallInstructions);
+                    processFunctionInstructions(first, pAct->functionIndex, pAct->nComponentPars, pAct->nParams, pAct->nVars, pAct->nCallInstructions);
                 }
                 break;
             case sitFunctionCall:                   isImpossibleInstruction = true; break;
@@ -1000,13 +1021,14 @@ void ComponentDefinition::processInstructions(IsInstruction*& first, const Model
 
 
 //***********************************************************************
-void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns functionIndex, uns nParams, uns nVars, uns nCallInstructions) {
+void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns functionIndex, uns nComponentParams, uns nParams, uns nVars, uns nCallInstructions) {
 //***********************************************************************
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
         throw hmgExcept("CircuitStorage::processFunctionInstructions", "The instruction stream has ended during sunred tree definition.");
 
     HgmCustomFunctionModel fvModel;
+    fvModel.nComponentParams = nComponentParams;
     fvModel.nParams = nParams;
     fvModel.nLocal = nVars;
     fvModel.lines.reserve(nCallInstructions);
@@ -1021,6 +1043,11 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
         first = first->next;
         switch (act->instruction) {
             case sitNothing: break;
+            case sitUns: {
+                    IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
+                    lineDesc.componentParams.push_back(pAct->data);
+                }
+                break;
             case sitRvt: {
                     IsRvtInstruction* pAct = static_cast<IsRvtInstruction*>(act);
                     lineDesc.moreValues.push_back(pAct->data);
@@ -1044,15 +1071,17 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
                     }
 
                     lineDesc.value = pAct->value;
+                    lineDesc.componentParams.clear();
+                    if (pAct->nComponentParams > 0)
+                        lineDesc.componentParams.pars.reserve(pAct->nComponentParams);
                     lineDesc.parameters.clear();
                     if (pAct->nParameters > 0)
-                        lineDesc.parameters.reserve(pAct->nValues);
+                        lineDesc.parameters.reserve(pAct->nParameters);
                     lineDesc.moreValues.clear();
                     if (pAct->nValues > 0)
                         lineDesc.moreValues.reserve(pAct->nValues);
 
                     lineDesc.jumpValue = (int)pAct->labelXID - (int)fvModel.lines.size(); // converting to relative address
-                    lineDesc.CTid = pAct->labelXID;
                     lineDesc.xSrc = pAct->xSrc;
                 }
                 break;

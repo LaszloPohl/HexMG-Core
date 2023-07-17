@@ -619,6 +619,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
         builtInFunctionType type = biftInvalid;
         uns customIndex;                                                        // if type == biftCustom => index in globalNames.functionNames
+        std::vector<uns> componentParams;
         std::vector<ParameterIdentifier> parameters;
         std::vector<rvt> values;                                                // function parameter values for _PWL
         rvt value = rvt0;                                                       // function parameter value for _CONST
@@ -638,6 +639,26 @@ struct HMGFileFunction: HMGFileListItem {
 
     //***********************************************************************
     void Read(ReadALine&, char*, LineInfo&);
+    //***********************************************************************
+    void ReadComponentParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
+    //***********************************************************************
+        dest.componentParams.reserve(nPar);
+        for (uns i = 0; i < nPar; i++) {
+            char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            uns ct = 0;
+            if (strcmp(token, "_THIS") == 0)
+                ct = unsMax;
+            else if (token[0] == 'C' && token[1] == 'T') {
+                if (sscanf_s(token + 2, "%u", &ct) != 1)
+                    throw hmgExcept("HMGFileFunction::ReadParams", "CTnumber expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            }
+            else
+                throw hmgExcept("HMGFileFunction::ReadParams", "CT or _THIS expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+            dest.componentParams.push_back(ct);
+        }
+    }
+    //***********************************************************************
     void ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo);
     //***********************************************************************
     void ReadLabel(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo) {
@@ -671,6 +692,7 @@ struct HMGFileFunction: HMGFileListItem {
             if (isNodeN)
                 if (sscanf_s(token + 2, "%u", &dest.xSrc.index) != 1)
                     throw hmgExcept("HMGFileFunction::ReadNodeVariable", "VG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            dest.componentParams.push_back(unsMax);
         }
         else if (token[0] == 'C' && token[1] == 'T') {
             char* token2 = token + 2;
@@ -683,6 +705,7 @@ struct HMGFileFunction: HMGFileListItem {
             token2++;
             if (!textToSimpleInterfaceNodeID(token2, dest.xSrc, isNodeN))
                 throw hmgExcept("HMGFileFunction::ReadNodeVariable", "unrecognized node ID: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            dest.componentParams.push_back(dest.labelXID);
         }
         else
             throw hmgExcept("HMGFileFunction::ReadNodeVariable", "unrecognized node name: %s (CT or VG expected) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -690,9 +713,11 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsFunctionInstruction(functionIndex, nParams, nInternalVars, (uns)instructions.size()));
+        iStream.add(new IsFunctionInstruction(functionIndex, nComponentParams, nParams, nInternalVars, (uns)instructions.size()));
         for (const auto& line : instructions) {
-            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelXID, line.xSrc, (uns)line.parameters.size(), (uns)line.values.size()));
+            iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelXID, line.xSrc, (uns)line.componentParams.size(), (uns)line.parameters.size(), (uns)line.values.size()));
+            for (const auto& par : line.componentParams)
+                iStream.add(new IsUnsInstruction(par));
             for (const auto& par : line.parameters)
                 iStream.add(new IsFunctionParIDInstruction(par));
             for (const auto& val : line.values)
