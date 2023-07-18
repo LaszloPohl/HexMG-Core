@@ -158,7 +158,6 @@ enum builtInFunctionType {
     bift_UNIT, bift_UNITT, bift_URAMP, bift_TIME, bift_DT, bift_FREQ,
     bift_RAIL,
 
-    bift_SETVG, bift_GETVG,
     bift_LOAD, bift_LOADD, bift_LOADI, bift_LOADSTS, bift_STORE, bift_STORED,
     bift_INCD, bift_STORESTS,
     bift_ILOAD, bift_ILOADD, bift_ILOADI,bift_ILOADSTS,  bift_ISTORE, bift_ISTORED,

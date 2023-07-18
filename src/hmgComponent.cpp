@@ -17,6 +17,45 @@ namespace nsHMG {
 
 
 //***********************************************************************
+NodeVariable* ComponentAndControllerBase::getNodeVariableSimpleInterfaceNodeID(const SimpleInterfaceNodeID& nodeID) noexcept {
+//***********************************************************************
+    switch (nodeID.type) {
+        case nvtNone: return nullptr;
+        case nvtIO: return getNode(nodeID.index);
+        case nvtNInternal: return getInternalNode(nodeID.index);
+        case nvtIN:
+        case nvtCIN:
+        case nvtOUT:
+        case nvtFWOUT:
+        case nvtCInternal:
+        case nvtVarInternal: {
+            CDNode cdn;
+            if (!pModel->SimpleInterfaceNodeIDToCDNode(cdn, nodeID))
+                return nullptr;
+            if (cdn.type == cdntExternal)
+                return getNode(cdn.index);
+            else if (cdn.type == cdntInternal || cdn.type == cdntVar)
+                return getInternalNode(cdn.index);
+            else
+                return nullptr; // impossible
+        }
+        case nvtVarGlobal: {
+            CircuitStorage& gc = CircuitStorage::getInstance();
+            return gc.globalVariables[nodeID.index].get();
+        }
+        case nvtParam: return nullptr;
+        case nvtRail: return &Rails::V[nodeID.index]->rail;
+        case nvtGND: return &Rails::V[defaultNodeValueIndex].get()->rail;
+        case nvtUnconnected: return nullptr;
+        case nvtTime: return &SimControl::timeStepStop;
+        case nvtDTime: return &SimControl::dt;
+        case nvtFreq: return &SimControl::freq;
+    }
+    return nullptr;
+}
+
+
+//***********************************************************************
 int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::timeStepStop.getValueDC() > rvt0 ? rvt1 : rvt0;
@@ -57,40 +96,174 @@ int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_SETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    CircuitStorage& gc = CircuitStorage::getInstance();
-    gc.globalVariables[line.xSrc.index]->setValueDC(workField[index[2]]);
-    return 0;
-}
-
-
-//***********************************************************************
-int HmgBuiltInFunction_GETVG::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    CircuitStorage& gc = CircuitStorage::getInstance();
-    workField[index[0]] = gc.globalVariables[line.xSrc.index]->getValueDC();
-    return 0;
-}
-
-
-//***********************************************************************
 int HmgBuiltInFunction_LOAD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
-    if (line.xSrc.type == nvtVarGlobal) {
-        CircuitStorage& gc = CircuitStorage::getInstance();
-        workField[index[0]] = gc.globalVariables[line.xSrc.index]->getValueDC();
-    }
-    else {
-        switch (line.xSrc.type) {
-            case nvtIO:
-                workField[index[0]] = static_cast<ComponentBase*>(pComponentParams[0])->getNode(line.xSrc.index)->getValueDC(); // controllers don't have IO nodes
-                break;
-            case nvtNInternal:
-                workField[index[0]] = static_cast<ComponentBase*>(pComponentParams[0])->getInternalNode(line.xSrc.index)->getValueDC();
-                break;ezt még rendbe kell rakni => ne it legyen, hanem, a ComponentAndControllerBase--nek legyen egy node lekérõ függvénye, ami simpleNodeID-t kér
-        }
-    }
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_LOADD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getDDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_LOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    if (line.xSrc.type == nvtIO)
+        workField[index[0]] = pComponentParams[0]->getCurrentDC(line.xSrc.index);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_LOADSTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getStepStartDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_STORE::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        nv->setValueDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_STORED::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        nv->setDDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_INCD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        nv->incDDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_STORESTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
+    if(nv != nullptr)
+        nv->setStepStartDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ILOAD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getValueDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ILOADD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getDDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ILOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    uns n = (uns)(workField[index[2]] + 0.5);
+    if (line.xSrc.type == nvtIO)
+        workField[index[0]] = pComponentParams[0]->getCurrentDC(n);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ILOADSTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        workField[index[0]] = nv->getStepStartDC();
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ISTORE::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        nv->setValueDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ISTORED::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        nv->setDDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_IINCD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        nv->incDDC(workField[index[0]]);
+    return 0;
+}
+
+
+//***********************************************************************
+int HmgBuiltInFunction_ISTORESTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+//***********************************************************************
+    SimpleInterfaceNodeID src = line.xSrc;
+    src.index = (uns)(workField[index[2]] + 0.5);
+    NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(src);
+    if(nv != nullptr)
+        nv->setStepStartDC(workField[index[0]]);
     return 0;
 }
 

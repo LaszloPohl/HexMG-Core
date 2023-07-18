@@ -218,8 +218,6 @@ FileFunctionNameID biftNameID[] = {
     { "DT",	    bift_DT },
     { "FREQ",	bift_FREQ },
     { "RAIL",	bift_RAIL },
-    { "SETVG",	bift_SETVG },
-    { "GETVG",	bift_GETVG },
     { "LOAD",	    bift_LOAD },
     { "LOADD",	    bift_LOADD },
     { "LOADI",	    bift_LOADI },
@@ -2317,12 +2315,6 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_FREQ:
                     case bift_RAIL:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
 
-                    case bift_SETVG:    ReadVG(func, lineToken, reader, line, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
-                                        break;
-                    case bift_GETVG:    ReadParams(func, 1, lineToken, reader, line, lineInfo);
-                                        ReadVG(func, lineToken, reader, line, lineInfo);
-                                        break;
                     case bift_LOAD:
                     case bift_LOADD:
                     case bift_LOADI:
@@ -2339,13 +2331,13 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_ILOADD:
                     case bift_ILOADI:
                     case bift_ILOADSTS: ReadParams(func, 1, lineToken, reader, line, lineInfo);
-                                        ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                                        ReadNodeVariable(func, lineToken, reader, line, lineInfo, false);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_ISTORE:
                     case bift_ISTORED:
                     case bift_IINCD:
-                    case bift_ISTORESTS:ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
+                    case bift_ISTORESTS:ReadNodeVariable(func, lineToken, reader, line, lineInfo, false);
                                         ReadParams(func, 2, lineToken, reader, line, lineInfo);
                                         break;
 

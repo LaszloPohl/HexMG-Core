@@ -55,7 +55,6 @@ namespace nsHMG {
 class SimControl {
 //***********************************************************************
     inline static cplx complexFrequency = cplx0;    // AC: angular frequency (omega) of the analysis, Timeconst: complex frequency (s) of the analysis
-    inline static rvt  freq = rvt0;                 // frequency component of the complexFrequency (Hz)
 public:
     //***********************************************************************
     // It is possible to run AC during transient:
@@ -66,6 +65,7 @@ public:
     inline static NodeVariable timeStepStart;   // transient: the start time of the step
     inline static NodeVariable timeStepStop;    // transient: the end time of the step (timeStepStop = timeStepStart + dt)
     inline static NodeVariable dt;              // transient: dt of the step
+    inline static NodeVariable freq;            // frequency component of the complexFrequency (Hz)
     inline static NodeVariable minIter;         // minimum number of iterations in the current step (e.g. a semiconductor diode is replaced with a resistor for the first 1-2 iterations)
     inline static NodeVariable iter;            // which iteration we are at in the current step
     inline static NodeVariable stepError;       // relative error of the current iteration compared to the previous
@@ -75,18 +75,18 @@ public:
     static void setFinalDC() noexcept { if (timeStepStart.getValueDC() == rvt0)timeStepStart.setValueDC(1e-20); timeStepStop.setValueDC(timeStepStart.getValueDC()); dt.setValueDC(rvt0); }
     static void stepTransientWithDT(rvt dt_) noexcept { timeStepStart.setValueDC(timeStepStop.getValueDC()); timeStepStop.setValueDC(timeStepStart.getValueDC() + dt_); dt.setValueDC(dt_); }
     static void stepTransientWithTStop(rvt tStop) noexcept { rvt tStart = timeStepStop.getValueDC(); if (tStop < tStart)tStop = tStart; timeStepStart.setValueDC(tStart); timeStepStop.setValueDC(tStop); dt.setValueDC(tStop - tStart); }
-    static void setComplexFrequencyForAC(rvt f) noexcept { complexFrequency = { 0, 2 * hmgPi * f }; freq = f; }
+    static void setComplexFrequencyForAC(rvt f) noexcept { complexFrequency = { 0, 2 * hmgPi * f }; freq.setValue0DC(f); }
     //***********************************************************************
     static void setComplexFrequencyForTimeConst(rvt f, uns stepPerDecade) noexcept {
     //***********************************************************************
         crvt omega = rvt(2 * hmgPi * f);
         crvt angle = rvt(hmgPi + 1.5 * log(10.0) / stepPerDecade); // 3 samples for the full width at half maximum (FWHM)
         complexFrequency = { omega * cos(angle), omega * sin(angle) };
-        freq = f;
+        freq.setValue0DC(f);
     }
     //***********************************************************************
     static cplx getComplexFrequency() noexcept { return complexFrequency; }
-    static rvt  getFrequency() noexcept { return freq; }
+    static rvt  getFrequency() noexcept { return freq.getValue0DC(); }
     //***********************************************************************
 };
 
@@ -104,6 +104,11 @@ public:
     ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
     virtual bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept = 0;
+    NodeVariable* getNodeVariableSimpleInterfaceNodeID(const SimpleInterfaceNodeID& nodeID) noexcept;
+    virtual NodeVariable* getNode(siz nodeIndex) noexcept = 0;
+    virtual NodeVariable* getInternalNode(siz nodeIndex) noexcept = 0;
+    virtual rvt getCurrentDC(uns y) const noexcept = 0;
+    virtual cplx getCurrentAC(uns y) const noexcept = 0;
     //***********************************************************************
 
     //***********************************************************************
@@ -138,8 +143,6 @@ public:
 
     //***********************************************************************
     virtual const NodeVariable& getComponentValue() const noexcept = 0;
-    virtual NodeVariable* getNode(siz nodeIndex) noexcept = 0;
-    virtual NodeVariable* getInternalNode(siz nodeIndex) noexcept = 0;
     virtual void setNode(siz nodeIndex, NodeVariable* pNode) noexcept = 0;
     virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
@@ -169,14 +172,12 @@ public:
     virtual rvt getJreducedDC(uns y) const noexcept = 0;
     virtual rvt getYDC(uns y, uns x) const noexcept = 0;
     virtual void calculateYiiDC() noexcept = 0;
-    virtual rvt getCurrentDC(uns y) const noexcept = 0;
     //************************** AC functions *******************************
     virtual void acceptIterationAndStepAC() noexcept = 0; // Vnode = Vnode + v
     virtual void buildForAC() = 0; // buildOrReplace() do this for DC
     virtual cplx getJreducedAC(uns y) const noexcept = 0;
     virtual cplx getYAC(uns y, uns x) const noexcept = 0;
     virtual void calculateYiiAC() noexcept = 0;
-    virtual cplx getCurrentAC(uns y) const noexcept = 0;
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     virtual void printNodeValueDC(uns) const noexcept = 0;
@@ -1369,9 +1370,12 @@ public:
     //***********************************************************************
     ~Controller() { delete[] mVars; }
     //***********************************************************************
+    NodeVariable* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return &mVars[nodeIndex]; }
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
-    NodeVariable* getNode(siz nodeIndex) noexcept { return externalNodes[nodeIndex]; }
     void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
+    rvt getCurrentDC(uns y) const noexcept override { return rvt0; }
+    cplx getCurrentAC(uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************

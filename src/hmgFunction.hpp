@@ -2551,15 +2551,6 @@ public:
 
 
 //***********************************************************************
-class HmgBuiltInFunction_SETVG final : public HmgFunction{
-//***********************************************************************
-public:
-    HmgBuiltInFunction_SETVG() : HmgFunction{ 0, 1, 3, 0 } {}
-    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
-};
-
-
-//***********************************************************************
 class HmgBuiltInFunction_LOAD final : public HmgFunction{
 //***********************************************************************
 public:
@@ -2569,10 +2560,136 @@ public:
 
 
 //***********************************************************************
-class HmgBuiltInFunction_GETVG final : public HmgFunction{
+class HmgBuiltInFunction_LOADD final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_GETVG() : HmgFunction{ 0, 0, 2, 0 } {}
+    HmgBuiltInFunction_LOADD() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_LOADI final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_LOADI() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_LOADSTS final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_LOADSTS() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_STORE final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_STORE() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_STORED final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_STORED() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_INCD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_INCD() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_STORESTS final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_STORESTS() : HmgFunction{ 1, 0, 2, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ILOAD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ILOAD() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ILOADD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ILOADD() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ILOADI final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ILOADI() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ILOADSTS final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ILOADSTS() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ISTORE final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ISTORE() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ISTORED final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ISTORED() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_IINCD final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_IINCD() : HmgFunction{ 1, 1, 3, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_ISTORESTS final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_ISTORESTS() : HmgFunction{ 1, 1, 3, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override;
 };
 
@@ -2903,14 +3020,12 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_DT] = std::make_unique<HmgBuiltInFunction_DT>();
     builtInFunctions[builtInFunctionType::bift_FREQ] = std::make_unique<HmgBuiltInFunction_FREQ>();
     builtInFunctions[builtInFunctionType::bift_RAIL] = std::make_unique<HmgBuiltInFunction_RAIL>();
-    builtInFunctions[builtInFunctionType::bift_SETVG] = std::make_unique<HmgBuiltInFunction_SETVG>();
-    builtInFunctions[builtInFunctionType::bift_GETVG] = std::make_unique<HmgBuiltInFunction_GETVG>();
     builtInFunctions[builtInFunctionType::bift_LOAD]    = std::make_unique<HmgBuiltInFunction_LOAD>();
-/*    builtInFunctions[builtInFunctionType::bift_LOADD] = std::make_unique<HmgBuiltInFunction_LOADD>();
+    builtInFunctions[builtInFunctionType::bift_LOADD]   = std::make_unique<HmgBuiltInFunction_LOADD>();
     builtInFunctions[builtInFunctionType::bift_LOADI]   = std::make_unique<HmgBuiltInFunction_LOADI>();
     builtInFunctions[builtInFunctionType::bift_LOADSTS] = std::make_unique<HmgBuiltInFunction_LOADSTS>();
     builtInFunctions[builtInFunctionType::bift_STORE]   = std::make_unique<HmgBuiltInFunction_STORE>();
-    builtInFunctions[builtInFunctionType::bift_STORED]  = std::make_unique<HmgBuiltInFunction_STORED>();
+    builtInFunctions[builtInFunctionType::bift_STORED] = std::make_unique<HmgBuiltInFunction_STORED>();
     builtInFunctions[builtInFunctionType::bift_INCD]    = std::make_unique<HmgBuiltInFunction_INCD>();
     builtInFunctions[builtInFunctionType::bift_STORESTS] = std::make_unique<HmgBuiltInFunction_STORESTS>();
     builtInFunctions[builtInFunctionType::bift_ILOAD]   = std::make_unique<HmgBuiltInFunction_ILOAD>();
@@ -2921,7 +3036,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_ISTORED] = std::make_unique<HmgBuiltInFunction_ISTORED>();
     builtInFunctions[builtInFunctionType::bift_IINCD]   = std::make_unique<HmgBuiltInFunction_IINCD>();
     builtInFunctions[builtInFunctionType::bift_ISTORESTS] = std::make_unique<HmgBuiltInFunction_ISTORESTS>();
-*/}
+}
 
 
 //***********************************************************************
