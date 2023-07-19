@@ -320,7 +320,29 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 }
                 break;
             case sitDefModelController: {
-                    TODO("controller");
+                    IsDefModelControllerInstruction* pAct = static_cast<IsDefModelControllerInstruction*>(act);
+                    
+                    if (pAct->isReplace) {
+                        ModelController* mc = static_cast<ModelController*>(models[pAct->index].get());
+                        models[pAct->index] = std::make_unique<ModelController>(ms->externalNs, ms->internalNs, ms->solutionType != SolutionType::stFullMatrix, ms->solutionType, ms->srTreeInstructions);
+                        mc = static_cast<ModelController*>(models[pAct->index].get());
+                    }
+                    else {
+                        if (pAct->index == models.size()) {
+                            models.push_back(std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs,
+                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr));
+                        }
+                        else {
+                            if (pAct->index > models.size())
+                                models.resize(pAct->index + 1);
+                            models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs,
+                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr);
+                        }
+                    }
+
+                    ModelController* ms = static_cast<ModelController*>(models[pAct->index].get());
+
+                    ms->processInstructions(first);
                 }
                 break;
             case sitComponentInstance:              isImpossibleInstruction = true; break;
@@ -384,6 +406,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitRailValue:                      isImpossibleInstruction = true; break;
             case sitRailRange:                      isImpossibleInstruction = true; break;
             case sitNodeValue:                      isImpossibleInstruction = true; break;
+            case sitDefaultNodeParameter:           isImpossibleInstruction = true; break;
             case sitParameterValue:                 isImpossibleInstruction = true; break;
             case sitComponentIndex:                 isImpossibleInstruction = true; break;
             case sitProbe: {
@@ -1071,7 +1094,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                             CDNode cdn = SimpleInterfaceNodeID2CDNode(pfAct->nodeID, xns, internalNs); // internalNs is only a dummy because internal nodes of the component are not allowed to connect to the function (no reason in principle just I don't see why would it be needed)
                             if (cdn.type != cdntExternal)
                                 throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => only external type node or parameter enabled as function parameter, %u found", (uns)pfAct->nodeID.type);
-                            src.sourceType = NodeConnectionInstructions::SourceType::sExternalNodeValue;
+                            src.sourceType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::SourceType::sExternalNodeStepstart : NodeConnectionInstructions::SourceType::sExternalNodeValue;
                             src.sourceIndex = cdn.index;
                         }
                         functionSources.sources.push_back(src);

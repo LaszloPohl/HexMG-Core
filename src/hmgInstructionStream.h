@@ -336,8 +336,18 @@ struct IsDefModelControllerInstruction: public IsInstruction {
 //***********************************************************************
     uns index = 0;
     bool isReplace = false;
-    IsDefModelControllerInstruction(bool isReplace_, uns indx)
-        :IsInstruction{ sitDefModelController }, isReplace{ isReplace_ }, index{ indx } {}
+    builtInFunctionType functionType = biftInvalid;
+    uns functionCustomIndex = 0;
+    uns ctrlLevel = 0;
+    uns nDefaultNodeValues = 0;
+    uns nFunctionComponentParams = 0;
+    uns nFunctionParamsLoad = 0;
+    uns nFunctionParamsStore = 0;
+    IsDefModelControllerInstruction(bool isReplace_, uns indx, builtInFunctionType functionType_, uns functionCustomIndex_,
+        uns ctrlLevel_, uns nDefaultNodeValues_, uns nFunctionComponentParams_, uns nFunctionParamsLoad_, uns nFunctionParamsStore_)
+        :IsInstruction{ sitDefModelController }, isReplace{ isReplace_ }, index{ indx }, functionType{ functionType_ }, functionCustomIndex{ functionCustomIndex_ },
+        ctrlLevel{ ctrlLevel_ }, nDefaultNodeValues{ nDefaultNodeValues_ }, nFunctionComponentParams{ nFunctionComponentParams_ }, nFunctionParamsLoad{ nFunctionParamsLoad_ },
+        nFunctionParamsStore{ nFunctionParamsStore_ } {}
 };
 
 
@@ -415,6 +425,14 @@ struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
     SimpleInterfaceNodeID nodeID;
     IsNodeValueInstruction(const SimpleInterfaceNodeID& node) :IsInstruction{ sitNodeValue }, nodeID{ node }{}
+};
+
+
+//***********************************************************************
+struct IsDefaultNodeParameterInstruction: public IsInstruction {
+//***********************************************************************
+    DefaultNodeParameter nodeID;
+    IsDefaultNodeParameterInstruction(const DefaultNodeParameter& node) :IsInstruction{ sitDefaultNodeParameter }, nodeID{ node }{}
 };
 
 

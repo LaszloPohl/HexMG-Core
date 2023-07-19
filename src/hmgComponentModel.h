@@ -90,7 +90,7 @@ class ModelConstR_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstR_1 } {}
+    ModelConstR_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1, 0 }, ccmt_ConstR_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -101,7 +101,7 @@ class ModelConstR_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstR_2 } {}
+    ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2, 0 }, ccmt_ConstR_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -112,7 +112,7 @@ class ModelConstG_1 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstG_1 } {}
+    ModelConstG_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1, 0 }, ccmt_ConstG_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -123,7 +123,7 @@ class ModelConstG_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
 public:
-    ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstG_2 } {}
+    ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2, 0 }, ccmt_ConstG_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -133,7 +133,7 @@ public:
 class ModelConstC_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1 }, ccmt_ConstC_1 } {}
+    ModelConstC_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 1, 0 }, ccmt_ConstC_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -143,7 +143,7 @@ public:
 class ModelConstC_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2 }, ccmt_ConstC_2 } {}
+    ModelConstC_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 2, 0 }, ccmt_ConstC_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -153,7 +153,7 @@ public:
 class ModelConstI_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4 }, ccmt_ConstI_1 } {}
+    ModelConstI_1() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 4, 0 }, ccmt_ConstI_1 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -163,7 +163,7 @@ public:
 class ModelConstI_2 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5 }, ccmt_ConstI_2 } {}
+    ModelConstI_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5, 0 }, ccmt_ConstI_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -173,7 +173,17 @@ public:
 class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4 }, ccmt_Const_V_Controlled_I_1 } {}
+    ModelConst_V_Controlled_I_1() :ComponentAndControllerModelBase{ { 2, 2, 0, 0, 0, 4, 0 }, ccmt_Const_V_Controlled_I_1 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
+};
+
+
+//***********************************************************************
+class ModelConst_Controlled_I final : public ComponentAndControllerModelBase {
+//***********************************************************************
+public:
+    ModelConst_Controlled_I() :ComponentAndControllerModelBase{ { 2, 0, 1, 0, 0, 1, 0 }, ccmt_ConstIC } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -183,7 +193,7 @@ public:
 class ModelGirator final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2 }, ccmt_Girator } {}
+    ModelGirator() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 0, 2, 0 }, ccmt_Girator } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
 };
@@ -193,7 +203,7 @@ public:
 class ModelConstVI final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
-    ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5 }, ccmt_ConstVI } {}
+    ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5, 0 }, ccmt_ConstVI } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }
@@ -212,7 +222,7 @@ public:
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
     Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
         NodeConnectionInstructions functionSources_, std::vector<uns>&& functionComponentParams_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_ }, ccmt_Function_Controlled_I_with_const_G },
+        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, 0, nParams_, 0 }, ccmt_Function_Controlled_I_with_const_G },
             functionSources{ std::move(functionSources_) }, functionComponentParams{ std::move(functionComponentParams_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
@@ -249,7 +259,7 @@ public:
     uns nMVars;
     ModelController(uns nControlINodes_, uns nControlONodes_, uns nMVars_, uns nParams_,
         NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_ }, ccmt_Controller }, // O nodes of the Controller are defined as normal O nodes
+        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_, 0 }, ccmt_Controller }, // O nodes of the Controller are defined as normal O nodes
         nMVars{ nMVars_ }, functionSources { std::move(functionSources_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;

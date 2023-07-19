@@ -17,7 +17,6 @@
 #include <string>
 #include <map>
 #include "hmgException.h"
-#include "hmgLineTokenizer.h"
 #include "hmgCommon.h"
 #include "hmgInstructionStream.h"
 #include "hmgMultigridTypes.h"
@@ -28,6 +27,159 @@
 //***********************************************************************
 namespace nsHMG {
 //***********************************************************************
+
+
+#define MAX_LINE_LENGHT 4096
+
+
+//***********************************************************************
+class LineTokenizer {
+//***********************************************************************
+    //***********************************************************************
+    const char* pLine = nullptr;
+    unsigned position = 0, storedPos = 0;
+    char token[MAX_LINE_LENGHT] = { 0 };
+    bool isSpecialExpressionToken = false;
+    enum SpecExprTokenType{ setttNone, settVFirst, settVComma, settVSecond, settVClose };
+    SpecExprTokenType specExprToken = setttNone;
+    inline static const char* const specCharsOfNames = "_.:@$+-";
+    //***********************************************************************
+    static bool isSpecChar(char ch, bool isExcept_ = false) {
+    //***********************************************************************
+        for (const char* pSpec = specCharsOfNames + (isExcept_ ? 1 : 0); *pSpec != 0; pSpec++)
+            if (ch == *pSpec)
+                return true;
+        return false;
+    }
+    //***********************************************************************
+    void setIsSeparators() {
+    //***********************************************************************
+        isSepSpace = isSepOpeningBracket = isSepClosingBracket = isSepEOL = isSepComma = isSepAssignment = false; 
+        unsigned pos;
+        bool canBeEOL = true;
+        for (pos = position; pLine[pos] == ' ' || pLine[pos] == '(' || pLine[pos] == ')' || pLine[pos] == ',' || pLine[pos] == '='; pos++) {
+            if (pLine[pos] == ' ') isSepSpace = true;
+            if (pLine[pos] == '(') { isSepOpeningBracket = true; canBeEOL = false; }
+            if (pLine[pos] == ')') { isSepClosingBracket = true; canBeEOL = false; }
+            if (pLine[pos] == ',') { isSepComma = true; canBeEOL = false; }
+            if (pLine[pos] == '=') { isSepAssignment = true; canBeEOL = false; }
+        }
+        if(canBeEOL && pLine[pos] == 0) isSepEOL = true;
+    }
+    //***********************************************************************
+public:
+    //***********************************************************************
+    bool isSepSpace = false, isSepOpeningBracket = false, isSepClosingBracket = false, isSepEOL = false, isSepComma = false, isSepAssignment = false;
+    std::string errorMessage;
+    //***********************************************************************
+    void init(const char* theLine) { pLine = theLine; position = 0; setIsSeparators(); }
+    //***********************************************************************
+    void storePosition() { storedPos = position; }
+    void loadPosition() { position = storedPos; }
+    //***********************************************************************
+    void skipSeparators() {
+    //***********************************************************************
+        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',' || pLine[position] == '=')
+            position++;
+    }
+    //***********************************************************************
+    void skipSeparatorsUntilClosingBracket() {
+    //***********************************************************************
+        while (pLine[position] == ' ' || pLine[position] == '(' || pLine[position] == ')' || pLine[position] == ',' || pLine[position] == '=') {
+            if (pLine[position] == ')') {
+                position++;
+                break;
+            }
+            position++;
+        }
+    }
+    //***********************************************************************
+    void skipSeparatorsAndSetIsSeparators() {
+    //***********************************************************************
+        skipSeparators();
+        setIsSeparators();
+    }
+    //***********************************************************************
+    bool getIsControl() {
+    //***********************************************************************
+        skipSeparators();
+        if (pLine[position] == '>') {
+            position++;
+            return true;
+        }
+        return false;
+    }
+    //***********************************************************************
+    const char* getLine()const { return pLine; }
+    //***********************************************************************
+    char* getNextToken(const char* fileName, unsigned lineNumber) {
+    // from position the alphanum chars + specCharsOfNames, skips starting
+    // separators
+    //***********************************************************************
+        skipSeparators();
+        unsigned tokenpos = 0;
+        while (isalnum(pLine[position]) || isSpecChar(pLine[position]))
+            token[tokenpos++] = pLine[position++];
+        token[tokenpos] = 0;
+        if (tokenpos == 0)
+            throw hmgExcept("LineTokenizer::getNextToken", "unexpected end of line in %s, line %u: %s", fileName, lineNumber, pLine);
+        setIsSeparators();
+        return token;
+    }
+    //***********************************************************************
+    bool getNextTokenSimple(const char* fileName, unsigned lineNumber) {
+    //***********************************************************************
+        getNextToken(fileName, lineNumber);
+        return !isSpecChar(token[0], true);
+    }
+    //***********************************************************************
+    const char* getActToken()const {
+    //***********************************************************************
+        return token;
+    }
+    //***********************************************************************
+    const char* getRestOfTheLine() {
+    // the expression from the end of the line
+    //***********************************************************************
+        while (pLine[position] == ' ')
+            position++;
+        unsigned tokenpos = 0;
+        while (pLine[position] != 0)
+            token[tokenpos++] = pLine[position++];
+        token[tokenpos] = 0;
+        setIsSeparators();
+        return token;
+    }
+    //***********************************************************************
+    bool getQuotedText(const char* & ret) {
+    //***********************************************************************
+        skipSeparators();
+        if (pLine[position] != '\"') {
+            token[0] = 0;
+            setIsSeparators();
+            ret = token;
+            return false;
+        }
+        unsigned tokenpos = 0;
+        position++;
+        while (pLine[position] != '\"' && pLine[position] != 0) {
+            token[tokenpos++] = pLine[position++];
+        }
+        token[tokenpos] = 0;
+        ret = token;
+        bool rv = pLine[position] != 0;
+        if (rv)
+            position++;
+        setIsSeparators();
+        return rv;
+    }
+    //***********************************************************************
+    bool getQuotedText() {
+    //***********************************************************************
+        const char* temp;
+        return getQuotedText(temp);
+    }
+};
 
 
 //***********************************************************************
@@ -141,6 +293,13 @@ inline bool spiceTextToRvt(const char* text,rvt& value) {
 //***********************************************************************
 inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result, bool isNodeN = true) {
 //***********************************************************************
+    result.isStepStart = false;
+    for (uns i = 0; text[i] != '\0'; i++)
+        if (text[i] == '.') {
+            if (strcmp(text + i + 1, "STEPSTART") == 0)
+                result.isStepStart = true;
+            break;
+        }
     switch (text[0]) {
         case 'C':
             if (text[1] == 'I' || text[2] == 'N') {
@@ -452,6 +611,9 @@ struct HMGFileModelDescription: HMGFileListItem {
     ExternalConnectionSizePack externalNs;
     InternalNodeVarSizePack internalNs;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object
+    //***********************************************************************
+    //                        ***** subcircuit data *****
+    //***********************************************************************
     std::vector< HMGFileComponentInstanceLine* > instanceList;
     std::map<std::string, uns> componentInstanceNameIndex;
     std::map<std::string, uns> controllerInstanceNameIndex;
@@ -460,6 +622,16 @@ struct HMGFileModelDescription: HMGFileListItem {
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
     //***********************************************************************
+    //                        ***** controller data *****
+    //***********************************************************************
+    std::vector<DefaultNodeParameter> defaultNodeValues;
+    builtInFunctionType functionType = biftInvalid;
+    uns functionCustomIndex = unsMax; // if functionType == biftCustom => index in globalNames.functionNames
+    uns ctrlLevel = 0;
+    std::vector<uns> functionComponentParams;   // unsMax means _THIS
+    std::vector<SimpleInterfaceNodeID> functionParamsLoad;
+    std::vector<SimpleInterfaceNodeID> functionParamsStore;
+    //***********************************************************************
 
     //***********************************************************************
     void clear() { for (auto it : instanceList) delete it; instanceList.clear(); }
@@ -467,31 +639,44 @@ struct HMGFileModelDescription: HMGFileListItem {
     void Read(ReadALine&, char*, LineInfo&);
     void Replace(HMGFileModelDescription*, ReadALine&, char*, LineInfo&);
     void ReadOrReplaceBodySubcircuit(ReadALine&, char*, LineInfo&);
-    void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&) {}
+    void ReadOrReplaceBodyController(ReadALine&, char*, LineInfo&);
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        if (modelType == hfmtSubcircuit) iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, internalNs, solutionType, solutionDescriptionIndex));
-        else                             iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex));
-        for (const auto& src: defaults) {
-            ForcedNodeDef forcedNodeRange;
-            forcedNodeRange.defaultRailIndex = src.rail;
-            SimpleInterfaceNodeID startS, stopS;
-            stopS.type = startS.type = src.type;
-            startS.index = src.start_index;
-            stopS.index  = src.stop_index;
-            CDNode startC = SimpleInterfaceNodeID2CDNode(startS, externalNs, internalNs);
-            CDNode stopC  = SimpleInterfaceNodeID2CDNode(stopS, externalNs, internalNs);
-            forcedNodeRange.isExternal = startC.type == cdntExternal;
-            forcedNodeRange.nodeStartIndex = startC.index;
-            forcedNodeRange.nodeStopIndex  = stopC.index;
-            iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
+        if (modelType == hfmtSubcircuit) {
+            iStream.add(new IsDefModelSubcircuitInstruction(isReplacer, modelIndex, externalNs, internalNs, solutionType, solutionDescriptionIndex));
+            for (const auto& src : defaults) {
+                ForcedNodeDef forcedNodeRange;
+                forcedNodeRange.defaultRailIndex = src.rail;
+                SimpleInterfaceNodeID startS, stopS;
+                stopS.type = startS.type = src.type;
+                startS.index = src.start_index;
+                stopS.index = src.stop_index;
+                CDNode startC = SimpleInterfaceNodeID2CDNode(startS, externalNs, internalNs);
+                CDNode stopC = SimpleInterfaceNodeID2CDNode(stopS, externalNs, internalNs);
+                forcedNodeRange.isExternal = startC.type == cdntExternal;
+                forcedNodeRange.nodeStartIndex = startC.index;
+                forcedNodeRange.nodeStopIndex = stopC.index;
+                iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
+            }
+            for (size_t i = 0; i < instanceList.size(); i++) {
+                instanceList[i]->toInstructionStream(iStream);
+            }
+            iStream.add(new IsEndDefInstruction(sitDefModelSubcircuit, modelIndex));
         }
-        for (size_t i = 0; i < instanceList.size(); i++) {
-            instanceList[i]->toInstructionStream(iStream);
+        else {
+            iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex, functionType, functionCustomIndex, ctrlLevel, 
+                (uns)defaultNodeValues.size(), (uns)functionComponentParams.size(), (uns)functionParamsLoad.size(), (uns)functionParamsStore.size()));
+            for (const auto& dnv : defaultNodeValues)
+                iStream.add(new IsDefaultNodeParameterInstruction(dnv));
+            for (const auto& fcp : functionComponentParams)
+                iStream.add(new IsUnsInstruction(fcp));
+            for (const auto& fpl : functionParamsLoad)
+                iStream.add(new IsNodeValueInstruction(fpl));
+            for (const auto& fps : functionParamsStore)
+                iStream.add(new IsNodeValueInstruction(fps));
+            iStream.add(new IsEndDefInstruction(sitDefModelController, modelIndex));
         }
-        if (modelType == hfmtSubcircuit) iStream.add(new IsEndDefInstruction(sitDefModelSubcircuit, modelIndex));
-        else                             iStream.add(new IsEndDefInstruction(sitDefModelController, modelIndex));
     }
     //***********************************************************************
     bool checkNodeValidity(SimpleInterfaceNodeID id) const noexcept{

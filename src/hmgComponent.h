@@ -768,6 +768,104 @@ public:
 
 
 //***********************************************************************
+class Component_2Node_1Control : public RealComponent {
+//***********************************************************************
+protected:
+    NodeVariable* N[3] = { nullptr, nullptr, nullptr };
+public:
+    //***********************************************************************
+    using RealComponent::RealComponent;
+    //***********************************************************************
+    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    //***********************************************************************
+        return N[nodeIndex];
+    }
+    //***********************************************************************
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    //***********************************************************************
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    //***********************************************************************
+        pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        N[nodeIndex] = pNode;
+    }
+    //************************** AC / DC functions *******************************
+    void resetNodes(bool isDC) noexcept override final {}
+    void deleteD(bool isDC) noexcept override final {}
+    void deleteF(bool isDC) noexcept override final {}
+    void deleteYii(bool isDC) noexcept override final {}
+    void loadFtoD(bool isDC) noexcept override final {}
+    void forwsubs(bool isDC) override final {}
+    void backsubs(bool isDC) override final {}
+    void jacobiIteration(bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    //************************** DC functions *******************************
+    DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
+    DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
+    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptStepDC() noexcept override {}
+    //************************** AC functions *******************************
+    void acceptIterationAndStepAC() noexcept override final {}
+    //***********************************************************************
+#ifdef HMG_DEBUGPRINT
+    void printNodeValueDC(uns) const noexcept override final {}
+    void printNodeErrorDC(uns) const noexcept override final {}
+    void printNodeDefectDC(uns) const noexcept override final {}
+    void printNodeValueAC(uns) const noexcept override final {}
+    void printNodeErrorAC(uns) const noexcept override final {}
+    void printNodeDefectAC(uns) const noexcept override final {}
+#endif
+};
+
+
+//***********************************************************************
+class ComponentConst_Controlled_I final: public Component_2Node_1Control {
+//***********************************************************************
+    Param param; // multiplier
+public:
+    //***********************************************************************
+    using Component_2Node_1Control::Component_2Node_1Control;
+    //************************** AC / DC functions *******************************
+    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    //***********************************************************************
+    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    //************************** AC / DC functions *******************************
+    void calculateCurrent(bool isDC) noexcept override {
+    //***********************************************************************
+        if (isDC) {
+            rvt I = componentValue.getValueDC();
+            componentCurrent.setValueDC(-I);
+            N[0]->incDDC(I);
+            N[1]->incDDC(-I);
+        }
+        else {
+            rvt I = componentValue.getValueDC();
+            N[0]->incDAC(I);
+            N[1]->incDAC(-I);
+        }
+    }
+    //************************** DC functions *******************************
+    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    void calculateYiiDC() noexcept override {}
+    //************************** DC functions *******************************
+    void calculateValueDC() noexcept override {
+    //***********************************************************************
+        componentValue.setValueDC(param.get() * N[2]->getValueDC());
+    }
+    //***********************************************************************
+    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    //************************** AC functions *******************************
+    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    void calculateYiiAC() noexcept override {}
+    cplx getCurrentAC(uns y) const noexcept override { return getCurrentDC(y); }
+    //***********************************************************************
+};
+
+
+//***********************************************************************
 class ComponentGirator final : public RealComponent {
 //***********************************************************************
 protected:
@@ -1247,9 +1345,9 @@ public:
                 case NodeConnectionInstructions::SourceType::sParam:
                     workField[i + 1] = pars[model.functionSources.sources[i].sourceIndex].get();
                     break;
-                case NodeConnectionInstructions::SourceType::sReturn:
+                //case NodeConnectionInstructions::SourceType::sReturn:
                     // do nothing
-                    break;
+                //    break;
             }
         }
         model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), functionComponentParams.size() == 0 ? nullptr : &functionComponentParams.front());
@@ -1328,14 +1426,6 @@ public:
 
 
 //***********************************************************************
-inline int HmgF_Load_ControlledI_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    workField[index[0]] = static_cast<const Component_Function_Controlled_I_with_const_G*>(owner)->externalNodes[nodeIndex]->getStepStartDC();
-    return 0;
-}
-
-
-//***********************************************************************
 class Controller final : public ComponentAndControllerBase {
 //***********************************************************************
     friend class HmgF_Load_Controller_Node_StepStart;
@@ -1395,9 +1485,9 @@ public:
                 case NodeConnectionInstructions::SourceType::sParam:
                     workField[i + 1] = pars[model.functionSources.sources[i].sourceIndex].get();
                     break;
-                case NodeConnectionInstructions::SourceType::sReturn:
+                //case NodeConnectionInstructions::SourceType::sReturn:
                     // do nothing
-                    break;
+                //    break;
                 // mVars are not copied, instead HmgF_Load_Controller_mVar_Value / HmgF_Set_Controller_mVar_Value functions are used
             }
         }
@@ -1435,47 +1525,6 @@ public:
             mVars[i].setStepStartFromAcceptedDC();
     }
 };
-
-
-//***********************************************************************
-inline int HmgF_Load_Controller_Node_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->externalNodes[nodeIndex]->getStepStartDC();
-    return 0;
-}
-
-
-//***********************************************************************
-inline int HmgF_Load_Controller_mVar_StepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getStepStartDC();
-    return 0;
-}
-
-
-//***********************************************************************
-inline int HmgF_Load_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    workField[index[0]] = static_cast<const Controller*>(owner)->mVars[varIndex].getValueDC();
-    return 0;
-}
-
-
-//***********************************************************************
-inline int HmgF_Set_Controller_mVar_Value::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex].setValueDC(workField[index[0]]);
-    return 0;
-}
-
-
-//***********************************************************************
-inline int HmgF_Set_Controller_mVar_ValueFromStepStart::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
-//***********************************************************************
-    static_cast<Controller*>(owner)->mVars[varIndex].setValueFromStepStartDC();
-    return 0;
-}
-
 
 
 //***********************************************************************
@@ -2391,6 +2440,13 @@ inline ComponentAndControllerBase* ModelConst_V_Controlled_I_1::makeComponent(co
 
 
 //***********************************************************************
+inline ComponentAndControllerBase* ModelConst_Controlled_I::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
+//***********************************************************************
+    return new ComponentConst_Controlled_I(def, defaultNodeValueIndex);
+}
+
+
+//***********************************************************************
 inline ComponentAndControllerBase* ModelGirator::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
     return new ComponentGirator(def, defaultNodeValueIndex);
@@ -2465,6 +2521,7 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtConstI_1] = std::make_unique<ModelConstI_1>();
         builtInModels[builtInModelType::bimtConstI_2] = std::make_unique<ModelConstI_2>();
         builtInModels[builtInModelType::bimtConst_V_Controlled_I] = std::make_unique<ModelConst_V_Controlled_I_1>();
+        builtInModels[builtInModelType::bimtConst_Controlled_I] = std::make_unique<ModelConst_Controlled_I>();
         builtInModels[builtInModelType::bimtGirator] = std::make_unique<ModelGirator>();
         builtInModels[builtInModelType::bimtConstVI] = std::make_unique<ModelConstVI>();
         builtInModels[builtInModelType::bimFunc_Controlled_IG] = std::unique_ptr<Model_Function_Controlled_I_with_const_G>(nullptr);
