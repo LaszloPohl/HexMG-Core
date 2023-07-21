@@ -555,6 +555,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
     bool isController = false;
     bool isBuiltIn = false;
     uns defaultValueRailIndex = 0;
+    uns ctrlLevel = 0;
     //***********************************************************************
     // function controlled component:
     bool isFunctionControlled = false;
@@ -586,7 +587,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
             iStream.add(new IsEndDefInstruction(sitComponentInstance, instanceIndex)); // ! sitComponentInstance (ComponentDefinition::processInstructions() expects sitComponentInstance)
         }
         else {
-            iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), (uns)componentParams.size()));
+            iStream.add(new IsComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, defaultValueRailIndex, isController, ctrlLevel, isBuiltIn, (uns)nodes.size(), (uns)params.size(), (uns)componentParams.size()));
             for (const auto& node : nodes)
                 iStream.add(new IsNodeValueInstruction(node));
             for (const auto& param : params)
@@ -627,7 +628,6 @@ struct HMGFileModelDescription: HMGFileListItem {
     std::vector<DefaultNodeParameter> defaultNodeValues;
     builtInFunctionType functionType = biftInvalid;
     uns functionCustomIndex = unsMax; // if functionType == biftCustom => index in globalNames.functionNames
-    uns ctrlLevel = 0;
     std::vector<uns> functionComponentParams;   // unsMax means _THIS
     std::vector<SimpleInterfaceNodeID> functionParamsLoad;
     std::vector<SimpleInterfaceNodeID> functionParamsStore;
@@ -665,7 +665,7 @@ struct HMGFileModelDescription: HMGFileListItem {
             iStream.add(new IsEndDefInstruction(sitDefModelSubcircuit, modelIndex));
         }
         else {
-            iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex, functionType, functionCustomIndex, ctrlLevel, 
+            iStream.add(new IsDefModelControllerInstruction(isReplacer, modelIndex, externalNs, internalNs, functionType, functionCustomIndex,
                 (uns)defaultNodeValues.size(), (uns)functionComponentParams.size(), (uns)functionParamsLoad.size(), (uns)functionParamsStore.size()));
             for (const auto& dnv : defaultNodeValues)
                 iStream.add(new IsDefaultNodeParameterInstruction(dnv));

@@ -555,13 +555,15 @@ void probaSzimulacio4() {
 	funcModel.lines.push_back(lineDesc);
 
 	NodeConnectionInstructions functionSources; // Model_Function_Controlled_I_with_const_G ctor moves it !
-	NodeConnectionInstructions::Source src;
-	src.sourceType = NodeConnectionInstructions::SourceType::sExternalNodeValue;
-	src.sourceIndex = 2; // Usrc
-	functionSources.sources.push_back(src);
-	src.sourceType = NodeConnectionInstructions::SourceType::sParam;
-	src.sourceIndex = 1; // Gsrc
-	functionSources.sources.push_back(src);
+	NodeConnectionInstructions::ConnectionInstruction src;
+	src.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue;
+	src.nodeOrVarIndex = 2; // Usrc
+	src.functionParamIndex = 0;
+	functionSources.load.push_back(src);
+	src.nodeOrVarType = NodeConnectionInstructions::sParam;
+	src.nodeOrVarIndex = 1; // Gsrc
+	src.functionParamIndex = 2;
+	functionSources.load.push_back(src);
 
 	std::unique_ptr<Model_Function_Controlled_I_with_const_G> mf;
 

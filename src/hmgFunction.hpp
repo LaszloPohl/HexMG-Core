@@ -2962,18 +2962,14 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
 //***********************************************************************
 struct NodeConnectionInstructions {
 //***********************************************************************
-    enum SourceType { sExternalNodeValue, sExternalNodeStepstart, sParam, sMVarValue, sMVarStepstart };
-    struct Source {
-        SourceType sourceType = sExternalNodeValue;
-        uns sourceIndex = 0;
+    enum NodeOrVarType { sExternalNodeValue, sExternalNodeStepstart, sParam, sMVarValue, sMVarStepstart };
+    struct ConnectionInstruction {
+        NodeOrVarType nodeOrVarType = sExternalNodeValue; // here external = out
+        uns functionParamIndex = 0;
+        uns nodeOrVarIndex = 0;
     };
-    struct Destination {
-        SourceType destType = sExternalNodeValue; // here external = out
-        uns srcParamIndex = 0;
-        uns destNodeIndex = 0;
-    };
-    std::vector<Source> sources;
-    std::vector<Destination> destinations; // for controllers
+    std::vector<ConnectionInstruction> load;
+    std::vector<ConnectionInstruction> store; // for controllers
 };
 
 

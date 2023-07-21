@@ -335,19 +335,20 @@ struct IsDefModelSubcircuitInstruction: public IsInstruction {
 struct IsDefModelControllerInstruction: public IsInstruction {
 //***********************************************************************
     uns index = 0;
+    ExternalConnectionSizePack externalNs;
+    InternalNodeVarSizePack internalNs;
     bool isReplace = false;
     builtInFunctionType functionType = biftInvalid;
     uns functionCustomIndex = 0;
-    uns ctrlLevel = 0;
     uns nDefaultNodeValues = 0;
     uns nFunctionComponentParams = 0;
     uns nFunctionParamsLoad = 0;
     uns nFunctionParamsStore = 0;
-    IsDefModelControllerInstruction(bool isReplace_, uns indx, builtInFunctionType functionType_, uns functionCustomIndex_,
-        uns ctrlLevel_, uns nDefaultNodeValues_, uns nFunctionComponentParams_, uns nFunctionParamsLoad_, uns nFunctionParamsStore_)
-        :IsInstruction{ sitDefModelController }, isReplace{ isReplace_ }, index{ indx }, functionType{ functionType_ }, functionCustomIndex{ functionCustomIndex_ },
-        ctrlLevel{ ctrlLevel_ }, nDefaultNodeValues{ nDefaultNodeValues_ }, nFunctionComponentParams{ nFunctionComponentParams_ }, nFunctionParamsLoad{ nFunctionParamsLoad_ },
-        nFunctionParamsStore{ nFunctionParamsStore_ } {}
+    IsDefModelControllerInstruction(bool isReplace_, uns indx, ExternalConnectionSizePack externalNs_, InternalNodeVarSizePack internalNs_, builtInFunctionType functionType_, uns functionCustomIndex_,
+        uns nDefaultNodeValues_, uns nFunctionComponentParams_, uns nFunctionParamsLoad_, uns nFunctionParamsStore_)
+        :IsInstruction{ sitDefModelController }, isReplace{ isReplace_ }, index{ indx }, externalNs{ externalNs_ }, internalNs{ internalNs_ }, functionType{ functionType_ }, 
+        functionCustomIndex{ functionCustomIndex_ }, nDefaultNodeValues{ nDefaultNodeValues_ }, nFunctionComponentParams{ nFunctionComponentParams_ }, 
+        nFunctionParamsLoad{ nFunctionParamsLoad_ }, nFunctionParamsStore{ nFunctionParamsStore_ } {}
 };
 
 
@@ -373,10 +374,11 @@ struct IsComponentInstanceInstruction : public IsInstruction {
     uns nParams = 0;
     uns nComponentParams = 0;
     uns defaultValueRailIndex = 0;
+    uns ctrlLevel = 0;
 
-    IsComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, bool isBltIn, uns nNode, uns nPar, uns nComponentParams_)
-        :IsInstruction{ sitComponentInstance }, instanceIndex{ index }, modelIndex{ modelIndex_ }, isDefaultRail{ isDefRail }, 
-        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, nComponentParams{ nComponentParams_ }, defaultValueRailIndex{ defRail } {}
+    IsComponentInstanceInstruction(uns index, uns modelIndex_, bool isDefRail, uns defRail, bool isCntrller, uns ctrlLevel_, bool isBltIn, uns nNode, uns nPar, uns nComponentParams_)
+        :IsInstruction{ sitComponentInstance }, instanceIndex{ index }, modelIndex{ modelIndex_ }, isDefaultRail{ isDefRail },
+        isController{ isCntrller }, isBuiltIn{ isBltIn }, nNodes{ nNode }, nParams{ nPar }, nComponentParams{ nComponentParams_ }, defaultValueRailIndex{ defRail }, ctrlLevel{ ctrlLevel_ } {}
 };
 
 
@@ -431,8 +433,8 @@ struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
 struct IsDefaultNodeParameterInstruction: public IsInstruction {
 //***********************************************************************
-    DefaultNodeParameter nodeID;
-    IsDefaultNodeParameterInstruction(const DefaultNodeParameter& node) :IsInstruction{ sitDefaultNodeParameter }, nodeID{ node }{}
+    DefaultNodeParameter nodePar;
+    IsDefaultNodeParameterInstruction(const DefaultNodeParameter& nodeP) :IsInstruction{ sitDefaultNodeParameter }, nodePar{ nodeP }{}
 };
 
 

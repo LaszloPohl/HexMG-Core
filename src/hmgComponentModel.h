@@ -76,6 +76,7 @@ public:
     componentModelType modelType = cmtCustom;
     uns modelIndex = 0; // in CircuitStorage::models or CircuitStorage::builtInModels
     uns defaultValueRailIndex = 0;
+    uns ctrlLevel = 0; // for controller instances
     std::vector<CDNode> nodesConnectedTo;
     std::vector<CDParam> params;
     std::vector<ComponentIndex> componentParams;
@@ -233,10 +234,10 @@ public:
             nodeToFunctionParam.resize(getN_IO_Nodes() + getN_Normal_I_Nodes()); // ! different in controller
             for (auto& val : nodeToFunctionParam)
                 val = unsMax;
-            for (uns i = 0; i < functionSources.sources.size(); i++) {
-                const auto& src = functionSources.sources[i];
-                if (src.sourceType == NodeConnectionInstructions::SourceType::sExternalNodeValue && src.sourceIndex < nodeToFunctionParam.size())
-                    nodeToFunctionParam[src.sourceIndex] = i + 2;
+            for (uns i = 0; i < functionSources.load.size(); i++) {
+                const auto& src = functionSources.load[i];
+                if (src.nodeOrVarType == NodeConnectionInstructions::sExternalNodeValue && src.nodeOrVarIndex < nodeToFunctionParam.size())
+                    nodeToFunctionParam[src.nodeOrVarIndex] = src.functionParamIndex;
             }
     }
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
@@ -253,14 +254,16 @@ class Controller;
 class ModelController final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
+    std::vector<DefaultNodeParameter> defaultNodeValues;
     NodeConnectionInstructions functionSources;
+    std::vector<uns> functionComponentParams;   // unsMax means _THIS
     HmgFunction* controlFunction = nullptr;
     std::vector<uns> indexField;
     uns nMVars;
-    ModelController(uns nControlINodes_, uns nControlONodes_, uns nMVars_, uns nParams_,
-        NodeConnectionInstructions functionSources_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 0, 0, nControlINodes_, nControlONodes_, 0, nParams_, 0 }, ccmt_Controller }, // O nodes of the Controller are defined as normal O nodes
-        nMVars{ nMVars_ }, functionSources { std::move(functionSources_) }, controlFunction{ controlFunction_ } {
+    ModelController(ExternalConnectionSizePack Ns_, uns nMVars_, std::vector<DefaultNodeParameter>&& defaultNodeValues_, NodeConnectionInstructions functionSources_, std::vector<uns>&& functionComponentParams_, 
+        HmgFunction* controlFunction_) :ComponentAndControllerModelBase{ Ns_, ccmt_Controller }, // O nodes of the Controller are defined as normal O nodes
+        nMVars{ nMVars_ }, defaultNodeValues{ std::move(defaultNodeValues_) }, functionSources { std::move(functionSources_) }, functionComponentParams{ std::move(functionComponentParams_) }, 
+        controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;
             indexField[1] = controlFunction->getN_Param() + 1;

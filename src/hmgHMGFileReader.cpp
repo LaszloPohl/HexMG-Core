@@ -1033,7 +1033,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 if (strcmp(token, "CTRL_LEVEL") == 0) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if(sscanf_s(token, "%u", &ctrlLevel) != 1)
+                    if(sscanf_s(token, "%u", &pxline->ctrlLevel) != 1)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "Missing CTRL_LEVEL value in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
                 else

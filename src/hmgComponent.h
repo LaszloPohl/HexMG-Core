@@ -1334,20 +1334,18 @@ public:
     void calculateValueDC() noexcept override {
     //***********************************************************************
         const Model_Function_Controlled_I_with_const_G& model = static_cast<const Model_Function_Controlled_I_with_const_G&>(*pModel);
-        for (uns i = 0; i < model.functionSources.sources.size(); i++) {
-            switch (model.functionSources.sources[i].sourceType) {
-                case NodeConnectionInstructions::SourceType::sExternalNodeValue:
-                    workField[i + 1] = externalNodes[model.functionSources.sources[i].sourceIndex]->getValueDC();
+        const std::vector<NodeConnectionInstructions::ConnectionInstruction>& load = model.functionSources.load;
+        for (uns i = 0; i < load.size(); i++) {
+            switch (load[i].nodeOrVarType) {
+                case NodeConnectionInstructions::sExternalNodeValue:
+                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
                     break;
-                case NodeConnectionInstructions::SourceType::sExternalNodeStepstart:
-                    workField[i + 1] = externalNodes[model.functionSources.sources[i].sourceIndex]->getStepStartDC();
+                case NodeConnectionInstructions::sExternalNodeStepstart:
+                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
                     break;
-                case NodeConnectionInstructions::SourceType::sParam:
-                    workField[i + 1] = pars[model.functionSources.sources[i].sourceIndex].get();
+                case NodeConnectionInstructions::sParam:
+                    workField[load[i].functionParamIndex] = pars[load[i].nodeOrVarIndex].get();
                     break;
-                //case NodeConnectionInstructions::SourceType::sReturn:
-                    // do nothing
-                //    break;
             }
         }
         model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), functionComponentParams.size() == 0 ? nullptr : &functionComponentParams.front());
@@ -1474,26 +1472,29 @@ public:
     void loadNodesAndParamsToFunction() noexcept {
     //***********************************************************************
         const ModelController& model = static_cast<const ModelController&>(*pModel);
-        for (uns i = 0; i < model.functionSources.sources.size(); i++) {
-            switch (model.functionSources.sources[i].sourceType) {
-                case NodeConnectionInstructions::SourceType::sExternalNodeValue:
-                    workField[i + 1] = externalNodes[model.functionSources.sources[i].sourceIndex]->getValueDC();
+        const std::vector<NodeConnectionInstructions::ConnectionInstruction>& load = model.functionSources.load;
+        for (uns i = 0; i < load.size(); i++) {
+            switch (load[i].nodeOrVarType) {
+                case NodeConnectionInstructions::sExternalNodeValue:
+                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
                     break;
-                case NodeConnectionInstructions::SourceType::sExternalNodeStepstart:
-                    workField[i + 1] = externalNodes[model.functionSources.sources[i].sourceIndex]->getStepStartDC();
+                case NodeConnectionInstructions::sExternalNodeStepstart:
+                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
                     break;
-                case NodeConnectionInstructions::SourceType::sParam:
-                    workField[i + 1] = pars[model.functionSources.sources[i].sourceIndex].get();
+                case NodeConnectionInstructions::sParam:
+                    workField[load[i].functionParamIndex] = pars[load[i].nodeOrVarIndex].get();
                     break;
-                //case NodeConnectionInstructions::SourceType::sReturn:
-                    // do nothing
-                //    break;
-                // mVars are not copied, instead HmgF_Load_Controller_mVar_Value / HmgF_Set_Controller_mVar_Value functions are used
+                case NodeConnectionInstructions::sMVarValue:
+                    workField[load[i].functionParamIndex] = mVars[load[i].nodeOrVarIndex].getValueDC();
+                    break;
+                case NodeConnectionInstructions::sMVarStepstart:
+                    workField[load[i].functionParamIndex] = mVars[load[i].nodeOrVarIndex].getStepStartDC();
+                    break;
             }
         }
     }
     //***********************************************************************
-    void evaluate_and_storeNodes() noexcept {
+    void evaluate_and_storeNodes() {
     //***********************************************************************
         const ModelController& model = static_cast<const ModelController&>(*pModel);
 
@@ -1503,9 +1504,17 @@ public:
         TODO("component parameterek cimei");
 
         model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), nullptr);
-        for (uns i = 0; i < model.functionSources.destinations.size(); i++) {
-            const NodeConnectionInstructions::Destination& dest = model.functionSources.destinations[i];
-            externalNodes[dest.destNodeIndex]->setValueDC(workField[dest.srcParamIndex]); // srcParamIndex == 0 => return, >0 => par
+        for (uns i = 0; i < model.functionSources.store.size(); i++) {
+            const NodeConnectionInstructions::ConnectionInstruction& dest = model.functionSources.store[i];
+
+            // functionParamIndex == 0 => return, >0 => par
+
+            if (dest.nodeOrVarType == NodeConnectionInstructions::sExternalNodeValue)
+                externalNodes[dest.nodeOrVarIndex]->setValueDC(workField[dest.functionParamIndex]); 
+            else if (dest.nodeOrVarType == NodeConnectionInstructions::sMVarValue)
+                mVars[dest.nodeOrVarIndex].setValueDC(workField[dest.functionParamIndex]);
+            else
+                throw hmgExcept("Controller::evaluate_and_storeNodes", "inappropriate STORE type: only OUT node and Var allowed, %u arrived", dest.nodeOrVarType);
         }
     }
     //***********************************************************************

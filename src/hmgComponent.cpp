@@ -321,28 +321,129 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitDefModelController: {
                     IsDefModelControllerInstruction* pAct = static_cast<IsDefModelControllerInstruction*>(act);
-                    
+
+                    std::vector<DefaultNodeParameter> defaultNodeValues;
+                    std::vector<uns> functionComponentParams;
+                    NodeConnectionInstructions functionSources;
+
+                    defaultNodeValues.reserve(pAct->nDefaultNodeValues);
+                    for (uns i = 0; i < pAct->nDefaultNodeValues; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("CircuitStorage::processInstructions", "The instruction stream has ended during MODEL CONTROLLER definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitDefaultNodeParameter)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node parameter expected %u arrived", (uns)fact->instruction);
+                        IsDefaultNodeParameterInstruction* pfAct = static_cast<IsDefaultNodeParameterInstruction*>(fact);
+                        defaultNodeValues.push_back(pfAct->nodePar);
+
+                        delete fact;
+                    }
+
+                    functionComponentParams.reserve(pAct->nFunctionComponentParams);
+                    for (uns i = 0; i < pAct->nFunctionComponentParams; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("CircuitStorage::processInstructions", "The instruction stream has ended during MODEL CONTROLLER definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitUns)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => function component parameter expected %u arrived", (uns)fact->instruction);
+                        IsUnsInstruction* pfAct = static_cast<IsUnsInstruction*>(fact);
+                        functionComponentParams.push_back(pfAct->data);
+
+                        delete fact;
+                    }
+
+                    functionSources.load.reserve(pAct->nFunctionParamsLoad);
+                    for (uns i = 0; i < pAct->nFunctionParamsLoad; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("CircuitStorage::processInstructions", "The instruction stream has ended during MODEL CONTROLLER definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitNodeValue)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => LOAD parameter expected %u arrived", (uns)fact->instruction);
+                        IsNodeValueInstruction* pfAct = static_cast<IsNodeValueInstruction*>(fact);
+                        NodeConnectionInstructions::ConnectionInstruction src;
+                        if (pfAct->nodeID.type == nvtParam)
+                            src.nodeOrVarType = NodeConnectionInstructions::sParam;
+                        else if (pfAct->nodeID.type == nvtCIN || pfAct->nodeID.type == nvtOUT)
+                            src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sExternalNodeStepstart : NodeConnectionInstructions::sExternalNodeValue;
+                        else if (pfAct->nodeID.type == nvtVarInternal)
+                            src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sMVarStepstart : NodeConnectionInstructions::sMVarValue;
+                        else if (pfAct->nodeID.type != nvtNone)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER LOAD => parameter, control input node, output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
+                        // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
+                        src.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
+                        src.functionParamIndex = i == 0 ? 0 : i + 1;
+                        if (pfAct->nodeID.type != nvtNone)
+                            functionSources.load.push_back(src);
+
+                        delete fact;
+                    }
+
+                    functionSources.store.reserve(pAct->nFunctionParamsStore);
+                    for (uns i = 0; i < pAct->nFunctionParamsStore; i++) {
+                        if (first == nullptr)
+                            throw hmgExcept("CircuitStorage::processInstructions", "The instruction stream has ended during MODEL CONTROLLER definition.");
+                        IsInstruction* fact = first;
+                        first = first->next;
+                        if (fact->instruction != sitNodeValue)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => STORE parameter expected %u arrived", (uns)fact->instruction);
+                        IsNodeValueInstruction* pfAct = static_cast<IsNodeValueInstruction*>(fact);
+                        NodeConnectionInstructions::ConnectionInstruction dest;
+                        if (pfAct->nodeID.type == nvtOUT)
+                            dest.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue;
+                        else if (pfAct->nodeID.type == nvtVarInternal)
+                            dest.nodeOrVarType = NodeConnectionInstructions::sMVarValue;
+                        else if (pfAct->nodeID.type != nvtNone)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER STORE => output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
+                        // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
+                        dest.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
+                        dest.functionParamIndex = i == 0 ? 0 : i + 1;
+                        if (pfAct->nodeID.type != nvtNone)
+                            functionSources.store.push_back(dest);
+
+                        delete fact;
+                    }
+
+                    CircuitStorage& gc = CircuitStorage::getInstance();
+
+                    HmgFunction* fu = pAct->functionType != biftCustom
+                        ? HgmFunctionStorage::builtInFunctions[pAct->functionType].get()
+                        : gc.functions[pAct->functionCustomIndex].get();
+
                     if (pAct->isReplace) {
                         ModelController* mc = static_cast<ModelController*>(models[pAct->index].get());
-                        models[pAct->index] = std::make_unique<ModelController>(ms->externalNs, ms->internalNs, ms->solutionType != SolutionType::stFullMatrix, ms->solutionType, ms->srTreeInstructions);
-                        mc = static_cast<ModelController*>(models[pAct->index].get());
+                        models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues), 
+                            std::move(functionSources), std::move(functionComponentParams), fu);
                     }
                     else {
                         if (pAct->index == models.size()) {
-                            models.push_back(std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs,
-                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr));
+                            models.push_back(std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues),
+                                std::move(functionSources), std::move(functionComponentParams), fu));
                         }
                         else {
                             if (pAct->index > models.size())
                                 models.resize(pAct->index + 1);
-                            models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs,
-                                pAct->solutionType != SolutionType::stFullMatrix, pAct->solutionType, pAct->solutionType == SolutionType::stSunRed ? sunredTrees[pAct->solutionDescriptionIndex].get() : nullptr);
+                            models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues),
+                                std::move(functionSources), std::move(functionComponentParams), fu);
                         }
                     }
-
-                    ModelController* ms = static_cast<ModelController*>(models[pAct->index].get());
-
-                    ms->processInstructions(first);
+                    
+                    delete act;
+                    
+                    if (first == nullptr)
+                        throw hmgExcept("CircuitStorage::processInstructions", "The instruction stream has ended during MODEL CONTROLLER definition.");
+                    
+                    act = first;
+                    first = first->next;
+                    if (act->instruction != sitEndInstruction)
+                        throw hmgExcept("CircuitStorage::processInstructions", "END CONTROLLER instruction expected, %u arrived", (uns)act->instruction);
+                    
+                    IsEndDefInstruction* pActe = static_cast<IsEndDefInstruction*>(act);
+                    
+                    if (pActe->whatEnds != sitDefModelController)
+                        throw hmgExcept("CircuitStorage::processInstructions", "illegal ending instruction type (%u) in CONTROLLER definition", pActe->whatEnds);
                 }
                 break;
             case sitComponentInstance:              isImpossibleInstruction = true; break;
@@ -1037,6 +1138,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                     cd->modelType = pAct->isBuiltIn ? cmtBuiltIn : cmtCustom;
                     cd->isDefaultRail = pAct->isDefaultRail;
                     cd->defaultValueRailIndex = pAct->defaultValueRailIndex;
+                    cd->ctrlLevel = pAct->ctrlLevel;
                     cd->modelIndex = pAct->modelIndex;
                     cd->nodesConnectedTo.reserve(pAct->nNodes);
                     cd->params.reserve(pAct->nParams);
@@ -1058,8 +1160,6 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                 break;
             case sitFunctionControlledComponentInstance: {
                     IsFunctionControlledComponentInstanceInstruction* pAct = static_cast<IsFunctionControlledComponentInstanceInstruction*>(act);
-
-                    CircuitStorage& gc = CircuitStorage::getInstance();
 
                     ExternalConnectionSizePack xns;
 
@@ -1085,19 +1185,20 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         if (fact->instruction != sitNodeValue)
                             throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => function parameter expected %u arrived", (uns)fact->instruction);
                         IsNodeValueInstruction* pfAct = static_cast<IsNodeValueInstruction*>(fact);
-                        NodeConnectionInstructions::Source src;
+                        NodeConnectionInstructions::ConnectionInstruction src;
                         if (pfAct->nodeID.type == nvtParam) {
-                            src.sourceType = NodeConnectionInstructions::SourceType::sParam;
-                            src.sourceIndex = pfAct->nodeID.index;
+                            src.nodeOrVarType = NodeConnectionInstructions::sParam;
+                            src.nodeOrVarIndex = pfAct->nodeID.index;
                         }
                         else {
                             CDNode cdn = SimpleInterfaceNodeID2CDNode(pfAct->nodeID, xns, internalNs); // internalNs is only a dummy because internal nodes of the component are not allowed to connect to the function (no reason in principle just I don't see why would it be needed)
                             if (cdn.type != cdntExternal)
                                 throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => only external type node or parameter enabled as function parameter, %u found", (uns)pfAct->nodeID.type);
-                            src.sourceType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::SourceType::sExternalNodeStepstart : NodeConnectionInstructions::SourceType::sExternalNodeValue;
-                            src.sourceIndex = cdn.index;
+                            src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sExternalNodeStepstart : NodeConnectionInstructions::sExternalNodeValue;
+                            src.nodeOrVarIndex = cdn.index;
                         }
-                        functionSources.sources.push_back(src);
+                        src.functionParamIndex = i == 0 ? 0 : i + 1;
+                        functionSources.load.push_back(src);
 
                         delete fact;
                     }
@@ -1116,6 +1217,8 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
 
                         delete fact;
                     }
+
+                    CircuitStorage& gc = CircuitStorage::getInstance();
 
                     if (pAct->modelIndex == bimFunc_Controlled_IG) {
                         std::unique_ptr<Model_Function_Controlled_I_with_const_G> mf;
