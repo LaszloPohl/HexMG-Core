@@ -103,6 +103,7 @@ public:
     //***********************************************************************
     ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
+    virtual void buildOrReplace() = 0; // should only be called after the nodes and params have been set!, buildForAC() do this for AC
     virtual bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept = 0;
     NodeVariable* getNodeVariableSimpleInterfaceNodeID(const SimpleInterfaceNodeID& nodeID) noexcept;
     virtual NodeVariable* getNode(siz nodeIndex) noexcept = 0;
@@ -148,7 +149,6 @@ public:
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
     //***********************************************************************
     virtual const NodeVariable& getComponentCurrent() const noexcept = 0;
-    virtual void buildOrReplace() = 0; // should only be called after the nodes and params have been set!, buildForAC() do this for AC
     //************************** AC / DC functions *******************************
     virtual bool isJacobianMXSymmetrical(bool isDC)const noexcept = 0; // e.g. controlled source is alway asymmetrical, in AC, too
     virtual void resetNodes(bool isDC) noexcept = 0;
@@ -166,7 +166,7 @@ public:
     virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
     virtual void calculateValueDC() noexcept = 0; // no AC version
-    virtual void calculateControllersDC(uns step) noexcept {} // no AC version, step 1 and 2: to reduce the number of virtual functions
+    virtual uns calculateControllersDC(uns level, controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
     virtual DefectCollector collectCurrentDefectDC() const noexcept = 0; // no AC version
     virtual DefectCollector collectVoltageDefectDC() const noexcept = 0; // no AC version
     virtual rvt getJreducedDC(uns y) const noexcept = 0;
@@ -1436,6 +1436,7 @@ class Controller final : public ComponentAndControllerBase {
     std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars;
     std::vector<ComponentAndControllerBase*> componentParams;
+    std::vector<ComponentAndControllerBase*> functionComponentParams;
     std::vector<rvt> workField;
 public:
     //***********************************************************************
@@ -1448,15 +1449,46 @@ public:
         componentParams.resize(def->componentParams.size());
         const ModelController* pM = dynamic_cast<const ModelController*>(pModel);
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
-        delete[] mVars;
-        nmVars = pM->nMVars;
-        mVars = new NodeVariable[nmVars];
-        for (uns i = 0; i < nmVars; i++) {
-            mVars[i].setDefaultValueIndex(0, false);
-        }
     }
     //***********************************************************************
     ~Controller() { delete[] mVars; }
+    //***********************************************************************
+
+    //***********************************************************************
+    void buildOrReplace() override {
+    //***********************************************************************
+        if (mVars != nullptr)
+            return;
+
+        const ModelController& model = static_cast<const ModelController&>(*pModel);
+
+        uns nUnconnectedONode = 0;
+        cuns nEndOnodes = model.getN_ExternalNodes();
+        for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
+            if (externalNodes[i] == nullptr)
+                nUnconnectedONode++;
+        }
+
+        uns nUnconnectedOnodeIndex = model.nMVars;
+        nmVars = nUnconnectedOnodeIndex + nUnconnectedONode;
+        mVars = new NodeVariable[nmVars];
+
+        for (uns i = 0; i < model.nMVars; i++)
+            mVars[i].setDefaultValueIndex(0, true);
+
+        for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
+            if (externalNodes[i] == nullptr)
+                externalNodes[i] = &mVars[nUnconnectedOnodeIndex++];
+        }
+
+        csiz siz = model.functionComponentParams.size();
+        functionComponentParams.resize(siz);
+        for (uns i = 0; i < siz; i++) {
+            cuns index = model.functionComponentParams[i];
+            functionComponentParams[i] = index == unsMax ? this : componentParams[index];
+        }
+    }
+
     //***********************************************************************
     NodeVariable* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
     NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return &mVars[nodeIndex]; }
@@ -1498,12 +1530,8 @@ public:
     //***********************************************************************
         const ModelController& model = static_cast<const ModelController&>(*pModel);
 
-        //
-        // !!!!!!!!!!! át kell adni a component paraméterek címeit !!!!!!!!!!!!!!!!!
-        //
-        TODO("component parameterek cimei");
+        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), functionComponentParams.size() == 0 ? nullptr : &functionComponentParams.front());
 
-        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), nullptr);
         for (uns i = 0; i < model.functionSources.store.size(); i++) {
             const NodeConnectionInstructions::ConnectionInstruction& dest = model.functionSources.store[i];
 
@@ -1526,6 +1554,24 @@ public:
     //***********************************************************************
         for (uns i = 0; i < nmVars; i++)
             mVars[i].reset();
+        const ModelController& model = static_cast<const ModelController&>(*pModel);
+        for (uns i = 0; i < model.defaultNodeValues.size(); i++) {
+            const DefaultNodeParameter& np = model.defaultNodeValues[i];
+            if (np.nodeID.type == nvtCIN) {
+                externalNodes[np.nodeID.index]->setValueDC(np.defaultValue);
+                externalNodes[np.nodeID.index]->setStepStartDC(np.defaultValue);
+            }
+            else if (np.nodeID.type == nvtOUT) {
+                externalNodes[np.nodeID.index + model.externalNs.nControlINodes]->setValueDC(np.defaultValue);
+                externalNodes[np.nodeID.index + model.externalNs.nControlINodes]->setStepStartDC(np.defaultValue);
+            }
+            else if (np.nodeID.type == nvtVarInternal) {
+                mVars[np.nodeID.index].setValueDC(np.defaultValue);
+                mVars[np.nodeID.index].setStepStartDC(np.defaultValue);
+            }
+            else
+                printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"); // impossible
+        }
     }
     //***********************************************************************
     void setStepStartFromValue() noexcept {
@@ -1732,20 +1778,33 @@ public:
         }
     }
     //***********************************************************************
-    void calculateControllersDC(uns step) noexcept override {
+    uns calculateControllersDC(uns level, controllerOperationStage stage) override {
     // TO PARALLEL
     //***********************************************************************
+        uns nextLevel = level;
         for (auto& comp : components)
-            if (comp->isEnabled) comp->calculateControllersDC(step);
+            if (comp->isEnabled) {
+                uns retLevel = comp->calculateControllersDC(level, stage);
+                if (retLevel > level && (nextLevel == level || retLevel < nextLevel))
+                    nextLevel = retLevel;
+            }
 
-        if (step == 1) {
+        if (stage == cosLoad) {
             for (auto& ctrl : controllers)
-                if (ctrl.get()->isEnabled) ctrl.get()->loadNodesAndParamsToFunction();
+                if (ctrl.get()->isEnabled) {
+                    uns ctrlLevel = ctrl.get()->def->ctrlLevel;
+                    if (ctrlLevel == level)
+                        ctrl.get()->loadNodesAndParamsToFunction();
+                    else if (ctrlLevel > level && (nextLevel == level || ctrlLevel < nextLevel)) // choosing the smallest of the greaters
+                        nextLevel = ctrlLevel;
+                }
         }
-        else { // 2
+        else { // cosEvaluateAndStore
             for (auto& ctrl : controllers)
-                if (ctrl.get()->isEnabled) ctrl.get()->evaluate_and_storeNodes();
+                if (ctrl.get()->isEnabled && ctrl.get()->def->ctrlLevel == level) 
+                    ctrl.get()->evaluate_and_storeNodes();
         }
+        return nextLevel;
     }
     //***********************************************************************
     void forwsubs(bool isDC)override { if (isDC) forwsubsDC(); else forwsubsAC(); }
@@ -2755,6 +2814,74 @@ public:
     //***********************************************************************
     bool processInstructions(IsInstruction*& first);
     //***********************************************************************
+ 
+    //***********************************************************************
+    static void CalculateControllersDC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        uns currentLevel = 0;
+        uns nextLevel = 0;
+        do {
+            currentLevel = nextLevel;
+            nextLevel = gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosLoad);
+            gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosEvaluateAndStore);
+        } while (nextLevel > currentLevel);
+    }
+
+    //***********************************************************************
+    static void CalculateValuesAndCurrentsDC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
+        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
+        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+    }
+    //***********************************************************************
+    static void ForwsubsBacksubsDC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
+        gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
+    }
+    //***********************************************************************
+    static void AcceptIterationDC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationDC(true);
+    }
+    //***********************************************************************
+    static void AcceptStepDC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->acceptStepDC();
+    }
+
+    //***********************************************************************
+    static void CalculateValuesAndCurrentsAC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
+        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
+    }
+    //***********************************************************************
+    static void ForwsubsBacksubsAC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(false);
+        gc.fullCircuitInstances[fullCircuitID].component->backsubs(false);
+    }
+    //***********************************************************************
+    static void AcceptIterationAC(uns fullCircuitID) {
+    // no iterations in AC => do nothing
+    //***********************************************************************
+
+    }
+    //***********************************************************************
+    static void AcceptStepAC(uns fullCircuitID) {
+    //***********************************************************************
+        CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationAndStepAC();
+    }
 };
 
 

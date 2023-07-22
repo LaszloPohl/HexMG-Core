@@ -117,6 +117,11 @@ enum componentModelType { cmtBuiltIn, cmtCustom, cmtFunctionControlledBuiltIn };
 
 
 //***********************************************************************
+enum controllerOperationStage { cosLoad, cosEvaluateAndStore };
+//***********************************************************************
+
+
+//***********************************************************************
 enum builtInFunctionType {
 //***********************************************************************
     biftInvalid, biftCustom,

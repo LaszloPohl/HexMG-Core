@@ -335,6 +335,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         if (fact->instruction != sitDefaultNodeParameter)
                             throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node parameter expected %u arrived", (uns)fact->instruction);
                         IsDefaultNodeParameterInstruction* pfAct = static_cast<IsDefaultNodeParameterInstruction*>(fact);
+                        if (pfAct->nodePar.nodeID.type != nvtCIN && pfAct->nodePar.nodeID.type != nvtOUT && pfAct->nodePar.nodeID.type != nvtVarInternal)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node value: CIN, OUT or V expected, %u arrived", (uns)pfAct->nodePar.nodeID.type);
                         defaultNodeValues.push_back(pfAct->nodePar);
 
                         delete fact;
@@ -1468,6 +1470,8 @@ void ComponentSubCircuit::buildOrReplace() {
         csiz nComponent = model.components.size();
         for (auto& comp : components)
             if (comp->isEnabled) comp->buildOrReplace();
+        for (auto& cont : controllers)
+            if (cont->isEnabled) cont->buildOrReplace();
 
         // isJacobianMXSymmetrical
 
@@ -1531,7 +1535,7 @@ void ComponentSubCircuit::buildOrReplace() {
                 internalNodesAndVars[i].setDefaultValueIndex(forced.defaultRailIndex, true);
     }
 
-    // creating components
+    // creating components and controllers
 
     //*******************************************************
     // Here we don't examine that the contained components are enabled or not (defalult is enabled)
@@ -1571,7 +1575,7 @@ void ComponentSubCircuit::buildOrReplace() {
             throw hmgExcept("ComponentSubCircuit::buildOrReplace", "controllers[%u] is not a controller.", i);
     }
 
-    // setting external nodes, parameters and component parameters (CT) of the contained components
+    // setting external nodes, parameters and component parameters (CT) of the contained components and controllers
 
     for (siz i = 0; i < nComponent; i++) {
         ComponentBase& comp = *components[i].get();
@@ -1579,6 +1583,22 @@ void ComponentSubCircuit::buildOrReplace() {
             const CDNode& cdn = comp.def->nodesConnectedTo[j];
             if (cdn.type != CDNodeType::cdntUnconnected) {
                 comp.setNode(j,
+                    cdn.type == CDNodeType::cdntInternal ? &internalNodesAndVars[cdn.index]
+                    : cdn.type == CDNodeType::cdntExternal ? externalNodes[cdn.index]
+                    : cdn.type == CDNodeType::cdntRail ? &Rails::V[cdn.index].get()->rail
+                    : cdn.type == CDNodeType::cdntGnd ? &Rails::V[defaultNodeValueIndex].get()->rail
+                    : nullptr // unconnected node or var, never gets here
+                );
+            }
+        }
+    }
+
+    for (siz i = 0; i < nControllers; i++) {
+        Controller& cont = *controllers[i].get();
+        for (siz j = 0; j < cont.def->nodesConnectedTo.size(); j++) {
+            const CDNode& cdn = cont.def->nodesConnectedTo[j];
+            if (cdn.type != CDNodeType::cdntUnconnected) {
+                cont.setNode(j,
                     cdn.type == CDNodeType::cdntInternal ? &internalNodesAndVars[cdn.index]
                     : cdn.type == CDNodeType::cdntExternal ? externalNodes[cdn.index]
                     : cdn.type == CDNodeType::cdntRail ? &Rails::V[cdn.index].get()->rail
@@ -1623,6 +1643,40 @@ void ComponentSubCircuit::buildOrReplace() {
         }
     }
 
+    for (siz i = 0; i < nControllers; i++) {
+        Controller& cont = *controllers[i].get();
+        for (siz j = 0; j < cont.def->params.size(); j++) {
+            const CDParam& cdp = cont.def->params[j];
+            Param par;
+            switch (cdp.type) {
+                case CDParamType::cdptValue:
+                    par.value = cdp.value;
+                    break;
+                case CDParamType::cdptGlobalVariable:
+                    par.var = vectorForcedGet(CircuitStorage::getInstance().globalVariables, cdp.index).get();
+                    if (par.var == nullptr) {
+                        CircuitStorage::getInstance().globalVariables[cdp.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
+                        par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
+                    }
+                    par.var->setDefaultValueIndex(0, true);
+                    break;
+                case CDParamType::cdptLocalVariable:
+                    par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
+                    break;
+                case CDParamType::cdptParam:
+                    par = pars[cdp.index];
+                    break;
+                case CDParamType::cdptInternalNode:
+                    par.var = &internalNodesAndVars[cdp.index];
+                    break;
+                case CDParamType::cdptExternalNode:
+                    par.var = externalNodes[cdp.index];
+                    break;
+            }
+            cont.setParam(j, par);
+        }
+    }
+
     for (siz i = 0; i < nComponent; i++) {
         ComponentBase& comp = *components[i].get();
         for (siz j = 0; j < comp.def->componentParams.size(); j++) {
@@ -1653,6 +1707,10 @@ void ComponentSubCircuit::buildOrReplace() {
 
     for (siz i = 0; i < nComponent; i++) {
         components[i]->buildOrReplace();
+    }
+
+    for (siz i = 0; i < nControllers; i++) {
+        controllers[i]->buildOrReplace();
     }
 
     // isJacobianMXSymmetrical

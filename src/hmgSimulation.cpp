@@ -30,42 +30,35 @@ void Simulation::runDC() {
     // TODO: SimControl::minIter
 
     if (SimControl::nNonlinComponents == 0) {
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
+        CircuitStorage::AcceptStepDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        
         CircuitStorage& gc = CircuitStorage::getInstance();
-        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
-        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
-        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
-        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationDC(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptStepDC();
-        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
-        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
-        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
     else {
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
+        CircuitStorage::AcceptStepDC(fullCircuitID);
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        
         CircuitStorage& gc = CircuitStorage::getInstance();
-        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
-        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
-        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
-        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationDC(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptStepDC();
-        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
-        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
-        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 
-        gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptIterationDC(true);
-        gc.fullCircuitInstances[fullCircuitID].component->acceptStepDC();
-        gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
-        gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
-        gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
+        CircuitStorage::AcceptStepDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
     }
