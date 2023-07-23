@@ -1338,13 +1338,13 @@ public:
         for (uns i = 0; i < load.size(); i++) {
             switch (load[i].nodeOrVarType) {
                 case NodeConnectionInstructions::sExternalNodeValue:
-                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
                     break;
                 case NodeConnectionInstructions::sExternalNodeStepstart:
-                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
                     break;
                 case NodeConnectionInstructions::sParam:
-                    workField[load[i].functionParamIndex] = pars[load[i].nodeOrVarIndex].get();
+                    workField[model.indexField[load[i].functionParamIndex]] = pars[load[i].nodeOrVarIndex].get();
                     break;
             }
         }
@@ -1508,19 +1508,19 @@ public:
         for (uns i = 0; i < load.size(); i++) {
             switch (load[i].nodeOrVarType) {
                 case NodeConnectionInstructions::sExternalNodeValue:
-                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
                     break;
                 case NodeConnectionInstructions::sExternalNodeStepstart:
-                    workField[load[i].functionParamIndex] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
                     break;
                 case NodeConnectionInstructions::sParam:
-                    workField[load[i].functionParamIndex] = pars[load[i].nodeOrVarIndex].get();
+                    workField[model.indexField[load[i].functionParamIndex]] = pars[load[i].nodeOrVarIndex].get();
                     break;
                 case NodeConnectionInstructions::sMVarValue:
-                    workField[load[i].functionParamIndex] = mVars[load[i].nodeOrVarIndex].getValueDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = mVars[load[i].nodeOrVarIndex].getValueDC();
                     break;
                 case NodeConnectionInstructions::sMVarStepstart:
-                    workField[load[i].functionParamIndex] = mVars[load[i].nodeOrVarIndex].getStepStartDC();
+                    workField[model.indexField[load[i].functionParamIndex]] = mVars[load[i].nodeOrVarIndex].getStepStartDC();
                     break;
             }
         }
@@ -1538,9 +1538,9 @@ public:
             // functionParamIndex == 0 => return, >0 => par
 
             if (dest.nodeOrVarType == NodeConnectionInstructions::sExternalNodeValue)
-                externalNodes[dest.nodeOrVarIndex]->setValueDC(workField[dest.functionParamIndex]); 
+                externalNodes[dest.nodeOrVarIndex]->setValueDC(workField[model.indexField[dest.functionParamIndex]]);
             else if (dest.nodeOrVarType == NodeConnectionInstructions::sMVarValue)
-                mVars[dest.nodeOrVarIndex].setValueDC(workField[dest.functionParamIndex]);
+                mVars[dest.nodeOrVarIndex].setValueDC(workField[model.indexField[dest.functionParamIndex]]);
             else
                 throw hmgExcept("Controller::evaluate_and_storeNodes", "inappropriate STORE type: only OUT node and Var allowed, %u arrived", dest.nodeOrVarType);
         }

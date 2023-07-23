@@ -1,0 +1,22 @@
+HEXMG 1.0
+
+.FUNCTION square P=2 V=1
+10 _MUL V0 P0 P0
+15 _ADD V0 V0 0
+20 _MUL RET V0 P1
+.END FUNCTION square
+
+.MODEL circuit SUBCIRCUIT N=2
+R1 R N0 GND 10
+I1 I N0 GND 0.25
+I2 FCI IN=1 CIN=0 P=1 F=square(IN0 P1) N1 GND N0 0.5 0.1
+.END MODEL circuit
+
+.CREATE circ1 circuit GND=R0
+
+.PROBE P1 V circ1 N0 N1
+
+.RUN circ1 DC
+.SAVE FILE="probe_3.res" P1
+
+.END

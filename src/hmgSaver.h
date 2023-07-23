@@ -163,7 +163,7 @@ class hmgSaver {
                                     fprintf_s(fp, "\t");
                             }
                     }
-                    fprintf_s(fp, "\n");
+                    //fprintf_s(fp, "\n");
                     fclose(fp);
                     delete currentSave;
                 }

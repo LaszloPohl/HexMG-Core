@@ -376,7 +376,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                             throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER LOAD => parameter, control input node, output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
                         // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
                         src.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
-                        src.functionParamIndex = i == 0 ? 0 : i + 1;
+                        src.functionParamIndex = i == 0 ? 0 : i + 1; // there is return parameter
                         if (pfAct->nodeID.type != nvtNone)
                             functionSources.load.push_back(src);
 
@@ -401,7 +401,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                             throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER STORE => output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
                         // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
                         dest.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
-                        dest.functionParamIndex = i == 0 ? 0 : i + 1;
+                        dest.functionParamIndex = i == 0 ? 0 : i + 1; // there is return parameter
                         if (pfAct->nodeID.type != nvtNone)
                             functionSources.store.push_back(dest);
 
@@ -1199,7 +1199,7 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                             src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sExternalNodeStepstart : NodeConnectionInstructions::sExternalNodeValue;
                             src.nodeOrVarIndex = cdn.index;
                         }
-                        src.functionParamIndex = i == 0 ? 0 : i + 1;
+                        src.functionParamIndex = i + 2; // = i == 0 ? 0 : i + 1; => no return parameter !
                         functionSources.load.push_back(src);
 
                         delete fact;

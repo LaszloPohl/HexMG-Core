@@ -1,0 +1,90 @@
+HEXMG 1.0
+
+
+.FUNCTION blue_attenuation P=3 V=2
+10 _MULC V0 P0 -0.60947	// P0: T
+20 _ADDC V1 V0 2589.067
+30 _NEG V1 V1
+40 _MUL V0 V1 P1	// P1: d
+50 _EXP V1 V0
+60 _MUL RET V1 P2	// P2: blue in
+.END FUNCTION blue_attenuation
+
+
+.FUNCTION blue_conversion_efficiency P=2 V=2
+10 _MULC V0 P0 -0.00012734	// P0: T
+20 _ADDC V1 V0 0.84530223
+30 _MUL RET V0 P1		// P1: blue absorbed
+.END FUNCTION blue_conversion_efficiency
+
+
+.FUNCTION blue_ray_section CT=1 P=3 V=3
+5 _LOAD V3 CTS0.N0			// V3: T
+10 blue_attenuation RET V3 P0 P1	// P0: d, P1: blue in => blue out
+20 _SUB V0 P1 RET			// blue absorbed
+30 blue_conversion_efficiency V1 V3 V0	// new yellow
+40 _SUB V2 V0 V1			// dissipated power
+50 _INCD CTS1.V0 V1			// new yellow
+60 _INCD CTS1.V1 V2			// dissipated power
+// 60 _LOAD
+// 60 _STORE
+// 60 _LOADD
+// 60 _STORED
+// 60 _INCD
+// 60 _LOADI				// only for an X node of a component, no store
+// 60 _LOADSTS				// stepstart
+// 60 _STORESTS				// stepstart
+// 60 _LOAD_VG P4 V2			// V2 = VG[P4]
+// 60 _STORE_VG P4 V2			// VG[P4] = V2
+// 60 _LOADD_VG
+// 60 _STORED_VG
+// 60 _INCD_VG P4 V2			// VG[P4].d += V2
+.END FUNCTION blue_ray_section
+
+
+.FUNCTION blue_ray_1 CT=3 P=1 V=2
+10 blue_ray_section CT0 V0 2.3e-8 P0	// P0: blue in
+20 blue_ray_section CT1 V1 4.7e-8 V0
+30 blue_ray_section CT2 RET 1.5e-7 V1
+.END FUNCTION blue_ray_1
+
+
+.MODEL bRay1 CONTROLLER CIN=1 OUT=1 CT=3
+FUNCTION blue_ray_1 CT0 CT1 CT2	// no params here
+LOAD  X CIN0
+STORE OUT X
+.END MODEL bRay1
+
+
+.MODEL circ2 SUBCIRCUIT N=24 C=2
+Cell_0 MODEL cell_0 N0 N3 C0
+Cell_1 MODEL cell_2 N0 N1 N4
+Cell_2 MODEL cell_2 N1 N2 N5
+Cell_3 MODEL cell_0 N2 N6
+
+Cell_4 MODEL cell_6 N15 N3 N7
+Cell_5 MODEL cell_4 N15 N16 N4 N8
+Cell_6 MODEL cell_4 N16 N17 N5 N9
+Cell_7 MODEL cell_3 N17 N6 N10
+
+Cell_8 MODEL cell_6 N18 N7 N11
+Cell_9 MODEL cell_4 N18 N19 N8 N12
+Cell_10 MODEL cell_4 N19 N20 N9 N13
+Cell_11 MODEL cell_6 N20 N10 N14
+
+Cell_12 MODEL cell_1 N21 N11
+Cell_13 MODEL cell_2 N21 N22 N12
+Cell_14 MODEL cell_2 N22 N23 N13
+Cell_15 MODEL cell_0 N23 N14
+
+Ray1 MODEL bRay1 C0 C1 Cell_0 Cell_1 Cell_2
+.END MODEL circ2
+
+.CREATE circ2 xxx GND=R0
+
+.PROBE P2 V circ2 N0 N1
+
+.RUN circ2 DC
+.SAVE FILE="probe_5.res" P2
+
+.END

@@ -574,7 +574,7 @@ struct HMGFileComponentInstanceLine : HMGFileListItem {
             iStream.add(new IsFunctionControlledComponentInstanceInstruction(instanceIndex, modelIndex, isDefaultRail, 
                 defaultValueRailIndex, isController, isBuiltIn, (uns)nodes.size(), (uns)params.size(), (uns)componentParams.size(), nIN, nCin, nPar,
                 isFunctionBuiltIn, functionIndex, (uns)functionParams.size(), (uns)functionComponentParams.size()));
-            for (const auto& fparam : functionParams)
+            for (const auto& fparam : functionParams) // not sending param for RET (controller does)
                 iStream.add(new IsNodeValueInstruction(fparam));
             for (const auto& num : functionComponentParams)
                 iStream.add(new IsUnsInstruction(num));
@@ -671,9 +671,9 @@ struct HMGFileModelDescription: HMGFileListItem {
                 iStream.add(new IsDefaultNodeParameterInstruction(dnv));
             for (const auto& fcp : functionComponentParams)
                 iStream.add(new IsUnsInstruction(fcp));
-            for (const auto& fpl : functionParamsLoad)
+            for (const auto& fpl : functionParamsLoad) // sending param for RET (funct controlled components does not)
                 iStream.add(new IsNodeValueInstruction(fpl));
-            for (const auto& fps : functionParamsStore)
+            for (const auto& fps : functionParamsStore) // sending param for RET (funct controlled components does not)
                 iStream.add(new IsNodeValueInstruction(fps));
             iStream.add(new IsEndDefInstruction(sitDefModelController, modelIndex));
         }
