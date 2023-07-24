@@ -46,7 +46,6 @@ void Simulation::runDC() {
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         
@@ -56,7 +55,16 @@ void Simulation::runDC() {
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+
+        std::cout << std::endl;
+        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
         CircuitStorage::AcceptStepDC(fullCircuitID);
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
         std::cout << std::endl;
@@ -83,14 +91,12 @@ void Simulation::runTimeStep() {
     }
     else {
         CircuitStorage& gc = CircuitStorage::getInstance();
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
+        for (uns i = 0; i < 10; i++) {
+            CircuitStorage::CalculateControllersDC(fullCircuitID);
+            CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+            CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+            CircuitStorage::AcceptIterationDC(fullCircuitID);
+        }
         CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
