@@ -93,9 +93,9 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 
 //***********************************************************************
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
-    bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
+    bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, bimtConstV,
     bimtConst_V_Controlled_I, bimtConst_Controlled_I, bimtGirator, bimtConstVI,
-    bimFunc_Controlled_IG, bimtSize }; // bimtSize have to be the last one
+    bimtConstMI, bimFunc_Controlled_IG, bimtSize }; // bimtSize have to be the last one
 //***********************************************************************
 
 
@@ -104,8 +104,8 @@ enum ComponentAndControllerModelType {
 //***********************************************************************
     ccmt_ConstR_1, ccmt_ConstR_2, ccmt_ConstG_1, ccmt_ConstG_2,
     ccmt_ConstC_1, ccmt_ConstC_2, ccmt_ConstI_1, ccmt_ConstI_2,
-    ccmt_Const_V_Controlled_I_1,  ccmt_Girator,  ccmt_ConstVI,
-    ccmt_ConstIC,
+    ccmt_ConstV, ccmt_Const_V_Controlled_I_1, ccmt_Girator,
+    ccmt_ConstVI, ccmt_ConstMI, ccmt_ConstIC,
     ccmt_Function_Controlled_I_with_const_G, ccmt_Controller,
     ccmt_SubCircuit
 };

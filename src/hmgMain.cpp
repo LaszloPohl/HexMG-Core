@@ -636,12 +636,13 @@ void probaSzimulacio4() {
 int main(int n, const char** params) {
 //***********************************************************************
 	Rails::resize(1);
+	Rails::reset();
 	try {
 		HmgFileReader reader;
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_8.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_9.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

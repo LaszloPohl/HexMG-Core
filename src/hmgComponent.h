@@ -621,6 +621,78 @@ public:
 
 
 //***********************************************************************
+class ComponentConstV : public Component_2Node {
+//***********************************************************************
+    Param param[5];
+    cplx IAC = cplx0;
+public:
+    //***********************************************************************
+    // par1: DC value before t=0, par2: DC value after t=0, par3: AC amplitude, par4: AC phase [rad], par5: G
+    //***********************************************************************
+    using Component_2Node::Component_2Node;
+    //***********************************************************************
+    void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
+    //************************** AC / DC functions *******************************
+    void calculateCurrent(bool isDC) noexcept override {
+    //***********************************************************************
+        if (isDC) {
+            crvt V = componentValue.getValueDC();
+            crvt G = param[4].get();
+            crvt I = G * (V + N1->getValueDC() - N0->getValueDC());
+            componentCurrent.setValueDC(-I);
+            N0->incDDC(I);
+            N1->incDDC(-I);
+        }
+        else {
+            crvt G = param[4].get();
+            crvt A = param[2].get() * G;
+            crvt Phi = param[3].get();
+            IAC = { A * cos(Phi), A * sin(Phi) };
+            IAC += N1->getValueAC() - N0->getValueAC();
+            N0->incDAC(IAC);
+            N1->incDAC(-IAC);
+        }
+    }
+    //***********************************************************************
+    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    //************************** DC functions *******************************
+    void calculateValueDC() noexcept override {
+    //***********************************************************************
+        componentValue.setValueDC(SimControl::timeStepStop.getValueDC() == 0 
+            ? param[0].get()
+            : param[1].get());
+    }
+    //***********************************************************************
+    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() * param[4].get() : componentCurrent.getValueDC() * param[4].get(); }
+    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getYDC(uns y, uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        crvt G = param[4].get();
+        N0->incYiiDC(G);
+        N1->incYiiDC(G);
+    }
+    //************************** AC functions *******************************
+    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getYAC(uns y, uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    //***********************************************************************
+        if (N0 == N1)
+            return;
+        ccplx G = param[4].get();
+        N0->incYiiAC(G);
+        N1->incYiiAC(G);
+    }
+    //***********************************************************************
+};
+
+
+//***********************************************************************
 class Component_4Node_4Par : public RealComponent {
 //***********************************************************************
 protected:
@@ -1183,6 +1255,8 @@ public:
     //***********************************************************************
     rvt getJreducedDC(uns y) const noexcept override { 
     //***********************************************************************
+        if (y > 1)
+            return rvt0;
         // XB = [-1 1]
         // JRED = XB*NZBJB (and +JA but JA=0)
         return y == 0 ? NZBJB_DC : -NZBJB_DC;
@@ -1190,7 +1264,9 @@ public:
     //***********************************************************************
     rvt getYDC(uns y, uns x) const noexcept override {
     //***********************************************************************
-        return y == x ? param[4].get() : -param[4].get();
+        if (x > 1 || y > 1)
+            return rvt0;
+        return y == x ? param[4].get() : -param[4].get();  // !
     }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
@@ -1198,7 +1274,7 @@ public:
     //***********************************************************************
         if (N[0] == N[1])
             return;
-        crvt G = param[4].get();
+        crvt G = param[4].get(); // !
         N[0]->incYiiDC(G);
         N[1]->incYiiDC(G);
     }
@@ -1211,6 +1287,8 @@ public:
     //***********************************************************************
     cplx getJreducedAC(uns y) const noexcept override {
     //***********************************************************************
+        if (y > 1)
+            return cplx0;
         // XB = [-1 1]
         // JRED = XB*NZBJB (and +JA but JA=0)
         return y == 0 ? NZBJB_AC : -NZBJB_AC;
@@ -1218,7 +1296,9 @@ public:
     //***********************************************************************
     cplx getYAC(uns y, uns x) const noexcept override {
     //***********************************************************************
-        return y == x ? param[4].get() : -param[4].get();
+        if (x > 1 || y > 1)
+            return cplx0;
+        return y == x ? param[4].get() : -param[4].get(); // !
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -1226,7 +1306,228 @@ public:
     //***********************************************************************
         if (N[0] == N[1])
             return;
-        ccplx G = param[4].get();
+        ccplx G = param[4].get(); // !
+        N[0]->incYiiAC(G);
+        N[1]->incYiiAC(G);
+    }
+    //***********************************************************************
+    cplx getCurrentAC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueAC(); case 1: return N[2]->getValueAC(); default: return cplx0; } }
+    //***********************************************************************
+#ifdef HMG_DEBUGPRINT
+    void printNodeValueDC(uns) const noexcept override {}
+    void printNodeErrorDC(uns) const noexcept override {}
+    void printNodeDefectDC(uns) const noexcept override {}
+    void printNodeValueAC(uns) const noexcept override {}
+    void printNodeErrorAC(uns) const noexcept override {}
+    void printNodeDefectAC(uns) const noexcept override {}
+#endif
+};
+
+
+//***********************************************************************
+class ComponentConstMI final : public RealComponent {
+//***********************************************************************
+protected:
+    NodeVariable* N[3] = { nullptr, nullptr, nullptr };
+    std::unique_ptr<NodeVariable> possibleCurrentNode;
+    Param param;
+    rvt NZBJB_DC = rvt0;
+    cplx NZBJB_AC = cplx0;
+public:
+    //***********************************************************************
+    // par: G value of the voltmeter, this means a G = 1/G resistor on the B side of the girator
+    //***********************************************************************
+    using RealComponent::RealComponent;
+    //***********************************************************************
+    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    //***********************************************************************
+        return N[nodeIndex];
+    }
+    //***********************************************************************
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    //***********************************************************************
+    void setParam(siz parIndex, const Param& par)noexcept override { param = par; }
+    //***********************************************************************
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    //***********************************************************************
+        if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
+            pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
+            pNode->setIsConcurrent(false);
+        }
+        else
+            pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        N[nodeIndex] = pNode;
+    }
+    //************************** AC / DC functions *******************************
+    void resetNodes(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
+    void deleteD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
+    void deleteF(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
+    void deleteYii(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
+    void loadFtoD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
+    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    //***********************************************************************
+    void calculateCurrent(bool isDC) noexcept override {
+    //***********************************************************************
+        crvt G = 1.0 / param.get();
+        if (isDC) {
+            crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
+            crvt UB = N[2]->getValueDC();
+            componentCurrent.setValueDC(UB);
+            N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->incDDC(UB);
+            crvt JB = -IB - G * UB;
+            N[2]->setDDC(JB);
+        }
+        else {
+            ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
+            ccplx UB = N[2]->getValueAC();
+            N[0]->incDAC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->incDAC(UB);
+            ccplx JB = -IB - G * UB;
+            N[2]->setDAC(JB);
+        }
+    }
+    //***********************************************************************
+    void forwsubs(bool isDC) override {
+    //***********************************************************************
+        crvt NZB = -param.get(); // crvt G = 1.0 / param.get(); crvt NZB = -1.0 / G;
+        if (isDC) {
+            crvt JB = -N[2]->getDDC();
+            NZBJB_DC = NZB * JB;
+        }
+        else {
+            ccplx JB = -N[2]->getDAC();
+            NZBJB_AC = NZB * JB;
+        }
+    }
+    //***********************************************************************
+    void backsubs(bool isDC) override {
+    //***********************************************************************
+        if (isDC) {
+            crvt UA1 = N[0]->getVDC();
+            crvt UA2 = N[1]->getVDC();
+            crvt UB = (UA1 - UA2) * param.get() + NZBJB_DC;
+            N[2]->setVDC(UB);
+            componentCurrent.setValueDC(N[2]->getValueDC());
+        }
+        else {
+            ccplx UA1 = N[0]->getVAC();
+            ccplx UA2 = N[1]->getVAC();
+            ccplx UB = (UA1 - UA2) * param.get() + NZBJB_AC;
+            N[2]->setVAC(UB);
+        }
+    }
+    //***********************************************************************
+    void jacobiIteration(bool isDC) noexcept override {
+    //***********************************************************************
+        if (isDC) {
+            N[2]->setValue0DC(N[2]->getValue0DC() + param.get() * N[2]->getDDC()); // + or - ? I'm not sure
+        }
+        else {
+            N[2]->setValue0AC(N[2]->getValue0AC() + param.get() * N[2]->getDAC()); // + or - ? I'm not sure
+        }
+    }
+    //***********************************************************************
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
+    //***********************************************************************
+        ComponentConstMI* coarseVgen = static_cast<ComponentConstMI*>(coarse);
+        rvt sumRet = rvt0;
+        if (isDC) {
+            switch (type) {
+                case rprProlongateU: N[2]->setValue0DC(coarseVgen->N[2]->getValue0DC()); break; // uh = uH
+                case rprRestrictU:   coarseVgen->N[2]->setValue0DC(N[2]->getValue0DC()); break; // uH = uh
+                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                        rvt diff = coarseVgen->N[2]->getDDC() - N[2]->getDDC();
+                        coarseVgen->N[2]->setFDC(N[2]->getFDC() + diff);
+                        sumRet += diff * diff;
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurrentDC(coarseVgen->N[2]->getValue0DC() - N[2]->getValue0DC()); break; // dH_NonConcurrent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0DC(coarseVgen->N[2]->getDNonConcurrentDC()); break; // uh = uh + P(dH_NonConcurrent)
+            }
+        }
+        else {
+            switch (type) {
+                case rprProlongateU: N[2]->setValue0AC(coarseVgen->N[2]->getValue0AC()); break; // uh = uH
+                case rprRestrictU:   coarseVgen->N[2]->setValue0AC(N[2]->getValue0AC()); break; // uH = uh
+                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                        cplx diff = coarseVgen->N[2]->getDAC() - N[2]->getDAC();
+                        coarseVgen->N[2]->setFAC(N[2]->getFAC() + diff);
+                        sumRet = absSquare(diff);
+                    }
+                    break;
+                case rpruHMinusRestrictUhToDHNC: coarseVgen->N[2]->setDNonConcurrentAC(coarseVgen->N[2]->getValue0AC() - N[2]->getValue0AC()); break; // dH_NonConcurrent = uH – R(uh)
+                case rprProlongateDHNCAddToUh:   N[2]->incValue0AC(coarseVgen->N[2]->getDNonConcurrentAC()); break; // uh = uh + P(dH_NonConcurrent)
+            }
+        }
+        return sumRet;
+    }
+    //***********************************************************************
+    rvt calculateResidual(bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
+    //************************** DC functions *******************************
+    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
+    void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
+    //***********************************************************************
+    // If the current node is not connected, buildOrReplace creates an internal node and connect the current node to it.
+    void buildOrReplace() override { 
+    //***********************************************************************
+        if (N[2] == nullptr) { 
+            possibleCurrentNode = std::make_unique<NodeVariable>(); 
+            setNode(2, possibleCurrentNode.get());
+        } 
+    }
+    //***********************************************************************
+    void calculateValueDC() noexcept override {}
+    rvt getJreducedDC(uns y) const noexcept override {
+        if (y > 1)
+            return rvt0;
+        return y == 0 ? NZBJB_DC : -NZBJB_DC; 
+    }
+    rvt getYDC(uns y, uns x) const noexcept override { 
+        if (x > 1 || y > 1)
+            return rvt0;
+        return y == x ? param.get() : -param.get();
+    }  // !
+    //***********************************************************************
+    void calculateYiiDC() noexcept override {
+    // the internal node is ignored here
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        crvt G = param.get(); // !
+        N[0]->incYiiDC(G);
+        N[1]->incYiiDC(G);
+    }
+    //***********************************************************************
+    DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
+    DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
+    rvt getCurrentDC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueDC(); case 1: return N[2]->getValueDC(); default: return rvt0; } }
+    //************************** AC functions *******************************
+    void acceptIterationAndStepAC() noexcept override { N[2]->setValueAcceptedAC(); }
+    //***********************************************************************
+    cplx getJreducedAC(uns y) const noexcept override {
+    //***********************************************************************
+        if (y > 1)
+            return cplx0;
+        // XB = [-1 1]
+        // JRED = XB*NZBJB (and +JA but JA=0)
+        return y == 0 ? NZBJB_AC : -NZBJB_AC;
+    }
+    //***********************************************************************
+    cplx getYAC(uns y, uns x) const noexcept override {
+    //***********************************************************************
+        if (x > 1 || y > 1)
+            return cplx0;
+        return y == x ? param.get() : -param.get(); // !
+    }
+    //***********************************************************************
+    void calculateYiiAC() noexcept override {
+    // the internal node is ignored here
+    //***********************************************************************
+        if (N[0] == N[1])
+            return;
+        ccplx G = param.get(); // !
         N[0]->incYiiAC(G);
         N[1]->incYiiAC(G);
     }
@@ -1364,6 +1665,7 @@ public:
             ? model.controlFunction->devive(&model.indexField[0], &workField[0], const_cast<Component_Function_Controlled_I_with_const_G*>(this), 
                 model.nodeToFunctionParam[x], LineDescription(), functionComponentParams.size() == 0 ? nullptr : const_cast<ComponentAndControllerBase**>(&functionComponentParams.front()))
             : rvt0;
+        //printf("[%u %u] dFv_per_dUi = %g\n", y, x, dFv_per_dUi);
         return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
     }
     //***********************************************************************
@@ -2501,6 +2803,13 @@ inline ComponentAndControllerBase* ModelConstI_2::makeComponent(const ComponentD
 
 
 //***********************************************************************
+inline ComponentAndControllerBase* ModelConstV::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
+//***********************************************************************
+    return new ComponentConstV(def, defaultNodeValueIndex);
+}
+
+
+//***********************************************************************
 inline ComponentAndControllerBase* ModelConst_V_Controlled_I_1::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
     return new ComponentConst_V_Controlled_I_1(def, defaultNodeValueIndex);
@@ -2525,6 +2834,13 @@ inline ComponentAndControllerBase* ModelGirator::makeComponent(const ComponentDe
 inline ComponentAndControllerBase* ModelConstVI::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
     return new ComponentConstVI(def, defaultNodeValueIndex);
+}
+
+
+//***********************************************************************
+inline ComponentAndControllerBase* ModelConstMI::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
+//***********************************************************************
+    return new ComponentConstMI(def, defaultNodeValueIndex);
 }
 
 
@@ -2588,10 +2904,12 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtConstC_2] = std::make_unique<ModelConstC_2>();
         builtInModels[builtInModelType::bimtConstI_1] = std::make_unique<ModelConstI_1>();
         builtInModels[builtInModelType::bimtConstI_2] = std::make_unique<ModelConstI_2>();
+        builtInModels[builtInModelType::bimtConstV] = std::make_unique<ModelConstV>();
         builtInModels[builtInModelType::bimtConst_V_Controlled_I] = std::make_unique<ModelConst_V_Controlled_I_1>();
         builtInModels[builtInModelType::bimtConst_Controlled_I] = std::make_unique<ModelConst_Controlled_I>();
         builtInModels[builtInModelType::bimtGirator] = std::make_unique<ModelGirator>();
         builtInModels[builtInModelType::bimtConstVI] = std::make_unique<ModelConstVI>();
+        builtInModels[builtInModelType::bimtConstMI] = std::make_unique<ModelConstMI>();
         builtInModels[builtInModelType::bimFunc_Controlled_IG] = std::unique_ptr<Model_Function_Controlled_I_with_const_G>(nullptr);
         saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }

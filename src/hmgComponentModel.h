@@ -171,6 +171,16 @@ public:
 
 
 //***********************************************************************
+class ModelConstV final : public ComponentAndControllerModelBase {
+//***********************************************************************
+public:
+    ModelConstV() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 0, 5, 0 }, ccmt_ConstV } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return false; }
+};
+
+
+//***********************************************************************
 class ModelConst_V_Controlled_I_1 final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
@@ -205,6 +215,18 @@ class ModelConstVI final : public ComponentAndControllerModelBase {
 //***********************************************************************
 public:
     ModelConstVI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 5, 0 }, ccmt_ConstVI } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    uns getN_NormalInternalNodes()const noexcept final override { return 1; }
+    uns getN_InternalNodes()const noexcept final override { return 1; }
+    bool canBeNonlinear()const noexcept override { return false; }
+};
+
+
+//***********************************************************************
+class ModelConstMI final : public ComponentAndControllerModelBase {
+//***********************************************************************
+public:
+    ModelConstMI() :ComponentAndControllerModelBase{ { 2, 0, 0, 1, 0, 1, 0 }, ccmt_ConstMI } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     uns getN_NormalInternalNodes()const noexcept final override { return 1; }
     uns getN_InternalNodes()const noexcept final override { return 1; }

@@ -930,7 +930,9 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,  "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2; parnum = 2; }
             else if (strcmp(token,   "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1; parnum = 4; }
             else if (strcmp(token,  "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2; parnum = 5; }
+            else if (strcmp(token,   "V") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstV;   parnum = 5; }
             else if (strcmp(token,  "VI") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVI;  parnum = 5; nodenum = 3; startONodes = 2; stopONodes = 2; }
+            else if (strcmp(token,  "MI") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstMI;  parnum = 1; nodenum = 3; startONodes = 2; stopONodes = 2; }
             else if (strcmp(token,  "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
             else if (strcmp(token, "FCI") == 0) { 
                 pxline->isBuiltIn = true; 
@@ -1076,6 +1078,11 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             }
             for (uns i = 0; i < parnum; i++) {
                 pxline->params.emplace_back(ParameterInstance());
+            }
+            switch (pxline->modelIndex) {
+                case bimtConstV:  pxline->params[4].value = 1.0e+005; break;
+                case bimtConstVI: pxline->params[4].value = 1.0e+005; break;
+                case bimtConstMI: pxline->params[0].value = 1.0e+005; break;
             }
             for (uns i = 0; i < parnum; i++) { // the actual number of parameters can be less than the formal parameter number, the missing parameters are 0 values
                 if (lineToken.isSepEOL)

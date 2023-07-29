@@ -63,6 +63,24 @@ void Simulation::runDC() {
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+
+        std::cout << std::endl;
+        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+
+        for (uns i = 0; i < 40; i++) {
+            CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+            CircuitStorage::AcceptIterationDC(fullCircuitID);
+            CircuitStorage::CalculateControllersDC(fullCircuitID);
+            CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+
+            std::cout << std::endl;
+            gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+        }
+
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
         CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);

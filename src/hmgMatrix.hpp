@@ -163,13 +163,13 @@ public:
         }
     }
     //***********************************************************************
-    datatype & get_elem(unsigned row, unsigned col) noexcept {
+    datatype & get_elem(unsigned rw, unsigned cl) noexcept {
     //***********************************************************************
         if (is_symm) {// so m[i][j] is indeed the element with index i,j, but j>=i is mandatory!
-            return (col < row) ? rows[col][row] : rows[row][col];
+            return (cl < rw) ? rows[cl][rw] : rows[rw][cl];
         }
         else {
-            return rows[row][col];
+            return rows[rw][cl];
         }
     }
 
