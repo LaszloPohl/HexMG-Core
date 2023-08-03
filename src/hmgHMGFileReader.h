@@ -301,23 +301,14 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
             break;
         }
     switch (text[0]) {
-        case 'C':
-            if (text[1] == 'I' || text[2] == 'N') {
-                result.type = nvtCIN;
-                if (isNodeN && sscanf_s(&text[3], "%u", &result.index) != 1)
-                    return false;
-            }
-            else {
-                result.type = nvtCInternal;
-                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
-                    return false;
-            }
-            break;
-        case 'F':
-            if (text[1] != 'W' || text[2] != 'O' || text[3] != 'U' || text[4] != 'T')
+        case 'A':
+            result.type = nvtA;
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
-            result.type = nvtFWOUT;
-            if (isNodeN && sscanf_s(&text[5], "%u", &result.index) != 1)
+            break;
+        case 'C':
+            result.type = nvtC;
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
         case 'G':
@@ -327,28 +318,19 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
             else
                 return false;
             break;
-        case 'I':
-            if (text[1] != 'N')
-                return false;
-            result.type = nvtIN;
-            if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
-                return false;
-            break;
         case 'N':
             if (text[1] == 'O' && text[2] == 'N' && text[3] == 'E') {
                 result.type = nvtUnconnected; // ! nvtNone is used for other purposes
             }
             else {
-                result.type = nvtNInternal;
+                result.type = nvtN;
                 if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                     return false;
             }
             break;
         case 'O':
-            if (text[1] != 'U' || text[2] != 'T')
-                return false;
-            result.type = nvtOUT;
-            if (isNodeN && sscanf_s(&text[3], "%u", &result.index) != 1)
+            result.type = nvtO;
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
         case 'P':
@@ -361,22 +343,27 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
             if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
-        case 'X':
-            result.type = nvtIO;
-            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
-                return false;
-            break;
         case 'V':
             if (text[1] == 'G') {
-                result.type = nvtVarGlobal;
+                result.type = nvtVG;
                 if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
                     return false;
             }
             else {
-                result.type = nvtVarInternal;
+                result.type = nvtV;
                 if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                     return false;
             }
+            break;
+        case 'X':
+            result.type = nvtX;
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
+                return false;
+            break;
+        case 'Y':
+            result.type = nvtY;
+            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
+                return false;
             break;
         default:
             return false;
@@ -391,10 +378,10 @@ inline bool textToCDNode(const char* text, CDNode& result) {
     SimpleInterfaceNodeID tmp;
     if (!textToSimpleInterfaceNodeID(text, tmp))
         return false;
-    if (tmp.type != nvtIO && tmp.type != nvtNInternal)
+    if (tmp.type != nvtX && tmp.type != nvtN)
         return false;
     result.index = tmp.index;
-    result.type = tmp.type == nvtIO ? cdntExternal : cdntInternal;
+    result.type = tmp.type == nvtX ? cdntExternal : cdntInternal;
     return true;
 }
 
@@ -682,15 +669,14 @@ struct HMGFileModelDescription: HMGFileListItem {
     bool checkNodeValidity(SimpleInterfaceNodeID id) const noexcept{
     //***********************************************************************
         switch(id.type){
-            case nvtIO:             return id.index < externalNs.nIONodes;
-            case nvtIN:             return id.index < externalNs.nNormalINodes;
-            case nvtCIN:            return id.index < externalNs.nControlINodes;
-            case nvtOUT:            return id.index < externalNs.nNormalONodes;
-            case nvtFWOUT:          return id.index < externalNs.nForwardedONodes;
-            case nvtNInternal:      return id.index < internalNs.nNormalInternalNodes;
-            case nvtCInternal:      return id.index < internalNs.nControlInternalNodes;
-            case nvtVarInternal:    return id.index < internalNs.nInternalVars;
-            case nvtParam:          return id.index < externalNs.nParams;
+            case nvtX:      return id.index < externalNs.nXNodes;
+            case nvtY:      return id.index < externalNs.nYNodes;
+            case nvtA:      return id.index < externalNs.nANodes;
+            case nvtO:      return id.index < externalNs.nONodes;
+            case nvtN:      return id.index < internalNs.nNNodes;
+            case nvtC:      return id.index < internalNs.nCNodes;
+            case nvtV:      return id.index < internalNs.nVars;
+            case nvtParam:  return id.index < externalNs.nParams;
         }
         return true;
     }
@@ -808,14 +794,14 @@ struct HMGFileFunction: HMGFileListItem {
         std::vector<ParameterIdentifier> parameters;
         std::vector<rvt> values;                                                // function parameter values for _PWL
         rvt value = rvt0;                                                       // function parameter value for _CONST
-        uns labelXID = 0;                                                       // for jump instructions, also the index of the external source, e.g. CT6.X2 => labelXID = 6, xSrc = { nvtIO, 2 }
+        uns labelXID = 0;                                                       // for jump instructions, also the index of the external source, e.g. CT6.X2 => labelXID = 6, xSrc = { nvtX, 2 }
         SimpleInterfaceNodeID xSrc;                                             // nodeID of the external source
         std::string labelName;                                                  // first read only the name of the label beacuse forward jumping is possible
     };
     //***********************************************************************
     uns functionIndex = 0;
     uns nParams = 0;
-    uns nInternalVars = 0;
+    uns nVars = 0;
     uns nComponentParams = 0;
     std::map<std::string, uns> labels;
     std::map<rvt, uns> constants; // constant, variable index
@@ -873,7 +859,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (token[0] == 'V' && token[1] == 'G') {
-            dest.xSrc.type = nvtVarGlobal;
+            dest.xSrc.type = nvtVG;
             if (isNodeN)
                 if (sscanf_s(token + 2, "%u", &dest.xSrc.index) != 1)
                     throw hmgExcept("HMGFileFunction::ReadNodeVariable", "VG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -898,7 +884,7 @@ struct HMGFileFunction: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsFunctionInstruction(functionIndex, nComponentParams, nParams, nInternalVars, (uns)instructions.size()));
+        iStream.add(new IsFunctionInstruction(functionIndex, nComponentParams, nParams, nVars, (uns)instructions.size()));
         for (const auto& line : instructions) {
             iStream.add(new IsFunctionCallInstruction(line.type, line.customIndex, line.value, line.labelXID, line.xSrc, (uns)line.componentParams.size(), (uns)line.parameters.size(), (uns)line.values.size()));
             for (const auto& par : line.componentParams)

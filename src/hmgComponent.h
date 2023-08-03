@@ -33,21 +33,16 @@ namespace nsHMG {
 //***********************************************************************
 // External nodes:
 // --------------
-//      IONodes
-//      NormalINodes: Y values can be nonzero
-//      ControlInodes: no Y values
-//      NormalONodes: >= 2 component nodes connected, must be reduced
-//      ForwardedONodes
+//      XNodes
+//      YNodes: Y values can be nonzero
+//      ANodes: no Y values
+//      ONodes: >= 2 component nodes connected, must be reduced
 // Internal nodes:
 // --------------
-//      NormalInternalNodes: >= 2 component nodes connected, must be reduced
-//      ControlInternalNodes
-//      InternalVars
-//***********************************************************************
-// When a component is created, all external nodes must be connected
-// because it gets the external nodes from out.
-// If nothing uses ONodes, then an internal node must be created in the 
-// storage component for each ONode and must be attached to it.
+//      NNodes: >= 2 component nodes connected, must be reduced
+//      CNodes
+//      Vars
+//      UnconnectedONodes
 //***********************************************************************
 
 
@@ -1581,7 +1576,7 @@ public:
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
-        if (nodeIndex < pModel->getN_IO_Nodes() + pModel->getN_Normal_I_Nodes()) // There are 2 IO nodes.
+        if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) // There are 2 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         externalNodes[nodeIndex] = pNode;
     }
@@ -1661,11 +1656,12 @@ public:
             return rvt0;
         crvt G = x == 0 ? pars[0].get() : x == 1 ? -pars[0].get() : rvt0;
         const Model_Function_Controlled_I_with_const_G& model = static_cast<const Model_Function_Controlled_I_with_const_G&>(*pModel);
-        crvt dFv_per_dUi = x < model.nodeToFunctionParam.size() && model.nodeToFunctionParam[x] != unsMax
+        rvt dFv_per_dUi = x < model.nodeToFunctionParam.size() && model.nodeToFunctionParam[x] != unsMax
             ? model.controlFunction->devive(&model.indexField[0], &workField[0], const_cast<Component_Function_Controlled_I_with_const_G*>(this), 
                 model.nodeToFunctionParam[x], LineDescription(), functionComponentParams.size() == 0 ? nullptr : const_cast<ComponentAndControllerBase**>(&functionComponentParams.front()))
             : rvt0;
         //printf("[%u %u] dFv_per_dUi = %g\n", y, x, dFv_per_dUi);
+        //dFv_per_dUi = 0;
         return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
     }
     //***********************************************************************
@@ -1750,7 +1746,10 @@ public:
         pars.resize(def->params.size());
         componentParams.resize(def->componentParams.size());
         const ModelController* pM = dynamic_cast<const ModelController*>(pModel);
-        workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
+        cuns wfs = pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1;
+        workField.resize(wfs);
+        for (uns i = 0; i < wfs; i++)
+            workField[i] = rvt0;
     }
     //***********************************************************************
     ~Controller() { delete[] mVars; }
@@ -1859,15 +1858,15 @@ public:
         const ModelController& model = static_cast<const ModelController&>(*pModel);
         for (uns i = 0; i < model.defaultNodeValues.size(); i++) {
             const DefaultNodeParameter& np = model.defaultNodeValues[i];
-            if (np.nodeID.type == nvtCIN) {
+            if (np.nodeID.type == nvtA) {
                 externalNodes[np.nodeID.index]->setValueDC(np.defaultValue);
                 externalNodes[np.nodeID.index]->setStepStartDC(np.defaultValue);
             }
-            else if (np.nodeID.type == nvtOUT) {
-                externalNodes[np.nodeID.index + model.externalNs.nControlINodes]->setValueDC(np.defaultValue);
-                externalNodes[np.nodeID.index + model.externalNs.nControlINodes]->setStepStartDC(np.defaultValue);
+            else if (np.nodeID.type == nvtO) {
+                externalNodes[np.nodeID.index + model.externalNs.nANodes]->setValueDC(np.defaultValue);
+                externalNodes[np.nodeID.index + model.externalNs.nANodes]->setStepStartDC(np.defaultValue);
             }
-            else if (np.nodeID.type == nvtVarInternal) {
+            else if (np.nodeID.type == nvtV) {
                 mVars[np.nodeID.index].setValueDC(np.defaultValue);
                 mVars[np.nodeID.index].setStepStartDC(np.defaultValue);
             }
@@ -1932,7 +1931,7 @@ public:
     //***********************************************************************
         is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "ComponentSubCircuit::ComponentSubCircuit");
         externalNodes.resize(def->nodesConnectedTo.size());
-        externalCurrents.resize(pModel->getN_IO_Nodes());
+        externalCurrents.resize(pModel->getN_X_Nodes());
         pars.resize(def->params.size());
         componentParams.resize(def->componentParams.size());
     }
@@ -1966,9 +1965,9 @@ public:
     // how many components are connecting to a node (multiple connection from the same component is counted as 1)
     //***********************************************************************
         externalNodesToComponents.clear();
-        externalNodesToComponents.resize(pModel->getN_ExternalNodes()); // NormalONode is possible
+        externalNodesToComponents.resize(pModel->getN_ExternalNodes()); // ONode is possible
         internalNodesToComponents.clear();
-        internalNodesToComponents.resize(static_cast<const ModelSubCircuit*>(pModel)->getN_NormalInternalNodes());
+        internalNodesToComponents.resize(static_cast<const ModelSubCircuit*>(pModel)->getN_N_Nodes()); // ?? What about ONodes?
         for (uns i = 0; i < components.size(); i++) {
             const auto& comp = *components[i];
             if (comp.isEnabled) {
@@ -2134,7 +2133,7 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         
         if (isDC) {
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+            for (uns i = 0; i < model.getN_N_Nodes(); i++) { // ?? What about ONodes?
                 crvt y = internalNodesAndVars[i].getYiiDC();
                 crvt d = internalNodesAndVars[i].getDDC();
                 if (y != rvt0)
@@ -2142,7 +2141,7 @@ public:
             }
         }
         else {
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+            for (uns i = 0; i < model.getN_N_Nodes(); i++) { // ?? What about ONodes?
                 ccplx y = internalNodesAndVars[i].getYiiAC();
                 ccplx d = internalNodesAndVars[i].getDAC();
                 if (y != cplx0)
@@ -2156,7 +2155,7 @@ public:
     //***********************************************************************
         ComponentSubCircuit* coarseSubckt = static_cast<ComponentSubCircuit*>(coarse);
         cuns NInternal = pModel->getN_InternalNodes();
-        cuns NNormalInternal = pModel->getN_NormalInternalNodes();
+        cuns NNormalInternal = pModel->getN_N_Nodes(); // ?? What about ONodes?
         rvt sumRet = rvt0;
         if (isDC) {
             switch (type) {
@@ -2222,7 +2221,7 @@ public:
     rvt calculateResidual(bool isDC) const noexcept override final { 
     //***********************************************************************
         rvt residual = rvt0;
-        cuns NInodes = pModel->getN_NormalInternalNodes();
+        cuns NInodes = pModel->getN_N_Nodes(); // ?? What about ONodes?
 
         if (isDC) {
             for (uns i = 0; i < NInodes; i++)
@@ -2256,7 +2255,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+        for (uns i = 0; i < model.getN_InternalNodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
         }
         for (auto& comp : components)
@@ -2269,7 +2268,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) {
+        for (uns i = 0; i < model.getN_InternalNodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
         }
         for (auto& comp : components)
@@ -2294,10 +2293,10 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
                 internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
         else {
-            for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
                 internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
@@ -2341,7 +2340,7 @@ public:
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_NormalInternalNodes(); i++) // the normalONodes come from outside, from normalInternalNodes
+        for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
             internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationAndStepAC();
@@ -2422,7 +2421,7 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_InternalNodes(); i++)
-            std::cout << "V (" << n << ")\t[" << i << "] = " << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
+            std::cout << "V (" << n << ")\t[" << i << "] = " << std::setprecision(15) << cutToPrint(internalNodesAndVars[i].getValueDC()) << std::endl;
         for (uns i = 0; i < components.size(); i++) {
             if (components[i]->isEnabled) components[i]->printNodeValueDC(i);
         }
@@ -2519,9 +2518,9 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pSubCircuit->pModel);
         const bool isSymm = pSubCircuit->isJacobianMXSymmetrical(true);
-        cuns Arow = model.getN_IO_Nodes();
-        cuns Acol = Arow + (isSymm ? 0 : model.getN_Normal_I_Nodes());
-        cuns Browcol = model.getN_NormalInternalNodes() + model.getN_Normal_O_Nodes();
+        cuns Arow = model.getN_X_Nodes();
+        cuns Acol = Arow + (isSymm ? 0 : model.getN_Y_Nodes());
+        cuns Browcol = model.getN_N_Nodes() + model.getN_O_Nodes();
         YRED.resize_if_needed(Arow, Acol, isSymm);
         JRED.resize_if_needed(Arow);
         YAwork.resize_if_needed(Arow, Acol, isSymm);
@@ -2570,9 +2569,9 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pSubCircuit->pModel);
         const bool isSymm = pSubCircuit->isJacobianMXSymmetrical(false);
-        cuns Arow = model.getN_IO_Nodes();
-        cuns Acol = Arow + (isSymm ? 0 : model.getN_Normal_I_Nodes());
-        cuns Browcol = model.getN_NormalInternalNodes() + model.getN_Normal_O_Nodes();
+        cuns Arow = model.getN_X_Nodes();
+        cuns Acol = Arow + (isSymm ? 0 : model.getN_Y_Nodes());
+        cuns Browcol = model.getN_N_Nodes() + model.getN_O_Nodes();
         YRED.resize_if_needed(Arow, Acol, isSymm);
         JRED.resize_if_needed(Arow);
         YA.resize_if_needed(Arow, Acol, isSymm);

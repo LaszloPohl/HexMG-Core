@@ -32,31 +32,27 @@ inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, con
     CDNode res;
     uns delta = 0;
     switch (src.type) {
-        case nvtIO:
+        case nvtX:
             res.type = CDNodeType::cdntExternal;
             break;
-        case nvtIN:
+        case nvtY:
             res.type = CDNodeType::cdntExternal;
-            delta = externalNs.nIONodes;
+            delta = externalNs.nXNodes;
             break;
-        case nvtCIN:
+        case nvtA:
             res.type = CDNodeType::cdntExternal;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes;
+            delta = externalNs.nXNodes + externalNs.nYNodes;
             break;
-        case nvtOUT:
+        case nvtO:
             res.type = CDNodeType::cdntExternal;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+            delta = externalNs.nXNodes + externalNs.nYNodes + externalNs.nANodes;
             break;
-        case nvtFWOUT:
-            res.type = CDNodeType::cdntExternal;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
-            break;
-        case nvtNInternal:
+        case nvtN:
             res.type = CDNodeType::cdntInternal;
             break;
-        case nvtCInternal:
+        case nvtC:
             res.type = CDNodeType::cdntInternal;
-            delta = internalNs.nNormalInternalNodes;
+            delta = internalNs.nNNodes;
             break;
         case nvtRail:
             res.type = CDNodeType::cdntRail;
@@ -85,36 +81,32 @@ inline CDParam ParameterInstance2CDParam(const ParameterInstance& src, const Ext
         case nvtNone:
             res.type = CDParamType::cdptValue;
             break;
-        case nvtIO:
+        case nvtX:
             res.type = CDParamType::cdptExternalNode;
             break;
-        case nvtIN:
+        case nvtY:
             res.type = CDParamType::cdptExternalNode;
-            delta = externalNs.nIONodes;
+            delta = externalNs.nXNodes;
             break;
-        case nvtCIN:
+        case nvtA:
             res.type = CDParamType::cdptExternalNode;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes;
+            delta = externalNs.nXNodes + externalNs.nYNodes;
             break;
-        case nvtOUT:
+        case nvtO:
             res.type = CDParamType::cdptExternalNode;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes;
+            delta = externalNs.nXNodes + externalNs.nYNodes + externalNs.nANodes;
             break;
-        case nvtFWOUT:
-            res.type = CDParamType::cdptExternalNode;
-            delta = externalNs.nIONodes + externalNs.nNormalINodes + externalNs.nControlINodes + externalNs.nNormalONodes;
-            break;
-        case nvtNInternal:
+        case nvtN:
             res.type = CDParamType::cdptInternalNode;
             break;
-        case nvtCInternal:
+        case nvtC:
             res.type = CDParamType::cdptInternalNode;
-            delta = internalNs.nNormalInternalNodes;
+            delta = internalNs.nNNodes;
             break;
-        case nvtVarInternal:
+        case nvtV:
             res.type = CDParamType::cdptLocalVariable;
             break;
-        case nvtVarGlobal:
+        case nvtVG:
             res.type = CDParamType::cdptGlobalVariable;
             break;
         case nvtParam:
@@ -550,7 +542,7 @@ struct IsFunctionCallInstruction : public IsInstruction {
     builtInFunctionType type = biftInvalid;
     uns customIndex;                        // if type == biftCustom
     rvt value = rvt0;                       // if the function have 1 value
-    uns labelXID = unsMax;                  // for jump instructions, also the index of the external source, e.g. CTS6.X2 => labelXID = 6, xSrc = { nvtIO, 2 }
+    uns labelXID = unsMax;                  // for jump instructions, also the index of the external source, e.g. CTS6.X2 => labelXID = 6, xSrc = { nvtX, 2 }
     SimpleInterfaceNodeID xSrc;             // nodeID of the external source
     uns nParameters = 0;
     uns nComponentParams = 0;

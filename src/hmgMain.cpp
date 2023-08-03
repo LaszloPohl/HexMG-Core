@@ -13,7 +13,7 @@
 #include <chrono>
 #include <ratio>
 #include "hmgHMGFileReader.h"
-#include "hmgInstructionProcessor.h"
+#include "hmgInstructionQueue.h"
 //***********************************************************************
 
 
@@ -367,7 +367,7 @@ void probaSzimulacio2() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nParams_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, G);	mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 0, I, I, 0);		mc->push_back_component(std::move(cd));
@@ -437,7 +437,7 @@ void probaSzimulacio3() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nParams_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 1, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 2, 0, 0 }, false, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 1, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 2, 0, 0 }, false, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, 0.1);		mc->push_back_component(std::move(cd));
 	//cd = make_unique<ComponentDefinition>();	setIStep(cd, 600'000.0, 600'000.0);	mc->push_back_component(std::move(cd));
@@ -450,7 +450,7 @@ void probaSzimulacio3() {
 
 	// 1
 
-	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 1, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 1, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setR(cd, 0, 0.1);		mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, 0.1);	mc->push_back_component(std::move(cd));
@@ -460,8 +460,8 @@ void probaSzimulacio3() {
 
 	// 2
 
-	//mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stSunRed, &instr);
-	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
+	//mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stSunRed, &instr);
+	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 1, 0, 0 }, false, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 0, 1, 0);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setCell(cd, 1, 1, 0);	mc->push_back_component(std::move(cd));
@@ -583,7 +583,7 @@ void probaSzimulacio4() {
 
 	//uns nIONodes_, uns nNormalINodes_, uns nControlINodes_, uns nNormalONodes_, uns nForwardedONodes_, uns nInternalNodes_, uns nNormalInternalNodes_, bool defaultInternalNodeIsConcurrent_, uns nInternalVars_, uns nParams_, SolutionType solutionType_
 
-	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 2, 0, 0 }, false, SolutionType::stFullMatrix);
+	mc = make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 0, 0, 0, 0, 0, 0 }, InternalNodeVarSizePack{ 2, 0, 0 }, false, SolutionType::stFullMatrix);
 
 	cd = make_unique<ComponentDefinition>();	setRinternal(cd, 0.1, 0, 0);	mc->push_back_component(std::move(cd));
 	cd = make_unique<ComponentDefinition>();	setI(cd, 0.25);					mc->push_back_component(std::move(cd));
@@ -642,16 +642,16 @@ int main(int n, const char** params) {
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_9.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_4.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");
 		reader.clear();
 		//most("clear");
 
-		InstructionProcessor ip;
+		InstructionQueue ip;
 		ip.addInstructionStream(is);
-		InstructionProcessor::waitToFinish(ip);
+		InstructionQueue::waitToFinish(ip);
 		//most("process instructions");
 		//esemenyek_kiirasa();
 	}

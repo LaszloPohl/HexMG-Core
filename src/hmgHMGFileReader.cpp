@@ -767,15 +767,14 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
     if (!lineToken.isSepEOL && !lineToken.getNextTokenSimple(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine))
         throw hmgExcept("HMGFileModelDescription::Read", "node/parameter=number expected, %s arrived in %s, line %u", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     while (!lineToken.isSepEOL) {
-        if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "X", externalNs.nIONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "N", internalNs.nNormalInternalNodes));
+        if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "X", externalNs.nXNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "N", internalNs.nNNodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", externalNs.nParams));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN", externalNs.nNormalINodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN", externalNs.nControlINodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "OUT", externalNs.nNormalONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "FWOUT", externalNs.nForwardedONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nControlInternalNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", internalNs.nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "Y", externalNs.nYNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "A", externalNs.nANodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "O", externalNs.nONodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nCNodes));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", internalNs.nVars));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT", externalNs.nComponentT));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
@@ -913,13 +912,13 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
                 const HMGFileModelDescription& mod = *globalNames.modelData[pxline->modelIndex];
-                nodenum = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes + mod.externalNs.nNormalONodes + mod.externalNs.nForwardedONodes;
+                nodenum = mod.externalNs.nXNodes + mod.externalNs.nYNodes + mod.externalNs.nANodes + mod.externalNs.nONodes;
                 parnum = mod.externalNs.nParams;
                 compnum = mod.externalNs.nComponentT;
                 pxline->isController = mod.modelType == hfmtController;
-                if (mod.externalNs.nNormalONodes != 0) {
-                    startONodes = mod.externalNs.nIONodes + mod.externalNs.nNormalINodes + mod.externalNs.nControlINodes;
-                    stopONodes = startONodes + mod.externalNs.nNormalONodes - 1;
+                if (mod.externalNs.nONodes != 0) {
+                    startONodes = mod.externalNs.nXNodes + mod.externalNs.nYNodes + mod.externalNs.nANodes;
+                    stopONodes = startONodes + mod.externalNs.nONodes - 1;
                 }
             }
             else if (strcmp(token,   "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
@@ -1219,7 +1218,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
             while (!lineToken.isSepEOL) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 functionParamsLoad.emplace_back(SimpleInterfaceNodeID());
-                if (strcmp(token, "X") == 0) {
+                if (strcmp(token, "-") == 0) {
                     functionParamsLoad.back().type = nvtNone;
                 }
                 else if (!textToSimpleInterfaceNodeID(token, functionParamsLoad.back()))
@@ -1230,7 +1229,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
             while (!lineToken.isSepEOL) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 functionParamsStore.emplace_back(SimpleInterfaceNodeID());
-                if (strcmp(token, "X") == 0) {
+                if (strcmp(token, "-") == 0) {
                     functionParamsStore.back().type = nvtNone;
                 }
                 else if (!textToSimpleInterfaceNodeID(token, functionParamsStore.back()))
@@ -1611,7 +1610,7 @@ void HMGFileSet::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if (!globalNames.textToDeepInterfaceVarID(token, varID))
         throw hmgExcept("HMGFileSet::Read", "unrecognised variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-    if (varID.nodeID.type != nvtVarInternal && varID.nodeID.type != nvtVarGlobal)
+    if (varID.nodeID.type != nvtV && varID.nodeID.type != nvtVG)
         throw hmgExcept("HMGFileSet::Read", "not a variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
     // value
@@ -1837,7 +1836,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (!textToSimpleInterfaceNodeID(token, instr.nodeID))
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                    if(instr.nodeID.type != nvtNInternal && instr.nodeID.type != nvtCInternal)
+                    if(instr.nodeID.type != nvtN && instr.nodeID.type != nvtC)
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "in .GLOBALRESTRICTION and .GLOBALPROLONGATION only internal node types (N and C) allowed, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     
                     bool isRestrictionProlongationNotEnded = true;
@@ -2069,9 +2068,9 @@ void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokeni
                 id.parIndex = constants[constant];
             }
             else {
-                constants[constant] = nInternalVars;
-                id.parIndex = nInternalVars;
-                nInternalVars++;
+                constants[constant] = nVars;
+                id.parIndex = nVars;
+                nVars++;
             }
         }
         else if (token[0] == 'R' && token[1] == 'E' && token[2] == 'T') { // ! indexField[0] = ret
@@ -2097,7 +2096,7 @@ void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokeni
             
             if (id.parType == ptParam && id.parIndex >= nParams)
                 throw hmgExcept("HMGFileFunction::ReadParams", "parameter index >= number of parameters in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-            if (id.parType == ptLocalVar && id.parIndex >= nInternalVars)
+            if (id.parType == ptLocalVar && id.parIndex >= nVars)
                 throw hmgExcept("HMGFileFunction::ReadParams", "variable index >= number of variables in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
             // ! indexField[0] = ret, indexField[1] = work field starts, indexField[2...nParam+2-1] = params !
@@ -2141,7 +2140,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         throw hmgExcept("HMGFileFunction::Read", "P/V=number expected, %s arrived in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     while (!lineToken.isSepEOL) {
         if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P", nParams));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", nInternalVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", nVars));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT", nComponentParams));
         else
             throw hmgExcept("HMGFileFunction::Read", "unknown node/parameter type, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);

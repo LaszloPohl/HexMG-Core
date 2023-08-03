@@ -63,8 +63,8 @@ inline constexpr uns maxComponentPar = 12;
 //***********************************************************************
 enum NodeVarType {
 //***********************************************************************
-    nvtNone, nvtIO, nvtIN, nvtCIN, nvtOUT, nvtFWOUT, nvtNInternal, nvtCInternal, 
-    nvtVarInternal, nvtVarGlobal, nvtParam, nvtRail, nvtGND, nvtUnconnected,
+    nvtNone, nvtX, nvtY, nvtA, nvtO, nvtN, nvtC, 
+    nvtV, nvtVG, nvtParam, nvtRail, nvtGND, nvtUnconnected,
     nvtTime, nvtDTime, nvtFreq
 };
 
@@ -229,24 +229,23 @@ enum ProbeType {
 //***********************************************************************
 struct ExternalConnectionSizePack {
 //***********************************************************************
-    uns nIONodes = 0;
-    uns nNormalINodes = 0;
-    uns nControlINodes = 0;
-    uns nNormalONodes = 0;
-    uns nForwardedONodes = 0;
+    uns nXNodes = 0;
+    uns nYNodes = 0;
+    uns nANodes = 0;
+    uns nONodes = 0;
     uns nParams = 0;
     uns nComponentT = 0;
-    void zero() { nIONodes = nNormalINodes = nControlINodes = nNormalONodes = nForwardedONodes = nParams = nComponentT = 0; }
+    void zero() { nXNodes = nYNodes = nANodes = nONodes = nParams = nComponentT = 0; }
 };
 
 
 //***********************************************************************
 struct InternalNodeVarSizePack {
 //***********************************************************************
-    uns nNormalInternalNodes = 0;
-    uns nControlInternalNodes = 0;
-    uns nInternalVars = 0;
-    void zero() { nNormalInternalNodes = nControlInternalNodes = nInternalVars = 0; }
+    uns nNNodes = 0;
+    uns nCNodes = 0;
+    uns nVars = 0;
+    void zero() { nNNodes = nCNodes = nVars = 0; }
 };
 
 

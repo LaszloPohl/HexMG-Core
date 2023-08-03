@@ -22,11 +22,11 @@ HEXMG 1.0
 .END FUNCTION hisztercore
 
 
-.MODEL hiszter CONTROLLER CIN=1 OUT=1 P=3 // CIN0=T, OUT0=H, P0=T1, P1=T2, P2=W
-INIT OUT0 0 // only constant, reset sets this for value and stepstart, OUT and V can be initialized
+.MODEL hiszter CONTROLLER A=2 P=3 // A0=T, A1=H, P0=T1, P1=T2, P2=W
+INIT A1 0 // only constant, reset sets this for value and stepstart, A and V can be initialized
 FUNCTION hisztercore
-LOAD  X CIN0 P0 P1 P2 OUT0.STEPSTART	// first is ret, the others are the pars
-STORE OUT0 X X X X X			// first is ret, the others are the pars
+LOAD  - A0 P0 P1 P2 A1.STEPSTART	// first is ret, the others are the pars
+STORE A1 - - - - -			// first is ret, the others are the pars
 .END MODEL hiszter
 
 

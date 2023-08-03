@@ -21,14 +21,13 @@ NodeVariable* ComponentAndControllerBase::getNodeVariableSimpleInterfaceNodeID(c
 //***********************************************************************
     switch (nodeID.type) {
         case nvtNone: return nullptr;
-        case nvtIO: return getNode(nodeID.index);
-        case nvtNInternal: return getInternalNode(nodeID.index);
-        case nvtIN:
-        case nvtCIN:
-        case nvtOUT:
-        case nvtFWOUT:
-        case nvtCInternal:
-        case nvtVarInternal: {
+        case nvtX: return getNode(nodeID.index);
+        case nvtN: return getInternalNode(nodeID.index);
+        case nvtY:
+        case nvtA:
+        case nvtO:
+        case nvtC:
+        case nvtV: {
             CDNode cdn;
             if (!pModel->SimpleInterfaceNodeIDToCDNode(cdn, nodeID))
                 return nullptr;
@@ -39,7 +38,7 @@ NodeVariable* ComponentAndControllerBase::getNodeVariableSimpleInterfaceNodeID(c
             else
                 return nullptr; // impossible
         }
-        case nvtVarGlobal: {
+        case nvtVG: {
             CircuitStorage& gc = CircuitStorage::getInstance();
             return gc.globalVariables[nodeID.index].get();
         }
@@ -118,7 +117,7 @@ int HmgBuiltInFunction_LOADD::evaluate(cuns* index, rvt* workField, ComponentAnd
 //***********************************************************************
 int HmgBuiltInFunction_LOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
-    if (line.xSrc.type == nvtIO)
+    if (line.xSrc.type == nvtX)
         workField[index[0]] = pComponentParams[0]->getCurrentDC(line.xSrc.index);
     return 0;
 }
@@ -202,7 +201,7 @@ int HmgBuiltInFunction_ILOADD::evaluate(cuns* index, rvt* workField, ComponentAn
 int HmgBuiltInFunction_ILOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     uns n = (uns)(workField[index[2]] + 0.5);
-    if (line.xSrc.type == nvtIO)
+    if (line.xSrc.type == nvtX)
         workField[index[0]] = pComponentParams[0]->getCurrentDC(n);
     return 0;
 }
@@ -335,8 +334,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         if (fact->instruction != sitDefaultNodeParameter)
                             throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node parameter expected %u arrived", (uns)fact->instruction);
                         IsDefaultNodeParameterInstruction* pfAct = static_cast<IsDefaultNodeParameterInstruction*>(fact);
-                        if (pfAct->nodePar.nodeID.type != nvtCIN && pfAct->nodePar.nodeID.type != nvtOUT && pfAct->nodePar.nodeID.type != nvtVarInternal)
-                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node value: CIN, OUT or V expected, %u arrived", (uns)pfAct->nodePar.nodeID.type);
+                        if (pfAct->nodePar.nodeID.type != nvtA && pfAct->nodePar.nodeID.type != nvtV)
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => default node value: A or V expected, %u arrived", (uns)pfAct->nodePar.nodeID.type);
                         defaultNodeValues.push_back(pfAct->nodePar);
 
                         delete fact;
@@ -368,14 +367,14 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         NodeConnectionInstructions::ConnectionInstruction src;
                         if (pfAct->nodeID.type == nvtParam)
                             src.nodeOrVarType = NodeConnectionInstructions::sParam;
-                        else if (pfAct->nodeID.type == nvtCIN || pfAct->nodeID.type == nvtOUT)
+                        else if (pfAct->nodeID.type == nvtA)
                             src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sExternalNodeStepstart : NodeConnectionInstructions::sExternalNodeValue;
-                        else if (pfAct->nodeID.type == nvtVarInternal)
+                        else if (pfAct->nodeID.type == nvtV)
                             src.nodeOrVarType = pfAct->nodeID.isStepStart ? NodeConnectionInstructions::sMVarStepstart : NodeConnectionInstructions::sMVarValue;
                         else if (pfAct->nodeID.type != nvtNone)
-                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER LOAD => parameter, control input node, output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER LOAD => parameter, external control node, local var or - expected, %u arrived", (uns)pfAct->nodeID.type);
                         // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
-                        src.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
+                        src.nodeOrVarIndex = pfAct->nodeID.index;
                         src.functionParamIndex = i == 0 ? 0 : i + 1; // there is return parameter
                         if (pfAct->nodeID.type != nvtNone)
                             functionSources.load.push_back(src);
@@ -393,14 +392,14 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                             throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER => STORE parameter expected %u arrived", (uns)fact->instruction);
                         IsNodeValueInstruction* pfAct = static_cast<IsNodeValueInstruction*>(fact);
                         NodeConnectionInstructions::ConnectionInstruction dest;
-                        if (pfAct->nodeID.type == nvtOUT)
+                        if (pfAct->nodeID.type == nvtA)
                             dest.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue;
-                        else if (pfAct->nodeID.type == nvtVarInternal)
+                        else if (pfAct->nodeID.type == nvtV)
                             dest.nodeOrVarType = NodeConnectionInstructions::sMVarValue;
                         else if (pfAct->nodeID.type != nvtNone)
-                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER STORE => output node, local var or X expected, %u arrived", (uns)pfAct->nodeID.type);
+                            throw hmgExcept("CircuitStorage::processInstructions", "CONTROLLER STORE => A node, V var or - expected, %u arrived", (uns)pfAct->nodeID.type);
                         // a controller can only have control input nodes and output nodes as external nodes, no internal nodes
-                        dest.nodeOrVarIndex = pfAct->nodeID.type == nvtOUT ? pfAct->nodeID.index + pAct->externalNs.nControlINodes : pfAct->nodeID.index;
+                        dest.nodeOrVarIndex = pfAct->nodeID.index;
                         dest.functionParamIndex = i == 0 ? 0 : i + 1; // there is return parameter
                         if (pfAct->nodeID.type != nvtNone)
                             functionSources.store.push_back(dest);
@@ -416,18 +415,18 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
 
                     if (pAct->isReplace) {
                         ModelController* mc = static_cast<ModelController*>(models[pAct->index].get());
-                        models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues), 
+                        models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nVars, std::move(defaultNodeValues), 
                             std::move(functionSources), std::move(functionComponentParams), fu);
                     }
                     else {
                         if (pAct->index == models.size()) {
-                            models.push_back(std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues),
+                            models.push_back(std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nVars, std::move(defaultNodeValues),
                                 std::move(functionSources), std::move(functionComponentParams), fu));
                         }
                         else {
                             if (pAct->index > models.size())
                                 models.resize(pAct->index + 1);
-                            models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nInternalVars, std::move(defaultNodeValues),
+                            models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nVars, std::move(defaultNodeValues),
                                 std::move(functionSources), std::move(functionComponentParams), fu);
                         }
                     }
@@ -538,7 +537,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitRvt:                            isImpossibleInstruction = true; break;
             case sitSet: {
                     IsSetInstruction* pAct = static_cast<IsSetInstruction*>(act);
-                    if (pAct->nodeID.nodeID.type == nvtVarGlobal) {
+                    if (pAct->nodeID.nodeID.type == nvtVG) {
                         NodeVariable* poi = vectorForcedGet(globalVariables, pAct->nodeID.nodeID.index).get();
                         if (poi == nullptr) {
                             globalVariables[pAct->nodeID.nodeID.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
@@ -547,7 +546,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         }
                         poi->setValueDC(pAct->value);
                     }
-                    else if (pAct->nodeID.nodeID.type == nvtVarInternal) {
+                    else if (pAct->nodeID.nodeID.type == nvtV) {
                         if (pAct->nodeID.componentID.size() == 0)
                             throw hmgExcept("CircuitStorage::processInstructions", ".SET VI: missing full circuit ID");
                         if(pAct->nodeID.componentID[0] >= fullCircuitInstances.size())
@@ -1166,11 +1165,10 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                     ExternalConnectionSizePack xns;
 
                     if (pAct->modelIndex == bimFunc_Controlled_IG) {
-                        xns.nIONodes = 2;
-                        xns.nNormalINodes = pAct->nIN;
-                        xns.nControlINodes = pAct->nCIN;
-                        xns.nNormalONodes = 0;
-                        xns.nForwardedONodes = 0;
+                        xns.nXNodes = 2;
+                        xns.nYNodes = pAct->nIN;
+                        xns.nANodes = pAct->nCIN;
+                        xns.nONodes = 0;
                         xns.nParams = 1 + pAct->nPar;
                         xns.nComponentT = 0;
                     }
@@ -1512,14 +1510,14 @@ void ComponentSubCircuit::buildOrReplace() {
             nUnconnectedONode++;
     }
 
-    uns nUnconnectedOnodeIndex = model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + model.internalNs.nInternalVars; // = the number of internal nodes and internal vars
+    uns nUnconnectedOnodeIndex = model.internalNs.nNNodes + model.internalNs.nCNodes + model.internalNs.nVars; // = the number of internal nodes and internal vars
     
     delete[] internalNodesAndVars;
     nInternalNodesAndVars = nUnconnectedOnodeIndex + nUnconnectedONode;
     internalNodesAndVars = new NodeVariable[nInternalNodesAndVars];
 
-    for (uns i = 0; i < model.internalNs.nInternalVars; i++)
-        internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + i].setDefaultValueIndex(0, true);
+    for (uns i = 0; i < model.internalNs.nVars; i++)
+        internalNodesAndVars[model.internalNs.nNNodes + model.internalNs.nCNodes + i].setDefaultValueIndex(0, true);
 
     for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
         if (externalNodes[i] == nullptr)
@@ -1627,7 +1625,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     par.var->setDefaultValueIndex(0, true);
                     break;
                 case CDParamType::cdptLocalVariable:
-                    par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
+                    par.var = &internalNodesAndVars[model.internalNs.nNNodes + model.internalNs.nCNodes + cdp.index];
                     break;
                 case CDParamType::cdptParam:
                     par = pars[cdp.index];
@@ -1661,7 +1659,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     par.var->setDefaultValueIndex(0, true);
                     break;
                 case CDParamType::cdptLocalVariable:
-                    par.var = &internalNodesAndVars[model.internalNs.nNormalInternalNodes + model.internalNs.nControlInternalNodes + cdp.index];
+                    par.var = &internalNodesAndVars[model.internalNs.nNNodes + model.internalNs.nCNodes + cdp.index];
                     break;
                 case CDParamType::cdptParam:
                     par = pars[cdp.index];
@@ -1766,10 +1764,10 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
     JA.zero(); // the defect of the external nodes is addad to the defect of the subckt component's JB so here not used
     // JB.zero(); // initialized with the defect of the internal nodes
 
-    cuns A1_nIONodes = model.getN_IO_Nodes();
-    cuns A2_nNINodes = model.getN_Normal_I_Nodes();
-    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
-    cuns B2_nNONodes = model.getN_Normal_O_Nodes();
+    cuns A1_nIONodes = model.getN_X_Nodes();
+    cuns A2_nNINodes = model.getN_Y_Nodes();
+    cuns B1_nNInternalNodes = model.getN_N_Nodes();
+    cuns B2_nNONodes = model.getN_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
     cuns NONodes_end = ONodes_start + B2_nNONodes; // end index of normal ONodes
 
@@ -1786,12 +1784,12 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
     // admittance + defect of the contained components
 
     for (uns i = 0; i < subckt.getNContainedComponents(); i++) {
-        const ComponentBase& compInstance = *subckt.getContainedComponent(i);
+        ComponentBase& compInstance = *const_cast<ComponentBase*>(subckt.getContainedComponent(i));
         if (compInstance.isEnabled) {
             const ComponentAndControllerModelBase& compModel = compInstance.getModel();
             const ComponentDefinition& compDef = *compInstance.def;
-            cuns nIO = compModel.getN_IO_Nodes();
-            cuns nAx = nIO + (isSymm ? 0 : compModel.getN_Normal_I_Nodes());
+            cuns nIO = compModel.getN_X_Nodes();
+            cuns nAx = nIO + (isSymm ? 0 : compModel.getN_Y_Nodes());
             for (uns rowSrc = 0; rowSrc < nIO; rowSrc++) {
 
                 // ground connections disappear
@@ -1807,7 +1805,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                 if (B2_nNONodes != 0) {
                     if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal) {
                         if (yDest >= ONodes_start && yDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
-                            isA = false; // false: NormalONode
+                            isA = false; // false: ONode
                             yDest += B1_nNInternalNodes - ONodes_start;
                         }
                         else isA = true;
@@ -1829,26 +1827,33 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                 // admittances 
 
                 for (uns colSrc = isSymm ? rowSrc : 0; colSrc < nAx; colSrc++) { // in symmetric matrices the admittances should be increased only once(y[i,j] and y[j,i] would be the same)
-                    if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntRail || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntGnd || compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntUnconnected)
+                    const CDNode& nct = compDef.nodesConnectedTo[colSrc];
+                    if (!(nct.type == CDNodeType::cdntInternal || nct.type == CDNodeType::cdntExternal))
                         continue;
                     crvt adm = compInstance.getYDC(rowSrc, colSrc);
+
+                    // INode connected to ControlInternalNode
+
+                    if (nct.type == CDNodeType::cdntInternal && nct.index >= B1_nNInternalNodes) {
+                        continue;
+                    }
 
                     // what is the destination?
                     // if normal ONode among the external nodes, it must be handled as an internal node
 
                     bool isUp;
-                    uns xDest = compDef.nodesConnectedTo[colSrc].index;
+                    uns xDest = nct.index;
                     if (B2_nNONodes != 0) {
-                        if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal) {
+                        if (nct.type == CDNodeType::cdntExternal) {
                             if (xDest >= ONodes_start && xDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
-                                isUp = false; // false: NormalONode
+                                isUp = false; // false: ONode
                                 xDest += B1_nNInternalNodes - ONodes_start;
                             }
                             else isUp = true;
                         }
                         else isUp = false; // false: internal
                     }
-                    else isUp = compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal; // false: internal
+                    else isUp = nct.type == CDNodeType::cdntExternal; // false: internal
 
                     uns externalIndex2 = isUp ? xDest : 0;
                     uns internalIndex2 = isUp ? 0 : xDest;
@@ -1923,11 +1928,11 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
 
     // fill UA
 
-    cuns A1_nIONodes = model.getN_IO_Nodes();
-    cuns A2_nNINodes = model.getN_Normal_I_Nodes();
+    cuns A1_nIONodes = model.getN_X_Nodes();
+    cuns A2_nNINodes = model.getN_Y_Nodes();
     cuns nA = A1_nIONodes + A2_nNINodes;
-    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
-    cuns B2_nNONodes = model.getN_Normal_O_Nodes();
+    cuns B1_nNInternalNodes = model.getN_N_Nodes();
+    cuns B2_nNONodes = model.getN_O_Nodes();
 
     for (uns i = 0; i < nA; i++) {
         UA[i] = subckt.externalNodes[i]->getVDC();
@@ -1965,10 +1970,10 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
     YB_NZB.zero_unsafe();
     JA.zero(); // the defect of the external nodes is addad to the defect of the subckt component's JB so here not used
 
-    cuns A1_nIONodes = model.getN_IO_Nodes();
-    cuns A2_nNINodes = model.getN_Normal_I_Nodes();
-    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
-    cuns B2_nNONodes = model.getN_Normal_O_Nodes();
+    cuns A1_nIONodes = model.getN_X_Nodes();
+    cuns A2_nNINodes = model.getN_Y_Nodes();
+    cuns B1_nNInternalNodes = model.getN_N_Nodes();
+    cuns B2_nNONodes = model.getN_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
     cuns NONodes_end = ONodes_start + B2_nNONodes; // end index of normal ONodes
 
@@ -1989,8 +1994,8 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
         if (compInstance.isEnabled) {
             const ComponentAndControllerModelBase& compModel = compInstance.getModel();
             const ComponentDefinition& compDef = *compInstance.def;
-            cuns nIO = compModel.getN_IO_Nodes();
-            cuns nAx = nIO + (isSymm ? 0 : compModel.getN_Normal_I_Nodes());
+            cuns nIO = compModel.getN_X_Nodes();
+            cuns nAx = nIO + (isSymm ? 0 : compModel.getN_Y_Nodes());
             for (uns rowSrc = 0; rowSrc < nIO; rowSrc++) {
 
                 // ground connections disappear
@@ -2006,7 +2011,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                 if (B2_nNONodes != 0) {
                     if (compDef.nodesConnectedTo[rowSrc].type == CDNodeType::cdntExternal) {
                         if (yDest >= ONodes_start && yDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
-                            isA = false; // false: NormalONode
+                            isA = false; // false: ONode
                             yDest += B1_nNInternalNodes - ONodes_start;
                         }
                         else isA = true;
@@ -2040,7 +2045,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                     if (B2_nNONodes != 0) {
                         if (compDef.nodesConnectedTo[colSrc].type == CDNodeType::cdntExternal) {
                             if (xDest >= ONodes_start && xDest < NONodes_end) { // internal node as normal (=to be reduced) ONode
-                                isUp = false; // false: NormalONode
+                                isUp = false; // false: ONode
                                 xDest += B1_nNInternalNodes - ONodes_start;
                             }
                             else isUp = true;
@@ -2121,11 +2126,11 @@ void SubCircuitFullMatrixReductorAC::backsubs() {
 
     // fill UA
 
-    cuns A1_nIONodes = model.getN_IO_Nodes();
-    cuns A2_nNINodes = model.getN_Normal_I_Nodes();
+    cuns A1_nIONodes = model.getN_X_Nodes();
+    cuns A2_nNINodes = model.getN_Y_Nodes();
     cuns nA = A1_nIONodes + A2_nNINodes;
-    cuns B1_nNInternalNodes = model.getN_NormalInternalNodes();
-    cuns B2_nNONodes = model.getN_Normal_O_Nodes();
+    cuns B1_nNInternalNodes = model.getN_N_Nodes();
+    cuns B2_nNONodes = model.getN_O_Nodes();
 
     for (uns i = 0; i < nA; i++) {
         UA[i] = subckt.externalNodes[i]->getVAC();

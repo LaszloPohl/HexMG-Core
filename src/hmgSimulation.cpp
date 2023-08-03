@@ -69,7 +69,7 @@ void Simulation::runDC() {
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 
-        for (uns i = 0; i < 40; i++) {
+        for (uns i = 0; i < 10; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
             CircuitStorage::AcceptIterationDC(fullCircuitID);
             CircuitStorage::CalculateControllersDC(fullCircuitID);
