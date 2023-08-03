@@ -63,8 +63,8 @@ inline constexpr uns maxComponentPar = 12;
 //***********************************************************************
 enum NodeVarType {
 //***********************************************************************
-    nvtNone, nvtX, nvtY, nvtA, nvtO, nvtN, nvtC, 
-    nvtV, nvtVG, nvtParam, nvtRail, nvtGND, nvtUnconnected,
+    nvtNone, nvtX, nvtY, nvtA, nvtO, nvtN, nvtB, 
+    nvtBG, nvtParam, nvtRail, nvtGND, nvtUnconnected,
     nvtTime, nvtDTime, nvtFreq
 };
 
@@ -243,9 +243,8 @@ struct ExternalConnectionSizePack {
 struct InternalNodeVarSizePack {
 //***********************************************************************
     uns nNNodes = 0;
-    uns nCNodes = 0;
-    uns nVars = 0;
-    void zero() { nNNodes = nCNodes = nVars = 0; }
+    uns nBNodes = 0;
+    void zero() { nNNodes = nBNodes = 0; }
 };
 
 
@@ -336,6 +335,7 @@ struct DeepInterfaceNodeID {
 //***********************************************************************
     SimpleInterfaceNodeID nodeID;
     std::vector<uns> componentID;
+    bool isController = false;
 };
 
 
@@ -402,9 +402,9 @@ struct SimulationToSaveData {
 
 
 //***********************************************************************
-enum CDNodeType { cdntNone, cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntVar, cdntUnconnected }; // unconnected: only for ONodes, var: for functions
+enum CDNodeType { cdntNone, cdntInternal, cdntExternal, cdntRail, cdntGnd, cdntUnconnected };
 struct CDNode { CDNodeType type = cdntNone; uns index = 0; }; // ! default type must be cdntNone!
-enum CDParamType { cdptValue, cdptGlobalVariable, cdptLocalVariable, cdptParam, cdptInternalNode, cdptExternalNode };
+enum CDParamType { cdptValue, cdptGlobalVariable, cdptParam, cdptInternalNode, cdptExternalNode };
 struct CDParam { CDParamType type = CDParamType::cdptValue; uns index = 0; rvt value = rvt0; };
 //***********************************************************************
 

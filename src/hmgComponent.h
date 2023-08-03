@@ -40,9 +40,8 @@ namespace nsHMG {
 // Internal nodes:
 // --------------
 //      NNodes: >= 2 component nodes connected, must be reduced
-//      CNodes
-//      Vars
-//      UnconnectedONodes
+//      BNodes
+//      UnconnectedExtNodes
 //***********************************************************************
 
 
@@ -225,6 +224,7 @@ public:
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        pNode->extend();
         if (nodeIndex == 0)
             N0 = pNode;
         else
@@ -749,8 +749,10 @@ public:
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
-        if(nodeIndex < 2)
+        if (nodeIndex < 2) {
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+            pNode->extend();
+        }
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -854,6 +856,8 @@ public:
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        if (nodeIndex < 2)
+            pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -957,6 +961,7 @@ public:
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1106,6 +1111,7 @@ public:
         }
         else
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1352,6 +1358,7 @@ public:
         }
         else
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+        pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1576,8 +1583,10 @@ public:
     //***********************************************************************
     void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
-        if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) // There are 2 IO nodes.
+        if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) { // There are 2 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+            pNode->extend();
+        }
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
@@ -1729,7 +1738,8 @@ class Controller final : public ComponentAndControllerBase {
     friend class HmgF_Load_Controller_mVar_Value;
     friend class HmgF_Set_Controller_mVar_Value;
     friend class HmgF_Set_Controller_mVar_ValueFromStepStart;
-    NodeVariable* mVars = nullptr;
+    friend class CircuitStorage;
+    std::vector<NodeVariable> mVars;
     uns nmVars = 0;
     std::vector<NodeVariable*> externalNodes;
     std::vector<Param> pars;
@@ -1752,32 +1762,30 @@ public:
             workField[i] = rvt0;
     }
     //***********************************************************************
-    ~Controller() { delete[] mVars; }
-    //***********************************************************************
 
     //***********************************************************************
     void buildOrReplace() override {
     //***********************************************************************
-        if (mVars != nullptr)
+        if (mVars.size() != 0)
             return;
 
         const ModelController& model = static_cast<const ModelController&>(*pModel);
 
-        uns nUnconnectedONode = 0;
-        cuns nEndOnodes = model.getN_ExternalNodes();
-        for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
+        uns nUnconnectedExtNode = 0;
+        cuns nEndExtNodes = model.getN_ExternalNodes();
+        for (uns i = 0; i < nEndExtNodes; i++) {
             if (externalNodes[i] == nullptr)
-                nUnconnectedONode++;
+                nUnconnectedExtNode++;
         }
 
         uns nUnconnectedOnodeIndex = model.nMVars;
-        nmVars = nUnconnectedOnodeIndex + nUnconnectedONode;
-        mVars = new NodeVariable[nmVars];
+        nmVars = nUnconnectedOnodeIndex + nUnconnectedExtNode;
+        mVars.resize(nmVars);
 
         for (uns i = 0; i < model.nMVars; i++)
             mVars[i].setDefaultValueIndex(0, true);
 
-        for (uns i = model.getN_Start_Of_O_Nodes(); i < nEndOnodes; i++) {
+        for (uns i = 0; i < nEndExtNodes; i++) {
             if (externalNodes[i] == nullptr)
                 externalNodes[i] = &mVars[nUnconnectedOnodeIndex++];
         }
@@ -1866,7 +1874,7 @@ public:
                 externalNodes[np.nodeID.index + model.externalNs.nANodes]->setValueDC(np.defaultValue);
                 externalNodes[np.nodeID.index + model.externalNs.nANodes]->setStepStartDC(np.defaultValue);
             }
-            else if (np.nodeID.type == nvtV) {
+            else if (np.nodeID.type == nvtB) {
                 mVars[np.nodeID.index].setValueDC(np.defaultValue);
                 mVars[np.nodeID.index].setStepStartDC(np.defaultValue);
             }
@@ -1905,7 +1913,7 @@ class ComponentSubCircuit final : public ComponentBase {
     std::vector<std::unique_ptr<Controller>> controllers;
     std::vector<NodeVariable*> externalNodes;
     std::vector<cplx> externalCurrents;
-    NodeVariable* internalNodesAndVars = nullptr;
+    std::vector<NodeVariable> internalNodesAndVars;
     std::vector<Param> pars;
     std::vector<ComponentAndControllerBase*> componentParams;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
@@ -1935,8 +1943,6 @@ public:
         pars.resize(def->params.size());
         componentParams.resize(def->componentParams.size());
     }
-    //***********************************************************************
-    ~ComponentSubCircuit() { delete[] internalNodesAndVars; }
     //***********************************************************************
     const NodeVariable& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
     const NodeVariable& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }

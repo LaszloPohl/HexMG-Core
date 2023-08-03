@@ -532,7 +532,9 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
                 return false;
             uns ci = currentComponent->instanceListIndex[token];
             dest.componentID.push_back(ci);
+            TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+            dest.isController = pxline->isController;
             currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
             componentIndex++;
@@ -574,7 +576,9 @@ bool GlobalHMGFileNames::textToDeepInterfaceVarID(char* token, DeepInterfaceNode
             else {
                 uns ci = currentComponent->instanceListIndex[token];
                 dest.componentID.push_back(ci);
+                TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
                 HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+                dest.isController = pxline->isController;
                 currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             }
             token[i] = '.';
@@ -610,6 +614,7 @@ bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, D
                 return false;
             uns ci = currentComponent->instanceListIndex[token];
             dest.componentID.push_back(ci);
+            TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
             currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
@@ -618,32 +623,6 @@ bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, D
         }
         else {
             if (!textToCDNode(token, dest.nodeID))
-                return false;
-            return true;
-        }
-    }
-}
-
-
-//***********************************************************************
-bool GlobalHMGFileNames::textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest) {
-//***********************************************************************
-    dest.componentID.clear();
-    while (true) {
-        uns i = 0;
-        while (token[i] != '\0' && token[i] != '.')
-            i++;
-        if (token[i] == '.') {
-            token[i] = '\0';
-            uns ci = 0;
-            if (sscanf_s(token, "%u", &ci) != 1)
-                return false;
-            dest.componentID.push_back(ci);
-            token[i] = '.';
-            token += i + 1;
-        }
-        else {
-            if (!textToSimpleInterfaceNodeID(token, dest.nodeID))
                 return false;
             return true;
         }
@@ -773,8 +752,7 @@ void HMGFileModelDescription::Read(ReadALine& reader, char* line, LineInfo& line
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "Y", externalNs.nYNodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "A", externalNs.nANodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "O", externalNs.nONodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "C", internalNs.nCNodes));
-        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "V", internalNs.nVars));
+        else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "B", internalNs.nBNodes));
         else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT", externalNs.nComponentT));
         else if (strcmp(lineToken.getActToken(), "SUNRED") == 0) {
             solutionType = stSunRed;
@@ -1605,13 +1583,13 @@ void HMGFileSet::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     if (strcmp(token, ".SET") != 0)
         throw hmgExcept("HMGFileSet::Read", ".SET expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
-    // var ID
+    // B ID
 
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if (!globalNames.textToDeepInterfaceVarID(token, varID))
-        throw hmgExcept("HMGFileSet::Read", "unrecognised variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-    if (varID.nodeID.type != nvtV && varID.nodeID.type != nvtVG)
-        throw hmgExcept("HMGFileSet::Read", "not a variable (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        throw hmgExcept("HMGFileSet::Read", "unrecognised B node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    if (varID.nodeID.type != nvtB && varID.nodeID.type != nvtBG)
+        throw hmgExcept("HMGFileSet::Read", "not a B node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
     // value
 
@@ -1836,8 +1814,8 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (!textToSimpleInterfaceNodeID(token, instr.nodeID))
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                    if(instr.nodeID.type != nvtN && instr.nodeID.type != nvtC)
-                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "in .GLOBALRESTRICTION and .GLOBALPROLONGATION only internal node types (N and C) allowed, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if(instr.nodeID.type != nvtN && instr.nodeID.type != nvtB)
+                        throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "in .GLOBALRESTRICTION and .GLOBALPROLONGATION only internal node types (N and B) allowed, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     
                     bool isRestrictionProlongationNotEnded = true;
                     do {

@@ -306,10 +306,17 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
             if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
             break;
-        case 'C':
-            result.type = nvtC;
-            if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
-                return false;
+        case 'B':
+            if (text[1] == 'G') {
+                result.type = nvtBG;
+                if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
+                    return false;
+            }
+            else {
+                result.type = nvtB;
+                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
+                    return false;
+            }
             break;
         case 'G':
             if (text[1] == 'N' && text[2] == 'D') {
@@ -342,18 +349,6 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
             result.type = nvtRail;
             if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
                 return false;
-            break;
-        case 'V':
-            if (text[1] == 'G') {
-                result.type = nvtVG;
-                if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
-                    return false;
-            }
-            else {
-                result.type = nvtV;
-                if (isNodeN && sscanf_s(&text[1], "%u", &result.index) != 1)
-                    return false;
-            }
             break;
         case 'X':
             result.type = nvtX;
@@ -497,7 +492,6 @@ struct GlobalHMGFileNames {
     std::vector<HMGFileFunction*> functionData;
     //***********************************************************************
     bool textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest);
-    bool textRawToDeepInterfaceNodeID(char* token, DeepInterfaceNodeID& dest);
     bool textToDeepInterfaceVarID(char* token, DeepInterfaceNodeID& dest);
     bool textToDeepCDNodeID(char* token, uns fullCircuitIndex, DeepCDNodeID& dest);
     bool textRawToDeepCDNodeID(char* token, DeepCDNodeID& dest);
@@ -674,8 +668,7 @@ struct HMGFileModelDescription: HMGFileListItem {
             case nvtA:      return id.index < externalNs.nANodes;
             case nvtO:      return id.index < externalNs.nONodes;
             case nvtN:      return id.index < internalNs.nNNodes;
-            case nvtC:      return id.index < internalNs.nCNodes;
-            case nvtV:      return id.index < internalNs.nVars;
+            case nvtB:      return id.index < internalNs.nBNodes;
             case nvtParam:  return id.index < externalNs.nParams;
         }
         return true;
@@ -858,11 +851,11 @@ struct HMGFileFunction: HMGFileListItem {
     void ReadNodeVariable(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo, bool isNodeN) {
     //***********************************************************************
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        if (token[0] == 'V' && token[1] == 'G') {
-            dest.xSrc.type = nvtVG;
+        if (token[0] == 'B' && token[1] == 'G') {
+            dest.xSrc.type = nvtBG;
             if (isNodeN)
                 if (sscanf_s(token + 2, "%u", &dest.xSrc.index) != 1)
-                    throw hmgExcept("HMGFileFunction::ReadNodeVariable", "VG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileFunction::ReadNodeVariable", "BG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             dest.componentParams.push_back(unsMax);
         }
         else if (token[0] == 'C' && token[1] == 'T') {

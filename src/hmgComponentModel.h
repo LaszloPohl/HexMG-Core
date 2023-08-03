@@ -336,11 +336,9 @@ public:
     }
     //***********************************************************************
     uns getN_N_Nodes()const noexcept final override{ return internalNs.nNNodes; }
-    uns getN_InternalNodes()const noexcept final override{ return internalNs.nNNodes + internalNs.nCNodes; }
-    uns getN_Control_Internal_Nodes()const noexcept { return internalNs.nCNodes; }
+    uns getN_InternalNodes()const noexcept final override{ return internalNs.nNNodes + internalNs.nBNodes; }
     //***********************************************************************
-    void setNInternalVars(uns n) noexcept { version++; internalNs.nVars = n; }
-    void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; internalNs.nCNodes = nAll - nNormal; internalNs.nNNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
+    void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; internalNs.nBNodes = nAll - nNormal; internalNs.nNNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
     //***********************************************************************
     uns push_back_component(std::unique_ptr<ComponentDefinition> ptr) { version++; components.push_back(std::move(ptr)); return uns(components.size()); }
     void setComponent(uns index, std::unique_ptr<ComponentDefinition> ptr) noexcept { version++; components[index] = std::move(ptr); }
@@ -385,19 +383,11 @@ inline bool ComponentAndControllerModelBase::SimpleInterfaceNodeIDToCDNode(CDNod
                 return false;
             dest.type = CDNodeType::cdntInternal;
             break;
-        case nvtC:
-            if (modelType != ccmt_SubCircuit)
+        case nvtB:
+            if (modelType != ccmt_SubCircuit && modelType != ccmt_Controller)
                 return false;
             dest.type = CDNodeType::cdntInternal;
             delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNNodes;
-            break;
-        case nvtV:
-            if (modelType != ccmt_SubCircuit && modelType != ccmt_Controller)
-                return false;
-            dest.type = CDNodeType::cdntVar;
-            if (modelType == ccmt_SubCircuit)
-                delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNNodes + static_cast<const ModelSubCircuit*>(this)->internalNs.nCNodes;
-            // controllers have only internal vars, no internal nodes => delta = 0.
             break;
         case nvtRail:
             dest.type = CDNodeType::cdntRail;

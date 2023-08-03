@@ -50,7 +50,7 @@ inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, con
         case nvtN:
             res.type = CDNodeType::cdntInternal;
             break;
-        case nvtC:
+        case nvtB:
             res.type = CDNodeType::cdntInternal;
             delta = internalNs.nNNodes;
             break;
@@ -99,14 +99,11 @@ inline CDParam ParameterInstance2CDParam(const ParameterInstance& src, const Ext
         case nvtN:
             res.type = CDParamType::cdptInternalNode;
             break;
-        case nvtC:
+        case nvtB:
             res.type = CDParamType::cdptInternalNode;
             delta = internalNs.nNNodes;
             break;
-        case nvtV:
-            res.type = CDParamType::cdptLocalVariable;
-            break;
-        case nvtVG:
+        case nvtBG:
             res.type = CDParamType::cdptGlobalVariable;
             break;
         case nvtParam:
