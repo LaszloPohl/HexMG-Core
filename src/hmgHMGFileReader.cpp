@@ -531,10 +531,9 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
             if (currentComponent == nullptr)
                 return false;
             uns ci = currentComponent->instanceListIndex[token];
-            dest.componentID.push_back(ci);
-            TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
             dest.isController = pxline->isController;
+            dest.componentID.push_back(pxline->instanceIndex);
             currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
             componentIndex++;
@@ -575,10 +574,10 @@ bool GlobalHMGFileNames::textToDeepInterfaceVarID(char* token, DeepInterfaceNode
             }
             else {
                 uns ci = currentComponent->instanceListIndex[token];
-                dest.componentID.push_back(ci);
-                TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
+                // dest.componentID.push_back(ci);
                 HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
                 dest.isController = pxline->isController;
+                dest.componentID.push_back(pxline->instanceIndex);
                 currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             }
             token[i] = '.';
@@ -613,9 +612,10 @@ bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, D
             if (currentComponent == nullptr)
                 return false;
             uns ci = currentComponent->instanceListIndex[token];
-            dest.componentID.push_back(ci);
-            TODO("Itt component ID-ként menti az instanceListIndexet, pedig komponensek és kontrollerek is lehetnek instance-ok. Ezt ki kell javítani.");
+            //dest.componentID.push_back(ci);
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+            dest.isController = pxline->isController;
+            dest.componentID.push_back(pxline->instanceIndex);
             currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
             token[i] = '.';
             componentIndex++;
@@ -1588,8 +1588,8 @@ void HMGFileSet::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if (!globalNames.textToDeepInterfaceVarID(token, varID))
         throw hmgExcept("HMGFileSet::Read", "unrecognised B node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-    if (varID.nodeID.type != nvtB && varID.nodeID.type != nvtBG)
-        throw hmgExcept("HMGFileSet::Read", "not a B node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    //if (varID.nodeID.type != nvtB && varID.nodeID.type != nvtBG)
+    //    throw hmgExcept("HMGFileSet::Read", "not a B node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
     // value
 

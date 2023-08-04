@@ -2922,6 +2922,8 @@ class CircuitStorage {
     //***********************************************************************
     const ComponentBase& getComponent(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
+        if (nodeID.isController)
+            throw hmgExcept("CircuitStorage::getComponent", "nodeID asks controller");
         const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
         for (uns i = 0; i < nodeID.componentID.size(); i++) {
             const ComponentSubCircuit* subckt = static_cast<const ComponentSubCircuit*>(component);
@@ -2931,14 +2933,42 @@ class CircuitStorage {
     }
 
     //***********************************************************************
+    const Controller& getController(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
+    //***********************************************************************
+        if (!nodeID.isController)
+            throw hmgExcept("CircuitStorage::getController", "nodeID asks component");
+        const ComponentBase* component = fullCircuitInstances[fullCircuitID].component.get();
+        const Controller* controller = nullptr;
+        for (uns i = 0; i < nodeID.componentID.size(); i++) {
+            const ComponentSubCircuit* subckt = static_cast<const ComponentSubCircuit*>(component);
+            if (i + 1 < nodeID.componentID.size())
+                component = subckt->components[nodeID.componentID[i]].get();
+            else
+                controller = subckt->controllers[nodeID.componentID[i]].get();
+        }
+        return *controller;
+    }
+
+    //***********************************************************************
     const NodeVariable& getNode(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
-        const ComponentBase& component = getComponent(fullCircuitID, nodeID);
-        switch (nodeID.nodeID.type) {
-            case cdntInternal: return static_cast<const ComponentSubCircuit&>(component).internalNodesAndVars[nodeID.nodeID.index];
-            case cdntExternal: return *const_cast<ComponentBase&>(component).getNode(nodeID.nodeID.index);
-            default:
-                throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
+        if (nodeID.isController) {
+            const Controller& controller = getController(fullCircuitID, nodeID);
+            switch (nodeID.nodeID.type) {
+                case cdntInternal: return controller.mVars[nodeID.nodeID.index];
+                case cdntExternal: return *const_cast<Controller&>(controller).getNode(nodeID.nodeID.index);
+                default:
+                    throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
+            }
+        }
+        else {
+            const ComponentBase& component = getComponent(fullCircuitID, nodeID);
+            switch (nodeID.nodeID.type) {
+                case cdntInternal: return static_cast<const ComponentSubCircuit&>(component).internalNodesAndVars[nodeID.nodeID.index];
+                case cdntExternal: return *const_cast<ComponentBase&>(component).getNode(nodeID.nodeID.index);
+                default:
+                    throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
+            }
         }
     }
 
@@ -3070,14 +3100,14 @@ class CircuitStorage {
         switch (src->analysisType) {
             case atDC:
             case atTimeStep: {
-                for (auto probeIndex : probeIndex)
-                    getProbeValuesDC(*probes[probeIndex].get(), src->saveValuesDC);
+                for (auto pi : probeIndex)
+                    getProbeValuesDC(*probes[pi].get(), src->saveValuesDC);
             }
             break;
             case atAC:
             case atTimeConst: {
-                for (auto probeIndex : probeIndex)
-                    getProbeValuesAC(*probes[probeIndex].get(), src->saveValuesAC);
+                for (auto pi : probeIndex)
+                    getProbeValuesAC(*probes[pi].get(), src->saveValuesAC);
             }
             break;
             default:

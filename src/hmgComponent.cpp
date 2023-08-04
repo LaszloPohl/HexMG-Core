@@ -545,44 +545,58 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         }
                         poi->setValueDC(pAct->value);
                     }
-                    else if (pAct->nodeID.nodeID.type == nvtB) {
+                    else if (pAct->nodeID.nodeID.type == nvtX || pAct->nodeID.nodeID.type == nvtY || pAct->nodeID.nodeID.type == nvtA || pAct->nodeID.nodeID.type == nvtO || pAct->nodeID.nodeID.type == nvtN || pAct->nodeID.nodeID.type == nvtB) {
                         if (pAct->nodeID.componentID.size() == 0)
-                            throw hmgExcept("CircuitStorage::processInstructions", ".SET B: missing full circuit ID");
+                            throw hmgExcept("CircuitStorage::processInstructions", ".SET: missing full circuit ID");
                         if(pAct->nodeID.componentID[0] >= fullCircuitInstances.size())
-                            throw hmgExcept("CircuitStorage::processInstructions", ".SET B: invalid full circuit ID (%u)", pAct->nodeID.componentID[0]);
+                            throw hmgExcept("CircuitStorage::processInstructions", ".SET: invalid full circuit ID (%u)", pAct->nodeID.componentID[0]);
                         ComponentSubCircuit* subckt = fullCircuitInstances[pAct->nodeID.componentID[0]].component.get();
                         if (pAct->nodeID.isController) {
                             for (uns i = 1; i < pAct->nodeID.componentID.size() - 1; i++) {
                                 if (subckt->components.size() <= pAct->nodeID.componentID[i])
-                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET B: invalid component index (%u), the subcircuit contains only %u components.",
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: invalid component index (%u), the subcircuit contains only %u components.",
                                         pAct->nodeID.componentID[i], (uns)subckt->components.size());
                                 subckt = dynamic_cast<ComponentSubCircuit*>(subckt->components[pAct->nodeID.componentID[i]].get());
                                 if (subckt == nullptr)
-                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET B: only subcircuits can have internal variables");
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: only subcircuits can have internal variables");
                             }
                             if (subckt->controllers.size() <= pAct->nodeID.componentID.back())
-                                throw hmgExcept("CircuitStorage::processInstructions", ".SET B: invalid controller index (%u), the subcircuit contains only %u components.",
+                                throw hmgExcept("CircuitStorage::processInstructions", ".SET: invalid controller index (%u), the subcircuit contains only %u components.",
                                     pAct->nodeID.componentID.back(), (uns)subckt->components.size());
                             Controller* ctrl = static_cast<Controller*>(subckt->controllers[pAct->nodeID.componentID.back()].get());
                             cuns index = pAct->nodeID.nodeID.index;
-                            if (ctrl->mVars.size() <= index)
-                                throw hmgExcept("CircuitStorage::processInstructions", ".SET B: trying to set a non-existent internal variable (%u)", pAct->nodeID.nodeID.index);
-                            ctrl->mVars[index].setValueDC(pAct->value);
+                            if (pAct->nodeID.nodeID.type == nvtB) {
+                                if (ctrl->mVars.size() <= index)
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: trying to set a non-existent internal node (%u)", pAct->nodeID.nodeID.index);
+                                ctrl->mVars[index].setValueDC(pAct->value);
+                            }
+                            else if (pAct->nodeID.nodeID.type == nvtA) {
+                                if (ctrl->externalNodes.size() <= index)
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: trying to set a non-existent external node (%u)", pAct->nodeID.nodeID.index);
+                                ctrl->externalNodes[index]->setValueDC(pAct->value);
+                            }
+                            else
+                                throw hmgExcept("CircuitStorage::processInstructions", ".SET: only A and B nodes can be set of a controller.");
                         }
                         else {
                             for (uns i = 1; i < pAct->nodeID.componentID.size(); i++) {
                                 if (subckt->components.size() <= pAct->nodeID.componentID[i])
-                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET B: invalid component index (%u), the subcircuit contains only %u components.",
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: invalid component index (%u), the subcircuit contains only %u components.",
                                         pAct->nodeID.componentID[i], (uns)subckt->components.size());
                                 subckt = dynamic_cast<ComponentSubCircuit*>(subckt->components[pAct->nodeID.componentID[i]].get());
                                 if (subckt == nullptr)
-                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET B: only subcircuits can have internal variables");
+                                    throw hmgExcept("CircuitStorage::processInstructions", ".SET: only subcircuits can have internal variables");
                             }
-                            cuns offset = subckt->pModel->getN_N_Nodes();
-                            cuns index = offset + pAct->nodeID.nodeID.index;
-                            if (subckt->nInternalNodesAndVars <= index)
-                                throw hmgExcept("CircuitStorage::processInstructions", ".SET B: trying to set a non-existent internal variable (%u)", pAct->nodeID.nodeID.index);
-                            subckt->internalNodesAndVars[index].setValueDC(pAct->value);
+                            CDNode cdn;
+                            subckt->pModel->SimpleInterfaceNodeIDToCDNode(cdn, pAct->nodeID.nodeID);
+                            if (cdn.type == cdntExternal) {
+                                subckt->externalNodes[cdn.index]->setValueDC(pAct->value);
+                            }
+                            else if (cdn.type == cdntInternal) {
+                                subckt->internalNodesAndVars[cdn.index].setValueDC(pAct->value);
+                            }
+                            else
+                                throw hmgExcept("CircuitStorage::processInstructions", ".SET: program error: impossible code route");
                         }
                     }
                     else
@@ -1071,22 +1085,45 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
             case sitProbeNode: {
                     IsProbeNodeInstruction* pAct = static_cast<IsProbeNodeInstruction*>(act);
 
-                    const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
-                    for (uns i = 0; i < pAct->nodeID.componentID.size(); i++) {
-                        const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
-                        if (subckt == nullptr)
-                            throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: [[[SUBCIRCUIT.]SUBCIRCUIT.]COMPONENT.]NODE required but COMPONENT found instead of a SUBCIRCUIT");
-                        component = subckt->components[pAct->nodeID.componentID[i]].get();
+                    if (pAct->nodeID.isController) {
+                        const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
+                        const Controller* controller = nullptr;
+                        for (uns i = 0; i < pAct->nodeID.componentID.size(); i++) {
+                            const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+                            if (subckt == nullptr)
+                                throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: [[[SUBCIRCUIT.]SUBCIRCUIT.]COMPONENT.]NODE required but COMPONENT found instead of a SUBCIRCUIT");
+                            if (i < pAct->nodeID.componentID.size() - 1)
+                                component = subckt->components[pAct->nodeID.componentID[i]].get();
+                            else
+                                controller = subckt->controllers[pAct->nodeID.componentID[i]].get();
+                        }
+
+                        DeepCDNodeID id = {
+                            SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, controller->pModel->externalNs, InternalNodeVarSizePack{0, static_cast<const ModelController*>(controller->pModel)->nMVars}),
+                            pAct->nodeID.componentID,
+                            true
+                        };
+                        probes[currentProbe]->nodes.push_back(id);
                     }
-                    const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
-                    ;
-                    DeepCDNodeID id = {
-                        SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs),
-                        pAct->nodeID.componentID
-                    };
-                    if(subckt == nullptr && id.nodeID.type != cdntExternal)
-                        throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: internal node is allowed only for SUBCIRCUITS");
-                    probes[currentProbe]->nodes.push_back(id);
+                    else {
+                        const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
+                        for (uns i = 0; i < pAct->nodeID.componentID.size(); i++) {
+                            const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+                            if (subckt == nullptr)
+                                throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: [[[SUBCIRCUIT.]SUBCIRCUIT.]COMPONENT.]NODE required but COMPONENT found instead of a SUBCIRCUIT");
+                            component = subckt->components[pAct->nodeID.componentID[i]].get();
+                        }
+                        const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
+                        ;
+                        DeepCDNodeID id = {
+                            SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs),
+                            pAct->nodeID.componentID,
+                            false
+                        };
+                        if (subckt == nullptr && id.nodeID.type != cdntExternal)
+                            throw hmgExcept("CircuitStorage::processProbesInstructions", "PROBE node definition problem: internal node is allowed only for SUBCIRCUITS");
+                        probes[currentProbe]->nodes.push_back(id);
+                    }
                 }
                 break;
             case sitEndInstruction: {

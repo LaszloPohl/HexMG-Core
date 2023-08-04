@@ -72,7 +72,7 @@ class hmgSaver {
                                 }
                                 break;
                             case atTimeStep: {
-                                    fprintf_s(fp, "Time Step\tt = %g sec\tdt = %g sec\n%g\t", currentSave->timeFreqValue, currentSave->dtValue, currentSave->timeFreqValue);
+                                    fprintf_s(fp, "Time Step\tt = %g sec\tdt = %g sec\n%g\t%g\t", currentSave->timeFreqValue, currentSave->dtValue, currentSave->timeFreqValue, currentSave->dtValue);
                                     isDC = true;
                                 }
                                 break;
@@ -82,7 +82,10 @@ class hmgSaver {
                                 }
                                 break;
                             case atTimeConst: {
-                                    fprintf_s(fp, "Time Constant\tTau = %g sec (f = %g Hz)\n%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue);
+                                    if(currentSave->isTau)
+                                        fprintf_s(fp, "Time Constant\tTau = %g sec (f = %g Hz)\n%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
+                                    else
+                                        fprintf_s(fp, "Time Constant\tf = %g Hz sec (Tau = %g)\n%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
                                     isTC = true;
                                 }
                                 break;
@@ -119,9 +122,11 @@ class hmgSaver {
                         bool isAC = false;
                         bool isTC = false;
                         switch (currentSave->analysisType) {
-                            case atDC: break;
+                            case atDC: 
+                                    isDC = true;
+                                break;
                             case atTimeStep: {
-                                    fprintf_s(fp, "%g\t", currentSave->timeFreqValue);
+                                    fprintf_s(fp, "%g\t%g\t", currentSave->timeFreqValue, currentSave->dtValue);
                                     isDC = true;
                                 }
                                 break;
@@ -131,7 +136,7 @@ class hmgSaver {
                                 }
                                 break;
                             case atTimeConst: {
-                                    fprintf_s(fp, "%g\t", currentSave->timeFreqValue);
+                                    fprintf_s(fp, "%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
                                     isTC = true;
                                 }
                                 break;

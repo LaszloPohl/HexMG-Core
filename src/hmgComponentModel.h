@@ -387,7 +387,8 @@ inline bool ComponentAndControllerModelBase::SimpleInterfaceNodeIDToCDNode(CDNod
             if (modelType != ccmt_SubCircuit && modelType != ccmt_Controller)
                 return false;
             dest.type = CDNodeType::cdntInternal;
-            delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNNodes;
+            if (modelType == ccmt_SubCircuit)
+                delta = static_cast<const ModelSubCircuit*>(this)->internalNs.nNNodes; // controller delta = 0
             break;
         case nvtRail:
             dest.type = CDNodeType::cdntRail;

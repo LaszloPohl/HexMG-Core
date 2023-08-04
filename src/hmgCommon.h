@@ -389,6 +389,7 @@ struct SimulationToSaveData {
 //***********************************************************************
     bool isRaw = false;
     bool isAppend = false;
+    bool isTau = false;
     AnalysisType analysisType = atDC;
     uns maxResultsPerRow = 100;
     rvt timeFreqValue = rvt0;
@@ -414,6 +415,7 @@ struct DeepCDNodeID {
 //***********************************************************************
     CDNode nodeID;
     std::vector<uns> componentID;
+    bool isController = false;
 };
 
 

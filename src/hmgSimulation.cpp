@@ -227,6 +227,7 @@ void Simulation::run(const RunData& runData) {
             else
                 SimControl::setComplexFrequencyForTimeConst(runData.fTauDtT, runData.iterNumSPD);
             timeFreqValue = SimControl::getFrequency();
+            isTau = runData.isTau;
             runAC();
         }
         break;

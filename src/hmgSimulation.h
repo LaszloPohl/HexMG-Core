@@ -32,6 +32,7 @@ class Simulation {
     rvt err = rvt0;
     bool wasDC = false;
     bool isBuiltForAC = false;
+    bool isTau = false;
 
     void iterate(); // always DC
     void runDC();
@@ -49,6 +50,7 @@ public:
         dest->analysisType = analysisType;
         dest->timeFreqValue = timeFreqValue;
         dest->dtValue = dtValue;
+        dest->isTau = isTau;
     }
 };
 
