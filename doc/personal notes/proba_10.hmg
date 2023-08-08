@@ -1,0 +1,81 @@
+HEXMG 1.0
+
+.FUNCTION diodeeq P=2
+10 _MULC RET P0 1k
+15 _MULC RET RET 1e13
+20 _ADDC RET RET 1
+30 _LN RET RET
+40 _MULC RET RET 0.026
+50 _MUL RET RET P1
+.END FUNCTION diodeeq
+
+.MODEL circuit SUBCIRCUIT N=3 B=1
+I1 I N0 GND B0
+R1 R N0 N1 20
+FCI1 FCI F=diodeeq(X1 P0) N1 N2 1k
+R2 R N2 GND 1m
+.END MODEL circuit
+
+.CREATE circ1 circuit GND=R0
+
+.PROBE P1 V circ1 N0 N1 N2
+
+.SET circ1.B0 0.001
+.RUN circ1 DC
+.SAVE FILE="result.txt" P1
+.SET circ1.B0 0.003
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.005
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.007
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.01
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.03
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.05
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.07
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.1
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.15
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.2
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.3
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.4
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.5
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.6
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.7
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.8
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 0.9
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+.SET circ1.B0 1
+.RUN circ1 DC
+.SAVE RAW APPEND FILE="result.txt" P1
+
+.END

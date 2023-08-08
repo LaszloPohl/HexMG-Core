@@ -22,11 +22,11 @@ HEXMG 1.0
 .END FUNCTION hisztercore
 
 
-.MODEL hiszter CONTROLLER CIN=1 OUT=1 P=3 // CIN0=T, OUT0=H, P0=T1, P1=T2, P2=W
-INIT OUT0 0 // only constant, reset sets this for value and stepstart, OUT and V can be initialized
+.MODEL hiszter CONTROLLER A=2 P=3 // A0=T, A1=H, P0=T1, P1=T2, P2=W
+INIT A1 0 // only constant, reset sets this for value and stepstart, A and V can be initialized
 FUNCTION hisztercore
-LOAD  X CIN0 P0 P1 P2 OUT0.STEPSTART	// first is ret, the others are the pars
-STORE OUT0 X X X X X			// first is ret, the others are the pars
+LOAD  - A0 P0 P1 P2 A1.STEPSTART	// first is ret, the others are the pars
+STORE A1 - - - - -			// first is ret, the others are the pars
 .END MODEL hiszter
 
 
@@ -41,17 +41,17 @@ STORE OUT0 X X X X X			// first is ret, the others are the pars
 .END FUNCTION triangle
 
 
-.MODEL hiszckt SUBCIRCUIT N=2 C=1
+.MODEL hiszckt SUBCIRCUIT N=2 B=1
 GEN1 FCI P=2 F=triangle(P1 P2) N0 GND 1 100 2
-HIS1 MODEL hiszter CTRL_LEVEL=0 N0 C0 61 70 6
-IC1  IC N1 GND C0 1
+HIS1 MODEL hiszter CTRL_LEVEL=0 N0 B0 61 70 6
+IC1  IC N1 GND B0 1
 R1   R  N1 GND 10
 .END MODEL hiszckt
 
 
 .CREATE circ1 hiszckt GND=R0
 
-.PROBE P1 V circ1 N0 N1 C0
+.PROBE P1 V circ1 N0 N1 B0 HIS1.A1
 
 //.RUN circ1 DC
 .RUN circ1 TIMESTEP DT=0.5

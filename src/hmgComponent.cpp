@@ -1566,9 +1566,9 @@ void ComponentSubCircuit::buildOrReplace() {
             nUnconnectedExtNode++;
     }
 
-    uns nUnconnectedOnodeIndex = model.internalNs.nNNodes + model.internalNs.nBNodes; // = the number of internal nodes
+    uns nUnconnectedNodeIndex = model.internalNs.nNNodes + model.internalNs.nBNodes; // = the number of internal nodes
     
-    nInternalNodesAndVars = nUnconnectedOnodeIndex + nUnconnectedExtNode;
+    nInternalNodesAndVars = nUnconnectedNodeIndex + nUnconnectedExtNode;
     internalNodesAndVars.resize(nInternalNodesAndVars);
 
     for (uns i = 0; i < model.internalNs.nBNodes; i++)
@@ -1576,7 +1576,7 @@ void ComponentSubCircuit::buildOrReplace() {
 
     for (uns i = 0; i < nEndExtNodes; i++) {
         if (externalNodes[i] == nullptr)
-            externalNodes[i] = &internalNodesAndVars[nUnconnectedOnodeIndex++];
+            externalNodes[i] = &internalNodesAndVars[nUnconnectedNodeIndex++];
     }
 
     for (const auto& forced : model.forcedNodes) {

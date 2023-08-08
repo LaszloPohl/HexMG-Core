@@ -70,7 +70,7 @@ void setI(std::unique_ptr<ComponentDefinition>& cd, rvt I) {
 void setV0(std::unique_ptr<ComponentDefinition>& cd, rvt V, rvt G) { // setV0(cd, 1, T0, G0);
 //***********************************************************************
 	cd->modelType = cmtBuiltIn;
-	cd->modelIndex = builtInModelType::bimtConstVI;
+	cd->modelIndex = builtInModelType::bimtConstVIB;
 	cd->nodesConnectedTo.resize(3);
 	cd->nodesConnectedTo[0].type = CDNodeType::cdntInternal;
 	cd->nodesConnectedTo[0].index = 0;
@@ -642,7 +642,7 @@ int main(int n, const char** params) {
 
 		//most("start");
 		//reader.ReadFile(params[1]);
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_11.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

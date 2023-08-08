@@ -29,7 +29,7 @@ void Simulation::runDC() {
 
     // TODO: SimControl::minIter
 
-    if (SimControl::nNonlinComponents == 0) {
+    if (SimControl::nNonlinComponents == 10) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);

@@ -1,0 +1,20 @@
+HEXMG 1.0
+
+.RAILS=2 R1=20
+
+.MODEL circuit SUBCIRCUIT N=4
+I1 I N0 GND -2
+R1 R N0 N1 6
+VI1 VIN N1 N2 N3 7 7
+//MI1 MIN N1 N2 N3
+R2 R N2 GND 4
+.END MODEL circuit
+
+.CREATE circ1 circuit GND=R1
+
+.PROBE P1 V circ1 N0 N1 N2
+
+.RUN circ1 DC
+.SAVE FILE="proba_11.res" P1
+
+.END
