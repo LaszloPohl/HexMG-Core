@@ -97,7 +97,11 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
     bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, bimtConstV,
     bimtConst_V_Controlled_I, bimtConst_Controlled_I, bimtGirator, bimtConstVIB, bimtConstVIN,
-    bimtMIB, bimtMIN, bimFunc_Controlled_IG, bimtSize }; // bimtSize have to be the last one
+    bimtMIB, bimtMIN, bimFunc_Controlled_IG,
+
+    bimtConstL_1,
+    
+    bimtSize }; // bimtSize have to be the last one
 //***********************************************************************
 
 
@@ -242,7 +246,7 @@ struct ExternalConnectionSizePack {
 
 
 //***********************************************************************
-struct InternalNodeVarSizePack {
+struct InternalNodeSizePack {
 //***********************************************************************
     uns nNNodes = 0;
     uns nBNodes = 0;

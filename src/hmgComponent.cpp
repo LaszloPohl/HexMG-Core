@@ -905,7 +905,7 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
     if (isNotFinished && first == nullptr)
         throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "The instruction stream has ended during multigrid definition.");
     CircuitStorage& gc = CircuitStorage::getInstance();
-    InternalNodeVarSizePack dummyInternalPack;
+    InternalNodeSizePack dummyInternalPack;
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -1076,7 +1076,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
     bool isNotFinished = true;
     if (isNotFinished && first == nullptr)
         throw hmgExcept("CircuitStorage::processProbesInstructions", "The instruction stream has ended during PROBE node definition.");
-    InternalNodeVarSizePack dummyInternalPack;
+    InternalNodeSizePack dummyInternalPack;
     while (isNotFinished) {
         IsInstruction* act = first;
         first = first->next;
@@ -1099,7 +1099,7 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
                         }
 
                         DeepCDNodeID id = {
-                            SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, controller->pModel->externalNs, InternalNodeVarSizePack{0, static_cast<const ModelController*>(controller->pModel)->nMVars}),
+                            SimpleInterfaceNodeID2CDNode(pAct->nodeID.nodeID, controller->pModel->externalNs, InternalNodeSizePack{0, static_cast<const ModelController*>(controller->pModel)->nMVars}),
                             pAct->nodeID.componentID,
                             true
                         };

@@ -905,9 +905,11 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,  "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2;  parnum = 2; }
             else if (strcmp(token,   "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
             else if (strcmp(token,  "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2;  parnum = 2; }
+            else if (strcmp(token,   "L") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstL_1; }
             else if (strcmp(token,   "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1;  parnum = 4; }
             else if (strcmp(token,  "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2;  parnum = 5; }
             else if (strcmp(token,   "V") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstV;    parnum = 5; }
+            else if (strcmp(token,  "IV") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_V_Controlled_I;   parnum = 4; nodenum = 4; }
             else if (strcmp(token, "GYR") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtGirator;   parnum = 2; nodenum = 4; }
             else if (strcmp(token, "VIB") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIB;  parnum = 5; nodenum = 3; startONodes = 2; stopONodes = 2; }
             else if (strcmp(token, "VIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIN;  parnum = 5; nodenum = 3; }
@@ -921,8 +923,8 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 bool isNotFinished = true;
                 do {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "IN",   pxline->nIN));
-                    else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CIN",  pxline->nCin));
+                    if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "Y",    pxline->nIN));
+                    else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "A",    pxline->nCin));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P",    pxline->nPar));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT",   pxline->nCT));
                     else if (strcmp(lineToken.getActToken(), "F") == 0) {
@@ -1055,6 +1057,24 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     if (startONodes == unsMax || i < startONodes || i > stopONodes)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "NONE node connection allowed only for normal output nodes (OUT) in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 }
+                if (pxline->nodes.back().type == nvtX && pxline->nodes.back().index >= externalNs.nXNodes) {
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "X node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nXNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+                if (pxline->nodes.back().type == nvtY && pxline->nodes.back().index >= externalNs.nYNodes) {
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "Y node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nYNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+                if (pxline->nodes.back().type == nvtA && pxline->nodes.back().index >= externalNs.nANodes) {
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "A node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nANodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+                if (pxline->nodes.back().type == nvtO && pxline->nodes.back().index >= externalNs.nONodes) { // nvtA, nvtO, nvtN, nvtB
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "O node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nONodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+                if (pxline->nodes.back().type == nvtN && pxline->nodes.back().index >= internalNs.nNNodes) {
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "N node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nNNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
+                if (pxline->nodes.back().type == nvtB && pxline->nodes.back().index >= internalNs.nBNodes) {
+                    throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "B node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nBNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                }
             }
             for (uns i = 0; i < parnum; i++) {
                 pxline->params.emplace_back(ParameterInstance());
@@ -1080,13 +1100,50 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     else if (strcmp(token, "AC") == 0) index = 2;
                     else if (strcmp(token, "PHI") == 0) index = 3;
                     else if (strcmp(token, "MUL") == 0) index = 4; // for bimtConstI_1 index = 4 == parnum => the error is handled in the next if-else section => it cannot be in an else branch
-                    else if (i == 0 || i == 1) { index = 1 - i; isNextNeeded = false; } // ! The oreder is DC DC0 if nameless!
+                    else if (i == 0 || i == 1) { index = i; isNextNeeded = false; }
                     if (index < parnum) {
                         if (isNextNeeded)
                             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                         if (isalpha(token[0])) { // parameter / variable / node
                             if (!textToSimpleInterfaceNodeID(token, pxline->params[index].param))
                                 throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            switch (pxline->params[index].param.type) {
+                                case nvtX:
+                                    if (pxline->params[index].param.index >= externalNs.nXNodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "X node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nXNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtY:
+                                    if (pxline->params[index].param.index >= externalNs.nYNodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "Y node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nYNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtA:
+                                    if (pxline->params[index].param.index >= externalNs.nANodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "A node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nANodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtO:
+                                    if (pxline->params[index].param.index >= externalNs.nONodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "O node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nONodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtN:
+                                    if (pxline->params[index].param.index >= internalNs.nNNodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "N node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nNNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtB:
+                                    if (pxline->params[index].param.index >= internalNs.nBNodes) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "B node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nBNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                                case nvtParam:
+                                    if (pxline->params[index].param.index >= externalNs.nParams) {
+                                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "P parameter index must be < %u, %s arrived in %s, line %u: %s", externalNs.nParams, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                    }
+                                    break;
+                            }
                         }
                         else { // value
                             if (!spiceTextToRvt(token, pxline->params[index].value))
@@ -1099,6 +1156,43 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 if (isalpha(token[0])) { // parameter / variable / node
                     if (!textToSimpleInterfaceNodeID(token, pxline->params[i].param))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    switch (pxline->params[i].param.type) {
+                        case nvtX:
+                            if (pxline->params[i].param.index >= externalNs.nXNodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "X node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nXNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtY:
+                            if (pxline->params[i].param.index >= externalNs.nYNodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "Y node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nYNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtA:
+                            if (pxline->params[i].param.index >= externalNs.nANodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "A node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nANodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtO:
+                            if (pxline->params[i].param.index >= externalNs.nONodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "O node index must be < %u, %s arrived in %s, line %u: %s", externalNs.nONodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtN:
+                            if (pxline->params[i].param.index >= internalNs.nNNodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "N node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nNNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtB:
+                            if (pxline->params[i].param.index >= internalNs.nBNodes) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "B node index must be < %u, %s arrived in %s, line %u: %s", internalNs.nBNodes, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                        case nvtParam:
+                            if (pxline->params[i].param.index >= externalNs.nParams) {
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "P parameter index must be < %u, %s arrived in %s, line %u: %s", externalNs.nParams, token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                            }
+                            break;
+                    }
                 }
                 else { // value
                     if (!spiceTextToRvt(token, pxline->params[i].value))

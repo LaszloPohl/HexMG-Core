@@ -27,7 +27,7 @@ namespace nsHMG {
 
 
 //***********************************************************************
-inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
+inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, const ExternalConnectionSizePack& externalNs, const InternalNodeSizePack& internalNs) {
 //***********************************************************************
     CDNode res;
     uns delta = 0;
@@ -72,7 +72,7 @@ inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, con
 
 
 //***********************************************************************
-inline CDParam ParameterInstance2CDParam(const ParameterInstance& src, const ExternalConnectionSizePack& externalNs, const InternalNodeVarSizePack& internalNs) {
+inline CDParam ParameterInstance2CDParam(const ParameterInstance& src, const ExternalConnectionSizePack& externalNs, const InternalNodeSizePack& internalNs) {
 //***********************************************************************
     CDParam res;
     uns delta = 0;
@@ -310,11 +310,11 @@ struct IsDefModelSubcircuitInstruction: public IsInstruction {
 //***********************************************************************
     uns index = 0;
     ExternalConnectionSizePack externalNs;
-    InternalNodeVarSizePack internalNs;
+    InternalNodeSizePack internalNs;
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
     bool isReplace = false;
-    IsDefModelSubcircuitInstruction(bool isReplace_, uns index_, ExternalConnectionSizePack externalNs_, InternalNodeVarSizePack internalNs_, SolutionType solutionType_, uns sdi)
+    IsDefModelSubcircuitInstruction(bool isReplace_, uns index_, ExternalConnectionSizePack externalNs_, InternalNodeSizePack internalNs_, SolutionType solutionType_, uns sdi)
         :IsInstruction{ sitDefModelSubcircuit }, isReplace{ isReplace_ }, index{ index_ }, externalNs{ externalNs_ },
         internalNs{ internalNs_ }, solutionType{ solutionType_ }, solutionDescriptionIndex{ sdi } {}
 };
@@ -325,7 +325,7 @@ struct IsDefModelControllerInstruction: public IsInstruction {
 //***********************************************************************
     uns index = 0;
     ExternalConnectionSizePack externalNs;
-    InternalNodeVarSizePack internalNs;
+    InternalNodeSizePack internalNs;
     bool isReplace = false;
     builtInFunctionType functionType = biftInvalid;
     uns functionCustomIndex = 0;
@@ -333,7 +333,7 @@ struct IsDefModelControllerInstruction: public IsInstruction {
     uns nFunctionComponentParams = 0;
     uns nFunctionParamsLoad = 0;
     uns nFunctionParamsStore = 0;
-    IsDefModelControllerInstruction(bool isReplace_, uns indx, ExternalConnectionSizePack externalNs_, InternalNodeVarSizePack internalNs_, builtInFunctionType functionType_, uns functionCustomIndex_,
+    IsDefModelControllerInstruction(bool isReplace_, uns indx, ExternalConnectionSizePack externalNs_, InternalNodeSizePack internalNs_, builtInFunctionType functionType_, uns functionCustomIndex_,
         uns nDefaultNodeValues_, uns nFunctionComponentParams_, uns nFunctionParamsLoad_, uns nFunctionParamsStore_)
         :IsInstruction{ sitDefModelController }, isReplace{ isReplace_ }, index{ indx }, externalNs{ externalNs_ }, internalNs{ internalNs_ }, functionType{ functionType_ }, 
         functionCustomIndex{ functionCustomIndex_ }, nDefaultNodeValues{ nDefaultNodeValues_ }, nFunctionComponentParams{ nFunctionComponentParams_ }, 

@@ -89,6 +89,9 @@ public:
 class ComponentAndControllerBase {
  //***********************************************************************
 public:
+    //***********************************************************************
+    inline static bool isTrapezoid = false;
+    //***********************************************************************
     const ComponentDefinition* def;
     const ComponentAndControllerModelBase* pModel;
     bool isEnabled = true;
@@ -401,8 +404,6 @@ protected:
     rvt Gc = 0, I_stepStart = 0;
     cplx IAC = cplx0;
 public:
-    //***********************************************************************
-    inline static bool isTrapezoid = false;
     //***********************************************************************
     using Component_2Node::Component_2Node;
     //************************** AC / DC functions *******************************
@@ -980,7 +981,7 @@ public:
     void calculateCurrent(bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
-            IDC1 = param[0].get() * (N[2]->getValueDC() - N[3]->getValueDC());
+            IDC1 = -param[0].get() * (N[2]->getValueDC() - N[3]->getValueDC());
             IDC2 = param[1].get() * (N[0]->getValueDC() - N[1]->getValueDC());
             N[0]->incDDC(IDC1);
             N[1]->incDDC(-IDC1);
@@ -988,7 +989,7 @@ public:
             N[3]->incDDC(-IDC2);
         }
         else {
-            IAC1 = param[0].get() * (N[2]->getValueAC() - N[3]->getValueAC());
+            IAC1 = -param[0].get() * (N[2]->getValueAC() - N[3]->getValueAC());
             IAC2 = param[1].get() * (N[0]->getValueAC() - N[1]->getValueAC());
             N[0]->incDAC(IAC1);
             N[1]->incDAC(-IAC1);
@@ -1013,10 +1014,10 @@ public:
     //***********************************************************************
         if (y < 2) {
             if (x < 2)  return rvt0;
-            else        return y + 2 == x ? -param[0].get() : param[0].get(); // I don't know why -S
+            else        return y + 2 == x ? -param[0].get() : param[0].get();
         }
         else {
-            if (x < 2)  return x + 2 == y ? -param[1].get() : param[1].get();
+            if (x < 2)  return x + 2 == y ? param[1].get() : -param[1].get();
             else        return rvt0;
         }
     }
@@ -1980,6 +1981,10 @@ public:
             : rvt0;
         //printf("[%u %u] dFv_per_dUi = %g\n", y, x, dFv_per_dUi);
         //dFv_per_dUi = 0;
+        if (dFv_per_dUi > gmax)
+            dFv_per_dUi = gmax;
+        if (dFv_per_dUi < -gmax)
+            dFv_per_dUi = -gmax;
         return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
     }
     //***********************************************************************
@@ -3218,6 +3223,11 @@ class CircuitStorage {
     std::thread saverThread;
     //***********************************************************************
 
+
+    //***********************************************************************
+    void Create_bimtConstL_1(ComponentAndControllerModelBase* dest);
+    //***********************************************************************
+
  
     //***********************************************************************
     CircuitStorage() {
@@ -3241,9 +3251,24 @@ class CircuitStorage {
         builtInModels[builtInModelType::bimtMIB] = std::make_unique<ModelMIB>();
         builtInModels[builtInModelType::bimtMIN] = std::make_unique<ModelMIN>();
         builtInModels[builtInModelType::bimFunc_Controlled_IG] = std::unique_ptr<Model_Function_Controlled_I_with_const_G>(nullptr);
+
+    /*  ExternalConnectionSizePack
+    uns nXNodes = 0;
+    uns nYNodes = 0;
+    uns nANodes = 0;
+    uns nONodes = 0;
+    uns nParams = 0;
+    uns nComponentT = 0;
+        InternalNodeSizePack
+    uns nNNodes = 0;
+    uns nBNodes = 0;
+    */
+        
+        builtInModels[builtInModelType::bimtConstL_1] = std::make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 2, 0, 0, 0, 1, 0 }, InternalNodeSizePack{ 1, 0 }, false, stFullMatrix);
+        Create_bimtConstL_1(builtInModels[builtInModelType::bimtConstL_1].get());
+
         saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }
-
     //***********************************************************************
     const ComponentBase& getComponent(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************

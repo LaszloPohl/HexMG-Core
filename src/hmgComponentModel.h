@@ -330,7 +330,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
 
     //***********************************************************************
     // number of internal nodes and nVars can be changed in the replace procedure
-    InternalNodeVarSizePack internalNs;
+    InternalNodeSizePack internalNs;
     //***********************************************************************
     uns version = 1; // version is increased with each change in the structure of the subcircuit => the component instance can check that it is up to date
     //***********************************************************************
@@ -351,7 +351,7 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    ModelSubCircuit(ExternalConnectionSizePack Ns_, InternalNodeVarSizePack internalNs_, bool defaultInternalNodeIsConcurrent_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
+    ModelSubCircuit(ExternalConnectionSizePack Ns_, InternalNodeSizePack internalNs_, bool defaultInternalNodeIsConcurrent_, SolutionType solutionType_, hmgSunred::ReductionTreeInstructions* srTree = nullptr)
         : ComponentAndControllerModelBase{ Ns_, ccmt_SubCircuit }, internalNs{ internalNs_ }, solutionType{ solutionType_ }, srTreeInstructions{ srTree } {
     //***********************************************************************
         internalNodeIsConcurrent.resize(internalNs_.nNNodes, defaultInternalNodeIsConcurrent_);

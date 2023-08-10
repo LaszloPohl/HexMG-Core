@@ -131,6 +131,7 @@ struct NodeVariable {
     void setIsConcurrent(bool is) noexcept { isConcurrent = is; }
     void setIsGnd(bool is) noexcept { isGnd = is; }
     void setDefaultValueIndex(uns dvi, bool isForced) noexcept { if (isForced || defaultValueIndex == unsMax) defaultValueIndex = dvi; }
+    uns  getDefaultValueIndex() const noexcept { return defaultValueIndex; }
     rvt getValueDC()const noexcept { if (extension) return valueDC + extension->v.real() * alpha; else return valueDC; } // value + v*alpha
     rvt getValue0DC()const noexcept { return valueDC; }
     rvt getStepStartDC()const noexcept { return stepStartDC; }

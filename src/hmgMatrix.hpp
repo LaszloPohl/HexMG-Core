@@ -623,6 +623,10 @@ public:
     //***********************************************************************
         if (col == 0 || row == 0)
             return;
+        if (a.col == 0) {
+            copy_unsafe(c);
+            return;
+        }
         is_equal_error(c.col, col,     "math_add_mul_t col");
         is_equal_error(c.row, row,     "math_add_mul_t row");
         is_equal_error(a.row, row,     "math_add_mul_t row row");
@@ -700,6 +704,10 @@ public:
     //***********************************************************************
         if (col == 0 || row == 0)
             return;
+        if (a.col == 0) {
+            copy_unsafe(c);
+            return;
+        }
         is_equal_error(a.row, row,     "math_add_mul_t_ row row");
         is_equal_error(b_t.row, col,   "math_add_mul_t_ row col");
         is_equal_error(a.col, b_t.col, "math_add_mul_t_ col col");
@@ -872,6 +880,11 @@ public:
     //***********************************************************************
         if (col == 0 || row == 0)
             return;
+        if (a.col == 0) {
+            copy_unsafe(c);
+            math_neg_unsafe();
+            return;
+        }
         is_equal_error(a.row, row,     "math_sub_mul_t row row");
         is_equal_error(b_t.row, col,   "math_sub_mul_t row col");
         is_equal_error(a.col, b_t.col, "math_sub_mul_t col col");

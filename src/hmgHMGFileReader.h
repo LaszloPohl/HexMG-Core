@@ -591,7 +591,7 @@ struct HMGFileModelDescription: HMGFileListItem {
     ModelType modelType = hfmtSubcircuit;
     bool isReplacer = false;
     ExternalConnectionSizePack externalNs;
-    InternalNodeVarSizePack internalNs;
+    InternalNodeSizePack internalNs;
     HMGFileModelDescription* pParent = nullptr; // if this is a replacer, parent is the replaced object
     //***********************************************************************
     //                        ***** subcircuit data *****
