@@ -899,24 +899,25 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     stopONodes = startONodes + mod.externalNs.nONodes - 1;
                 }
             }
-            else if (strcmp(token,   "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
-            else if (strcmp(token,  "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2;  parnum = 2; }
-            else if (strcmp(token,   "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
-            else if (strcmp(token,  "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2;  parnum = 2; }
-            else if (strcmp(token,   "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
-            else if (strcmp(token,  "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2;  parnum = 2; }
-            else if (strcmp(token,   "L") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstL_1; }
-            else if (strcmp(token,   "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1;  parnum = 4; }
-            else if (strcmp(token,  "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2;  parnum = 5; }
-            else if (strcmp(token,   "V") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstV;    parnum = 5; }
-            else if (strcmp(token,  "IV") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_V_Controlled_I;   parnum = 4; nodenum = 4; }
-            else if (strcmp(token, "GYR") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtGirator;   parnum = 2; nodenum = 4; }
-            else if (strcmp(token, "VIB") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIB;  parnum = 5; nodenum = 3; startONodes = 2; stopONodes = 2; }
-            else if (strcmp(token, "VIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIN;  parnum = 5; nodenum = 3; }
-            else if (strcmp(token, "MIB") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtMIB;       parnum = 1; nodenum = 3; startONodes = 2; stopONodes = 2; }
-            else if (strcmp(token, "MIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtMIN;       parnum = 1; nodenum = 3; }
-            else if (strcmp(token,  "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
-            else if (strcmp(token, "FCI") == 0) { 
+            else if (strcmp(token,      "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
+            else if (strcmp(token,     "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2;  parnum = 2; }
+            else if (strcmp(token,      "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
+            else if (strcmp(token,     "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2;  parnum = 2; }
+            else if (strcmp(token,      "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
+            else if (strcmp(token,     "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2;  parnum = 2; }
+            else if (strcmp(token,      "L") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstL_1; }
+            else if (strcmp(token,      "I") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_1;  parnum = 4; }
+            else if (strcmp(token,     "I2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstI_2;  parnum = 5; }
+            else if (strcmp(token,      "V") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstV;    parnum = 5; }
+            else if (strcmp(token,     "IV") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_V_Controlled_I;   parnum = 4; nodenum = 4; }
+            else if (strcmp(token,    "GYR") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtGirator;   parnum = 2; nodenum = 4; }
+            else if (strcmp(token,    "VIB") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIB;  parnum = 5; nodenum = 3; startONodes = 2; stopONodes = 2; }
+            else if (strcmp(token,    "VIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstVIN;  parnum = 5; nodenum = 3; }
+            else if (strcmp(token,    "MIB") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtMIB;       parnum = 1; nodenum = 3; startONodes = 2; stopONodes = 2; }
+            else if (strcmp(token,    "MIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtMIN;       parnum = 1; nodenum = 3; }
+            else if (strcmp(token,     "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
+            else if (strcmp(token, "XDIODE") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtXDiode;   parnum = 1; nodenum = 3; }
+            else if (strcmp(token,    "FCI") == 0) { 
                 pxline->isBuiltIn = true; 
                 pxline->modelIndex = bimFunc_Controlled_IG;
                 pxline->isFunctionControlled = true;

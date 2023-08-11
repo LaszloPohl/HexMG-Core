@@ -3222,10 +3222,24 @@ class CircuitStorage {
     hmgSaver saver;
     std::thread saverThread;
     //***********************************************************************
+public:
+    //***********************************************************************
+    std::vector<std::unique_ptr<NodeVariable>> globalVariables;
+    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> models; // all models are stored globally, controller models also included
+    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
+    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> functionControlledBuiltInModels; // core gives the ID number and not the client application / file reader as in case of the custom models
+    std::vector<std::unique_ptr<HmgFunction>> internalCustomFunctions;
+    //***********************************************************************
+    struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
+    std::vector<FullCircuit> fullCircuitInstances;
+    //***********************************************************************
 
+private:
 
     //***********************************************************************
     void Create_bimtConstL_1(ComponentAndControllerModelBase* dest);
+    HmgFunction* Create_function_XDiodeEq();
+    NodeConnectionInstructions Create_ConnectionInstructions_XDiode();
     //***********************************************************************
 
  
@@ -3266,6 +3280,8 @@ class CircuitStorage {
         
         builtInModels[builtInModelType::bimtConstL_1] = std::make_unique<ModelSubCircuit>(ExternalConnectionSizePack{ 2, 0, 0, 0, 1, 0 }, InternalNodeSizePack{ 1, 0 }, false, stFullMatrix);
         Create_bimtConstL_1(builtInModels[builtInModelType::bimtConstL_1].get());
+
+        builtInModels[builtInModelType::bimtXDiode] = std::make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, Create_ConnectionInstructions_XDiode(), std::vector<uns>(), Create_function_XDiodeEq());
 
         saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }
@@ -3485,16 +3501,6 @@ public:
         saver.finish();
         saverThread.join();
     }
-
-    //***********************************************************************
-    std::vector<std::unique_ptr<NodeVariable>> globalVariables;
-    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> models; // all models are stored globally, controller models also included
-    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> builtInModels;
-    std::vector<std::unique_ptr<ComponentAndControllerModelBase>> functionControlledBuiltInModels; // core gives the ID number and not the client application / file reader as in case of the custom models
-    //***********************************************************************
-    struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
-    std::vector<FullCircuit> fullCircuitInstances;
-    //***********************************************************************
 
     //***********************************************************************
     static CircuitStorage& getInstance() { // singleton

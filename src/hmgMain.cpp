@@ -643,7 +643,7 @@ int main(int n, const char** params) {
 		//most("start");
 		//reader.ReadFile(params[1]);
 		//ComponentConstC_1::isTrapezoid = true;
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_12.hmg");
+		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_10.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

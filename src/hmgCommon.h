@@ -99,7 +99,7 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1,
     bimtConst_V_Controlled_I, bimtConst_Controlled_I, bimtGirator, bimtConstVIB, bimtConstVIN,
     bimtMIB, bimtMIN, bimFunc_Controlled_IG,
 
-    bimtConstL_1,
+    bimtConstL_1, bimtXDiode,
     
     bimtSize }; // bimtSize have to be the last one
 //***********************************************************************

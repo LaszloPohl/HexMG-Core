@@ -263,9 +263,9 @@ public:
     HmgFunction* controlFunction = nullptr;
     std::vector<uns> indexField;
     std::vector<uns> nodeToFunctionParam; // for Yij => workField[index[nodeToFunctionParam[i]]] += dx;
-    Model_Function_Controlled_I_with_const_G(uns nNormalINodes_, uns nControlINodes_, uns nParams_,
+    Model_Function_Controlled_I_with_const_G(uns nYNodes_, uns nANodes_, uns nParams_,
         NodeConnectionInstructions functionSources_, std::vector<uns>&& functionComponentParams_, HmgFunction* controlFunction_)
-        :ComponentAndControllerModelBase{ { 2, nNormalINodes_, nControlINodes_, 0, nParams_, 0 }, ccmt_Function_Controlled_I_with_const_G },
+        :ComponentAndControllerModelBase{ { 2, nYNodes_, nANodes_, 0, nParams_, 0 }, ccmt_Function_Controlled_I_with_const_G },
             functionSources{ std::move(functionSources_) }, functionComponentParams{ std::move(functionComponentParams_) }, controlFunction{ controlFunction_ } {
             indexField.resize(controlFunction->getN_IndexField());
             indexField[0] = 0;

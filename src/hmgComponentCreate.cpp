@@ -99,6 +99,154 @@ void CircuitStorage::Create_bimtConstL_1(ComponentAndControllerModelBase* dest) 
 }
 
 
+//***********************************************************************
+HmgFunction* CircuitStorage::Create_function_XDiodeEq() {
+//***********************************************************************
+	HgmCustomFunctionModel fvModel;
+
+	fvModel.nComponentParams = 0;
+	fvModel.nParams = 2;
+	fvModel.nLocal = 1;
+
+	ParameterIdentifier parId;
+
+	// _CONST V0 1e-12
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_CONST].get();
+		lineDesc.value = 1.0e-12;
+		parId.parType = ParameterType::ptLocalVar; // V0
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _TSE RET P0 V0 V0 P0
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_TSE].get();
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // P0
+		parId.parIndex = 2;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptLocalVar; // V0
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptLocalVar; // V0
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // P0
+		parId.parIndex = 2;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _MULC RET RET 1e13
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MULC].get();
+		lineDesc.value = 1.0e13;
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _ADDC RET RET 1
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_ADDC].get();
+		lineDesc.value = 1.0;
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _LN RET RET
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_LN].get();
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _MULC RET RET 0.026
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MULC].get();
+		lineDesc.value = 0.026;
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	// _MUL RET RET P1
+
+	{
+		LineDescription lineDesc;
+		lineDesc.pFunction = HgmFunctionStorage::builtInFunctions[bift_MUL].get();
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // RET
+		parId.parIndex = 0;
+		lineDesc.parameters.push_back(parId);
+		parId.parType = ParameterType::ptParam; // P1
+		parId.parIndex = 3;
+		lineDesc.parameters.push_back(parId);
+		fvModel.lines.push_back(lineDesc);
+	}
+
+	internalCustomFunctions.push_back(std::make_unique<HmgF_CustomFunction>(fvModel));
+
+	return internalCustomFunctions.back().get();
+}
+
+
+//***********************************************************************
+NodeConnectionInstructions CircuitStorage::Create_ConnectionInstructions_XDiode() {
+//***********************************************************************
+	NodeConnectionInstructions pack; // Model_Function_Controlled_I_with_const_G ctor moves it !
+	NodeConnectionInstructions::ConnectionInstruction ci;
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue;
+	ci.functionParamIndex = 2;	// in the function: RET = 0, P0 = 2, P1 = 3
+	ci.nodeOrVarIndex = 2;		// in the FCI:		N0 = 0, N1 = 1, Y0 = 2
+	pack.load.push_back(ci);
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sParam;
+	ci.functionParamIndex = 3;	// in the function: RET = 0, P0 = 2, P1 = 3
+	ci.nodeOrVarIndex = 0;		// in the FCI:		P0 = 0
+	pack.load.push_back(ci);
+
+	return pack;
+}
+
+
 
 //***********************************************************************
 }
