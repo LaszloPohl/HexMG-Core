@@ -99,7 +99,7 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1,
     bimtConst_V_Controlled_I, bimtConst_Controlled_I, bimtGirator, bimtConstVIB, bimtConstVIN,
     bimtMIB, bimtMIN, bimFunc_Controlled_IG,
 
-    bimtConstL_1, bimtXDiode,
+    bimtConstL_1, bimtXDiode, bimtHYS_1,
     
     bimtSize }; // bimtSize have to be the last one
 //***********************************************************************
@@ -183,6 +183,8 @@ enum builtInFunctionType {
     bift_INCD, bift_STORESTS,
     bift_ILOAD, bift_ILOADD, bift_ILOADI,bift_ILOADSTS,  bift_ISTORE, bift_ISTORED,
     bift_IINCD, bift_ISTORESTS,
+
+    bift_HYS_1,
 
     biftSize
 };

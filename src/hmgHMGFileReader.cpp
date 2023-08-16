@@ -233,7 +233,8 @@ FileFunctionNameID biftNameID[] = {
     { "ISTORE",	    bift_ISTORE },
     { "ISTORED",	bift_ISTORED },
     { "IINCD",	    bift_IINCD },
-    { "ISTORESTS",	bift_ISTORESTS }
+    { "ISTORESTS",	bift_ISTORESTS },
+    { "HYS_1",      bift_HYS_1 }
 };
 
 
@@ -530,6 +531,8 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
             token[i] = '\0';
             if (currentComponent == nullptr)
                 return false;
+            if (!currentComponent->instanceListIndex.contains(token))
+                throw hmgExcept("GlobalHMGFileNames::textToDeepInterfaceNodeID", "unknown instance name (%s)", token);
             uns ci = currentComponent->instanceListIndex[token];
             HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
             dest.isController = pxline->isController;
@@ -917,7 +920,8 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,    "MIN") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtMIN;       parnum = 1; nodenum = 3; }
             else if (strcmp(token,     "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
             else if (strcmp(token, "XDIODE") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtXDiode;   parnum = 1; nodenum = 3; }
-            else if (strcmp(token,    "FCI") == 0) { 
+            else if (strcmp(token,  "HYS_1") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtHYS_1;    parnum = 3; nodenum = 2; pxline->isController = true; }
+            else if (strcmp(token,    "FCI") == 0) {
                 pxline->isBuiltIn = true; 
                 pxline->modelIndex = bimFunc_Controlled_IG;
                 pxline->isFunctionControlled = true;
@@ -2551,6 +2555,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_ISTORESTS:ReadNodeVariable(func, lineToken, reader, line, lineInfo, false);
                                         ReadParams(func, 2, lineToken, reader, line, lineInfo);
                                         break;
+                    case bift_HYS_1:    ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
 
                     default:
                         throw hmgExcept("HMGFileFunction::Read", "unknown built in function type ID (%u) in %s, line %u: %s", func.type, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);

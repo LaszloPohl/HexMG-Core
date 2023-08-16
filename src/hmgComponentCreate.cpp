@@ -101,6 +101,9 @@ void CircuitStorage::Create_bimtConstL_1(ComponentAndControllerModelBase* dest) 
 
 //***********************************************************************
 HmgFunction* CircuitStorage::Create_function_XDiodeEq() {
+// This is just an example. It seems that it is not worth creating 
+// functions in this way, but to create a specific function (derived
+// from HmgFunction).
 //***********************************************************************
 	HgmCustomFunctionModel fvModel;
 
@@ -244,6 +247,65 @@ NodeConnectionInstructions CircuitStorage::Create_ConnectionInstructions_XDiode(
 	pack.load.push_back(ci);
 
 	return pack;
+}
+
+
+
+//***********************************************************************
+NodeConnectionInstructions CircuitStorage::Create_ConnectionInstructions_HYS_1() {
+//***********************************************************************
+	NodeConnectionInstructions pack; // Model_Function_Controlled_I_with_const_G ctor moves it !
+	NodeConnectionInstructions::ConnectionInstruction ci;
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue; // ctrl.A0 => func.P0
+	ci.functionParamIndex = 2;
+	ci.nodeOrVarIndex = 0;
+	pack.load.push_back(ci);
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sParam; // ctrl.P0 => func.P1
+	ci.functionParamIndex = 3;
+	ci.nodeOrVarIndex = 0;
+	pack.load.push_back(ci);
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sParam; // ctrl.P1 => func.P2
+	ci.functionParamIndex = 4;
+	ci.nodeOrVarIndex = 1;
+	pack.load.push_back(ci);
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sParam; // ctrl.P2 => func.P3
+	ci.functionParamIndex = 5;
+	ci.nodeOrVarIndex = 2;
+	pack.load.push_back(ci);
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sExternalNodeStepstart; // ctrl.A1.stepstart => func.P4
+	ci.functionParamIndex = 6;
+	ci.nodeOrVarIndex = 1;
+	pack.load.push_back(ci);
+
+
+	ci.nodeOrVarType = NodeConnectionInstructions::sExternalNodeValue; // func.ret => ctrl.A1
+	ci.functionParamIndex = 0;
+	ci.nodeOrVarIndex = 1;
+	pack.store.push_back(ci);
+
+	return pack;
+}
+
+
+//***********************************************************************
+std::vector<DefaultNodeParameter> CircuitStorage::Create_DefaultNodeParameter_HYS_1() {
+//***********************************************************************
+	std::vector<DefaultNodeParameter> defaultNodeValues;
+	DefaultNodeParameter dnp;
+
+	dnp.nodeID.type = nvtA;
+	dnp.nodeID.index = 1;
+	dnp.nodeID.isStepStart = false;
+	dnp.defaultValue = rvt0;
+
+	defaultNodeValues.push_back(dnp);
+
+	return defaultNodeValues;
 }
 
 

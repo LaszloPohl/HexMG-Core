@@ -95,13 +95,13 @@ class HmgFunction {
 protected:
     uns nComponentParam = 0;
     uns nParam = 0;
-    uns nIndexField = 0;
-    uns nWorkingField = 0;
-    uns nSpecialParam = 0; // value, jump label
+    uns nIndexField = 0;    // in most built in function nIndexField = nParam + 2 (ret and workfield index)
+    uns nWorkingField = 0;  // only custom functions need workfield, built in functions can use C++ variables
+    uns nSpecialParam = 0;  // value, jump label (only information, not used for any purpose)
 public:
     //***********************************************************************
-    HmgFunction(uns nComponentParam_, uns nParam_, uns nIndexField_, uns nWorkingField_, uns nSpecailParam_) 
-        : nComponentParam{ nComponentParam_ }, nParam{ nParam_ }, nIndexField{ nIndexField_ }, nWorkingField{ nWorkingField_ }, nSpecialParam{ nSpecailParam_ } {}
+    HmgFunction(uns nComponentParam_, uns nParam_, uns nIndexField_, uns nWorkingField_, uns nSpecialParam_) 
+        : nComponentParam{ nComponentParam_ }, nParam{ nParam_ }, nIndexField{ nIndexField_ }, nWorkingField{ nWorkingField_ }, nSpecialParam{ nSpecialParam_ } {}
     virtual ~HmgFunction() = default;
     //***********************************************************************
     virtual int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept = 0;
@@ -1757,7 +1757,7 @@ public:
 class HmgBuiltInFunction_JMPR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JMPR() : HmgFunction{ 0, 0, 2, 0, 1 } {}
+    HmgBuiltInFunction_JMPR() : HmgFunction{ 0, 0, 2, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return returnInstructionID;
     }
@@ -1768,7 +1768,7 @@ public:
 class HmgBuiltInFunction_JGTR final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JGTR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JGTR() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] > workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1779,7 +1779,7 @@ public:
 class HmgBuiltInFunction_JSTR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JSTR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JSTR() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] < workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1790,7 +1790,7 @@ public:
 class HmgBuiltInFunction_JGER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JGER() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JGER() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] >= workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1801,7 +1801,7 @@ public:
 class HmgBuiltInFunction_JSER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JSER() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JSER() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] <= workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1812,7 +1812,7 @@ public:
 class HmgBuiltInFunction_JEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JEQR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JEQR() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] == workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1823,7 +1823,7 @@ public:
 class HmgBuiltInFunction_JNEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JNEQR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_JNEQR() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] != workField[index[3]] ? returnInstructionID : 0;
     }
@@ -1834,7 +1834,7 @@ public:
 class HmgBuiltInFunction_JGT0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JGT0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JGT0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] > rvt0 ? returnInstructionID : 0;
     }
@@ -1845,7 +1845,7 @@ public:
 class HmgBuiltInFunction_JST0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JST0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JST0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] < rvt0 ? returnInstructionID : 0;
     }
@@ -1856,7 +1856,7 @@ public:
 class HmgBuiltInFunction_JGE0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JGE0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JGE0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] >= rvt0 ? returnInstructionID : 0;
     }
@@ -1867,7 +1867,7 @@ public:
 class HmgBuiltInFunction_JSE0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JSE0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JSE0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] <= rvt0 ? returnInstructionID : 0;
     }
@@ -1878,7 +1878,7 @@ public:
 class HmgBuiltInFunction_JEQ0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JEQ0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JEQ0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] == rvt0 ? returnInstructionID : 0;
     }
@@ -1889,7 +1889,7 @@ public:
 class HmgBuiltInFunction_JNEQ0R final : public HmgFunction {
 //***********************************************************************
 public:
-    HmgBuiltInFunction_JNEQ0R() : HmgFunction{ 0, 1, 3, 0, 1 } {}
+    HmgBuiltInFunction_JNEQ0R() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return workField[index[2]] != rvt0 ? returnInstructionID : 0;
     }
@@ -1900,7 +1900,7 @@ public:
 class HmgBuiltInFunction_CGTR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGTR() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CGTR() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] > workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1915,7 +1915,7 @@ public:
 class HmgBuiltInFunction_CSTR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSTR() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CSTR() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] < workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1930,7 +1930,7 @@ public:
 class HmgBuiltInFunction_CGER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGER() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CGER() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] >= workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1945,7 +1945,7 @@ public:
 class HmgBuiltInFunction_CSER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSER() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CSER() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] <= workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1960,7 +1960,7 @@ public:
 class HmgBuiltInFunction_CEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CEQR() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CEQR() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] == workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1975,7 +1975,7 @@ public:
 class HmgBuiltInFunction_CNEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CNEQR() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_CNEQR() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] != workField[index[3]]) {
             workField[index[0]] = workField[index[4]];
@@ -1990,7 +1990,7 @@ public:
 class HmgBuiltInFunction_CGT0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGT0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CGT0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] > rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2005,7 +2005,7 @@ public:
 class HmgBuiltInFunction_CST0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CST0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CST0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] < rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2020,7 +2020,7 @@ public:
 class HmgBuiltInFunction_CGE0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGE0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CGE0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] >= rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2035,7 +2035,7 @@ public:
 class HmgBuiltInFunction_CSE0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSE0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CSE0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] <= rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2050,7 +2050,7 @@ public:
 class HmgBuiltInFunction_CEQ0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CEQ0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CEQ0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] == rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2065,7 +2065,7 @@ public:
 class HmgBuiltInFunction_CNEQ0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CNEQ0R() : HmgFunction{ 0, 2, 4, 0, 1 } {}
+    HmgBuiltInFunction_CNEQ0R() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] != rvt0) {
             workField[index[0]] = workField[index[3]];
@@ -2080,7 +2080,7 @@ public:
 class HmgBuiltInFunction_TGTR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TGTR() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TGTR() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] > workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] > workField[index[3]] ? returnInstructionID : 0;
@@ -2092,7 +2092,7 @@ public:
 class HmgBuiltInFunction_TSTR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TSTR() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TSTR() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] < workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] < workField[index[3]] ? returnInstructionID : 0;
@@ -2104,7 +2104,7 @@ public:
 class HmgBuiltInFunction_TGER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TGER() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TGER() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] >= workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] >= workField[index[3]] ? returnInstructionID : 0;
@@ -2116,7 +2116,7 @@ public:
 class HmgBuiltInFunction_TSER final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TSER() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TSER() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] <= workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] <= workField[index[3]] ? returnInstructionID : 0;
@@ -2128,7 +2128,7 @@ public:
 class HmgBuiltInFunction_TEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TEQR() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TEQR() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] == workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] == workField[index[3]] ? returnInstructionID : 0;
@@ -2140,7 +2140,7 @@ public:
 class HmgBuiltInFunction_TNEQR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TNEQR() : HmgFunction{ 0, 4, 6, 0, 1 } {}
+    HmgBuiltInFunction_TNEQR() : HmgFunction{ 0, 4, 6, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] != workField[index[3]] ? workField[index[4]] : workField[index[5]];
         return workField[index[2]] != workField[index[3]] ? returnInstructionID : 0;
@@ -2152,7 +2152,7 @@ public:
 class HmgBuiltInFunction_TGT0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TGT0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TGT0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] > rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] > rvt0 ? returnInstructionID : 0;
@@ -2164,7 +2164,7 @@ public:
 class HmgBuiltInFunction_TST0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TST0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TST0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] < rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] < rvt0 ? returnInstructionID : 0;
@@ -2176,7 +2176,7 @@ public:
 class HmgBuiltInFunction_TGE0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TGE0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TGE0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] >= rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] >= rvt0 ? returnInstructionID : 0;
@@ -2188,7 +2188,7 @@ public:
 class HmgBuiltInFunction_TSE0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TSE0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TSE0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] <= rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] <= rvt0 ? returnInstructionID : 0;
@@ -2200,7 +2200,7 @@ public:
 class HmgBuiltInFunction_TEQ0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TEQ0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TEQ0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] == rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] == rvt0 ? returnInstructionID : 0;
@@ -2212,7 +2212,7 @@ public:
 class HmgBuiltInFunction_TNEQ0R final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_TNEQ0R() : HmgFunction{ 0, 3, 5, 0, 1 } {}
+    HmgBuiltInFunction_TNEQ0R() : HmgFunction{ 0, 3, 5, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = workField[index[2]] != rvt0 ? workField[index[3]] : workField[index[4]];
         return workField[index[2]] != rvt0 ? returnInstructionID : 0;
@@ -2224,7 +2224,7 @@ public:
 class HmgBuiltInFunction_CGTCR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGTCR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CGTCR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] > workField[index[3]]) {
             workField[index[0]] = line.value;
@@ -2239,7 +2239,7 @@ public:
 class HmgBuiltInFunction_CSTCR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSTCR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CSTCR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] < workField[index[3]]){
             workField[index[0]] = line.value;
@@ -2254,7 +2254,7 @@ public:
 class HmgBuiltInFunction_CGECR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGECR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CGECR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] >= workField[index[3]]) {
             workField[index[0]] = line.value;
@@ -2269,7 +2269,7 @@ public:
 class HmgBuiltInFunction_CSECR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSECR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CSECR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] <= workField[index[3]]) {
             workField[index[0]] = line.value;
@@ -2284,7 +2284,7 @@ public:
 class HmgBuiltInFunction_CEQCR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CEQCR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CEQCR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] == workField[index[3]]) {
             workField[index[0]] = line.value;
@@ -2299,7 +2299,7 @@ public:
 class HmgBuiltInFunction_CNEQCR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CNEQCR() : HmgFunction{ 0, 2, 4, 0, 2 } {}
+    HmgBuiltInFunction_CNEQCR() : HmgFunction{ 0, 2, 4, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] != workField[index[3]]) {
             workField[index[0]] = line.value;
@@ -2314,7 +2314,7 @@ public:
 class HmgBuiltInFunction_CGT0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGT0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CGT0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] > rvt0) {
             workField[index[0]] = line.value;
@@ -2329,7 +2329,7 @@ public:
 class HmgBuiltInFunction_CST0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CST0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CST0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] < rvt0) {
             workField[index[0]] = line.value;
@@ -2344,7 +2344,7 @@ public:
 class HmgBuiltInFunction_CGE0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CGE0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CGE0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] >= rvt0) {
             workField[index[0]] = line.value;
@@ -2359,7 +2359,7 @@ public:
 class HmgBuiltInFunction_CSE0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CSE0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CSE0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] <= rvt0) {
             workField[index[0]] = line.value;
@@ -2374,7 +2374,7 @@ public:
 class HmgBuiltInFunction_CEQ0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CEQ0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CEQ0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] == rvt0) {
             workField[index[0]] = line.value;
@@ -2389,7 +2389,7 @@ public:
 class HmgBuiltInFunction_CNEQ0CR final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_CNEQ0CR() : HmgFunction{ 0, 1, 3, 0, 2 } {}
+    HmgBuiltInFunction_CNEQ0CR() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         if (workField[index[2]] != rvt0) {
             workField[index[0]] = line.value;
@@ -2613,6 +2613,37 @@ public:
 };
 
 
+//***********************************************************************
+class HmgBuiltInFunction_HYS_1 final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_HYS_1() : HmgFunction{ 0, 5, 7, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
+        // P0=T, P1=T1, P2=T2, P3=W, RET=H, P4=H.STEPSTART
+        crvt T = workField[index[2]];
+        crvt T1 = workField[index[3]];
+        crvt T2 = workField[index[4]];
+        crvt W = workField[index[5]];
+        crvt HS = workField[index[6]];
+        crvt W2 = 0.5 * W;  // P3 => V0
+        crvt TK = T1 - W2;  // P1 => V1
+        crvt TV = T2 + W2;  // P2 => V2
+        crvt TM = T2 - T1;  // V3
+        crvt TN = T1 + W2;  // V4
+        crvt TC = HS * TM + T1; // P4 => V5
+        crvt TL = TC - W2;  // V6
+        crvt TR = TC + W2;  // V7
+        if (T <= TK) {  workField[index[0]] = rvt0; return 0; } // P0
+        if (T >= TV) {  workField[index[0]] = rvt1; return 0; }
+        crvt V8 = (T - TK) / TM;
+        if (T < TL)  {  workField[index[0]] = V8;   return 0; }
+        if (T <= TR) {  workField[index[0]] = HS;   return 0; }
+        workField[index[0]] = (T - TN) / TM;
+        return 0;
+    }
+};
+
+
 //----------------------------------------------------------------------------
 
 
@@ -2643,7 +2674,7 @@ class HmgF_CustomFunction final : public HmgFunction {
         nSpecialParam = 0;
         for (const auto& line : model.lines) {
             nIndexField += line.pFunction->getN_IndexField();
-            nWorkingField += line.pFunction->getN_WorkingField();
+            nWorkingField += line.pFunction->getN_WorkingField(); // instead of sum, shouldn't it be max?
         }
     }
 public:
@@ -2956,6 +2987,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_ISTORED] = std::make_unique<HmgBuiltInFunction_ISTORED>();
     builtInFunctions[builtInFunctionType::bift_IINCD]   = std::make_unique<HmgBuiltInFunction_IINCD>();
     builtInFunctions[builtInFunctionType::bift_ISTORESTS] = std::make_unique<HmgBuiltInFunction_ISTORESTS>();
+    builtInFunctions[builtInFunctionType::bift_HYS_1]   = std::make_unique<HmgBuiltInFunction_HYS_1>();
 }
 
 

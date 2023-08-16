@@ -3240,6 +3240,8 @@ private:
     void Create_bimtConstL_1(ComponentAndControllerModelBase* dest);
     HmgFunction* Create_function_XDiodeEq();
     NodeConnectionInstructions Create_ConnectionInstructions_XDiode();
+    NodeConnectionInstructions Create_ConnectionInstructions_HYS_1();
+    std::vector<DefaultNodeParameter> Create_DefaultNodeParameter_HYS_1();
     //***********************************************************************
 
  
@@ -3282,6 +3284,8 @@ private:
         Create_bimtConstL_1(builtInModels[builtInModelType::bimtConstL_1].get());
 
         builtInModels[builtInModelType::bimtXDiode] = std::make_unique<Model_Function_Controlled_I_with_const_G>(1, 0, 2, Create_ConnectionInstructions_XDiode(), std::vector<uns>(), Create_function_XDiodeEq());
+
+        builtInModels[builtInModelType::bimtHYS_1] = std::make_unique<ModelController>(ExternalConnectionSizePack{ 0, 0, 2, 0, 3, 0 }, 0, Create_DefaultNodeParameter_HYS_1(), Create_ConnectionInstructions_HYS_1(), std::vector<uns>(), HgmFunctionStorage::builtInFunctions[bift_HYS_1].get());
 
         saverThread = std::thread{ hmgSaver::waitToFinish, &saver };
     }
