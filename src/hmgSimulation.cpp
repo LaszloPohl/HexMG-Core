@@ -38,10 +38,13 @@ void Simulation::runDC() {
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         
         CircuitStorage& gc = CircuitStorage::getInstance();
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
     }
     else {
+        std::cout << '.' << std::endl;
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
@@ -50,24 +53,33 @@ void Simulation::runDC() {
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         
         CircuitStorage& gc = CircuitStorage::getInstance();
+        std::cout << '.' << std::endl;
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
+        std::cout << '.' << std::endl;
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
+        std::cout << '.' << std::endl;
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
 
         for (uns i = 0; i < 10; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
@@ -75,8 +87,11 @@ void Simulation::runDC() {
             CircuitStorage::CalculateControllersDC(fullCircuitID);
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
+            std::cout << '.' << std::endl;
+#ifdef HMG_DEBUGPRINT
             std::cout << std::endl;
             gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
         }
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
@@ -85,8 +100,11 @@ void Simulation::runDC() {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
+        std::cout << '.' << std::endl;
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
     }
     wasDC = true;
 }
@@ -104,8 +122,10 @@ void Simulation::runTimeStep() {
         CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
     }
     else {
         CircuitStorage& gc = CircuitStorage::getInstance();
@@ -118,8 +138,10 @@ void Simulation::runTimeStep() {
         CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
     }
 }
 
@@ -140,8 +162,10 @@ void Simulation::runAC() {
     gc.fullCircuitInstances[fullCircuitID].component->acceptIterationAndStepAC();
     gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
     gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
+#ifdef HMG_DEBUGPRINT
     std::cout << std::endl;
     gc.fullCircuitInstances[fullCircuitID].component->printNodeValueAC(0);
+#endif
 }
 
 
@@ -170,11 +194,13 @@ void Simulation::run(const RunData& runData) {
 
         CircuitStorage& gc = CircuitStorage::getInstance();
         gc.multiGrids[runData.fullCircuitID]->solveDC(); // fullCircuitID used as choosing the multigrid (in most cases only one multigrid is defined => fullCircuitID == 0
+#ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
 
         gc.fullCircuitInstances[1].component->printNodeValueDC(0);
         std::cout << std::endl;
         gc.fullCircuitInstances[0].component->printNodeValueDC(0);
+#endif
         return;
     }
 

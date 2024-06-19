@@ -601,7 +601,7 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) {
                     dc->YRED.math_1_add_mul(dc->YRED, dc->calc->XB, dc->calc->NZBXA);
                 }
                 else if (Bsiz == 2) {
-                    dc->calc->NZBXA.math_2_ninv_mul(dc->calc->YB_NZB, dc->calc->XAT);
+                    dc->calc->NZBXA.math_2_ninv_mulT(dc->calc->YB_NZB, dc->calc->XAT); // fix: mul => mulT
                     dc->YRED.math_2_add_mul(dc->YRED, dc->calc->XB, dc->calc->NZBXA);
                 }
                 else {
@@ -1089,7 +1089,7 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
                     ac->YRED.math_1_add_mul(ac->YRED, ac->calc->XB, ac->calc->NZBXA);
                 }
                 else if (Bsiz == 2) {
-                    ac->calc->NZBXA.math_2_ninv_mul(ac->calc->YB_NZB, ac->calc->XAT);
+                    ac->calc->NZBXA.math_2_ninv_mulT(ac->calc->YB_NZB, ac->calc->XAT); // fix: mul => mulT
                     ac->YRED.math_2_add_mul(ac->YRED, ac->calc->XB, ac->calc->NZBXA);
                 }
                 else {

@@ -644,7 +644,8 @@ int main(int n, const char** params) {
 		//reader.ReadFile(params[1]);
 		//ComponentConstC_1::isTrapezoid = true;
 		HgmFunctionStorage::getInstance(); // HgmFunctionStorage constructor runs
-		reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_4.hmg");
+		//reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_13.hmg");
+		reader.ReadFile("c:/!D/Kutatás/MicReD/C/sunred3/IFAG/IFAG.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");

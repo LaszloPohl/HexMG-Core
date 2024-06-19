@@ -291,7 +291,7 @@ inline bool spiceTextToRvt(const char* text,rvt& value) {
 
 
 //***********************************************************************
-inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result, bool isNodeN = true) {
+inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID& result, std::map<std::string, uns> &globalVarNames, bool isNodeN = true) {
 //***********************************************************************
     result.isStepStart = false;
     for (uns i = 0; text[i] != '\0'; i++)
@@ -309,8 +309,16 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
         case 'B':
             if (text[1] == 'G') {
                 result.type = nvtBG;
-                if (isNodeN && sscanf_s(&text[2], "%u", &result.index) != 1)
-                    return false;
+                if (isNodeN) {
+                    if (!globalVarNames.contains(text)) {
+                        result.index = (uns)globalVarNames.size();
+                        globalVarNames[text] = result.index;
+                    }
+                    else
+                        result.index = globalVarNames[text];
+                }
+                else 
+                    return false; // There is no index for global variables, it contains a label.
             }
             else {
                 result.type = nvtB;
@@ -368,10 +376,10 @@ inline bool textToSimpleInterfaceNodeID(const char* text, SimpleInterfaceNodeID&
 
 
 //***********************************************************************
-inline bool textToCDNode(const char* text, CDNode& result) {
+inline bool textToCDNode(const char* text, CDNode& result, std::map<std::string, uns>& globalVarNames) {
 //***********************************************************************
     SimpleInterfaceNodeID tmp;
-    if (!textToSimpleInterfaceNodeID(text, tmp))
+    if (!textToSimpleInterfaceNodeID(text, tmp, globalVarNames))
         return false;
     if (tmp.type != nvtX && tmp.type != nvtN)
         return false;
@@ -485,7 +493,7 @@ struct GlobalHMGFileNames {
 //***********************************************************************
     std::map<std::string, uns> modelNames, sunredTreeNames, multigridNames,
         localRestrictionTypeNames, localProlongationTypeNames,
-        varNames, functionNames, probeNames, fullCircuitNames;
+        globalVarNames, functionNames, probeNames, fullCircuitNames;
     std::vector<HMGFileModelDescription*> modelData;
     std::vector<HMGFileProbe*> probeData;
     std::vector<HMGFileCreate*> fullCircuitData;
@@ -838,6 +846,7 @@ struct HMGFileFunction: HMGFileListItem {
         if (!spiceTextToRvt(token, dest.value))
             throw hmgExcept("HMGFileFunction::ReadValue", "value is not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
+    /*
     //***********************************************************************
     void ReadVG(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
     //***********************************************************************
@@ -847,15 +856,21 @@ struct HMGFileFunction: HMGFileListItem {
         if (sscanf_s(token + 2, "%u", &dest.labelXID) != 1)
             throw hmgExcept("HMGFileFunction::ReadVG", "global variable name (VG) expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
+    */
     //***********************************************************************
     void ReadNodeVariable(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo, bool isNodeN) {
     //***********************************************************************
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (token[0] == 'B' && token[1] == 'G') {
             dest.xSrc.type = nvtBG;
-            if (isNodeN)
-                if (sscanf_s(token + 2, "%u", &dest.xSrc.index) != 1)
-                    throw hmgExcept("HMGFileFunction::ReadNodeVariable", "BG name with an index expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (isNodeN) {
+                if (!globalNames.globalVarNames.contains(token)) {
+                    dest.xSrc.index = (uns)globalNames.globalVarNames.size();
+                    globalNames.globalVarNames[token] = dest.xSrc.index;
+                }
+                else
+                    dest.xSrc.index = globalNames.globalVarNames[token];
+            }
             dest.componentParams.push_back(unsMax);
         }
         else if (token[0] == 'C' && token[1] == 'T') {
@@ -867,7 +882,7 @@ struct HMGFileFunction: HMGFileListItem {
             if (*token2 == 0)
                 throw hmgExcept("HMGFileFunction::ReadNodeVariable", "missing node name after CT: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             token2++;
-            if (!textToSimpleInterfaceNodeID(token2, dest.xSrc, isNodeN))
+            if (!textToSimpleInterfaceNodeID(token2, dest.xSrc, globalNames.globalVarNames, isNodeN))
                 throw hmgExcept("HMGFileFunction::ReadNodeVariable", "unrecognized node ID: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             dest.componentParams.push_back(dest.labelXID);
         }

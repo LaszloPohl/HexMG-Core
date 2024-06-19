@@ -200,8 +200,8 @@ public:
     const NodeVariable& getComponentCurrent() const noexcept override { return componentCurrent; }
     void buildForAC() override {}
     void buildOrReplace() override {}
-#ifdef HMG_DEBUGPRINT
     const ComponentBase* getContainedComponent(uns componentIndex)const noexcept override { return nullptr; };
+#ifdef HMG_DEBUGPRINT
     void testPrint() const noexcept override {}
 #endif
 };

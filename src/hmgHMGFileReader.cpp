@@ -543,7 +543,7 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
             token += i + 1;
         }
         else {
-            if (!textToSimpleInterfaceNodeID(token, dest.nodeID))
+            if (!textToSimpleInterfaceNodeID(token, dest.nodeID, globalVarNames))
                 return false;
             return true;
         }
@@ -588,7 +588,7 @@ bool GlobalHMGFileNames::textToDeepInterfaceVarID(char* token, DeepInterfaceNode
             token += i + 1;
         }
         else {
-            if (!textToSimpleInterfaceNodeID(token, dest.nodeID))
+            if (!textToSimpleInterfaceNodeID(token, dest.nodeID, globalVarNames))
                 return false;
             return true;
         }
@@ -625,7 +625,7 @@ bool GlobalHMGFileNames::textToDeepCDNodeID(char* token, uns fullCircuitIndex, D
             token += i + 1;
         }
         else {
-            if (!textToCDNode(token, dest.nodeID))
+            if (!textToCDNode(token, dest.nodeID, globalVarNames))
                 return false;
             return true;
         }
@@ -651,7 +651,7 @@ bool GlobalHMGFileNames::textRawToDeepCDNodeID(char* token, DeepCDNodeID& dest) 
             token += i + 1;
         }
         else {
-            if (!textToCDNode(token, dest.nodeID))
+            if (!textToCDNode(token, dest.nodeID, globalVarNames))
                 return false;
             return true;
         }
@@ -820,12 +820,12 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token, ".DEFAULTRAIL") == 0) {
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 SimpleInterfaceNodeID rail;
-                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
+                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail, globalNames.globalVarNames) || rail.type != nvtRail)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 SimpleInterfaceNodeID node;
                 while (!lineToken.isSepEOL) {
                     lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node))
+                    if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node, globalNames.globalVarNames))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     if (!checkNodeValidity(node))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: invalid node index: %u in %s, line %u: %s", node.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -845,14 +845,14 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token, ".DEFAULTRAILRANGE") == 0) {
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 SimpleInterfaceNodeID rail;
-                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
+                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail, globalNames.globalVarNames) || rail.type != nvtRail)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 SimpleInterfaceNodeID node1, node2;
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node1))
+                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node1, globalNames.globalVarNames))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node2))
+                if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node2, globalNames.globalVarNames))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 if (!checkNodeValidity(node1))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: invalid node index: %u in %s, line %u: %s", node1.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -961,7 +961,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                                 for (uns i = 0; i < nPar; i++) {
                                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                                     pxline->functionParams.emplace_back(SimpleInterfaceNodeID());
-                                    if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back()))
+                                    if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back(), globalNames.globalVarNames))
                                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 }
                             }
@@ -996,7 +996,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                             for (uns i = 0; i < nPar; i++) {
                                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                                 pxline->functionParams.emplace_back(SimpleInterfaceNodeID());
-                                if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back()))
+                                if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back(), globalNames.globalVarNames))
                                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                             }
                         }
@@ -1056,7 +1056,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             for (uns i = 0; i < nodenum; i++) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 pxline->nodes.emplace_back(SimpleInterfaceNodeID());
-                if (!textToSimpleInterfaceNodeID(token, pxline->nodes.back()))
+                if (!textToSimpleInterfaceNodeID(token, pxline->nodes.back(), globalNames.globalVarNames))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 if (pxline->nodes.back().type == nvtUnconnected) {
                     if (startONodes == unsMax || i < startONodes || i > stopONodes)
@@ -1084,12 +1084,14 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             for (uns i = 0; i < parnum; i++) {
                 pxline->params.emplace_back(ParameterInstance());
             }
-            switch (pxline->modelIndex) {
-                case bimtConstV:    pxline->params[4].value = gmax; break;
-                case bimtConstVIB:  pxline->params[4].value = gmax; break;
-                case bimtConstVIN:  pxline->params[4].value = gmax; break;
-                case bimtMIB:       pxline->params[0].value = gmax; break;
-                case bimtMIN:       pxline->params[0].value = gmax; break;
+            if (pxline->isBuiltIn) {
+                switch (pxline->modelIndex) {
+                    case bimtConstV:    pxline->params[4].value = gmax; break;
+                    case bimtConstVIB:  pxline->params[4].value = gmax; break;
+                    case bimtConstVIN:  pxline->params[4].value = gmax; break;
+                    case bimtMIB:       pxline->params[0].value = gmax; break;
+                    case bimtMIN:       pxline->params[0].value = gmax; break;
+                }
             }
             for (uns i = 0; i < parnum; i++) { // the actual number of parameters can be less than the formal parameter number, the missing parameters are 0 values
                 if (lineToken.isSepEOL)
@@ -1097,7 +1099,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 if (strcmp(token, "DEFAULTRAIL") == 0)
                     break;
-                if (pxline->modelIndex == bimtConstI_1 || pxline->modelIndex == bimtConstI_2) {
+                if (pxline->isBuiltIn && (pxline->modelIndex == bimtConstI_1 || pxline->modelIndex == bimtConstI_2)) {
                     uns index = parnum;
                     bool isNextNeeded = true;
                     if (strcmp(token, "DC0") == 0) index = 0;
@@ -1110,7 +1112,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                         if (isNextNeeded)
                             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                         if (isalpha(token[0])) { // parameter / variable / node
-                            if (!textToSimpleInterfaceNodeID(token, pxline->params[index].param))
+                            if (!textToSimpleInterfaceNodeID(token, pxline->params[index].param, globalNames.globalVarNames))
                                 throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                             switch (pxline->params[index].param.type) {
                                 case nvtX:
@@ -1159,7 +1161,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 }
                 // this part cannot be put in else section ! (see above):
                 if (isalpha(token[0])) { // parameter / variable / node
-                    if (!textToSimpleInterfaceNodeID(token, pxline->params[i].param))
+                    if (!textToSimpleInterfaceNodeID(token, pxline->params[i].param, globalNames.globalVarNames))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised parameter/variable/node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     switch (pxline->params[i].param.type) {
                         case nvtX:
@@ -1214,7 +1216,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 if (isDefRail) {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     SimpleInterfaceNodeID rail;
-                    if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail) || rail.type != nvtRail)
+                    if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail, globalNames.globalVarNames) || rail.type != nvtRail)
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     pxline->isDefaultRail = true;
                     pxline->defaultValueRailIndex = rail.index;
@@ -1257,7 +1259,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
         if (strcmp(token, "INIT") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             defaultNodeValues.emplace_back(DefaultNodeParameter());
-            if (!textToSimpleInterfaceNodeID(token, defaultNodeValues.back().nodeID))
+            if (!textToSimpleInterfaceNodeID(token, defaultNodeValues.back().nodeID, globalNames.globalVarNames))
                 throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "INIT: wrong node/var ID (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if(!spiceTextToRvt(token, defaultNodeValues.back().defaultValue))
@@ -1303,7 +1305,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
                 if (strcmp(token, "-") == 0) {
                     functionParamsLoad.back().type = nvtNone;
                 }
-                else if (!textToSimpleInterfaceNodeID(token, functionParamsLoad.back()))
+                else if (!textToSimpleInterfaceNodeID(token, functionParamsLoad.back(), globalNames.globalVarNames))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             }
         }
@@ -1314,7 +1316,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
                 if (strcmp(token, "-") == 0) {
                     functionParamsStore.back().type = nvtNone;
                 }
-                else if (!textToSimpleInterfaceNodeID(token, functionParamsStore.back()))
+                else if (!textToSimpleInterfaceNodeID(token, functionParamsStore.back(), globalNames.globalVarNames))
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             }
         }
@@ -1366,7 +1368,7 @@ void HMGFileRails::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         SimpleInterfaceNodeID nid;
-        if (!textToSimpleInterfaceNodeID(token, nid))
+        if (!textToSimpleInterfaceNodeID(token, nid, globalNames.globalVarNames))
             throw hmgExcept("HMGFileRails::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         if (nid.type != nvtRail)
             throw hmgExcept("HMGFileRails::Read", "not a rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -1427,7 +1429,7 @@ void HMGFileCreate::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         throw hmgExcept("HMGFileCreate::Read", "GND expected, %s found in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     SimpleInterfaceNodeID nid;
-    if (!textToSimpleInterfaceNodeID(token, nid))
+    if (!textToSimpleInterfaceNodeID(token, nid, globalNames.globalVarNames))
         throw hmgExcept("HMGFileCreate::Read", "unrecognised rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     if(nid.type != nvtRail)
         throw hmgExcept("HMGFileCreate::Read", "not a rail (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -1916,7 +1918,7 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
                     else            level.globalNodeProlongations.emplace_back(InterfaceNodeInstruction());
                     InterfaceNodeInstruction& instr = code == 1 ? level.globalNodeRestrictions.back() : level.globalNodeProlongations.back();
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if (!textToSimpleInterfaceNodeID(token, instr.nodeID))
+                    if (!textToSimpleInterfaceNodeID(token, instr.nodeID, globalNames.globalVarNames))
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                     if(instr.nodeID.type != nvtN && instr.nodeID.type != nvtB)
                         throw hmgExcept("HMGFileMultiGrid::ReadOrReplaceBody", "in .GLOBALRESTRICTION and .GLOBALPROLONGATION only internal node types (N and B) allowed, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);

@@ -427,7 +427,7 @@ struct DeepCDNodeID {
 };
 
 
-#define HMG_DEBUGPRINT
+//#define HMG_DEBUGPRINT
 //***********************************************************************
 
 
