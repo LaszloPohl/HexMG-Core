@@ -3336,6 +3336,7 @@ private:
             switch (nodeID.nodeID.type) {
                 case cdntInternal: return static_cast<const ComponentSubCircuit&>(component).internalNodesAndVars[nodeID.nodeID.index];
                 case cdntExternal: return *const_cast<ComponentBase&>(component).getNode(nodeID.nodeID.index);
+                case cdntRail: return Rails::V[nodeID.nodeID.index].get()->rail;
                 default:
                     throw hmgExcept("CircuitStorage::getNode", "impossible probe node type: %u", (uns)nodeID.nodeID.type);
             }
