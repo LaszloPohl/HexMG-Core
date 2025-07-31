@@ -232,17 +232,7 @@ void apa::write_HMG_akt_sim(FILE *fp, simulation & aktSim){
 
     write_HMG_probes(fp, aktSim);
 
-    // write SET (boundary and excitation)
-
-    fprintf(fp, ".SET BG_COLOR2_Ithxi 0.1\n\n");
-
-    // write RUN
-
-    fprintf(fp, ".RUN circ1 DC\n\n");
-
-    // write SAVE
-
-    write_HMG_save(fp, aktSim, 0);
+    write_HMG_anals(fp, aktSim);
 
     // write END
 
@@ -282,8 +272,6 @@ void apa::write_HMG_boundary_cell_models(FILE *fp, simulation & aktSim){
 //***********************************************************************
 void apa::write_HMG_boundary_global_vars(FILE *fp, simulation& aktSim, const csomag& csom, size_t index, PLString name){
 //***********************************************************************
-    const dbl szakadas = 1e-12;
-    const dbl GV = 1e6;
     if (csom.el[index].is_special)
         throw hiba("apa::write_HMG_boundary_global_vars", "el special boubdary condition not implemented");
     if (csom.th[index].is_special)
@@ -353,13 +341,15 @@ void apa::write_HMG_boundary_global_vars(FILE *fp, simulation& aktSim, const cso
 
 //***********************************************************************
 void apa::write_HMG_colors(FILE * fp, simulation & aktSim){
-//***********************************************************************
+//*********************************************************************** 
+    /* elvileg nem kell semmire a HMG-nek ez a tcolor[i].index, mert az eredeti pixelszínt használja
     uns db = 0;
     for (uns i = 0; i < colmax; i++)
         if (aktSim.pmodel->tcolor[i].is && aktSim.pmodel->tcolor[i].tipus == SzinNormal && aktSim.pmodel->tcolor[i].terfogat>0.0) {
             aktSim.pmodel->tcolor[i].index = db++;
         }
         else aktSim.pmodel->tcolor[i].index = colmax;
+    */
     fprintf(fp, "\n* colors:\n");
     for (uns i = 0; i < colmax; i++)
         if (aktSim.pmodel->tcolor[i].is && aktSim.pmodel->tcolor[i].tipus == SzinNormal && aktSim.pmodel->tcolor[i].terfogat>0.0) {
@@ -926,6 +916,19 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
 
 
 //***********************************************************************
+uns lk2hatvany(uns ertek) {
+//***********************************************************************
+    uns n = 1, step = 1u;
+    for (; step <<= 1; n++)
+        ;
+    for (u32 i = 0; i < n; i++)
+        if (ertek <= (1u << i))
+            return i;
+    throw hiba("lk2hatvany()", "impossibility");
+}
+
+
+//***********************************************************************
 void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
 //***********************************************************************
     if (aktSim.tproV.size() > 0) {
@@ -933,11 +936,15 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
         for (uns j = 0; j < aktSim.tproV.size(); j++) {
             const probeT& akt_probe = aktSim.tproV[j];
             HmgModelRacs& akt_cella = hmg_modell_racs.getref(akt_probe.x, akt_probe.y, akt_probe.z);
-            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
-            if (curr_cell_model.core.type != SzinNormal)
+
+            if (akt_cella.cella_vector_index == ~0)
                 throw hiba("apa::write_HMG_probes", "V probe on a boundary cell (%u, %u, %u)", akt_probe.x, akt_probe.y, akt_probe.z);
+
+            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+
             if (!curr_cell_model.core.is_el)
                 throw hiba("apa::write_HMG_probes", "V probe on a th only cell (%u, %u, %u)", akt_probe.x, akt_probe.y, akt_probe.z);
+
             if (akt_probe.oldal == CENTER) {
                 fprintf(fp, " Cell_%u.N0", akt_cella.cell_index);
             }
@@ -952,11 +959,15 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
         for (uns j = 0; j < aktSim.tproT.size(); j++) {
             const probeT& akt_probe = aktSim.tproT[j];
             HmgModelRacs& akt_cella = hmg_modell_racs.getref(akt_probe.x, akt_probe.y, akt_probe.z);
-            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
-            if (curr_cell_model.core.type != SzinNormal)
+
+            if (akt_cella.cella_vector_index == ~0)
                 throw hiba("apa::write_HMG_probes", "T probe on a boundary cell (%u, %u, %u)", akt_probe.x, akt_probe.y, akt_probe.z);
+
+            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+
             if (!curr_cell_model.core.is_th)
                 throw hiba("apa::write_HMG_probes", "T probe on an el only cell (%u, %u, %u)", akt_probe.x, akt_probe.y, akt_probe.z);
+
             if (akt_probe.oldal == CENTER) {
                 fprintf(fp, " Cell_%u.N%u", akt_cella.cell_index, curr_cell_model.core.is_el ? 1 : 0);
             }
@@ -1100,7 +1111,358 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
         aktAnal.eredm.add(eredm);
     }
 */
+    // FIM
+    
+    if (!aktSim.is_nofim) {
+        model& aktMod = *aktSim.pmodel;
+        cuns x_res = aktMod.x_res;
+        cuns y_res = aktMod.y_res;
+        cuns z_res = aktMod.z_res;
+        cuns x_k = lk2hatvany(x_res);
+        cuns y_k = lk2hatvany(y_res);
+        cuns z_k = lk2hatvany(z_res);
+        cuns xy_k = x_k > y_k ? x_k : y_k;
+        cuns xy_n = 1 << xy_k;
+        cuns z_n = 1 << z_k;
+
+        // el FIM
+
+        if (aktSim.mezo == FieldEl || aktSim.mezo == FieldElTherm) {
+            uns item = 0;
+
+            // center
+
+            for (uns z = 0; z < z_n; z++)
+                for (uns y = 0; y < xy_n; y++)
+                    for (uns x = 0; x < xy_n; x++, item++) {
+                        if (item % 16 == 0)
+                            fprintf(fp, "\n.PROBE FEL FIM %u %u circ1", xy_k, z_k);
+                        if (x < x_res && y < y_res && z < z_res) {
+                            HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, z);
+                            if (akt_cella.cella_vector_index == ~0) // boundary cell
+                                fprintf(fp, " R0");
+                            else {
+                                hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                                if (curr_cell_model.core.is_el)
+                                    fprintf(fp, " Cell_%u.N0", akt_cella.cell_index);
+                                else
+                                    fprintf(fp, " R0");
+                            }
+                        }
+                        else {
+                            fprintf(fp, " R0");
+                        }
+                    }
+
+            // bottom of the bottom
+
+            for (uns y = 0; y < xy_n; y++)
+                for (uns x = 0; x < xy_n; x++, item++) {
+                    if (item % 16 == 0)
+                        fprintf(fp, "\n.PROBE FEL FIM %u %u circ1", xy_k, z_k);
+                    if (x < x_res && y < y_res) {
+                        HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, 0);
+                        if (akt_cella.cella_vector_index == ~0) // boundary cell
+                            fprintf(fp, " R0");
+                        else {
+                            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                            if (curr_cell_model.core.is_el)
+                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_core_nodes[BOTTOM].is_X ? 'X' : 'N', curr_cell_model.el_core_nodes[BOTTOM].node_index);
+                            else
+                                fprintf(fp, " R0");
+                        }
+                    }
+                    else {
+                        fprintf(fp, " R0");
+                    }
+                }
+
+            // top
+
+            for (uns z = 0; z < z_n; z++)
+                for (uns y = 0; y < xy_n; y++)
+                    for (uns x = 0; x < xy_n; x++, item++) {
+                        if (item % 16 == 0)
+                            fprintf(fp, "\n.PROBE FEL FIM %u %u circ1", xy_k, z_k);
+                        if (x < x_res && y < y_res && z < z_res) {
+                            HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, z);
+                            if (akt_cella.cella_vector_index == ~0) // boundary cell
+                                fprintf(fp, " R0");
+                            else {
+                                hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                                if (curr_cell_model.core.is_el)
+                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_core_nodes[TOP].is_X ? 'X' : 'N', curr_cell_model.el_core_nodes[TOP].node_index);
+                                else
+                                    fprintf(fp, " R0");
+                            }
+                        }
+                        else {
+                            fprintf(fp, " R0");
+                        }
+                    }
+            fprintf(fp, "\n");
+        }
+
+        // th FIM
+
+        if (aktSim.mezo == FieldTherm || aktSim.mezo == FieldElTherm) {
+            uns item = 0;
+
+            // center
+
+            for (uns z = 0; z < z_n; z++)
+                for (uns y = 0; y < xy_n; y++)
+                    for (uns x = 0; x < xy_n; x++, item++) {
+                        if (item % 16 == 0)
+                            fprintf(fp, "\n.PROBE FTH FIM %u %u circ1", xy_k, z_k);
+                        if (x < x_res && y < y_res && z < z_res) {
+                            HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, z);
+                            if (akt_cella.cella_vector_index == ~0) // boundary cell
+                                fprintf(fp, " R1");
+                            else {
+                                hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                                if(curr_cell_model.core.is_th)
+                                    fprintf(fp, " Cell_%u.N%u", akt_cella.cell_index, curr_cell_model.core.is_el ? 1 : 0);
+                                else
+                                    fprintf(fp, " R1");
+                            }
+                        }
+                        else {
+                            fprintf(fp, " R1");
+                        }
+                    }
+
+            // bottom of the bottom
+
+            for (uns y = 0; y < xy_n; y++)
+                for (uns x = 0; x < xy_n; x++, item++) {
+                    if (item % 16 == 0)
+                        fprintf(fp, "\n.PROBE FTH FIM %u %u circ1", xy_k, z_k);
+                    if (x < x_res && y < y_res) {
+                        HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, 0);
+                        if (akt_cella.cella_vector_index == ~0) // boundary cell
+                            fprintf(fp, " R1");
+                        else {
+                            hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                            if (curr_cell_model.core.is_th)
+                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_core_nodes[BOTTOM].is_X ? 'X' : 'N', curr_cell_model.th_core_nodes[BOTTOM].node_index);
+                            else
+                                fprintf(fp, " R1");
+                        }
+                    }
+                    else {
+                        fprintf(fp, " R1");
+                    }
+                }
+
+            // top
+
+            for (uns z = 0; z < z_n; z++)
+                for (uns y = 0; y < xy_n; y++)
+                    for (uns x = 0; x < xy_n; x++, item++) {
+                        if (item % 16 == 0)
+                            fprintf(fp, "\n.PROBE FTH FIM %u %u circ1", xy_k, z_k);
+                        if (x < x_res && y < y_res && z < z_res) {
+                            HmgModelRacs& akt_cella = hmg_modell_racs.getref(x, y, z);
+                            if (akt_cella.cella_vector_index == ~0) // boundary cell
+                                fprintf(fp, " R1");
+                            else {
+                                hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
+                                if (curr_cell_model.core.is_th)
+                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_core_nodes[TOP].is_X ? 'X' : 'N', curr_cell_model.th_core_nodes[TOP].node_index);
+                                else
+                                    fprintf(fp, " R1");
+                            }
+                        }
+                        else {
+                            fprintf(fp, " R1");
+                        }
+                    }
+            fprintf(fp, "\n");
+        }
+    }
     fprintf(fp, "\n");
+}
+
+
+//***********************************************************************
+void apa::write_HMG_anals(FILE * fp, simulation & aktSim){
+// excitations+boundaries, run, save
+//***********************************************************************
+
+    // initial DC
+
+    if (aktSim.tanal.size() > 0) {
+        AnalizisTipus tip = aktSim.tanal[0].tipus; // AnalDC, AnalNDC, AnalAC, AnalLinTran, AnalLogTran, AnalBode, AnalIdo, AnalCtrl
+        if(tip == AnalLinTran || tip == AnalLogTran || tip == AnalCtrl || tip == AnalAC || tip == AnalBode || tip == AnalIdo)
+            fprintf(fp, ".RUN INITIAL circ1 DC\n\n"); // for AC types initial also because AC excitations are defined, not DC
+    }
+    
+    // write SET (boundary and excitation)
+
+    //fprintf(fp, ".SET BG_COLOR1_Ithxi 0.1\n\n");
+    for (uns j = 0; j < colmax; j++) {
+        if (aktSim.mezo != FieldTherm && aktSim.texcitE[j].is) {
+            const excitation& x = aktSim.texcitE[j];
+            switch (x.tipus) {
+                case GerjSemmi:
+                    fprintf(fp, ".SET BG_COLOR%u_Gelx 0\n",  j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxi 0\n", j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxv 0\n", j);
+                    break;
+                case GerjU:
+                    fprintf(fp, ".SET BG_COLOR%u_Gelx %g\n",  j, GV);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxi 0\n",  j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxv %g\n", j, x.ertek);
+                    break;
+                case GerjI:
+                    fprintf(fp, ".SET BG_COLOR%u_Gelx 0\n",   j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxi %g\n", j, x.ertek);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxv 0\n",  j);
+                    break;
+            }
+        }
+        if (aktSim.mezo != FieldEl && aktSim.texcitT[j].is) {
+            const excitation& x = aktSim.texcitT[j];
+            switch (x.tipus) {
+                case GerjSemmi:
+                    fprintf(fp, ".SET BG_COLOR%u_Gthx 0\n",  j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxi 0\n", j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxv 0\n", j);
+                    break;
+                case GerjU:
+                    fprintf(fp, ".SET BG_COLOR%u_Gthx %g\n",  j, GV);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxi 0\n",  j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxv %g\n", j, x.ertek);
+                    break;
+                case GerjI:
+                    fprintf(fp, ".SET BG_COLOR%u_Gthx 0\n",   j);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxi %g\n", j, x.ertek);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxv 0\n",  j);
+                    break;
+            }
+        }
+    }
+    fprintf(fp, "\n");
+
+    // write RUN
+
+    //fprintf(fp, ".RUN circ1 DC\n\n");
+
+    // write SAVE
+
+    //write_HMG_save(fp, aktSim, 0);
+
+    uns stepIndex = 0;
+    for (uns i = 0; i < aktSim.tanal.size(); i++) {
+        v6anal aktAnal;
+        const analysis & anal = aktSim.tanal[i];
+        switch (anal.tipus) {
+            case AnalDC: 
+                fprintf(fp, ".RUN circ1 DC ITER\n\n"); // 1 DC step for linear models
+                write_HMG_save(fp, aktSim, stepIndex);
+                stepIndex++;
+                break;
+            case AnalNDC:
+                fprintf(fp, ".RUN circ1 DC\n\n");
+                write_HMG_save(fp, aktSim, stepIndex);
+                stepIndex++;
+                break;
+            case AnalAC:
+                fprintf(fp, ".RUN circ1 AC F=%g\n\n", anal.from);
+                write_HMG_save(fp, aktSim, stepIndex);
+                stepIndex++;
+                break;
+            case AnalLinTran:
+                for (dbl aktTime = anal.from; aktTime <= anal.to + aktTime * 1.0e-6; aktTime += anal.from) {
+                    fprintf(fp, ".RUN circ1 TIMESTEP T=%g\n\n", aktTime);
+                    write_HMG_save(fp, aktSim, stepIndex);
+                    stepIndex++;
+                }
+                break;
+            case AnalLogTran: {
+                    cd ddf = pow(10.0, 1.0 / anal.step);
+                    for (dbl aktTime = anal.from; aktTime <= anal.to + aktTime * 1.0e-6; aktTime *= ddf) {
+                        fprintf(fp, ".RUN circ1 TIMESTEP T=%g\n\n", aktTime);
+                        write_HMG_save(fp, aktSim, stepIndex);
+                        stepIndex++;
+                    }
+                }
+                break;
+            case AnalBode: {
+                    cd ddf = pow(10.0, 1.0 / anal.step);
+                    for (dbl aktFreq = anal.from; aktFreq <= anal.to + aktFreq * 1.0e-6; aktFreq *= ddf) {
+                        fprintf(fp, ".RUN circ1 AC F=%g\n\n", aktFreq);
+                        write_HMG_save(fp, aktSim, stepIndex);
+                        stepIndex++;
+                    }
+                }
+                break;
+            case AnalIdo: {
+                    cd ddf = pow(10.0, 1.0 / anal.step);
+                    for (dbl aktFreq = anal.to; aktFreq >= anal.from - aktFreq * 1.0e-6; aktFreq /= ddf) {
+                        fprintf(fp, ".RUN circ1 TIMECONST F=%g SPD=%u\n\n", aktFreq, anal.step);
+                        write_HMG_save(fp, aktSim, stepIndex);
+                        stepIndex++;
+                    }
+                }
+                break;
+            case AnalCtrl: {
+                    aktAnal.tipus = 'S';
+                    dbl aktStep = anal.from;
+                    dbl limit = anal.to;
+                    uns next_change_index = 0;
+                    dbl aktTime = 0;
+                    while (aktTime < limit + aktStep*1e-6) { // nincs több változás
+                        dbl prevTime = aktTime;
+                        bool noadd = false;
+                        if (next_change_index >= anal.ctrl.size()) {
+                            aktTime += aktStep;
+                            aktAnal.ertek = (aktTime < limit ? aktTime : limit) - prevTime;
+                            if (aktAnal.ertek<aktStep*1e-3)
+                                noadd = true;
+                        }
+                        else { // van még változás
+                            if (aktTime + aktStep*1.000001 > anal.ctrl[next_change_index].time) { // változás van
+                                const change_time & ct = anal.ctrl[next_change_index];
+                                aktTime = ct.time;
+                                if (aktTime >= limit + aktStep*1e-6) { // timelimit után lenne a következõ lépés a változással együtt
+                                    aktAnal.ertek = limit - prevTime;
+                                }
+                                else { // tényleg változás van
+                                    aktAnal.ertek = aktTime - prevTime;
+                                    if (ct.timestep > 0)
+                                        aktStep = ct.timestep;
+                                    for (uns j = 0; j < ct.excit.size(); j++) {
+                                        v6gerj gerj;
+                                        const excitation_2 & x = ct.excit[j];
+                                        gerj.ter = x.is_el ? 'E' : 'T';
+                                        switch (x.tipus) {
+                                            case GerjU: gerj.tipus = x.is_el ? 'U' : 'T'; gerj.ertek = x.ertek; break;
+                                            case GerjI: gerj.tipus = x.is_el ? 'I' : 'P'; gerj.ertek = x.ertek; break;
+                                            case GerjSemmi: gerj.tipus = 'N'; gerj.ertek = 0; break;
+                                        }
+                                        gerj.color_index = aktSim.pmodel->tcolor[x.color_index].index;
+                                        aktAnal.gerj.add(gerj);
+                                    }
+                                }
+                                next_change_index++;
+                            }
+                            else { // most nincs változás
+                                aktTime += aktStep;
+                                aktAnal.ertek = (aktTime < limit ? aktTime : limit) - prevTime;
+                                if (aktAnal.ertek<aktStep*1e-3)
+                                    noadd = true;
+                            }
+                        }
+                        if(!noadd)
+                            aktAnalizisek.add(aktAnal);
+                        aktAnal.reset();
+                    }
+                }
+                break;
+        }
+    }
 }
 
 
@@ -1111,12 +1473,20 @@ void apa::write_HMG_save(FILE * fp, simulation & aktSim, uns stepIndex){
         if (stepIndex == 0)
             fprintf(fp, ".SAVE FILE=\"%sprobe.res\"", path.c_str());
         else
-            fprintf(fp, ".SAVE APPEND FILE=\"%sprobe.res\"", path.c_str());
+            fprintf(fp, ".SAVE RAW APPEND FILE=\"%sprobe.res\"", path.c_str());
         if (aktSim.tproV.size() > 0)
             fprintf(fp, " PE");
         if (aktSim.tproT.size() > 0)
             fprintf(fp, " PT");
         fprintf(fp, "\n");
+    }
+    if (!aktSim.is_nofim) {
+        if (aktSim.mezo == FieldEl || aktSim.mezo == FieldElTherm) {
+            fprintf(fp, ".SAVE FIM FILE=\"%sSRE%04u.FIMe\" FEL\n", path.c_str(), stepIndex + 1);
+        }
+        if (aktSim.mezo == FieldTherm || aktSim.mezo == FieldElTherm) {
+            fprintf(fp, ".SAVE FIM FILE=\"%sSRE%04u.FIM\" FTH\n", path.c_str(), stepIndex + 1);
+        }
     }
     fprintf(fp, "\n");
 }

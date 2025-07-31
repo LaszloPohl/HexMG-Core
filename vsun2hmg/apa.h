@@ -19,6 +19,10 @@
 //***********************************************************************
 
 
+constexpr dbl szakadas = 1e-12;
+constexpr dbl GV = 1e6;
+
+
 //***********************************************************************
 class meret_tomb_tipus{
 //***********************************************************************
@@ -151,7 +155,7 @@ struct vezetes{
             throw hiba("vezetes::write_const", "only const value is acceptable");
         fprintf(fp, "%g;\n",g[0]);
     }
-    void hmg_write_nonlinfunction_normal(FILE* fp) {
+    void hmg_write_nonlinfunction_normal(FILE* fp, hmgNonlinComponentType ct) {
         if (is_resistivity)
             throw hiba("vezetes::hmg_write_nonlinfunction_normal", "is_resistivity not implemented");
         if (is_his)
@@ -163,15 +167,33 @@ struct vezetes{
                 throw hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_linearis not implemented");
                 break;
             case nlt_exp:
-                fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2\n", (uns)hmg_nonlin_index);
-                fprintf(fp, "10 _MULC V0 P2 %g\n", g[0]);
-                fprintf(fp, "20 _SUBC V1 P0 25\n");
-                fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
-                fprintf(fp, "40 _EXP V1 V1\n");
-                fprintf(fp, "50 _MUL V0 V0 V1\n");
-                fprintf(fp, "60 _SUB V1 P0 P1\n");
-                fprintf(fp, "70 _MUL RET V0 V1\n");
-                fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                switch (ct) {
+                    case hnctRth: { // pars: T1, T2, multiplier
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2 // Rth\n", (uns)hmg_nonlin_index);
+                        fprintf(fp, "10 _MULC V0 P2 %g\n", g[0]);
+                        fprintf(fp, "20 _SUBC V1 P0 25\n");
+                        fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "40 _EXP V1 V1\n");
+                        fprintf(fp, "50 _MUL V0 V0 V1\n");
+                        fprintf(fp, "60 _SUB V1 P0 P1\n");
+                        fprintf(fp, "70 _MUL RET V0 V1\n");
+                        fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    case hnctCth: { // pars: T, multiplier
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=2 V=2 // Cth\n", (uns)hmg_nonlin_index);
+                        fprintf(fp, "10 _MULC V0 P1 %g\n", g[0]);
+                        fprintf(fp, "20 _SUBC V1 P0 25\n");
+                        fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "40 _EXP V1 V1\n");
+                        fprintf(fp, "50 _MUL RET V0 V1\n");
+                        fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    default:
+                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_exp component type not implemented");
+                        break;
+                }
                 break;
             case nlt_quadratic:
                 hiba("vezetes::hmg_write_nonlinfunction_normal", "quadratic property is not supported");
@@ -554,12 +576,12 @@ struct material{
     void hmg_write_nonlin(FILE* fp) {
         if (is_his)
             throw hiba("material::hmg_write_nonlin", "is_his not implemented");
-        thvez.hmg_write_nonlinfunction_normal(fp);
-        elvez.hmg_write_nonlinfunction_normal(fp);
-        Cth.hmg_write_nonlinfunction_normal(fp);
-        S.hmg_write_nonlinfunction_normal(fp);
-        D.hmg_write_nonlinfunction_normal(fp);
-        emissivity.hmg_write_nonlinfunction_normal(fp);
+        thvez.hmg_write_nonlinfunction_normal(fp, hnctRth);
+        elvez.hmg_write_nonlinfunction_normal(fp, hnctRe);
+        Cth.hmg_write_nonlinfunction_normal(fp, hnctCth);
+        S.hmg_write_nonlinfunction_normal(fp, hnctUndef);
+        D.hmg_write_nonlinfunction_normal(fp, hnctUndef);
+        emissivity.hmg_write_nonlinfunction_normal(fp, hnctUndef);
     }
     void write(FILE * fp, uns irany, uns index) { // irány: 0=x, 1=y, 2=z
         if (irany == 0)
@@ -1364,6 +1386,7 @@ struct hmg_cella {
                 fprintf(fp, "ReT G N0 %c%u %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
             }
             else {
+                throw hiba("hmg_cella::write", "elektromos vezetés nemlinearitása nem jó");
                 fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
                 fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
                 fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
@@ -1372,18 +1395,18 @@ struct hmg_cella {
                 fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
             }
 
-            // excitation
+            // excitation // initial value unset, DC and AC set
 
             fprintf(fp, "Gex G N%u R0 BG_COLOR%u_Gex\n", thcenter, core.color_index);
             fprintf(fp, "Iexi I2 N%u R0 0 BG_COLOR%u_Iexi BG_COLOR%u_Iexi 0 %g\n", thcenter, core.color_index, core.color_index, Vcell / core.szin_terfogat);
-            fprintf(fp, "Iexv I N%u R0 BG_COLOR%u_Iexv\n", thcenter, core.color_index);
+            fprintf(fp, "Iexv I N%u R0 0 BG_COLOR%u_Iexv BG_COLOR%u_Iexv 0\n", thcenter, core.color_index, core.color_index);
 
-            // boundaries
+            // boundaries // initial value and DC set, AC unset
 
             for (uns i = WEST; i <= TOP; i++) {
                 if (el_boundaries[i].is_boundary) {
                     fprintf(fp, "BGe%u G N%u R0 BG_%s_Ge\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str());
-                    fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie BG_%s_Ie\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str());
+                    fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str());
                 }
             }
             thcenter = 1;
@@ -1414,43 +1437,43 @@ struct hmg_cella {
                 throw hiba("hmg_cella::write", "cth.tipus != nlt_lin TODO");
             }
 
-            // excitation
+            // excitation // initial value unset, DC and AC set
 
             fprintf(fp, "Gthx G N%u R0 BG_COLOR%u_Gthx\n", thcenter, core.color_index);
             fprintf(fp, "Ithxi I2 N%u R0 0 BG_COLOR%u_Ithxi BG_COLOR%u_Ithxi 0 %g\n", thcenter, core.color_index, core.color_index, Vcell / core.szin_terfogat);
-            fprintf(fp, "Ithxv I N%u R0 BG_COLOR%u_Ithxv\n", thcenter, core.color_index);
+            fprintf(fp, "Ithxv I N%u R0 0 BG_COLOR%u_Ithxv BG_COLOR%u_Ithxv 0\n", thcenter, core.color_index, core.color_index);
 
-            // boundaries
+            // boundaries  // initial value and DC set, AC unset
 
             if (th_boundaries[WEST].is_boundary) {
                 fprintf(fp, "BHTCW G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), core.y_size * core.z_size);
                 fprintf(fp, "BGthW G N%u R0 BG_%s_Gth\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str());
-                fprintf(fp, "BIthW I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), getBoundaryName(th_boundaries[WEST].global_var_index).c_str());
+                fprintf(fp, "BIthW I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), getBoundaryName(th_boundaries[WEST].global_var_index).c_str());
             }
             if (th_boundaries[EAST].is_boundary) {
                 fprintf(fp, "BHTCE G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), core.y_size * core.z_size);
                 fprintf(fp, "BGthE G N%u R0 BG_%s_Gth\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str());
-                fprintf(fp, "BIthE I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), getBoundaryName(th_boundaries[EAST].global_var_index).c_str());
+                fprintf(fp, "BIthE I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), getBoundaryName(th_boundaries[EAST].global_var_index).c_str());
             }
             if (th_boundaries[SOUTH].is_boundary) {
                 fprintf(fp, "BHTCS G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), core.x_size * core.z_size);
                 fprintf(fp, "BGthS G N%u R0 BG_%s_Gth\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str());
-                fprintf(fp, "BIthS I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str());
+                fprintf(fp, "BIthS I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str());
             }
             if (th_boundaries[NORTH].is_boundary) {
                 fprintf(fp, "BHTCN G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), core.x_size * core.z_size);
                 fprintf(fp, "BGthN G N%u R0 BG_%s_Gth\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str());
-                fprintf(fp, "BIthN I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), getBoundaryName(th_boundaries[NORTH].global_var_index).c_str());
+                fprintf(fp, "BIthN I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), getBoundaryName(th_boundaries[NORTH].global_var_index).c_str());
             }
             if (th_boundaries[BOTTOM].is_boundary) {
                 fprintf(fp, "BHTCB G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), core.x_size * core.y_size);
                 fprintf(fp, "BGthB G N%u R0 BG_%s_Gth\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str());
-                fprintf(fp, "BIthB I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str());
+                fprintf(fp, "BIthB I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str());
             }
             if (th_boundaries[TOP].is_boundary) {
                 fprintf(fp, "BHTCT G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), core.x_size * core.y_size);
                 fprintf(fp, "BGthT G N%u R0 BG_%s_Gth\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
-                fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith BG_%s_Ith 0\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
+                fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
             }
         }
         if (core.is_el && core.is_th)
@@ -1613,6 +1636,7 @@ public:
     void write_HMG_cell_models(FILE* fp, simulation& aktSim);
     void write_HMG_SUNRED_tree(FILE* fp, simulation& aktSim);
     void write_HMG_probes(FILE* fp, simulation& aktSim);
+    void write_HMG_anals(FILE* fp, simulation& aktSim);
     void write_HMG_save(FILE* fp, simulation& aktSim, uns stepIndex);
     //***********************************************************************
 

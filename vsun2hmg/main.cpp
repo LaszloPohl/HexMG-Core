@@ -10,6 +10,7 @@
 #include "apa.h"
 #include "gfunc.h"
 #include <iostream>
+#include <format>
 //***********************************************************************
 
 
@@ -38,6 +39,7 @@ char idobelyeg[100];
 //***********************************************************************
 int main(int argc,char **argv){ // normál sunred
 //***********************************************************************
+    // std::cout << std::format("There are {} ways I love you.", 219) << std::endl;
     time_t ltime;
     time(&ltime);
     strftime(idobelyeg, 100, "%y%m%d_%H%M%S", localtime(&ltime));

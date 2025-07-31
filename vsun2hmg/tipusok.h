@@ -87,6 +87,7 @@ enum ProbeTipus {ProbeV,ProbeT,ProbeC,ProbeM,ProbeS};// M=map, S=section
 enum AnalizisTipus {AnalDC,AnalNDC,AnalAC,AnalLinTran,AnalLogTran,AnalBode,AnalIdo,AnalCtrl};
 enum irany{X_IRANY,Y_IRANY,Z_IRANY,N_IRANY};//N_IRANY=nincs irány
 enum CompactTipus{CompactMatrix};
+enum hmgNonlinComponentType { hnctRth, hnctCth, hnctRe, hnctCe, hnctUndef };
 
 struct stackedMaterial {
     std::string name;
