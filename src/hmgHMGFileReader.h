@@ -933,6 +933,8 @@ struct HMGFileProbe: HMGFileListItem {
     uns probeIndex = 0;
     uns probeType = ptV;
     uns fullCircuitID = 0;
+    uns xy_k = 0; // FIM probe
+    uns z_k  = 0; // FIM probe
     std::vector<DeepInterfaceNodeID> nodes;
     //***********************************************************************
 
@@ -941,7 +943,7 @@ struct HMGFileProbe: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsProbeInstruction(probeIndex, probeType, fullCircuitID, (uns)nodes.size()));
+        iStream.add(new IsProbeInstruction(probeIndex, probeType, fullCircuitID, (uns)nodes.size(), xy_k, z_k));
         for (const auto& node : nodes)
             iStream.add(new IsProbeNodeInstruction(node));
         iStream.add(new IsEndDefInstruction(sitProbe, 0));
@@ -990,6 +992,7 @@ struct HMGFileSave: HMGFileListItem {
     //***********************************************************************
     bool isRaw = false;
     bool isAppend = false;
+    bool isFIM = false;
     uns maxResultsPerRow = 100;
     std::string fileName;
     std::vector<uns> probeIDs;
@@ -1000,7 +1003,7 @@ struct HMGFileSave: HMGFileListItem {
     //***********************************************************************
     void toInstructionStream(InstructionStream& iStream)override {
     //***********************************************************************
-        iStream.add(new IsSaveInstruction(isRaw, isAppend, maxResultsPerRow, fileName, (uns)probeIDs.size()));
+        iStream.add(new IsSaveInstruction(isFIM, isRaw, isAppend, maxResultsPerRow, fileName, (uns)probeIDs.size()));
         for (const auto& probe : probeIDs)
             iStream.add(new IsUnsInstruction(probe));
         iStream.add(new IsEndDefInstruction(sitSave, 0));

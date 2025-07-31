@@ -629,6 +629,37 @@ void probaSzimulacio4() {
 }
 
 
+//***********************************************************************
+struct bench_event {
+//***********************************************************************
+	std::string event;
+	std::chrono::high_resolution_clock::time_point time;
+};
+
+
+//***********************************************************************
+std::vector<bench_event> bench_events;
+//***********************************************************************
+
+
+//***********************************************************************
+void nsHMG::bench_now(const std::string& what_happened) {
+//***********************************************************************
+	bench_events.emplace_back(what_happened, high_resolution_clock::now());
+}
+
+
+//***********************************************************************
+void nsHMG::bench_print() {
+//***********************************************************************
+	for (size_t i = 0; i < bench_events.size(); i++) {
+		double dt = i > 0 ? duration_cast<duration<double>>(bench_events[i].time - bench_events[i - 1].time).count() : 0;
+		double ft = duration_cast<duration<double>>(bench_events[i].time - bench_events[0].time).count();
+		printf("t=%14.7f sec, dt=%14.7f sec: %s\n", ft, dt, bench_events[i].event.c_str());
+	}
+}
+
+
 // Be kell állítani a CircuitNodeData::defaultNodeValue vektort (méret és értékek) az áramkördefiníciós adatok alapján, utána lehet létrehozni az áramkört
 
 
@@ -640,23 +671,35 @@ int main(int n, const char** params) {
 	try {
 		HmgFileReader reader;
 
+		bench_now("start");
+
 		//most("start");
 		//reader.ReadFile(params[1]);
 		//ComponentConstC_1::isTrapezoid = true;
 		HgmFunctionStorage::getInstance(); // HgmFunctionStorage constructor runs
 		//reader.ReadFile("c:/!D/Kutatás/cikkek/tanszeki/HexMG/proba_13.hmg");
-		reader.ReadFile("D:/!D/Kutatás/MicReD/C/sunred3/testv/test.hmg");
+		if (n > 1) {
+			reader.ReadFile(params[1]);
+		}
+		else
+			reader.ReadFile("d:/!D/Kutatás/MicReD/C/SUNRED/gui2.2/!SULLYESZTO/128x8/128x8.hmg");
+		//reader.ReadFile("test.hmg");
 		InstructionStream is;
 		reader.convertToInstructionStream(is);
 		//most("convertToInstructionStream");
 		reader.clear();
 		//most("clear");
 
+		bench_now("in instruction stream");
+
 		InstructionQueue ip;
 		ip.addInstructionStream(is);
 		InstructionQueue::waitToFinish(ip);
 		//most("process instructions");
 		//esemenyek_kiirasa();
+
+		bench_now("stop");
+		bench_print();
 	}
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;

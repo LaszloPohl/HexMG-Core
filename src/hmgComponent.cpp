@@ -286,7 +286,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     IsSaveInstruction* pAct = static_cast<IsSaveInstruction*>(act);
                     std::vector<uns> probeIndex;
                     processSaveInstructions(first, probeIndex);
-                    save(pAct->isRaw, pAct->isAppend, pAct->maxResultsPerRow, pAct->fileName, probeIndex);
+                    save(pAct->isFIM, pAct->isRaw, pAct->isAppend, pAct->maxResultsPerRow, pAct->fileName, probeIndex);
                 }
                 break;
             case sitDefModelSubcircuit: {
@@ -522,6 +522,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     }
                     probes[pAct->probeIndex]->probeType = (ProbeType)pAct->probeType;
                     probes[pAct->probeIndex]->fullCircuitID = pAct->fullCircuitID;
+                    probes[pAct->probeIndex]->xy_k = pAct->xy_k;
+                    probes[pAct->probeIndex]->z_k  = pAct->z_k;
                     probes[pAct->probeIndex]->nodes.reserve(pAct->nNodes);
                     processProbesInstructions(first, pAct->probeIndex);
                 }
@@ -1228,6 +1230,14 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         xns.nParams = 1 + pAct->nPar;
                         xns.nComponentT = 0;
                     }
+                    else if (pAct->modelIndex == bimFunc_Controlled_Node) {
+                        xns.nXNodes = 0;
+                        xns.nYNodes = 0;
+                        xns.nANodes = 1 + pAct->nCIN;
+                        xns.nONodes = 0;
+                        xns.nParams = pAct->nPar;
+                        xns.nComponentT = 0;
+                    }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
 
@@ -1277,11 +1287,16 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                     CircuitStorage& gc = CircuitStorage::getInstance();
 
                     if (pAct->modelIndex == bimFunc_Controlled_IG) {
-                        std::unique_ptr<Model_Function_Controlled_I_with_const_G> mf;
                         HmgFunction* fv = pAct->isFunctionBuiltIn
                             ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
                             : gc.functions[pAct->functionIndex].get();
                         gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_G>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
+                    }
+                    else if (pAct->modelIndex == bimFunc_Controlled_Node) {
+                        HmgFunction* fv = pAct->isFunctionBuiltIn
+                            ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
+                            : gc.functions[pAct->functionIndex].get();
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_Node>(1 + pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
                     }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);

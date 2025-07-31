@@ -162,6 +162,7 @@ public:
     //************************** DC functions *******************************
     virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
+    virtual void calculateComponentControllerValueDC() noexcept {} // no AC version, runs before any calculateValueDC is evaluated => the other components can use what this calcaulated (FCB uses)
     virtual void calculateValueDC() noexcept = 0; // no AC version
     virtual uns calculateControllersDC(uns level, controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
     virtual DefectCollector collectCurrentDefectDC() const noexcept = 0; // no AC version
@@ -2045,6 +2046,124 @@ public:
 
 
 //***********************************************************************
+class Component_Function_Controlled_Node final : public RealComponent {
+//***********************************************************************
+    friend class HmgF_Load_ControlledI_Node_StepStart;
+    std::vector<NodeVariable*> externalNodes;
+    std::vector<Param> pars; // pars[0] is G
+    std::vector<ComponentAndControllerBase*> componentParams;
+    std::vector<ComponentAndControllerBase*> functionComponentParams;
+    std::vector<rvt> workField;
+    cplx IAC = cplx0;
+public:
+    //***********************************************************************
+    Component_Function_Controlled_Node(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
+    // workField size: 
+    //***********************************************************************
+        is_equal_error<siz>(def->nodesConnectedTo.size(), pModel->getN_ExternalNodes(), "Component_Function_Controlled_Node::Component_Function_Controlled_Node");
+        externalNodes.resize(def->nodesConnectedTo.size());
+        pars.resize(def->params.size());
+        componentParams.resize(def->componentParams.size());
+        const Model_Function_Controlled_Node* pM = dynamic_cast<const Model_Function_Controlled_Node*>(pModel);
+        workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
+    }
+    //***********************************************************************
+    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    //***********************************************************************
+        return externalNodes[nodeIndex];
+    }
+    //***********************************************************************
+    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    //***********************************************************************
+    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    //***********************************************************************
+    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    //***********************************************************************
+    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    //***********************************************************************
+        if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) {
+            pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
+            pNode->extend();
+        }
+        externalNodes[nodeIndex] = pNode;
+    }
+    //************************** AC / DC functions *******************************
+    void resetNodes(bool isDC) noexcept override {}
+    void deleteD(bool isDC) noexcept override {}
+    void deleteF(bool isDC) noexcept override {}
+    void deleteYii(bool isDC) noexcept override {}
+    void loadFtoD(bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void calculateCurrent(bool isDC) noexcept override {}
+    void forwsubs(bool isDC) override {}
+    void backsubs(bool isDC) override {}
+    void jacobiIteration(bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    //************************** DC functions *******************************
+    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptStepDC() noexcept override {}
+    //***********************************************************************
+    void buildOrReplace() override {
+    //***********************************************************************
+        const Model_Function_Controlled_Node* pMod = static_cast<const Model_Function_Controlled_Node*>(pModel);
+        csiz siz = pMod->functionComponentParams.size();
+        functionComponentParams.resize(siz);
+        for (uns i = 0; i < siz; i++) {
+            cuns index = pMod->functionComponentParams[i];
+            functionComponentParams[i] = index == unsMax ? this : componentParams[index];
+        }
+    }
+    //***********************************************************************
+    void calculateComponentControllerValueDC() noexcept override {
+    //***********************************************************************
+        const Model_Function_Controlled_Node& model = static_cast<const Model_Function_Controlled_Node&>(*pModel);
+        const std::vector<NodeConnectionInstructions::ConnectionInstruction>& load = model.functionSources.load;
+        for (uns i = 0; i < load.size(); i++) {
+            switch (load[i].nodeOrVarType) {
+                case NodeConnectionInstructions::sExternalNodeValue:
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getValueDC();
+                    break;
+                case NodeConnectionInstructions::sExternalNodeStepstart:
+                    workField[model.indexField[load[i].functionParamIndex]] = externalNodes[load[i].nodeOrVarIndex]->getStepStartDC();
+                    break;
+                case NodeConnectionInstructions::sParam:
+                    workField[model.indexField[load[i].functionParamIndex]] = pars[load[i].nodeOrVarIndex].get();
+                    break;
+            }
+        }
+        model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), functionComponentParams.size() == 0 ? nullptr : &functionComponentParams.front());
+        componentValue.setValueDC(workField[0]);
+        externalNodes[0]->setValueDC(workField[0]);
+    }
+    //***********************************************************************
+    void calculateValueDC() noexcept override {}
+    //***********************************************************************
+    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    void calculateYiiDC() noexcept override {}
+    rvt getCurrentDC(uns y) const noexcept override { return rvt0; }
+    DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
+    DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
+    //************************** AC functions *******************************
+    void acceptIterationAndStepAC() noexcept override {}
+    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    void calculateYiiAC() noexcept override { }
+    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    //***********************************************************************
+#ifdef HMG_DEBUGPRINT
+    void printNodeValueDC(uns) const noexcept override {}
+    void printNodeErrorDC(uns) const noexcept override {}
+    void printNodeDefectDC(uns) const noexcept override {}
+    void printNodeValueAC(uns) const noexcept override {}
+    void printNodeErrorAC(uns) const noexcept override {}
+    void printNodeDefectAC(uns) const noexcept override {}
+#endif
+};
+
+
+//***********************************************************************
 class Controller final : public ComponentAndControllerBase {
 //***********************************************************************
     friend class HmgF_Load_Controller_Node_StepStart;
@@ -2561,7 +2680,15 @@ public:
     }
     //************************** DC functions *******************************
     void allocForReductionDC();
+     //***********************************************************************
+    void calculateComponentControllerValueDC() noexcept override {
+    // TO PARALLEL
     //***********************************************************************
+        for (auto& comp : components)
+            if (comp->isEnabled) comp->calculateComponentControllerValueDC();
+        // setting own value should be here
+    }
+   //***********************************************************************
     void calculateValueDC() noexcept override {
     // TO PARALLEL
     //***********************************************************************
@@ -3185,6 +3312,13 @@ inline ComponentAndControllerBase* Model_Function_Controlled_I_with_const_G::mak
 
 
 //***********************************************************************
+inline ComponentAndControllerBase* Model_Function_Controlled_Node::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
+//***********************************************************************
+    return new Component_Function_Controlled_Node(def, defaultNodeValueIndex);
+}
+
+
+//***********************************************************************
 inline ComponentAndControllerBase* ModelController::makeComponent(const ComponentDefinition* def, uns defaultNodeValueIndex) const {
 //***********************************************************************
     return new Controller(def, defaultNodeValueIndex);
@@ -3209,6 +3343,7 @@ class CircuitStorage {
     //***********************************************************************
         ProbeType probeType = ptV;
         uns fullCircuitID = 0;
+        uns xy_k = 0, z_k = 0;
         std::vector<DeepCDNodeID> nodes;
     };
 
@@ -3267,6 +3402,7 @@ private:
         builtInModels[builtInModelType::bimtMIB] = std::make_unique<ModelMIB>();
         builtInModels[builtInModelType::bimtMIN] = std::make_unique<ModelMIN>();
         builtInModels[builtInModelType::bimFunc_Controlled_IG] = std::unique_ptr<Model_Function_Controlled_I_with_const_G>(nullptr);
+        builtInModels[builtInModelType::bimFunc_Controlled_Node] = std::unique_ptr<Model_Function_Controlled_Node>(nullptr);
 
     /*  ExternalConnectionSizePack
     uns nXNodes = 0;
@@ -3365,6 +3501,7 @@ private:
     void getProbeValuesDC(const Probe& probe, std::vector<rvt>& saveValuesDC) const {
     //***********************************************************************
         switch (probe.probeType) {
+            case ptFIM:
             case ptV: {
                 saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
@@ -3414,6 +3551,7 @@ private:
     void getProbeValuesAC(const Probe& probe, std::vector<cplx>& saveValuesAC) const {
     //***********************************************************************
         switch (probe.probeType) {
+            case ptFIM:
             case ptV: {
                 saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
@@ -3460,25 +3598,36 @@ private:
     }
 
     //***********************************************************************
-    void save(bool isRaw, bool isAppend, uns maxResultsPerRow, const char* fileName, const std::vector<uns>& probeIndex) {
+    void save(bool isFIM, bool isRaw, bool isAppend, uns maxResultsPerRow, const char* fileName, const std::vector<uns>& probeIndex) {
     //***********************************************************************
         SimulationToSaveData* src = new SimulationToSaveData;
+        src->isFIM = isFIM;
         src->isRaw = isRaw;
         src->isAppend = isAppend;
         src->maxResultsPerRow = maxResultsPerRow;
         src->fileName = fileName;
+
+        if (isFIM && probeIndex.size() != 1)
+            throw hmgExcept("CircuitStorage::save", ".SAVE FIM: exactly 1 probe must be defined, %u found", (uns)probeIndex.size());
+
         sim.fillSaveData(src);
         switch (src->analysisType) {
             case atDC:
             case atTimeStep: {
-                for (auto pi : probeIndex)
+                for (auto pi : probeIndex) {
+                    src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    src->z_k  = probes[pi].get()->z_k;  // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
                     getProbeValuesDC(*probes[pi].get(), src->saveValuesDC);
+                }
             }
             break;
             case atAC:
             case atTimeConst: {
-                for (auto pi : probeIndex)
+                for (auto pi : probeIndex) {
+                    src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    src->z_k  = probes[pi].get()->z_k;  // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
                     getProbeValuesAC(*probes[pi].get(), src->saveValuesAC);
+                }
             }
             break;
             default:
@@ -3546,6 +3695,7 @@ public:
     static void CalculateValuesAndCurrentsDC(uns fullCircuitID) {
     //***********************************************************************
         CircuitStorage& gc = getInstance();
+        gc.fullCircuitInstances[fullCircuitID].component->calculateComponentControllerValueDC();
         gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
         gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
         gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);

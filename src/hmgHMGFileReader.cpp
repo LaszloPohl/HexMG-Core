@@ -457,7 +457,7 @@ bool ReadALine::getLine(char* result, unsigned resultSize, LineInfo& lineInfo, b
                 // !!!! intentionally there is no break here because case stNormalRead will process ch
             case stNormalRead:
 label_NR:
-                if (isspace(ch))
+                if (ch>=0 && isspace(char(ch)))
                     st = stSpace;
                 else if (ch == ';')
                     st = stCommentLine;
@@ -470,7 +470,7 @@ label_NR:
                 }
                 break;
             case stSpace:
-                if (isspace(ch))
+                if (ch >= 0 && isspace(ch))
                     break;
                 if (resultIndex + 2 >= resultSize)
                     throw hmgExcept("ReadALine::getLine", "line is too long (line %u of %s)", actLine, names[fileNameIndex].name.c_str());
@@ -695,7 +695,7 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
     // reading the simulation
 
     globalCircuit.Read(reader, line, lineInfo);
-    most("Read");
+    //most("Read");
     //globalCircuit.ProcessXLines();
     //most("ProcessXLines");
     //globalCircuit.ProcessExpressionNames(&globalCircuit.itemList);
@@ -921,14 +921,21 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,     "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
             else if (strcmp(token, "XDIODE") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtXDiode;   parnum = 1; nodenum = 3; }
             else if (strcmp(token,  "HYS_1") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtHYS_1;    parnum = 3; nodenum = 2; pxline->isController = true; }
-            else if (strcmp(token,    "FCI") == 0) {
+            else if (strcmp(token,    "FCI") == 0 || strcmp(token, "FCB") == 0) {
                 pxline->isBuiltIn = true; 
+
                 pxline->modelIndex = bimFunc_Controlled_IG;
+                if(strcmp(token, "FCB") == 0)
+                    pxline->modelIndex = bimFunc_Controlled_Node; // !
+
                 pxline->isFunctionControlled = true;
                 bool isNotFinished = true;
                 do {
                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                    if      (readNodeOrParNumber(line, lineToken, reader, lineInfo, "Y",    pxline->nIN));
+                    if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "Y", pxline->nIN)) {
+                        if (pxline->modelIndex == bimFunc_Controlled_Node)
+                            throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "FCB component cannot have Y nodes, A nodes should be used instead in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    }
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "A",    pxline->nCin));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "P",    pxline->nPar));
                     else if (readNodeOrParNumber(line, lineToken, reader, lineInfo, "CT",   pxline->nCT));
@@ -1000,9 +1007,20 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                             }
                         }
-                        nodenum = 2 + pxline->nIN + pxline->nCin;
-                        parnum = 1 + pxline->nPar;
-                        compnum = pxline->nCT;
+                        switch (pxline->modelIndex) {
+                            case bimFunc_Controlled_IG:
+                                nodenum = 2 + pxline->nIN + pxline->nCin;
+                                parnum = 1 + pxline->nPar;
+                                compnum = pxline->nCT;
+                                break;
+                            case bimFunc_Controlled_Node:
+                                nodenum = 1 + pxline->nIN + pxline->nCin;
+                                parnum = pxline->nPar;
+                                compnum = pxline->nCT;
+                                break;
+                            default:
+                                throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodySubcircuit", "program error: unknown function controlled component");
+                        }
                         isNotFinished = false;
                     }
                     else
@@ -1450,13 +1468,13 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
     // check line
 
     if (strcmp(token, ".PROBE") != 0)
-        throw hmgExcept("HMGFileCreate::Read", ".PROBE expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        throw hmgExcept("HMGFileProbe::Read", ".PROBE expected, %s found in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
     // probe name
 
     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
     if(globalNames.probeNames.contains(token) != isContinue)
-        throw hmgExcept("HMGFileCreate::Read", "Program error: globalNames.probeNames.contains(token) != isContinue");
+        throw hmgExcept("HMGFileProbe::Read", "Program error: globalNames.probeNames.contains(token) != isContinue");
     if (!isContinue) {
         probeIndex = (uns)globalNames.probeNames.size();
         globalNames.probeNames[token] = probeIndex;
@@ -1472,15 +1490,33 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         else if (strcmp(token, "VAVERAGE") == 0) probeType = ptVAverage;
         else if (strcmp(token, "ISUM"    ) == 0) probeType = ptISum;
         else if (strcmp(token, "IAVERAGE") == 0) probeType = ptIAverage;
+        else if (strcmp(token, "FIM"     ) == 0) {
+            
+            probeType = ptFIM;
+
+            if (lineToken.isSepEOL)
+                throw hmgExcept("HMGFileProbe::Read", "empty .PROBE line: %s in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(lineToken.getActToken(), "%u", &xy_k) != 1)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE xy_k is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(lineToken.getActToken(), "%u", &z_k) != 1)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE z_k is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            if (xy_k + z_k > 12)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE xy_k+z_k must be <= 12, %u arrived (%s) in %s, line %u", xy_k + z_k, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        }
         else
-            throw hmgExcept("HMGFileCreate::Read", "Unknown probe type (%s) in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            throw hmgExcept("HMGFileProbe::Read", "Unknown probe type (%s) in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
         // fullCircuit
 
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         try { fullCircuitID = globalNames.fullCircuitNames.at(token); }
         catch (const std::out_of_range&) {
-            throw hmgExcept("HMGFileCreate::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileProbe::Read", "unrecognised full circuit (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
     }
     else {
@@ -1490,30 +1526,47 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (strcmp(token, "V") == 0) {
             if(probeType != ptV)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "I") == 0) {
             if (probeType != ptI)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "VSUM") == 0) {
             if (probeType != ptVSum)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "VAVERAGE") == 0) {
             if (probeType != ptVAverage)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "ISUM") == 0) {
             if (probeType != ptISum)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "IAVERAGE") == 0) {
             if (probeType != ptIAverage)
-                throw hmgExcept("HMGFileCreate::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+        }
+        else if (strcmp(token, "FIM") == 0) {
+            if (probeType != ptFIM)
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+            uns new_k;
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(lineToken.getActToken(), "%u", &new_k) != 1)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE xy_k is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (new_k != xy_k)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE xy_k is not the same number as previously (%u!=%u), (%s) in %s, line %u", new_k, xy_k, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (sscanf_s(lineToken.getActToken(), "%u", &new_k) != 1)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE z_k is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (new_k != z_k)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE z_k is not the same number as previously (%u!=%u), (%s) in %s, line %u", new_k, z_k, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         }
         else
-            throw hmgExcept("HMGFileCreate::Read", "Unknown probe type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileProbe::Read", "Unknown probe type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
         // fullCircuit
 
@@ -1521,17 +1574,17 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         uns newFullCircID;
         try { newFullCircID = globalNames.fullCircuitNames.at(token); }
         catch (const std::out_of_range&) {
-            throw hmgExcept("HMGFileCreate::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileProbe::Read", "unrecognised MODEL (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         if (newFullCircID != fullCircuitID)
-            throw hmgExcept("HMGFileCreate::Read", "A different full circuit ID than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileProbe::Read", "A different full circuit ID than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
 
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         DeepInterfaceNodeID pnid;
         if(!globalNames.textToDeepInterfaceNodeID(token, fullCircuitID, pnid))
-            throw hmgExcept("HMGFileCreate::Read", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            throw hmgExcept("HMGFileProbe::Read", "unrecognised node (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         nodes.push_back(pnid);
     }
 }
@@ -1647,6 +1700,7 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     while (true) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (strcmp(token, "RAW") == 0) isRaw = true;
+        else if (strcmp(token, "FIM") == 0) isFIM = true;
         else if (strcmp(token, "APPEND") == 0) isAppend = true;
         else if (strcmp(token, "MAXRESULTSPERROW") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1671,6 +1725,8 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         probeIDs.push_back(globalNames.probeNames.at(token));
     }
+    if (isFIM && probeIDs.size() != 1)
+        throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM line exactly 1 FIM probe must be given, in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 }
 
 

@@ -45,13 +45,20 @@ void Simulation::runDC() {
     }
     else {
         std::cout << '.' << std::endl;
+        bench_now("start DC");
         CircuitStorage::CalculateControllersDC(fullCircuitID);
+        bench_now("CalculateControllersDC");
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        bench_now("CalculateValuesAndCurrentsDC");
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        bench_now("ForwsubsBacksubsDC");
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+        bench_now("AcceptIterationDC");
         CircuitStorage::CalculateControllersDC(fullCircuitID);
+        bench_now("CalculateControllersDC");
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        
+        bench_now("CalculateValuesAndCurrentsDC");
+
         CircuitStorage& gc = CircuitStorage::getInstance();
         std::cout << '.' << std::endl;
 #ifdef HMG_DEBUGPRINT
@@ -80,6 +87,7 @@ void Simulation::runDC() {
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
+        bench_now("first iterations");
 
         for (uns i = 0; i < 10; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
@@ -92,6 +100,7 @@ void Simulation::runDC() {
             std::cout << std::endl;
             gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
+            bench_now("iteration");
         }
 
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
