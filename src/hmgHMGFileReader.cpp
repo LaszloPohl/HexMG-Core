@@ -34,6 +34,8 @@ FileFunctionNameID biftNameID[] = {
     { "CONST",	bift_CONST },
     { "CPYC",	bift_CONST },   // the same
     { "C_PI",	bift_C_PI },
+    { "PRINT",	bift_PRINT },
+    { "PRINTLN",	bift_PRINTLN },
     { "C_2PI",	bift_C_2PI },
     { "C_PI2",	bift_C_PI2 },
     { "C_E",	bift_C_E },
@@ -2332,6 +2334,8 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_C_PI:
+                    case bift_PRINT:
+                    case bift_PRINTLN:
                     case bift_C_2PI:
                     case bift_C_PI2:
                     case bift_C_E:

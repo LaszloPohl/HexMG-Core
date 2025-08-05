@@ -168,15 +168,23 @@ struct vezetes{
                 break;
             case nlt_exp:
                 switch (ct) {
-                    case hnctRth: { // pars: T1, T2, multiplier
+                    case hnctRth: { // pars: T1, T2, multiplier => should give the current value of the FCI
                         fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2 // Rth\n", (uns)hmg_nonlin_index);
                         fprintf(fp, "10 _MULC V0 P2 %g\n", g[0]);
+                        //fprintf(fp, "14 _PRINT P2\n");
+                        //fprintf(fp, "15 _PRINT V0\n");
                         fprintf(fp, "20 _SUBC V1 P0 25\n");
                         fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
                         fprintf(fp, "40 _EXP V1 V1\n");
                         fprintf(fp, "50 _MUL V0 V0 V1\n");
-                        fprintf(fp, "60 _SUB V1 P0 P1\n");
+                        //fprintf(fp, "54 _PRINT V0\n");
+                        //fprintf(fp, "55 _PRINT V1\n");
+                        fprintf(fp, "60 _SUB V1 P1 P0\n");
+                        //fprintf(fp, "64 _PRINT P0\n");
+                        //fprintf(fp, "6A _PRINT P1\n");
+                        //fprintf(fp, "65 _PRINT V1\n");
                         fprintf(fp, "70 _MUL RET V0 V1\n");
+                        //fprintf(fp, "75 _PRINTLN RET\n");
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
@@ -1372,7 +1380,11 @@ struct hmg_cella {
     }
 
     void write(FILE* fp, simulation& aktSim, uns model_index) {
-        fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u\n", model_index, xNodes, nNodes);
+        fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u", model_index, xNodes, nNodes);
+        if (core.is_th && core.pmat->Cth.tipus != nlt_lin) {
+            fprintf(fp, " B=1"); // control node for nonlinear heat capacitor
+        }
+        fprintf(fp, "\n");
         uns thcenter = 0;
         const dbl Vcell = core.x_size * core.y_size * core.z_size;
         if (core.is_el) {
@@ -1387,12 +1399,13 @@ struct hmg_cella {
             }
             else {
                 throw hiba("hmg_cella::write", "elektromos vezetés nemlinearitása nem jó");
-                fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "ReN FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "ReB FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                // eredetileg a méretet megszoroztam a elvez.get_ertek(0)-val, de ez faszság, a vezetés a függvényben van
+                fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                fprintf(fp, "ReN FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                fprintf(fp, "ReB FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N0 %c%u 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
             }
 
             // excitation // initial value unset, DC and AC set
@@ -1422,19 +1435,22 @@ struct hmg_cella {
                 fprintf(fp, "RthT G N%u %c%u %g\n", thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
             }
             else {
-                fprintf(fp, "RthW FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[WEST].is_X   ? 'X' : 'N', th_core_nodes[WEST].node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "RthE FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[EAST].is_X   ? 'X' : 'N', th_core_nodes[EAST].node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "RthS FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[SOUTH].is_X  ? 'X' : 'N', th_core_nodes[SOUTH].node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "RthN FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[NORTH].is_X  ? 'X' : 'N', th_core_nodes[NORTH].node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "RthB FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                fprintf(fp, "RthT FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                // eredetileg a méretet megszoroztam a thvez.get_ertek(0)-val, de ez faszság, a vezetés a függvényben van
+                fprintf(fp, "RthW FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[WEST].is_X   ? 'X' : 'N', th_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthE FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[EAST].is_X   ? 'X' : 'N', th_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthS FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[SOUTH].is_X  ? 'X' : 'N', th_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthN FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[NORTH].is_X  ? 'X' : 'N', th_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthB FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthT FCI P=2 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
             }
             const vezetes& cth = core.pmat->Cth;
             if (cth.tipus == nlt_lin) {
                 fprintf(fp, "Cth C N%u R1 %g\n", thcenter, cth.get_ertek(0) * Vcell);
             }
             else {
-                throw hiba("hmg_cella::write", "cth.tipus != nlt_lin TODO");
+                // eredetileg a méretet megszoroztam a cth.get_ertek(0)-val, de ez faszság, a kapacitás a függvényben van
+                fprintf(fp, "FCBth FCB A=1 P=1 F=nonlinfunc_%u(A1 P0) B0 N%u %g\n", (uns)cth.hmg_nonlin_index, thcenter, Vcell); // cth.get_ertek(0) * 
+                fprintf(fp, "Cth C N%u R1 B0\n", thcenter);
             }
 
             // excitation // initial value unset, DC and AC set

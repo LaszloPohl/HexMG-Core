@@ -280,7 +280,7 @@ void apa::write_HMG_boundary_global_vars(FILE *fp, simulation& aktSim, const cso
         switch (csom.el[index].tipus) {
             case PeremOpen:
                 fprintf(fp, ".SET BG_%s_Ge %g\n", name.c_str(), szakadas); // Ge
-                fprintf(fp, ".SET BG_%s_Ie 0\n", name.c_str()); // Ie
+                fprintf(fp, ".SET BG_%s_Ie 0\n",  name.c_str()); // Ie
                 break;
             case PeremV:
                 fprintf(fp, ".SET BG_%s_Ge %g\n", name.c_str(), GV);
@@ -294,22 +294,22 @@ void apa::write_HMG_boundary_global_vars(FILE *fp, simulation& aktSim, const cso
             case PeremOpen:
                 fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), szakadas); // HTC
                 fprintf(fp, ".SET BG_%s_Gth %g\n", name.c_str(), szakadas); // Gth
-                fprintf(fp, ".SET BG_%s_Ith 0\n", name.c_str()); // Ith
+                fprintf(fp, ".SET BG_%s_Ith 0\n",  name.c_str()); // Ith
                 break;
             case PeremT:
                 fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), szakadas);
                 fprintf(fp, ".SET BG_%s_Gth %g\n", name.c_str(), GV);
-                fprintf(fp, ".SET BG_%s_Ith %g\n", name.c_str(), GV * csom.el[index].value);
+                fprintf(fp, ".SET BG_%s_Ith %g\n", name.c_str(), GV * csom.th[index].value);
                 break;
             case PeremR:
-                fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), csom.el[index].value); // HTC
+                fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), csom.th[index].value); // HTC
                 fprintf(fp, ".SET BG_%s_Gth %g\n", name.c_str(), szakadas); // Gth
                 fprintf(fp, ".SET BG_%s_Ith 0\n", name.c_str()); // Ith
                 break;
             case PeremRU:
-                fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), csom.el[index].value); // HTC
+                fprintf(fp, ".SET BG_%s_HTC %g\n", name.c_str(), csom.th[index].value); // HTC
                 fprintf(fp, ".SET BG_%s_Gth %g\n", name.c_str(), GV); // Gth
-                fprintf(fp, ".SET BG_%s_Ith %g\n", name.c_str(), GV * csom.el[index].value2); // Ith
+                fprintf(fp, ".SET BG_%s_Ith %g\n", name.c_str(), GV * csom.th[index].value2); // Ith
                 break;
             default:
                 throw hiba("apa::write_HMG_boundary_global_vars", "unknown th boubdary condition (%u)", csom.th[index].tipus);

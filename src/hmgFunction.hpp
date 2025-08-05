@@ -177,6 +177,30 @@ public:
 
 
 //***********************************************************************
+class HmgBuiltInFunction_C_PRINT final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_C_PRINT() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
+        printf("> %g ", workField[index[0]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_C_PRINTLN final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_C_PRINTLN() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
+        printf("> %g <\n", workField[index[0]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
 class HmgBuiltInFunction_C_2PI final : public HmgFunction{
 //***********************************************************************
 public:
@@ -2788,6 +2812,8 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions.resize(builtInFunctionType::biftSize);
     builtInFunctions[builtInFunctionType::bift_CONST] = std::make_unique<HmgBuiltInFunction_CONST>();
     builtInFunctions[builtInFunctionType::bift_C_PI] = std::make_unique<HmgBuiltInFunction_C_PI>();
+    builtInFunctions[builtInFunctionType::bift_PRINT] = std::make_unique<HmgBuiltInFunction_C_PRINT>();
+    builtInFunctions[builtInFunctionType::bift_PRINTLN] = std::make_unique<HmgBuiltInFunction_C_PRINTLN>();
     builtInFunctions[builtInFunctionType::bift_C_2PI] = std::make_unique<HmgBuiltInFunction_C_2PI>();
     builtInFunctions[builtInFunctionType::bift_C_PI2] = std::make_unique<HmgBuiltInFunction_C_PI2>();
     builtInFunctions[builtInFunctionType::bift_C_E] = std::make_unique<HmgBuiltInFunction_C_E>();

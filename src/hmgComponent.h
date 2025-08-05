@@ -1917,6 +1917,7 @@ public:
             componentCurrent.setValueDC(-Ifull);
             externalNodes[0]->incDDC(Ifull);
             externalNodes[1]->incDDC(-Ifull);
+            // printf("** G = %g\tIG = %g\t Ifull = %g A **\n", G, IG, Ifull);
         }
         else {
             crvt G = pars[0].get();
@@ -1966,6 +1967,7 @@ public:
         }
         model.controlFunction->evaluate(&model.indexField[0], &workField[0], this, LineDescription(), functionComponentParams.size() == 0 ? nullptr : &functionComponentParams.front());
         componentValue.setValueDC(workField[0]);
+        // printf("** Value = %g **\n", workField[0]);
     }
     //***********************************************************************
     rvt getJreducedDC(uns y) const noexcept override { return rvt0; }

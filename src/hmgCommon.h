@@ -133,8 +133,8 @@ enum builtInFunctionType {
 //***********************************************************************
     biftInvalid, biftCustom,
     
-    bift_CONST, bift_C_PI, bift_C_2PI, bift_C_PI2, bift_C_E, bift_C_T0, 
-    bift_C_K, bift_C_Q,
+    bift_CONST, bift_C_PI, bift_PRINT, bift_PRINTLN, bift_C_2PI, bift_C_PI2,
+    bift_C_E, bift_C_T0, bift_C_K, bift_C_Q,
     
     bift_ADD, bift_SUB, bift_MUL, bift_DIV, bift_IDIV, bift_MOD, 
     bift_TRUNC, bift_ROUND, bift_CEIL, bift_FLOOR, 
