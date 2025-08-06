@@ -95,10 +95,12 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 
 
 //***********************************************************************
-enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1, 
-    bimtConstG_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, bimtConstV,
-    bimtConst_V_Controlled_I, bimtConst_Controlled_I, bimtGirator, bimtConstVIB, bimtConstVIN,
-    bimtMIB, bimtMIN, bimFunc_Controlled_IG, bimFunc_Controlled_Node,
+enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstRD_1, 
+    bimtConstR_2, bimtConstRD_2, bimtConstG_1, bimtConstGD_1, bimtConstG_2, 
+    bimtConstGD_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
+    bimtConstV, bimtConst_V_Controlled_I, bimtConst_Controlled_I, 
+    bimtGirator, bimtConstVIB, bimtConstVIN, bimtMIB, bimtMIN, 
+    bimFunc_Controlled_IG, bimFunc_Controlled_Node,
 
     bimtConstL_1, bimtXDiode, bimtHYS_1,
     
@@ -109,7 +111,8 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstR_2, bimtConstG_1,
 //***********************************************************************
 enum ComponentAndControllerModelType {
 //***********************************************************************
-    ccmt_ConstR_1, ccmt_ConstR_2, ccmt_ConstG_1, ccmt_ConstG_2,
+    ccmt_ConstR_1, ccmt_ConstRD_1, ccmt_ConstR_2, ccmt_ConstRD_2, 
+    ccmt_ConstG_1, ccmt_ConstGD_1, ccmt_ConstG_2, ccmt_ConstGD_2,
     ccmt_ConstC_1, ccmt_ConstC_2, ccmt_ConstI_1, ccmt_ConstI_2,
     ccmt_ConstV, ccmt_Const_V_Controlled_I_1, ccmt_Girator,
     ccmt_ConstVIB, ccmt_ConstVIN, ccmt_MIB, ccmt_MIN, ccmt_ConstIC,
@@ -216,8 +219,8 @@ enum StreamInstructionType {
     sitMgRecursiveInstr, sitMgOneRecursiveInstr, sitMgFineCoarse,
     sitMgNodeInstruction, sitMgOne, sitMgComponentGroup,
 
-    sitRails, sitRailValue, sitRailRange, sitNodeValue, sitDefaultNodeParameter,
-    sitParameterValue, sitComponentIndex,
+    sitRails, sitRailValue, sitRailRange, sitPrintNode, sitNodeValue, 
+    sitDefaultNodeParameter, sitParameterValue, sitComponentIndex,
 
     sitProbe, sitProbeNode, sitRun, sitUns, sitRvt,
     sitSet,
@@ -427,6 +430,15 @@ struct DeepCDNodeID {
     CDNode nodeID;
     std::vector<uns> componentID;
     bool isController = false;
+};
+
+
+//***********************************************************************
+struct PrintNodeDef {
+//***********************************************************************
+    CDNodeType type;
+    uns nodeStartIndex = 0;
+    uns nodeStopIndex = 0;
 };
 
 

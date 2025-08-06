@@ -1475,7 +1475,7 @@ void apa::write_HMG_save(FILE * fp, simulation & aktSim, uns stepIndex){
         else
             fprintf(fp, ".SAVE RAW APPEND FILE=\"%sprobe.res\"", path.c_str());
         if (aktSim.tproV.size() > 0)
-            fprintf(fp, " PE");
+            fprintf(fp, " PV");
         if (aktSim.tproT.size() > 0)
             fprintf(fp, " PT");
         fprintf(fp, "\n");

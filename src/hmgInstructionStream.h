@@ -412,6 +412,15 @@ struct IsRailNodeRangeInstruction: public IsInstruction {
 
 
 //***********************************************************************
+struct IsPrintNodeInstruction: public IsInstruction {
+//***********************************************************************
+    PrintNodeDef printedNodeRange;
+    IsPrintNodeInstruction(const PrintNodeDef& printedNodeRnge)
+        :IsInstruction{ sitPrintNode }, printedNodeRange{ printedNodeRnge } {}
+};
+
+
+//***********************************************************************
 struct IsNodeValueInstruction: public IsInstruction {
 //***********************************************************************
     SimpleInterfaceNodeID nodeID;

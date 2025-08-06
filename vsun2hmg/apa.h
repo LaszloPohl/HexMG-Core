@@ -19,8 +19,8 @@
 //***********************************************************************
 
 
-constexpr dbl szakadas = 1e-12;
-constexpr dbl GV = 1e6;
+constexpr dbl szakadas = 1e-18;
+constexpr dbl GV = 1e12;
 
 
 //***********************************************************************
@@ -1385,17 +1385,28 @@ struct hmg_cella {
             fprintf(fp, " B=1"); // control node for nonlinear heat capacitor
         }
         fprintf(fp, "\n");
-        uns thcenter = 0;
+
         const dbl Vcell = core.x_size * core.y_size * core.z_size;
+
         if (core.is_el) {
             const vezetes& elvez = core.pmat->elvez;
             if (elvez.tipus == nlt_lin) {
-                fprintf(fp, "ReW G N0 %c%u %g\n", el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "ReE G N0 %c%u %g\n", el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "ReS G N0 %c%u %g\n", el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "ReN G N0 %c%u %g\n", el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "ReB G N0 %c%u %g\n", el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                fprintf(fp, "ReT G N0 %c%u %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                if (core.is_th) { // eltherm => dissipators
+                    fprintf(fp, "ReW GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReE GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReS GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReN GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReB GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReT GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                }
+                else {
+                    fprintf(fp, "ReW G N0 %c%u %g\n", el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReE G N0 %c%u %g\n", el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReS G N0 %c%u %g\n", el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReN G N0 %c%u %g\n", el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReB G N0 %c%u %g\n", el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReT G N0 %c%u %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                }
             }
             else {
                 throw hiba("hmg_cella::write", "elektromos vezetés nemlinearitása nem jó");
@@ -1410,9 +1421,9 @@ struct hmg_cella {
 
             // excitation // initial value unset, DC and AC set
 
-            fprintf(fp, "Gex G N%u R0 BG_COLOR%u_Gex\n", thcenter, core.color_index);
-            fprintf(fp, "Iexi I2 N%u R0 0 BG_COLOR%u_Iexi BG_COLOR%u_Iexi 0 %g\n", thcenter, core.color_index, core.color_index, Vcell / core.szin_terfogat);
-            fprintf(fp, "Iexv I N%u R0 0 BG_COLOR%u_Iexv BG_COLOR%u_Iexv 0\n", thcenter, core.color_index, core.color_index);
+            fprintf(fp, "Gex G N0 R0 BG_COLOR%u_Gelx\n", core.color_index);
+            fprintf(fp, "Iexi I2 N0 R0 0 BG_COLOR%u_Ielxi BG_COLOR%u_Ielxi 0 %g\n", core.color_index, core.color_index, Vcell / core.szin_terfogat);
+            fprintf(fp, "Iexv I N0 R0 0 BG_COLOR%u_Ielxv BG_COLOR%u_Ielxv 0\n", core.color_index, core.color_index);
 
             // boundaries // initial value and DC set, AC unset
 
@@ -1422,8 +1433,9 @@ struct hmg_cella {
                     fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str());
                 }
             }
-            thcenter = 1;
         }
+
+        uns thcenter = core.is_el ? 1 : 0;
         if (core.is_th) {
             const vezetes& thvez = core.pmat->thvez;
             if (thvez.tipus == nlt_lin) {
@@ -1492,8 +1504,6 @@ struct hmg_cella {
                 fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
             }
         }
-        if (core.is_el && core.is_th)
-            throw hiba("hmg_cella::write", "el-th dissipation TODO");
         
         // TODO: junctions
 

@@ -96,6 +96,17 @@ public:
 
 
 //***********************************************************************
+class ModelConstRD_1 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstRD_1() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 2, 0 }, ccmt_ConstRD_1 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return true; }
+};
+
+
+//***********************************************************************
 class ModelConstR_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
@@ -103,6 +114,17 @@ public:
     ModelConstR_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 2, 0 }, ccmt_ConstR_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
+};
+
+
+//***********************************************************************
+class ModelConstRD_2 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstRD_2() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 3, 0 }, ccmt_ConstRD_2 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return true; }
 };
 
 
@@ -118,6 +140,17 @@ public:
 
 
 //***********************************************************************
+class ModelConstGD_1 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstGD_1() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 2, 0 }, ccmt_ConstGD_1 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return true; }
+};
+
+
+//***********************************************************************
 class ModelConstG_2 final : public ComponentAndControllerModelBase {
 // Resistor value is G!
 //***********************************************************************
@@ -125,6 +158,17 @@ public:
     ModelConstG_2() :ComponentAndControllerModelBase{ { 2, 0, 0, 0, 2, 0 }, ccmt_ConstG_2 } {}
     ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
     bool canBeNonlinear()const noexcept override { return false; }
+};
+
+
+//***********************************************************************
+class ModelConstGD_2 final : public ComponentAndControllerModelBase {
+// Resistor value is G!
+//***********************************************************************
+public:
+    ModelConstGD_2() :ComponentAndControllerModelBase{ { 4, 0, 0, 0, 3, 0 }, ccmt_ConstGD_2 } {}
+    ComponentAndControllerBase* makeComponent(const ComponentDefinition*, uns defaultNodeValueIndex) const override; // definition in hmgComponent.h
+    bool canBeNonlinear()const noexcept override { return true; }
 };
 
 
@@ -368,6 +412,7 @@ class ModelSubCircuit final : public ComponentAndControllerModelBase {
     //***********************************************************************
     std::vector<bool> internalNodeIsConcurrent; // if true, the defect type will be atomic (slower)
     std::vector<ForcedNodeDef> forcedNodes; // internal nodes where the default value index is defined
+    std::vector<PrintNodeDef> printedNodes; // internal nodes to print
     std::vector<std::unique_ptr<ComponentDefinition>> components;
     std::vector<std::unique_ptr<ComponentDefinition>> controllers;
     hmgSunred::ReductionTreeInstructions* srTreeInstructions;

@@ -506,6 +506,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitRailValue:                      isImpossibleInstruction = true; break;
             case sitRailRange:                      isImpossibleInstruction = true; break;
+            case sitPrintNode:                      isImpossibleInstruction = true; break;
             case sitNodeValue:                      isImpossibleInstruction = true; break;
             case sitDefaultNodeParameter:           isImpossibleInstruction = true; break;
             case sitParameterValue:                 isImpossibleInstruction = true; break;
@@ -1328,6 +1329,11 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
             case sitRailRange: {
                     IsRailNodeRangeInstruction* pAct = static_cast<IsRailNodeRangeInstruction*>(act);
                     forcedNodes.push_back(pAct->forcedNodeRange);
+                }
+                break;
+            case sitPrintNode: {
+                    IsPrintNodeInstruction* pAct = static_cast<IsPrintNodeInstruction*>(act);
+                    printedNodes.push_back(pAct->printedNodeRange);
                 }
                 break;
             case sitEndInstruction: {

@@ -609,6 +609,7 @@ struct HMGFileModelDescription: HMGFileListItem {
     std::map<std::string, uns> controllerInstanceNameIndex;
     std::map<std::string, uns> instanceListIndex;
     std::vector<DefaultRailRange> defaults;
+    std::vector<DefaultRailRange> printnodes;
     SolutionType solutionType = stFullMatrix;
     uns solutionDescriptionIndex = 0; // for sunred and multigrid 
     //***********************************************************************
@@ -646,7 +647,21 @@ struct HMGFileModelDescription: HMGFileListItem {
                 forcedNodeRange.isExternal = startC.type == cdntExternal;
                 forcedNodeRange.nodeStartIndex = startC.index;
                 forcedNodeRange.nodeStopIndex = stopC.index;
-                iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
+                if(startC.type == cdntInternal || startC.type == cdntExternal) // other node types ignored
+                    iStream.add(new IsRailNodeRangeInstruction(forcedNodeRange));
+            }
+            for (const auto& src : printnodes) {
+                PrintNodeDef printedNodeRange;
+                SimpleInterfaceNodeID startS, stopS;
+                stopS.type = startS.type = src.type;
+                startS.index = src.start_index;
+                stopS.index = src.stop_index;
+                CDNode startC = SimpleInterfaceNodeID2CDNode(startS, externalNs, internalNs);
+                CDNode stopC = SimpleInterfaceNodeID2CDNode(stopS, externalNs, internalNs);
+                printedNodeRange.type = startC.type;
+                printedNodeRange.nodeStartIndex = startC.index;
+                printedNodeRange.nodeStopIndex = stopC.index;
+                iStream.add(new IsPrintNodeInstruction(printedNodeRange));
             }
             for (size_t i = 0; i < instanceList.size(); i++) {
                 instanceList[i]->toInstructionStream(iStream);

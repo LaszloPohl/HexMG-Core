@@ -824,8 +824,8 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 SimpleInterfaceNodeID rail;
                 if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), rail, globalNames.globalVarNames) || rail.type != nvtRail)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: missing rail ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                SimpleInterfaceNodeID node;
                 while (!lineToken.isSepEOL) {
+                    SimpleInterfaceNodeID node;
                     lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                     if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node, globalNames.globalVarNames))
                         throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAIL: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -863,6 +863,27 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 if(node1.type != node2.type)
                     throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".DEFAULTRAILRANGE: node range required in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 defaults.push_back({ rail.index, node1.type, node1.index < node2.index ? node1.index : node2.index, node1.index < node2.index ? node2.index : node1.index });
+            }
+            else if (strcmp(token, ".PRINTNODE") == 0) {
+                while (!lineToken.isSepEOL) {
+                    SimpleInterfaceNodeID node;
+                    lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                    if (!textToSimpleInterfaceNodeID(lineToken.getActToken(), node, globalNames.globalVarNames))
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".PRINTNODE: wrong node ID in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if (!checkNodeValidity(node))
+                        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", ".PRINTNODE: invalid node index: %u in %s, line %u: %s", node.index, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    if (printnodes.size() > 0 && printnodes.back().type == node.type) {
+                        auto& last = printnodes.back();
+                        if (node.index == last.start_index - 1)
+                            last.start_index--;
+                        else if (node.index == last.stop_index + 1)
+                            last.stop_index++;
+                        else
+                            printnodes.push_back({ 0, node.type, node.index, node.index });
+                    }
+                    else
+                        printnodes.push_back({ 0, node.type, node.index, node.index });
+                }
             }
             else
                 throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBody", "unrecognised token (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -905,9 +926,13 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                 }
             }
             else if (strcmp(token,      "R") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_1; }
+            else if (strcmp(token,     "RD") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstRD_1; parnum = 2; nodenum = 4; }
             else if (strcmp(token,     "R2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstR_2;  parnum = 2; }
+            else if (strcmp(token,    "RD2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstRD_2; parnum = 3; nodenum = 4; }
             else if (strcmp(token,      "G") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_1; }
+            else if (strcmp(token,     "GD") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGD_1; parnum = 2; nodenum = 4; }
             else if (strcmp(token,     "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2;  parnum = 2; }
+            else if (strcmp(token,    "GD2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGD_2; parnum = 3; nodenum = 4; }
             else if (strcmp(token,      "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
             else if (strcmp(token,     "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2;  parnum = 2; }
             else if (strcmp(token,      "L") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstL_1; }
@@ -1725,7 +1750,10 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     while (!lineToken.isSepEOL) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-        probeIDs.push_back(globalNames.probeNames.at(token));
+        if (globalNames.probeNames.contains(token))
+            probeIDs.push_back(globalNames.probeNames.at(token));
+        else
+            throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM line unknown probe: %s, in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
     if (isFIM && probeIDs.size() != 1)
         throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM line exactly 1 FIM probe must be given, in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
