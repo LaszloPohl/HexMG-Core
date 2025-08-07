@@ -2255,10 +2255,10 @@ public:
     void math_1_ninv_mul(matrix & yb, const matrix & xa) noexcept {
     // yb is 1x1, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         const datatype nzb = datatype(-1) / yb.rows[0][0];
         yb.rows[0][0] = nzb;
+        if (col == 0 || row == 0)
+            return;
         for (unsigned i = 0; i < col; i++)
             rows[0][i] = nzb*xa.rows[0][i];
     }
@@ -2267,10 +2267,10 @@ public:
     void math_1_ninv_mulT(matrix & yb, const matrix & xat) noexcept {
     // yb is 1x1, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         const datatype nzb = datatype(-1) / yb.rows[0][0];
         yb.rows[0][0] = nzb;
+        if (col == 0 || row == 0)
+            return;
         for (unsigned i = 0; i < col; i++)
             rows[0][i] = nzb*xat.rows[i][0];
     }
@@ -2279,8 +2279,6 @@ public:
     void math_2_ninv_mul(matrix & yb, const matrix & xa) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2295,6 +2293,8 @@ public:
         const datatype nzb10 = in1[0] = -p2 * divisor2;
         const datatype nzb11 = in1[1] = -divisor2;
 
+        if (col == 0 || row == 0)
+            return;
         vektor<datatype> & nzbxa0 = rows[0];
         vektor<datatype> & nzbxa1 = rows[1];
         const vektor<datatype> & xa0 = xa.rows[0];
@@ -2309,8 +2309,6 @@ public:
     void math_2_ninv_mulT(matrix & yb, const matrix & xat) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2325,6 +2323,8 @@ public:
         const datatype nzb10 = in1[0] = -p2 * divisor2;
         const datatype nzb11 = in1[1] = -divisor2;
 
+        if (col == 0 || row == 0)
+            return;
         vektor<datatype> & nzbxa0 = rows[0];
         vektor<datatype> & nzbxa1 = rows[1];
         for (unsigned i = 0; i < col; i++) {
@@ -2337,8 +2337,6 @@ public:
     void math_2_ninv_mul_symm(matrix & yb, const matrix & xa) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, stored whole symmetrical, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2351,6 +2349,8 @@ public:
         const datatype nzb01 = in0[1] = in1[0] = C2;
         const datatype nzb11 = in1[1] = -divisor2;
 
+        if (col == 0 || row == 0)
+            return;
         vektor<datatype> & nzbxa0 = rows[0];
         vektor<datatype> & nzbxa1 = rows[1];
         const vektor<datatype> & xa0 = xa.rows[0];
@@ -2365,8 +2365,6 @@ public:
     void math_2_ninv_mul_symmT(matrix & yb, const matrix & xat) noexcept(!hmgVErrorCheck) {
     // yb is 2x2, stored whole symmetrical, this is inverted and puts zb*xa inside itself
     //***********************************************************************
-        if (col == 0 || row == 0)
-            return;
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
@@ -2379,6 +2377,8 @@ public:
         const datatype nzb01 = in0[1] = in1[0] = C2;
         const datatype nzb11 = in1[1] = -divisor2;
 
+        if (col == 0 || row == 0)
+            return;
         vektor<datatype> & nzbxa0 = rows[0];
         vektor<datatype> & nzbxa1 = rows[1];
         //const vektor<datatype> & xa0 = xa.rows[0];

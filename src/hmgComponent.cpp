@@ -280,6 +280,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     IsCreateInstruction* pAct = static_cast<IsCreateInstruction*>(act);
                     createFullCircuit(pAct->modelID, pAct->GND, pAct->fullCircuitIndex);
                     fullCircuitInstances[pAct->fullCircuitIndex].component->resetNodes(true);
+                    printf("Circuit created: %u components.\n", SimControl::nComponents.load());
                 }
                 break;
             case sitSave: {
@@ -1902,6 +1903,9 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                         continue;
                     crvt adm = compInstance.getYDC(rowSrc, colSrc);
 
+                    if (adm == rvt0)
+                        continue;
+
                     // INode connected to ControlInternalNode
 
                     if (nct.type == CDNodeType::cdntInternal && nct.index >= B1_nNInternalNodes) {
@@ -1930,8 +1934,13 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
 
                     // add admittance
 
-                    if (isA) {
-                        if (isUp) {  // YA
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    // Az isA-t és az isUp-ot megcseréltem, mert az isA a J vektornál jelenti, hogy A-ban van, de a mátrixnál pont a másik oldalt!
+                    // Kérdés, hogy ez stimmel-e mindenhol, mert az Ynodes miatt XAT és XB mérete különbözhet.
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    if (isUp) {
+                        if (isA) {  // YA
                             YAwork.get_elem(externalIndex1, externalIndex2) += adm; // get_elem_unsafe cannot be used because yDest > xDest possible
                         }
                         else { // XA
@@ -1944,7 +1953,7 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
                         }
                     }
                     else {
-                        if (isUp) { // XB
+                        if (isA) { // XB
                             XBwork[externalIndex1 + externalIndex2][internalIndex1 + internalIndex2] += adm;
                         }
                         else { // YB
@@ -2129,8 +2138,13 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
 
                     // add admittance
 
-                    if (isA) {
-                        if (isUp) {  // YA
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    // Az isA-t és az isUp-ot megcseréltem, mert az isA a J vektornál jelenti, hogy A-ban van, de a mátrixnál pont a másik oldalt!
+                    // Kérdés, hogy ez stimmel-e mindenhol, mert az Ynodes miatt XAT és XB mérete különbözhet.
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    if (isUp) {
+                        if (isA) {  // YA
                             YA.get_elem(externalIndex1, externalIndex2) += adm; // get_elem_unsafe cannot be used because yDest > xDest possible
                         }
                         else { // XA
@@ -2143,7 +2157,7 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
                         }
                     }
                     else {
-                        if (isUp) { // XB
+                        if (isA) { // XB
                             XB[externalIndex1 + externalIndex2][internalIndex1 + internalIndex2] += adm;
                         }
                         else { // YB

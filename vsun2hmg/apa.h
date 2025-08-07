@@ -1386,6 +1386,9 @@ struct hmg_cella {
         }
         fprintf(fp, "\n");
 
+        if(core.color_index==1)
+            fprintf(fp, ".PRINTNODE N0 N1\n");
+
         const dbl Vcell = core.x_size * core.y_size * core.z_size;
 
         if (core.is_el) {

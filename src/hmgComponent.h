@@ -64,6 +64,7 @@ public:
     inline static NodeVariable iter;            // which iteration we are at in the current step
     inline static NodeVariable stepError;       // relative error of the current iteration compared to the previous
     inline static std::atomic<uns> nNonlinComponents = 0; // actual number of nonlinear components in the network; if 0 => no more than 1 DC / timestep iteration needed
+    inline static std::atomic<uns> nComponents = 0; // actual number of components in the network
     //***********************************************************************
     static void setInitialDC() noexcept { timeStepStart.setValueDC(rvt0); timeStepStop.setValueDC(rvt0); dt.setValueDC(rvt0); }
     static void setFinalDC() noexcept { if (timeStepStart.getValueDC() == rvt0)timeStepStart.setValueDC(1e-20); timeStepStop.setValueDC(timeStepStart.getValueDC()); dt.setValueDC(rvt0); }
@@ -114,6 +115,7 @@ public:
     //***********************************************************************
         if (pModel->canBeNonlinear())
             SimControl::nNonlinComponents--;
+        SimControl::nComponents--;
     }
     //***********************************************************************
 };
@@ -450,8 +452,8 @@ public:
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
             case 1: return  componentCurrent.getValueDC();
-            case 2: return PDC * share.get(); // sign?
-            case 3: return PDC * (rvt1 - share.get()); // sign?
+            case 2: return -PDC * share.get(); // sign?
+            case 3: return -PDC * (rvt1 - share.get()); // sign?
         }
         return rvt0;
     }
@@ -488,8 +490,8 @@ public:
         switch (y) {
             case 0: return -IAC;
             case 1: return  IAC;
-            case 2: return PAC * share.get(); // sign?
-            case 3: return PAC * (rvt1 - share.get()); // sign?
+            case 2: return -PAC * share.get(); // sign?
+            case 3: return -PAC * (rvt1 - share.get()); // sign?
         }
         return cplx0;
     }
@@ -4084,6 +4086,7 @@ inline ComponentAndControllerBase::ComponentAndControllerBase(const ComponentDef
 //***********************************************************************
     if (pModel->canBeNonlinear())
         SimControl::nNonlinComponents++;
+    SimControl::nComponents++;
 }
 //***********************************************************************
 
