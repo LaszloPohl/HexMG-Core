@@ -1232,6 +1232,14 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         xns.nParams = 1 + pAct->nPar;
                         xns.nComponentT = 0;
                     }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGD) {
+                        xns.nXNodes = 4;
+                        xns.nYNodes = pAct->nIN;
+                        xns.nANodes = pAct->nCIN;
+                        xns.nONodes = 0;
+                        xns.nParams = 2 + pAct->nPar;
+                        xns.nComponentT = 0;
+                    }
                     else if (pAct->modelIndex == bimFunc_Controlled_Node) {
                         xns.nXNodes = 0;
                         xns.nYNodes = 0;
@@ -1293,6 +1301,12 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                             ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
                             : gc.functions[pAct->functionIndex].get();
                         gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_G>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
+                    }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGD) {
+                        HmgFunction* fv = pAct->isFunctionBuiltIn
+                            ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
+                            : gc.functions[pAct->functionIndex].get();
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_GD>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
                     }
                     else if (pAct->modelIndex == bimFunc_Controlled_Node) {
                         HmgFunction* fv = pAct->isFunctionBuiltIn

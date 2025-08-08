@@ -948,12 +948,14 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,     "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
             else if (strcmp(token, "XDIODE") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtXDiode;   parnum = 1; nodenum = 3; }
             else if (strcmp(token,  "HYS_1") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtHYS_1;    parnum = 3; nodenum = 2; pxline->isController = true; }
-            else if (strcmp(token,    "FCI") == 0 || strcmp(token, "FCB") == 0) {
+            else if (strcmp(token,    "FCI") == 0 || strcmp(token, "FCID") == 0 || strcmp(token, "FCB") == 0) {
                 pxline->isBuiltIn = true; 
 
                 pxline->modelIndex = bimFunc_Controlled_IG;
                 if(strcmp(token, "FCB") == 0)
                     pxline->modelIndex = bimFunc_Controlled_Node; // !
+                else if (strcmp(token, "FCID") == 0)
+                    pxline->modelIndex = bimFunc_Controlled_IGD;
 
                 pxline->isFunctionControlled = true;
                 bool isNotFinished = true;
@@ -1038,6 +1040,11 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                             case bimFunc_Controlled_IG:
                                 nodenum = 2 + pxline->nIN + pxline->nCin;
                                 parnum = 1 + pxline->nPar;
+                                compnum = pxline->nCT;
+                                break;
+                            case bimFunc_Controlled_IGD:
+                                nodenum = 4 + pxline->nIN + pxline->nCin;
+                                parnum = 2 + pxline->nPar;
                                 compnum = pxline->nCT;
                                 break;
                             case bimFunc_Controlled_Node:

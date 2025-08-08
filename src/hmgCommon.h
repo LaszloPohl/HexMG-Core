@@ -58,8 +58,8 @@ inline constexpr uns unsMax = ~uns(0);
 inline constexpr uns externalNodeFlag = uns(1 << 30);
 inline constexpr uns maxRails = 1'048'576;
 inline constexpr uns maxComponentPar = 12;
-inline constexpr rvt gmax = 1.0e+010;
-inline constexpr rvt gmin = 1.0e-010;
+inline constexpr rvt gmax = 1.0e+012;
+inline constexpr rvt gmin = 1.0e-018;
 //***********************************************************************
 
 
@@ -100,7 +100,7 @@ enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstRD_1,
     bimtConstGD_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
     bimtConstV, bimtConst_V_Controlled_I, bimtConst_Controlled_I, 
     bimtGirator, bimtConstVIB, bimtConstVIN, bimtMIB, bimtMIN, 
-    bimFunc_Controlled_IG, bimFunc_Controlled_Node,
+    bimFunc_Controlled_IG, bimFunc_Controlled_IGD, bimFunc_Controlled_Node,
 
     bimtConstL_1, bimtXDiode, bimtHYS_1,
     
@@ -116,8 +116,8 @@ enum ComponentAndControllerModelType {
     ccmt_ConstC_1, ccmt_ConstC_2, ccmt_ConstI_1, ccmt_ConstI_2,
     ccmt_ConstV, ccmt_Const_V_Controlled_I_1, ccmt_Girator,
     ccmt_ConstVIB, ccmt_ConstVIN, ccmt_MIB, ccmt_MIN, ccmt_ConstIC,
-    ccmt_Function_Controlled_I_with_const_G, ccmt_Function_Controlled_Node, 
-    ccmt_Controller, ccmt_SubCircuit
+    ccmt_Function_Controlled_I_with_const_G, ccmt_Function_Controlled_I_with_const_GD, 
+    ccmt_Function_Controlled_Node, ccmt_Controller, ccmt_SubCircuit
 };
 
 
