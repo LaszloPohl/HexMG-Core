@@ -2258,7 +2258,7 @@ public:
             dFv_per_dUi = -gmax;
         if (x == 0 && y == 0)
             dg = dFv_per_dUi;
-        return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
+        return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi; // y=0 => always -dFv_per_dUi, y=1 => always dFv_per_dUi !!!
     }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
@@ -2478,16 +2478,16 @@ public:
             dFv_per_dUi = -gmax;
 
         switch (y) { // sign?
-            case 0: switch (x) {
+            case 0: switch (x) { // always -dFv_per_dUi !!!
                 case 0:  dg = dFv_per_dUi; return  G - dFv_per_dUi;
-                case 1:  return -G + dFv_per_dUi;
+                case 1:  return -G - dFv_per_dUi;
                 default: return     -dFv_per_dUi;
             }
             break;
-            case 1: switch (x) {
+            case 1: switch (x) { // always +dFv_per_dUi !!!
                 case 0:  return -G + dFv_per_dUi;
-                case 1:  return  G - dFv_per_dUi;
-                default: return     -dFv_per_dUi;
+                case 1:  return  G + dFv_per_dUi;
+                default: return      dFv_per_dUi;
             }
             break;
             case 2: switch (x) {

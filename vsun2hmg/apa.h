@@ -199,7 +199,7 @@ struct vezetes{
                     }
                     break;
                     case hnctRe: { // pars: V1, V2, T, multiplier => should give the current value of the FCI (negative for positive resistivity)
-                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2 // Re\n", (uns)hmg_nonlin_index);
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=4 V=2 // Re\n", (uns)hmg_nonlin_index);
                         fprintf(fp, "10 _MULC V0 P3 %g\n", g[0]);
                         fprintf(fp, "20 _SUBC V1 P2 25\n");
                         fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
@@ -1426,12 +1426,12 @@ struct hmg_cella {
             else {
                 // eredetileg a méretet megszoroztam a elvez.get_ertek(0)-val, de ez faszság, a vezetés a függvényben van
                 if (core.is_th) {
-                    fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReS FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReN FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReB FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReT FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P1) N0 %c%u N1 N1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReS FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReN FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReB FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReT FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
                 }
                 else {
                     fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
