@@ -1904,10 +1904,16 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
 
                 // loading J
 
-                if (isA)
+                if (isA) {
+                    if (yDest >= JA.size())
+                        throw  hmgExcept("SubCircuitFullMatrixReductorDC::forwsubs", "Connecting a Component Normal node to an external Basic node (A node) is not allowed.");
                     JA[yDest] += compInstance.getJreducedDC(rowSrc);
-                else
+                }
+                else {
+                    if(yDest>= JB.size())
+                        throw  hmgExcept("SubCircuitFullMatrixReductorDC::forwsubs", "Connecting a Component Normal node to an internal Basic node (B node) is not allowed.");
                     JB[yDest] += compInstance.getJreducedDC(rowSrc);
+                }
 
                 // admittances 
 

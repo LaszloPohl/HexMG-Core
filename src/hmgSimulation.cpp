@@ -44,7 +44,6 @@ void Simulation::runDC() {
 #endif
     }
     else {
-        std::cout << '.' << std::endl;
         bench_now("start DC");
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         bench_now("CalculateControllersDC");
@@ -60,7 +59,6 @@ void Simulation::runDC() {
         bench_now("CalculateValuesAndCurrentsDC");
 
         CircuitStorage& gc = CircuitStorage::getInstance();
-        std::cout << '.' << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
@@ -71,7 +69,6 @@ void Simulation::runDC() {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
-        std::cout << '.' << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
@@ -82,20 +79,23 @@ void Simulation::runDC() {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
-        std::cout << '.' << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
         bench_now("first iterations");
 
-        for (uns i = 0; i < 10; i++) {
+        rvt max_error = 1000.0;
+        for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+            ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
             CircuitStorage::AcceptIterationDC(fullCircuitID);
             CircuitStorage::CalculateControllersDC(fullCircuitID);
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+            ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
 
-            std::cout << '.' << std::endl;
+            max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
+            std::cout << "    error = " << max_error << std::endl;
 #ifdef HMG_DEBUGPRINT
             std::cout << std::endl;
             gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
@@ -109,7 +109,6 @@ void Simulation::runDC() {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
-        std::cout << '.' << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
@@ -137,12 +136,17 @@ void Simulation::runTimeStep() {
 #endif
     }
     else {
+        rvt max_error = 1000.0;
         CircuitStorage& gc = CircuitStorage::getInstance();
-        for (uns i = 0; i < 10; i++) {
+        for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
             CircuitStorage::CalculateControllersDC(fullCircuitID);
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+            ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+            ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
             CircuitStorage::AcceptIterationDC(fullCircuitID);
+            max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
+            std::cout << "    error = " << max_error << std::endl;
         }
         CircuitStorage::AcceptStepDC(fullCircuitID);
         CircuitStorage::CalculateControllersDC(fullCircuitID);
@@ -247,6 +251,7 @@ void Simulation::run(const RunData& runData) {
             timeFreqValue = SimControl::timeStepStop.getValueDC();
             dtValue = SimControl::dt.getValueDC();
             SimControl::stepError.setValueDC(rvt0);
+            std::cout << "Time = " << timeFreqValue << " s\n";
             runTimeStep();
         }
         break;

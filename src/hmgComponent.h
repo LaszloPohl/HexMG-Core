@@ -3247,7 +3247,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_InternalNodes(); i++) {
+        for (uns i = 0; i < model.getN_N_Nodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
         }
         for (auto& comp : components)
@@ -3260,7 +3260,7 @@ public:
     //***********************************************************************
         DefectCollector d;
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_InternalNodes(); i++) {
+        for (uns i = 0; i < model.getN_N_Nodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
         }
         for (auto& comp : components)

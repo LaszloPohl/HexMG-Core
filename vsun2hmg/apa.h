@@ -1302,7 +1302,7 @@ struct hmg_cella {
 //***********************************************************************
     struct boundary_cell {
         bool is_boundary = false;
-        bool is_field_change = false; // ha ez a cella eltherm, de a szomszéd therm, akkor ez true
+        bool is_field_change = false; // ha ez a mezõ megszûkik a szomszéd cellában (pl. ez csak elektromos cella a szomszéd csak termikus, vagy ez elektrotermikus, az csak termikus)
         uns NNode_index = 0; // ehhez az N nodehoz csatlakozik a peremmodell
         uns global_var_index = 0; // 1..6 normál perem, 7.. belsõ perem
         bool operator==(const boundary_cell& other)const noexcept { return is_boundary == other.is_boundary && is_field_change == other.is_field_change 
@@ -1376,6 +1376,29 @@ struct hmg_cella {
             th_core_nodes[side].node_index = nNodes;
             nNodes++;
         }
+    }
+
+    void set_field_change(uns side, bool is_el_change) {
+        if (core.is_el && is_el_change) {
+            el_boundaries[side].is_boundary = false;
+            el_boundaries[side].is_field_change = true;
+            el_boundaries[side].NNode_index = nNodes;
+            el_boundaries[side].global_var_index = ~0; // not used
+            el_core_nodes[side].is_X = false;
+            el_core_nodes[side].node_index = nNodes;
+            nNodes++;
+        }
+        else if (core.is_th && !is_el_change) {
+            th_boundaries[side].is_boundary = false;
+            th_boundaries[side].is_field_change = true;
+            th_boundaries[side].NNode_index = nNodes;
+            th_boundaries[side].global_var_index = ~0; // not used
+            th_core_nodes[side].is_X = false;
+            th_core_nodes[side].node_index = nNodes;
+            nNodes++;
+        }
+        else
+            throw hiba("hmg_cella::set_field_change", "is_el: %u, is_th: %u, is_el_change: %u", (uns)core.is_el, (uns)core.is_th, (uns)is_el_change);
     }
 
     PLString getBoundaryName(uns index) {
@@ -1457,6 +1480,14 @@ struct hmg_cella {
                     fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str());
                 }
             }
+
+            // field change
+
+            for (uns i = WEST; i <= TOP; i++) {
+                if (el_boundaries[i].is_field_change) {
+                    fprintf(fp, "STOPe%u G N%u R0 %g\n", i, el_boundaries[i].NNode_index, szakadas);
+                }
+            }
         }
 
         uns thcenter = core.is_el ? 1 : 0;
@@ -1526,6 +1557,14 @@ struct hmg_cella {
                 fprintf(fp, "BHTCT G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), core.x_size * core.y_size);
                 fprintf(fp, "BGthT G N%u R0 BG_%s_Gth\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
                 fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
+            }
+
+            // field change
+
+            for (uns i = WEST; i <= TOP; i++) {
+                if (th_boundaries[i].is_field_change) {
+                    fprintf(fp, "STOPth%u G N%u R0 %g\n", i, th_boundaries[i].NNode_index, szakadas);
+                }
             }
         }
         

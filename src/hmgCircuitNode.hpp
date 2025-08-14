@@ -156,7 +156,9 @@ struct NodeVariable {
     void deleteYiiDC()noexcept { if (!isGnd) extension->yii.store(rvt0, isConcurrent); }
     void deleteFDC()noexcept { extension->f = rvt0; }
     void loadFtoDDC()noexcept { if (!isGnd) extension->d.store(extension->f, isConcurrent); }
-    rvt getDDC()const noexcept { return extension->d.loadRvt(isConcurrent); }
+    rvt getDDC()const noexcept { 
+        return extension->d.loadRvt(isConcurrent); 
+    }
     rvt getDNonConcurrentDC()const noexcept { return extension->d.loadNonConcurrentRvt(); }
     rvt getFDC()const noexcept { return extension->f.real(); }
     rvt getVDC()const noexcept { return extension->v.real(); }

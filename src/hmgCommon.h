@@ -59,7 +59,7 @@ inline constexpr uns externalNodeFlag = uns(1 << 30);
 inline constexpr uns maxRails = 1'048'576;
 inline constexpr uns maxComponentPar = 12;
 inline constexpr rvt gmax = 1.0e+012;
-inline constexpr rvt gmin = 1.0e-018;
+inline constexpr rvt gmin = 1.0e-012; // csak a VIN és MIN használja, ha e1-18, akkor elszáll a diódamodell
 //***********************************************************************
 
 
