@@ -156,6 +156,11 @@ struct vezetes{
             throw hiba("vezetes::write_const", "only const value is acceptable");
         fprintf(fp, "%g;\n",g[0]);
     }
+    void write_szakaszok_function_core(FILE* fp) { // A hõmérséklet V0-ban érkezik, az eredmény a V0-ba kerül
+        if (szakaszok.size() < 1)
+            throw hiba("vezetes::hmg_write_nonlinfunction_normal", "broken line undefined: no value-pair defined");
+
+    }
     void hmg_write_nonlinfunction_normal(FILE* fp, hmgNonlinComponentType ct) {
         if (is_resistivity)
             throw hiba("vezetes::hmg_write_nonlinfunction_normal", "is_resistivity not implemented");
@@ -167,11 +172,25 @@ struct vezetes{
                     case hnctS: {
                         if (g[0] == 0)
                             break;
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index);
-                        fprintf(fp, "10 _SUB RET P0 P1\n");
-                        fprintf(fp, "20 _MULC RET RET %g\n", g[0]);
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*g[0]
+                        fprintf(fp, "_SUB RET P0 P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
                         fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3\n", (uns)hmg_nonlin_index);// pars: Tszorzo, Tref, I // ret = Tszorzo * I * g[0]
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_MUL RET RET P2\n");
+                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
+                        //fprintf(fp, "_PRINT P0\n");
+                        //fprintf(fp, "_PRINT P1\n");
+                        //fprintf(fp, "_PRINT P2\n");
+                        //fprintf(fp, "_PRINTLN RET\n");
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
                     }
+                    break;
+                    default:
+                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_lin component type not implemented");
                     break;
                 }
                 break;
@@ -181,57 +200,131 @@ struct vezetes{
             case nlt_exp:
                 switch (ct) {
                     case hnctRth: { // pars: T1, T2, multiplier => should give the current value of the FCI
-                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2 // Rth\n", (uns)hmg_nonlin_index);
-                        fprintf(fp, "10 _MULC V0 P2 %g\n", g[0]);
-                        //fprintf(fp, "14 _PRINT P2\n");
-                        //fprintf(fp, "15 _PRINT V0\n");
-                        fprintf(fp, "20 _SUBC V1 P0 25\n");
-                        fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "40 _EXP V1 V1\n");
-                        fprintf(fp, "50 _MUL V0 V0 V1\n");
-                        //fprintf(fp, "54 _PRINT V0\n");
-                        //fprintf(fp, "55 _PRINT V1\n");
-                        fprintf(fp, "60 _SUB V1 P1 P0\n");
-                        //fprintf(fp, "64 _PRINT P0\n");
-                        //fprintf(fp, "6A _PRINT P1\n");
-                        //fprintf(fp, "65 _PRINT V1\n");
-                        fprintf(fp, "70 _MUL RET V0 V1\n");
-                        //fprintf(fp, "75 _PRINTLN RET\n");
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=2 // Rth\n", (uns)hmg_nonlin_index); // ret = (T2-T1)*G[0]*mul*exp(gg[0]*(T1-25))
+                        fprintf(fp, "_MULC V0 P2 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P0 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n");
+                        fprintf(fp, "_SUB V1 P1 P0\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
                     case hnctCth: { // pars: T, multiplier
-                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=2 V=2 // Cth\n", (uns)hmg_nonlin_index);
-                        fprintf(fp, "10 _MULC V0 P1 %g\n", g[0]);
-                        fprintf(fp, "20 _SUBC V1 P0 25\n");
-                        fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "40 _EXP V1 V1\n");
-                        fprintf(fp, "50 _MUL RET V0 V1\n");
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=2 V=2 // Cth\n", (uns)hmg_nonlin_index); // ret = G[0]*mul*exp(gg[0]*(T-25))
+                        fprintf(fp, "_MULC V0 P1 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P0 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
                     case hnctRe: { // pars: V1, V2, T, multiplier => should give the current value of the FCI (negative for positive resistivity)
-                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=4 V=2 // Re\n", (uns)hmg_nonlin_index);
-                        fprintf(fp, "10 _MULC V0 P3 %g\n", g[0]);
-                        fprintf(fp, "20 _SUBC V1 P2 25\n");
-                        fprintf(fp, "30 _MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "40 _EXP V1 V1\n");
-                        fprintf(fp, "50 _MUL V0 V0 V1\n");
-                        fprintf(fp, "60 _SUB V1 P1 P0\n");
-                        fprintf(fp, "70 _MUL RET V0 V1\n");
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=4 V=2 // Re\n", (uns)hmg_nonlin_index); // ret = (V2-V1)*G[0]*mul*exp(gg[0]*(T-25))
+                        fprintf(fp, "_MULC V0 P3 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P2 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n");
+                        fprintf(fp, "_SUB V1 P1 P0\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    case hnctS: { // pars: Tx, Tc
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))
+                        fprintf(fp, "_SUB V0 P0 P1\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P1 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=2\n", (uns)hmg_nonlin_index); // pars: Tszorzo, Tref, I // ret = Tszorzo * I * G[0]*exp(gg[0]*(Tref-25))
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_MULC V0 RET %g\n", g[0]);
+                        fprintf(fp, "_MUL V0 V0 P2\n");
+                        fprintf(fp, "_SUBC V1 P1 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
                     default:
                         hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_exp component type not implemented");
-                        break;
+                    break;
                 }
                 break;
             case nlt_quadratic:
                 hiba("vezetes::hmg_write_nonlinfunction_normal", "quadratic property is not supported");
                 break;
             case nlt_szakaszok: {
-                throw hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_szakaszok not implemented");
+                switch (ct) {
+                    case hnctRth: { // pars: T1, T2, multiplier => should give the current value of the FCI
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=3 V=1 // Rth\n", (uns)hmg_nonlin_index); // ret = (T2-T1)*mul*PWL(T1)
+                        fprintf(fp, "_PWL RET P0");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 P1 P0\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, "_MUL RET RET P2\n");
+                        fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    case hnctCth: { // pars: T, multiplier
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=2 // Cth\n", (uns)hmg_nonlin_index); // ret = mul*PWL(T)
+                        fprintf(fp, "_PWL RET P0");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    case hnctRe: { // pars: V1, V2, T, multiplier => should give the current value of the FCI (negative for positive resistivity)
+                        fprintf(fp, ".FUNCTION nonlinfunc_%u P=4 V=2 // Re\n", (uns)hmg_nonlin_index); // ret = (V2-V1)*mul*PWL(T)
+                        fprintf(fp, "_PWL RET P2");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 P1 P0\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, "_MUL RET RET P3\n");
+                        fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    case hnctS: { // pars: Tx, Tc
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // ret = (Tx-Tc)*PWL(Tc)
+                        fprintf(fp, "_SUB V0 P0 P1\n");
+                        fprintf(fp, "_PWL RET P1");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Tszorzo, Tref, I // ret = Tszorzo * I * PWL(Tc)
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_MUL V0 RET P2\n");
+                        fprintf(fp, "_PWL RET P1");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                    default:
+                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_szakaszok component type not implemented");
+                    break;
+                }
                 break;
             }
             case nlt_mizs1:
@@ -1586,6 +1679,30 @@ struct hmg_cella {
             fprintf(fp, "Gthx G N%u R0 BG_COLOR%u_Gthx\n", thcenter, core.color_index);
             fprintf(fp, "Ithxi I2 N%u R0 0 BG_COLOR%u_Ithxi BG_COLOR%u_Ithxi 0 %g\n", thcenter, core.color_index, core.color_index, Vcell / core.szin_terfogat);
             fprintf(fp, "Ithxv I N%u R0 0 BG_COLOR%u_Ithxv BG_COLOR%u_Ithxv 0\n", thcenter, core.color_index, core.color_index);
+
+            // Peltier-Thomson
+
+            if (is_Seebeck) {
+
+                // Thomson: szorzó: Tc, ref: Tx
+                
+                fprintf(fp, "TPW FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index, th_core_nodes[  WEST].Seebeck_B_node_index);
+                fprintf(fp, "TPE FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index, th_core_nodes[  EAST].Seebeck_B_node_index);
+                fprintf(fp, "TPS FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index, th_core_nodes[ SOUTH].Seebeck_B_node_index);
+                fprintf(fp, "TPN FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index, th_core_nodes[ NORTH].Seebeck_B_node_index);
+                fprintf(fp, "TPB FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, th_core_nodes[BOTTOM].Seebeck_B_node_index);
+                fprintf(fp, "TPT FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index, th_core_nodes[   TOP].Seebeck_B_node_index);
+                
+                // Peltier
+                
+                fprintf(fp, "PPW FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index, th_core_nodes[  WEST].Seebeck_B_node_index);
+                fprintf(fp, "PPE FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index, th_core_nodes[  EAST].Seebeck_B_node_index);
+                fprintf(fp, "PPS FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index, th_core_nodes[ SOUTH].Seebeck_B_node_index);
+                fprintf(fp, "PPN FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index, th_core_nodes[ NORTH].Seebeck_B_node_index);
+                fprintf(fp, "PPB FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, th_core_nodes[BOTTOM].Seebeck_B_node_index);
+                fprintf(fp, "PPT FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index, th_core_nodes[   TOP].Seebeck_B_node_index);
+                
+            }
 
             // boundaries  // initial value and DC set, AC unset
 

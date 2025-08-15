@@ -177,10 +177,10 @@ public:
 
 
 //***********************************************************************
-class HmgBuiltInFunction_C_PRINT final : public HmgFunction{
+class HmgBuiltInFunction_PRINT final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_C_PRINT() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    HmgBuiltInFunction_PRINT() : HmgFunction{ 0, 0, 2, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         printf("> %g ", workField[index[0]]);
         return 0;
@@ -189,12 +189,23 @@ public:
 
 
 //***********************************************************************
-class HmgBuiltInFunction_C_PRINTLN final : public HmgFunction{
+class HmgBuiltInFunction_PRINTLN final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_C_PRINTLN() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    HmgBuiltInFunction_PRINTLN() : HmgFunction{ 0, 0, 2, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         printf("> %g <\n", workField[index[0]]);
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_NOP final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_NOP() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         return 0;
     }
 };
@@ -894,7 +905,7 @@ public:
         if (x >= line.moreValues[last]) { y = line.moreValues[last + 1];return 0; }
         
         uns second = 2;
-        while (line.moreValues[second] > x)
+        while (line.moreValues[second] < x)
             second += 2;
 
         crvt x1 = line.moreValues[second - 2];
@@ -2812,8 +2823,9 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions.resize(builtInFunctionType::biftSize);
     builtInFunctions[builtInFunctionType::bift_CONST] = std::make_unique<HmgBuiltInFunction_CONST>();
     builtInFunctions[builtInFunctionType::bift_C_PI] = std::make_unique<HmgBuiltInFunction_C_PI>();
-    builtInFunctions[builtInFunctionType::bift_PRINT] = std::make_unique<HmgBuiltInFunction_C_PRINT>();
-    builtInFunctions[builtInFunctionType::bift_PRINTLN] = std::make_unique<HmgBuiltInFunction_C_PRINTLN>();
+    builtInFunctions[builtInFunctionType::bift_PRINT] = std::make_unique<HmgBuiltInFunction_PRINT>();
+    builtInFunctions[builtInFunctionType::bift_PRINTLN] = std::make_unique<HmgBuiltInFunction_PRINTLN>();
+    builtInFunctions[builtInFunctionType::bift_NOP] = std::make_unique<HmgBuiltInFunction_NOP>();
     builtInFunctions[builtInFunctionType::bift_C_2PI] = std::make_unique<HmgBuiltInFunction_C_2PI>();
     builtInFunctions[builtInFunctionType::bift_C_PI2] = std::make_unique<HmgBuiltInFunction_C_PI2>();
     builtInFunctions[builtInFunctionType::bift_C_E] = std::make_unique<HmgBuiltInFunction_C_E>();

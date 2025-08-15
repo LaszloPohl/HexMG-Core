@@ -36,6 +36,7 @@ FileFunctionNameID biftNameID[] = {
     { "C_PI",	bift_C_PI },
     { "PRINT",	bift_PRINT },
     { "PRINTLN",	bift_PRINTLN },
+    { "NOP",	bift_NOP },
     { "C_2PI",	bift_C_2PI },
     { "C_PI2",	bift_C_PI2 },
     { "C_E",	bift_C_E },
@@ -2233,6 +2234,12 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
 //***********************************************************************
 void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
+    if (nPar == 0) { // if no param, 1 param is set as RET
+        ParameterIdentifier id;
+        id.parType = ptParam;
+        id.parIndex = 0;
+        dest.parameters.push_back(id);
+    }
     for (uns i = 0; i < nPar; i++) {
         char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         ParameterIdentifier id;
@@ -2328,6 +2335,8 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     // read function lines
 
     bool isFunctionNotEnded = true;
+    uns labelnum = 0;
+    char labelstring[100];
 
     do {
         if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
@@ -2351,13 +2360,21 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
             // label
 
-            if (labels.contains(token))
-                throw hmgExcept("HMGFileFunction::Read", "%s label redefinition in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-            labels[token] = (uns)labels.size();
+            sprintf(labelstring, "@label%u", labelnum);
+
+            if (token[strlen(token) - 1] == ':') {
+                if (labels.contains(token))
+                    throw hmgExcept("HMGFileFunction::Read", "%s label redefinition in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                labels[token] = (uns)labels.size();
+                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            }
+            else {
+                labels[labelstring] = (uns)labels.size();
+                labelnum++;
+            }
             
             // called function
 
-            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             instructions.emplace_back(FunctionDescription());
             FunctionDescription& func = instructions.back();
             if (token[0] == '_') { // built in function
@@ -2370,7 +2387,8 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                                         break;
                     case bift_C_PI:
                     case bift_PRINT:
-                    case bift_PRINTLN:
+                    case bift_PRINTLN:  ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case bift_NOP:      ReadParams(func, 0, lineToken, reader, line, lineInfo); break;
                     case bift_C_2PI:
                     case bift_C_PI2:
                     case bift_C_E:
@@ -2447,7 +2465,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_RATIO:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
 
                     case bift_PWL: {
-                            ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                            ReadParams(func, 2, lineToken, reader, line, lineInfo);
                             rvt x, y;
                             while (!lineToken.isSepEOL) {
                                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -2455,6 +2473,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                                     throw hmgExcept("HMGFileFunction::Read", "x value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 if(lineToken.isSepEOL)
                                     throw hmgExcept("HMGFileFunction::Read", "unexpected end of line: y value is missing in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                                 if (!spiceTextToRvt(token, y))
                                     throw hmgExcept("HMGFileFunction::Read", "y value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 func.values.push_back(x);
