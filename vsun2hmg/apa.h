@@ -131,6 +131,7 @@ struct vezetes{
     bool specific;              // bool, Ernõ típusnál ha a mátrix 1 m2-re vonatkozik, azaz a félvezetõ felületével szorzandó
     bool is_resistivity;        // ha true, a felhasználó fajlagos ellenállást adott meg vezetés helyett, a hõmérsékletfüggés függgvényét erre kell alkalmazni
     bool is_his;
+    bool is_set = false;
     inline static size_t hmg_vezetes_counter = 0;
     size_t hmg_nonlin_index;
     dbl his_value_1,his_value_2; // A hiszterézises tartományban az érték. Ha value_2=0, akkor kapacitás, azaz a visszaadott érték value_1/(T_max-T_min), egyébként vezetés, ami lineárisan skálázódik min és max között
@@ -162,6 +163,17 @@ struct vezetes{
             throw hiba("vezetes::hmg_write_nonlinfunction_normal", "is_his not implemented"); // csak a beolvasásánál látom, de a korábbi konverter sem mentette
         switch (tipus) {
             case nlt_lin: // nothing to do: constant
+                switch (ct) {
+                    case hnctS: {
+                        if (g[0] == 0)
+                            break;
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index);
+                        fprintf(fp, "10 _SUB RET P0 P1\n");
+                        fprintf(fp, "20 _MULC RET RET %g\n", g[0]);
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
+                }
                 break;
             case nlt_linearis:
                 throw hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_linearis not implemented");
@@ -599,7 +611,7 @@ struct material{
         thvez.hmg_write_nonlinfunction_normal(fp, hnctRth);
         elvez.hmg_write_nonlinfunction_normal(fp, hnctRe);
         Cth.hmg_write_nonlinfunction_normal(fp, hnctCth);
-        S.hmg_write_nonlinfunction_normal(fp, hnctUndef);
+        S.hmg_write_nonlinfunction_normal(fp, hnctS);
         D.hmg_write_nonlinfunction_normal(fp, hnctUndef);
         emissivity.hmg_write_nonlinfunction_normal(fp, hnctUndef);
     }
@@ -1312,7 +1324,8 @@ struct hmg_cella {
     struct core_nodes {
         bool is_X = true;
         uns node_index = 0; // X vagy N
-        bool operator==(const core_nodes& other)const noexcept { return is_X == other.is_X && node_index == other.node_index; }
+        uns Seebeck_B_node_index = 0;
+        bool operator==(const core_nodes& other)const noexcept { return is_X == other.is_X && node_index == other.node_index && Seebeck_B_node_index == other.Seebeck_B_node_index; }
         bool operator!=(const core_nodes& other)const noexcept { return !(*this == other); }
     };
     struct junctions {
@@ -1331,10 +1344,14 @@ struct hmg_cella {
     boundary_cell el_boundaries[BASIC_SIDES];
     boundary_cell th_boundaries[BASIC_SIDES];
     core_nodes el_core_nodes[BASIC_SIDES];
+    core_nodes Seebeck_nodes[BASIC_SIDES]; // ha van Seebeck, akkor az el_core_nodes ide másolódik, az el_core_nodes-ba kerül a plusz node azonosítója, mert az íródik ki az ellenállás másik végéhez
     core_nodes th_core_nodes[BASIC_SIDES];
     junctions junctions[BASIC_SIDES];
     uns nNodes = 0; // number of N nodes
     uns xNodes = 0; // number of X nodes
+    uns bNodes = 0; // number of B nodes
+    bool is_Seebeck = false;
+    uns Seebeck_index = 0;
 
     bool operator==(const hmg_cella& other)const noexcept {
         if (core != other.core)
@@ -1401,6 +1418,21 @@ struct hmg_cella {
             throw hiba("hmg_cella::set_field_change", "is_el: %u, is_th: %u, is_el_change: %u", (uns)core.is_el, (uns)core.is_th, (uns)is_el_change);
     }
 
+    void set_Seebeck(uns S_index) {
+        is_Seebeck = true;
+        for (uns i = WEST; i < BASIC_SIDES; i++) {
+            Seebeck_nodes[i] = el_core_nodes[i]; // az elektromosnak jobb, ha nem használjuk a Seebeck_B_node_index változóját, nehogy itt bajt okozzon
+            el_core_nodes[i].is_X = false;
+            el_core_nodes[i].node_index = nNodes;
+            nNodes++;
+            Seebeck_nodes[i].Seebeck_B_node_index = bNodes;
+            bNodes++;
+            th_core_nodes[i].Seebeck_B_node_index = bNodes; // ez a B node lesz az áram értéke, ami a Peltier-hez kell
+            bNodes++;
+            Seebeck_index = S_index;
+        }
+    }
+
     PLString getBoundaryName(uns index) {
         switch (index) {
             case WEST: return "WEST";
@@ -1415,7 +1447,10 @@ struct hmg_cella {
     }
 
     void write(FILE* fp, simulation& aktSim, uns model_index) {
-        fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u", model_index, xNodes, nNodes);
+        if (bNodes != 0)
+            fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u B=%u", model_index, xNodes, nNodes, bNodes);
+        else
+            fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u", model_index, xNodes, nNodes);
         if (core.is_th && core.pmat->Cth.tipus != nlt_lin) {
             fprintf(fp, " B=1"); // control node for nonlinear heat capacitor
         }
@@ -1447,7 +1482,6 @@ struct hmg_cella {
                 }
             }
             else {
-                // eredetileg a méretet megszoroztam a elvez.get_ertek(0)-val, de ez faszság, a vezetés a függvényben van
                 if (core.is_th) {
                     fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
                     fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
@@ -1471,6 +1505,34 @@ struct hmg_cella {
             fprintf(fp, "Gex G N0 R0 BG_COLOR%u_Gelx\n", core.color_index);
             fprintf(fp, "Iexi I2 N0 R0 0 BG_COLOR%u_Ielxi BG_COLOR%u_Ielxi 0 %g\n", core.color_index, core.color_index, Vcell / core.szin_terfogat);
             fprintf(fp, "Iexv I N0 R0 0 BG_COLOR%u_Ielxv BG_COLOR%u_Ielxv 0\n", core.color_index, core.color_index);
+
+            // Seebeck
+
+            if (is_Seebeck) {
+                fprintf(fp, "BnW FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[WEST].Seebeck_B_node_index, th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index);
+                fprintf(fp, "VSW VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index, 
+                    th_core_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index);
+                
+                fprintf(fp, "BnE FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[EAST].Seebeck_B_node_index, th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index);
+                fprintf(fp, "VSE VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index,
+                    th_core_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index);
+                
+                fprintf(fp, "BnS FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index);
+                fprintf(fp, "VSS VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index,
+                    th_core_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index);
+                
+                fprintf(fp, "BnN FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index);
+                fprintf(fp, "VSN VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index,
+                    th_core_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index);
+                
+                fprintf(fp, "BnB FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index);
+                fprintf(fp, "VSB VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index,
+                    th_core_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index);
+                
+                fprintf(fp, "BnT FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[TOP].Seebeck_B_node_index, th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index);
+                fprintf(fp, "VST VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index,
+                    th_core_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index);
+            }
 
             // boundaries // initial value and DC set, AC unset
 
@@ -1502,7 +1564,6 @@ struct hmg_cella {
                 fprintf(fp, "RthT G N%u %c%u %g\n", thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
             }
             else {
-                // eredetileg a méretet megszoroztam a thvez.get_ertek(0)-val, de ez faszság, a vezetés a függvényben van
                 fprintf(fp, "RthW FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[WEST].is_X   ? 'X' : 'N', th_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
                 fprintf(fp, "RthE FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[EAST].is_X   ? 'X' : 'N', th_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
                 fprintf(fp, "RthS FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[SOUTH].is_X  ? 'X' : 'N', th_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 

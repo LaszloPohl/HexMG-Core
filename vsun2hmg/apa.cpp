@@ -861,10 +861,6 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                     }
                 }
 
-                // Seebeck, Peltier TODO
-
-                // => ide jönnek a junction-ök => TODO
-
                 cella.xNodes = 0;
                 for (uns i = WEST; i < BASIC_SIDES; i++) {
                     if (cella.core.is_el && cella.el_core_nodes[i].is_X) {
@@ -874,6 +870,13 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         cella.th_core_nodes[i].node_index = cella.xNodes++;
                     }
                 }
+
+                // Seebeck, Peltier TODO
+                
+                if (cella_color.pmat->S.is_set && cella.core.is_el && cella.core.is_th && !(cella_color.pmat->S.tipus == nlt_lin && cella_color.pmat->S.g[0] == 0))
+                    cella.set_Seebeck((uns)cella_color.pmat->S.hmg_nonlin_index);
+
+                // => ide jönnek a junction-ök => TODO
 
                 size_t cvi = hmg_cella_vector.size();
                 for (size_t i = 0; i < hmg_cella_vector.size(); i++)
@@ -1416,7 +1419,7 @@ void apa::write_HMG_anals(FILE * fp, simulation & aktSim){
                 case GerjU:
                     fprintf(fp, ".SET BG_COLOR%u_Gelx %g\n",  j, GV);
                     fprintf(fp, ".SET BG_COLOR%u_Ielxi 0\n",  j);
-                    fprintf(fp, ".SET BG_COLOR%u_Ielxv %g\n", j, x.ertek);
+                    fprintf(fp, ".SET BG_COLOR%u_Ielxv %g\n", j, x.ertek * GV);
                     break;
                 case GerjI:
                     fprintf(fp, ".SET BG_COLOR%u_Gelx 0\n",   j);
@@ -1436,7 +1439,7 @@ void apa::write_HMG_anals(FILE * fp, simulation & aktSim){
                 case GerjU:
                     fprintf(fp, ".SET BG_COLOR%u_Gthx %g\n",  j, GV);
                     fprintf(fp, ".SET BG_COLOR%u_Ithxi 0\n",  j);
-                    fprintf(fp, ".SET BG_COLOR%u_Ithxv %g\n", j, x.ertek);
+                    fprintf(fp, ".SET BG_COLOR%u_Ithxv %g\n", j, x.ertek * GV);
                     break;
                 case GerjI:
                     fprintf(fp, ".SET BG_COLOR%u_Gthx 0\n",   j);
@@ -4946,6 +4949,7 @@ uns function_azonosito(const PLString &nev, monlintipus &tipus) {
 //***********************************************************************
 bool R_converter(const tomb<PLString> & sor,u32 startindex,vezetes & dest,const material & m,bool is_diode=false){
 //***********************************************************************
+    dest.is_set = true;
     const PLString s=sor[startindex].LowCase();
     if (s == "function") {
         cuns db = function_azonosito(sor[startindex + 1], dest.tipus);
