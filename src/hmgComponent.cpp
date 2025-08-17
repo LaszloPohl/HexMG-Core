@@ -17,6 +17,65 @@ namespace nsHMG {
 
 
 //***********************************************************************
+void ComponentSubCircuit::forwsubsDC() {
+// TO PARALLEL
+//***********************************************************************
+    for (auto& comp : components)
+        if (comp->isEnabled) comp->forwsubs(true);
+    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+    if (model.solutionType == SolutionType::stFullMatrix)
+        sfmrDC->forwsubs();
+    else if (model.solutionType == SolutionType::stSunRed)
+        sunred.forwsubsDC();
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::backsubsDC() {
+// TO PARALLEL
+// UA is input in subcircuits, it must be set with setV before calling its backsubs
+//***********************************************************************
+    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+    if (model.solutionType == SolutionType::stFullMatrix)
+        sfmrDC->backsubs();
+    else if (model.solutionType == SolutionType::stSunRed)
+        sunred.backsubsDC();
+    for (auto& comp : components)
+        if (comp->isEnabled) comp->backsubs(true);
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::forwsubsAC() {
+// TO PARALLEL
+//***********************************************************************
+    for (auto& comp : components)
+        if (comp->isEnabled) comp->forwsubs(false);
+    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+    if (model.solutionType == SolutionType::stFullMatrix)
+        sfmrAC->forwsubs();
+    else if (model.solutionType == SolutionType::stSunRed)
+        sunred.forwsubsAC();
+}
+
+
+//***********************************************************************
+void ComponentSubCircuit::backsubsAC() {
+// TO PARALLEL
+// UA is input in subcircuits, it must be set with setV before calling its backsubs
+//***********************************************************************
+    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+    if (model.solutionType == SolutionType::stFullMatrix)
+        sfmrAC->backsubs();
+    else if (model.solutionType == SolutionType::stSunRed)
+        sunred.backsubsAC();
+    for (auto& comp : components)
+        if (comp->isEnabled) comp->backsubs(false);
+}
+
+
+
+//***********************************************************************
 NodeVariable* ComponentAndControllerBase::getNodeVariableSimpleInterfaceNodeID(const SimpleInterfaceNodeID& nodeID) noexcept {
 //***********************************************************************
     switch (nodeID.type) {

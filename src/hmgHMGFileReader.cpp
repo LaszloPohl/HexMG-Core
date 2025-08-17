@@ -32,6 +32,7 @@ struct FileFunctionNameID {
 FileFunctionNameID biftNameID[] = {
 //***********************************************************************
     { "CONST",	bift_CONST },
+    { "COPY",	bift_CONST },
     { "CPYC",	bift_CONST },   // the same
     { "C_PI",	bift_C_PI },
     { "PRINT",	bift_PRINT },

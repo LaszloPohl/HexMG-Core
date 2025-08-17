@@ -871,7 +871,7 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                     }
                 }
 
-                // Seebeck, Peltier TODO
+                // Seebeck, Peltier
                 
                 if (cella_color.pmat->S.is_set && cella.core.is_el && cella.core.is_th && !(cella_color.pmat->S.tipus == nlt_lin && cella_color.pmat->S.g[0] == 0))
                     cella.set_Seebeck((uns)cella_color.pmat->S.hmg_nonlin_index);

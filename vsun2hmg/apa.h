@@ -172,6 +172,25 @@ struct vezetes{
                     case hnctS: {
                         if (g[0] == 0)
                             break;
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*g[0]*1MEG
+                        fprintf(fp, "_SUB RET P0 P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index);// pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * g[0]
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_SUB V0 P2 P1\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19\n", (uns)hmg_nonlin_index); // ret = 0 (if S=const, no Thomson effect)
+                        fprintf(fp, "_COPY RET 0\n");
+                        fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
+/*
                         fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*g[0]
                         fprintf(fp, "_SUB RET P0 P1\n");
                         fprintf(fp, "_MULC RET RET %g\n", g[0]);
@@ -187,6 +206,7 @@ struct vezetes{
                         //fprintf(fp, "_PRINT P2\n");
                         //fprintf(fp, "_PRINTLN RET\n");
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+*/
                     }
                     break;
                     default:
@@ -233,8 +253,107 @@ struct vezetes{
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
-                    case hnctS: { // pars: Tx, Tc
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))
+                    case hnctS: {
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))*1MEG
+                        fprintf(fp, "_SUB V0 P0 P1\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P1 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * G[0]*exp(gg[0]*(Tref-25))
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_SUB V0 P2 P1\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, "_MULC V0 RET %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P0 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        // pars: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, VT2
+                        //       0   1   2   3   4   5   6   7    8    9    10   11   12   13   14   15   16   17   18
+
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19 V=4\n", (uns)hmg_nonlin_index); // ret = 1MEG * sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * G[0]*exp(gg[0]*(Tx-25))
+                        fprintf(fp, "_COPY RET 546.3 // 2*273.15\n");
+                        fprintf(fp, "_ADD RET RET P0\n");                                           // RET = Tc + 2*273.15
+
+                        fprintf(fp, "_SUBC V0 P1 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P8 P7\n");
+                        fprintf(fp, "_MUL V2 V0 V1\n"); // V2 !
+                        fprintf(fp, "_ADD V3 RET P1\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V2 V2 V3\n");
+
+                        fprintf(fp, "_SUBC V0 P2 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P10 P9\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P2\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_SUBC V0 P3 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P12 P11\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P3\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_SUBC V0 P4 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P14 P13\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P4\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_SUBC V0 P5 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P16 P15\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P5\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_SUBC V0 P6 25\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V0 V0\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUB V1 P18 P17\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P6\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_MULC RET V2 1MEG\n");
+                        fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
+
+/*
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))
                         fprintf(fp, "_SUB V0 P0 P1\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
                         fprintf(fp, "_SUBC V1 P1 25\n");
@@ -253,6 +372,7 @@ struct vezetes{
                         fprintf(fp, "_EXP V1 V1\n");
                         fprintf(fp, "_MUL RET V0 V1\n");
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+*/
                     }
                     break;
                     default:
@@ -299,8 +419,121 @@ struct vezetes{
                         fprintf(fp, ".END FUNCTION nonlinfunc_%u\n\n", (uns)hmg_nonlin_index);
                     }
                     break;
-                    case hnctS: { // pars: Tx, Tc
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // ret = (Tx-Tc)*PWL(Tc)
+                    case hnctS: {
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*PWL(Tc)*1MEG
+                        fprintf(fp, "_SUB V0 P0 P1\n");
+                        //fprintf(fp, "_PRINT V0\n");
+                        fprintf(fp, "_PWL RET P1");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        //fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        //fprintf(fp, "_PRINTLN RET\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * PWL(Tx)
+                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
+                        fprintf(fp, "_ADD RET RET P0\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, "_SUB V0 P2 P1\n");
+                        fprintf(fp, "_MUL V0 RET V0\n");
+                        fprintf(fp, "_PWL RET P0");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_MUL RET RET V0\n");
+                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        // pars: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, VT2
+                        //       0   1   2   3   4   5   6   7    8    9    10   11   12   13   14   15   16   17   18
+
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19 V=5\n", (uns)hmg_nonlin_index); // ret = 1MEG * sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * (PWL(Tx)-PWL(Tc)))
+                        fprintf(fp, "_COPY RET 546.3 // 2*273.15\n");
+                        fprintf(fp, "_ADD RET RET P0\n");                                           // RET = Tc + 2*273.15
+
+                        fprintf(fp, "_PWL V4 P0");                                                  // V4 = S(Tc)
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+
+                        fprintf(fp, "_PWL V0 P1");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P8 P7\n");
+                        fprintf(fp, "_MUL V2 V0 V1\n"); // V2 !                                     // V2 = sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * (PWL(Tx)-PWL(Tc)))
+                        fprintf(fp, "_ADD V3 RET P1\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V2 V2 V3\n");
+
+                        fprintf(fp, "_PWL V0 P2");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P10 P9\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P2\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_PWL V0 P3");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P12 P11\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P3\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_PWL V0 P4");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P14 P13\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P4\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_PWL V0 P5");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P16 P15\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P5\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_PWL V0 P6");
+                        for (uns i = 0; i < szakaszok.size(); i++)
+                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
+                        fprintf(fp, "\n");
+                        fprintf(fp, "_SUB V0 V0 V4\n");
+                        fprintf(fp, "_SUB V1 P18 P17\n");
+                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
+                        fprintf(fp, "_ADD V3 RET P6\n");
+                        fprintf(fp, "_MULC V3 V3 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V3\n");
+                        fprintf(fp, "_ADD V2 V2 V0\n");
+
+                        fprintf(fp, "_MULC RET V2 1MEG\n");
+                        fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
+
+/*
+                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*PWL(Tc)
                         fprintf(fp, "_SUB V0 P0 P1\n");
                         fprintf(fp, "_PWL RET P1");
                         for (uns i = 0; i < szakaszok.size(); i++)
@@ -319,6 +552,7 @@ struct vezetes{
                         fprintf(fp, "\n");
                         fprintf(fp, "_MUL RET RET V0\n");
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
+*/
                     }
                     break;
                     default:
@@ -1517,11 +1751,15 @@ struct hmg_cella {
             Seebeck_nodes[i] = el_core_nodes[i]; // az elektromosnak jobb, ha nem használjuk a Seebeck_B_node_index változóját, nehogy itt bajt okozzon
             el_core_nodes[i].is_X = false;
             el_core_nodes[i].node_index = nNodes;
+
+            nNodes += 2; // 2 új N node kell, a mérõ ellenállás miatt
+            /*
             nNodes++;
             Seebeck_nodes[i].Seebeck_B_node_index = bNodes;
             bNodes++;
             th_core_nodes[i].Seebeck_B_node_index = bNodes; // ez a B node lesz az áram értéke, ami a Peltier-hez kell
             bNodes++;
+            */
             Seebeck_index = S_index;
         }
     }
@@ -1602,31 +1840,57 @@ struct hmg_cella {
             // Seebeck
 
             if (is_Seebeck) {
+                fprintf(fp, "GmeasW G N%u N%u 1MEG\n", el_core_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1);
+                fprintf(fp, "VSW FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1,
+                    th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index);
+                
+                fprintf(fp, "GmeasE G N%u N%u 1MEG\n", el_core_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1);
+                fprintf(fp, "VSE FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1,
+                    th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index);
+                
+                fprintf(fp, "GmeasS G N%u N%u 1MEG\n", el_core_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1);
+                fprintf(fp, "VSS FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1,
+                    th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index);
+                
+                fprintf(fp, "GmeasN G N%u N%u 1MEG\n", el_core_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1);
+                fprintf(fp, "VSN FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1,
+                    th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index);
+                
+                fprintf(fp, "GmeasB G N%u N%u 1MEG\n", el_core_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1);
+                fprintf(fp, "VSB FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1,
+                    th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index);
+                
+                fprintf(fp, "GmeasT G N%u N%u 1MEG\n", el_core_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1);
+                fprintf(fp, "VST FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1,
+                    th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index);
+            }
+/*
+            if (is_Seebeck) {
                 fprintf(fp, "BnW FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[WEST].Seebeck_B_node_index, th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index);
-                fprintf(fp, "VSW VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index, 
+                fprintf(fp, "VSW VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index, 
                     th_core_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index);
                 
                 fprintf(fp, "BnE FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[EAST].Seebeck_B_node_index, th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index);
-                fprintf(fp, "VSE VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index,
+                fprintf(fp, "VSE VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index,
                     th_core_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index);
                 
                 fprintf(fp, "BnS FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index);
-                fprintf(fp, "VSS VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index,
+                fprintf(fp, "VSS VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index,
                     th_core_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index);
                 
                 fprintf(fp, "BnN FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index);
-                fprintf(fp, "VSN VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index,
+                fprintf(fp, "VSN VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index,
                     th_core_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index);
                 
                 fprintf(fp, "BnB FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index);
-                fprintf(fp, "VSB VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index,
+                fprintf(fp, "VSB VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index,
                     th_core_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index);
                 
                 fprintf(fp, "BnT FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[TOP].Seebeck_B_node_index, th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index);
-                fprintf(fp, "VST VIB %c%u N%u B%u B%u B%u 0 0 1M\n", Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index,
+                fprintf(fp, "VST VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index,
                     th_core_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index);
             }
-
+*/
             // boundaries // initial value and DC set, AC unset
 
             for (uns i = WEST; i <= TOP; i++) {
@@ -1684,6 +1948,41 @@ struct hmg_cella {
 
             if (is_Seebeck) {
 
+                // Peltier: Tx, V1, V2
+
+                fprintf(fp, "PPW FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index,
+                    el_core_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1);
+                fprintf(fp, "PPE FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index,
+                    el_core_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1);
+                fprintf(fp, "PPS FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index,
+                    el_core_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1);
+                fprintf(fp, "PPN FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index,
+                    el_core_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1);
+                fprintf(fp, "PPB FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index,
+                    el_core_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1);
+                fprintf(fp, "PPT FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index,
+                    el_core_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1);
+
+                // Thomson: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, T2
+
+                fprintf(fp, "PT FCI Y=18 F=Thomson_func_%u(X1 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13 Y14 Y15 Y16 Y17) R0 N%u %c%u %c%u %c%u %c%u %c%u %c%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u\n",
+                    Seebeck_index, thcenter, 
+                    th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index,
+                    th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index,
+                    th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index,
+                    th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index,
+                    th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index,
+                    th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index,
+                    el_core_nodes[  WEST].node_index + 1, el_core_nodes[  WEST].node_index,
+                    el_core_nodes[  EAST].node_index + 1, el_core_nodes[  EAST].node_index,
+                    el_core_nodes[ SOUTH].node_index + 1, el_core_nodes[ SOUTH].node_index,
+                    el_core_nodes[ NORTH].node_index + 1, el_core_nodes[ NORTH].node_index,
+                    el_core_nodes[BOTTOM].node_index + 1, el_core_nodes[BOTTOM].node_index,
+                    el_core_nodes[   TOP].node_index + 1, el_core_nodes[   TOP].node_index);
+            }
+/*
+            if (is_Seebeck) {
+
                 // Thomson: szorzó: Tc, ref: Tx
                 
                 fprintf(fp, "TPW FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index, th_core_nodes[  WEST].Seebeck_B_node_index);
@@ -1703,7 +2002,7 @@ struct hmg_cella {
                 fprintf(fp, "PPT FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index, th_core_nodes[   TOP].Seebeck_B_node_index);
                 
             }
-
+*/
             // boundaries  // initial value and DC set, AC unset
 
             if (th_boundaries[WEST].is_boundary) {

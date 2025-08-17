@@ -2185,7 +2185,7 @@ public:
             componentCurrent.setValueDC(-Ifull);
             externalNodes[0]->incDDC(Ifull);
             externalNodes[1]->incDDC(-Ifull);
-            // printf("** G = %g\tIG = %g\t Ifull = %g A **\n", G, IG, Ifull);
+            // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
             crvt G = pars[0].get();
@@ -3689,65 +3689,6 @@ inline cplx ComponentSubCircuit::getYAC(uns y, uns x) const noexcept {
     return cplx0;
 }
 //***********************************************************************
-
-
-//***********************************************************************
-inline void ComponentSubCircuit::forwsubsDC() {
-// TO PARALLEL
-//***********************************************************************
-    for (auto& comp : components)
-        if (comp->isEnabled) comp->forwsubs(true);
-    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrDC->forwsubs();
-    else if (model.solutionType == SolutionType::stSunRed)
-        sunred.forwsubsDC();
-}
-
-
-//***********************************************************************
-inline void ComponentSubCircuit::backsubsDC() {
-// TO PARALLEL
-// UA is input in subcircuits, it must be set with setV before calling its backsubs
-//***********************************************************************
-    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrDC->backsubs();
-    else if (model.solutionType == SolutionType::stSunRed)
-        sunred.backsubsDC();
-    for (auto& comp : components)
-        if (comp->isEnabled) comp->backsubs(true);
-}
-
-
-//***********************************************************************
-inline void ComponentSubCircuit::forwsubsAC() {
-// TO PARALLEL
-//***********************************************************************
-    for (auto& comp : components)
-        if (comp->isEnabled) comp->forwsubs(false);
-    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrAC->forwsubs();
-    else if (model.solutionType == SolutionType::stSunRed)
-        sunred.forwsubsAC();
-}
-
-
-//***********************************************************************
-inline void ComponentSubCircuit::backsubsAC() {
-// TO PARALLEL
-// UA is input in subcircuits, it must be set with setV before calling its backsubs
-//***********************************************************************
-    const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrAC->backsubs();
-    else if (model.solutionType == SolutionType::stSunRed)
-        sunred.backsubsAC();
-    for (auto& comp : components)
-        if (comp->isEnabled) comp->backsubs(false);
-}
-
 
 
 //***********************************************************************

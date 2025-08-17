@@ -147,7 +147,7 @@ void SunredTreeNode::loadNodeDataFromTwoNodes(SunredTreeNode* src1, SunredTreeNo
 
 
 //***********************************************************************
-void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) {
+void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runtime, 7.8% self
 //***********************************************************************
     cuns Asiz = (uns)ANodeIndex.size();
     cuns Bsiz = (uns)BNodeIndex.size();
@@ -605,10 +605,10 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) {
                     dc->YRED.math_2_add_mul(dc->YRED, dc->calc->XB, dc->calc->NZBXA);
                 }
                 else {
-                    dc->calc->YB_NZB.math_ninv_np();
-                    dc->calc->NZBXA.math_mul_t_unsafe(dc->calc->YB_NZB, dc->calc->XAT);
+                    dc->calc->YB_NZB.math_ninv_np();                                                // 11.2% of the runtime
+                    dc->calc->NZBXA.math_mul_t_unsafe(dc->calc->YB_NZB, dc->calc->XAT);             // 16.9% of the runtime
                     dc->calc->NZBXAT.transp(dc->calc->NZBXA);
-                    dc->YRED.math_add_mul_t_unsafe(dc->YRED, dc->calc->XB, dc->calc->NZBXAT);
+                    dc->YRED.math_add_mul_t_unsafe(dc->YRED, dc->calc->XB, dc->calc->NZBXAT);       // 56.7% of the runtime
                 }
             }
         }
