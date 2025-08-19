@@ -158,14 +158,14 @@ struct vezetes{
     }
     void write_szakaszok_function_core(FILE* fp) { // A hõmérséklet V0-ban érkezik, az eredmény a V0-ba kerül
         if (szakaszok.size() < 1)
-            throw hiba("vezetes::hmg_write_nonlinfunction_normal", "broken line undefined: no value-pair defined");
+            throw hiba("vezetes::hmg_write_nonlinfunction", "broken line undefined: no value-pair defined");
 
     }
-    void hmg_write_nonlinfunction_normal(FILE* fp, hmgNonlinComponentType ct) {
+    void hmg_write_nonlinfunction(FILE* fp, hmgNonlinComponentType ct) {
         if (is_resistivity)
-            throw hiba("vezetes::hmg_write_nonlinfunction_normal", "is_resistivity not implemented");
+            throw hiba("vezetes::hmg_write_nonlinfunction", "is_resistivity not implemented");
         if (is_his)
-            throw hiba("vezetes::hmg_write_nonlinfunction_normal", "is_his not implemented"); // csak a beolvasásánál látom, de a korábbi konverter sem mentette
+            throw hiba("vezetes::hmg_write_nonlinfunction", "is_his not implemented"); // csak a beolvasásánál látom, de a korábbi konverter sem mentette
         switch (tipus) {
             case nlt_lin: // nothing to do: constant
                 switch (ct) {
@@ -210,12 +210,12 @@ struct vezetes{
                     }
                     break;
                     default:
-                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_lin component type not implemented");
+                        hiba("vezetes::hmg_write_nonlinfunction", "nlt_lin type not implemented for (%u) component", ct);
                     break;
                 }
                 break;
             case nlt_linearis:
-                throw hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_linearis not implemented");
+                throw hiba("vezetes::hmg_write_nonlinfunction", "nlt_linearis not implemented");
                 break;
             case nlt_exp:
                 switch (ct) {
@@ -375,13 +375,25 @@ struct vezetes{
 */
                     }
                     break;
+                    case hnctSemiEq: {
+                        fprintf(fp, ".FUNCTION Semi_eq_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))*1MEG
+                        fprintf(fp, "_SUB V0 P0 P1\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
+                        fprintf(fp, "_SUBC V1 P1 25\n");
+                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
+                        fprintf(fp, "_EXP V1 V1\n");
+                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+                    }
+                    break;
                     default:
-                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_exp component type not implemented");
+                        hiba("vezetes::hmg_write_nonlinfunction", "nlt_exp type not implemented for (%u) component", ct);
                     break;
                 }
                 break;
             case nlt_quadratic:
-                hiba("vezetes::hmg_write_nonlinfunction_normal", "quadratic property is not supported");
+                hiba("vezetes::hmg_write_nonlinfunction", "quadratic property is not supported");
                 break;
             case nlt_szakaszok: {
                 switch (ct) {
@@ -556,16 +568,16 @@ struct vezetes{
                     }
                     break;
                     default:
-                        hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_szakaszok component type not implemented");
+                        hiba("vezetes::hmg_write_nonlinfunction", "nlt_szakaszok type not implemented for (%u) component", ct);
                     break;
                 }
                 break;
             }
             case nlt_mizs1:
-                throw hiba("vezetes::hmg_write_nonlinfunction_normal", "nlt_mizs1 not implemented");
+                throw hiba("vezetes::hmg_write_nonlinfunction", "nlt_mizs1 not implemented");
                 break;
             default:
-                throw hiba("vezetes::hmg_write_nonlinfunction_normal", "unsupported nonlin type");
+                throw hiba("vezetes::hmg_write_nonlinfunction", "unsupported nonlin type");
                 break;
         }
     }
@@ -935,12 +947,12 @@ struct material{
     void hmg_write_nonlin(FILE* fp) {
         if (is_his)
             throw hiba("material::hmg_write_nonlin", "is_his not implemented");
-        thvez.hmg_write_nonlinfunction_normal(fp, hnctRth);
-        elvez.hmg_write_nonlinfunction_normal(fp, hnctRe);
-        Cth.hmg_write_nonlinfunction_normal(fp, hnctCth);
-        S.hmg_write_nonlinfunction_normal(fp, hnctS);
-        D.hmg_write_nonlinfunction_normal(fp, hnctUndef);
-        emissivity.hmg_write_nonlinfunction_normal(fp, hnctUndef);
+        thvez.hmg_write_nonlinfunction(fp, hnctRth);
+        elvez.hmg_write_nonlinfunction(fp, hnctRe);
+        Cth.hmg_write_nonlinfunction(fp, hnctCth);
+        S.hmg_write_nonlinfunction(fp, hnctS);
+        D.hmg_write_nonlinfunction(fp, hnctUndef);
+        emissivity.hmg_write_nonlinfunction(fp, hnctUndef);
     }
     void write(FILE * fp, uns irany, uns index) { // irány: 0=x, 1=y, 2=z
         if (irany == 0)
@@ -2199,6 +2211,7 @@ public:
     void write_HMG_boundary_cell_models(FILE* fp, simulation& aktSim);
     void write_HMG_boundary_global_vars(FILE* fp, simulation& aktSim, const csomag& csom, size_t index, PLString name);
     void write_HMG_colors(FILE* fp, simulation& aktSim);
+    void write_HMG_junctions(FILE* fp, simulation& aktSim);
     void write_HMG_cell_models(FILE* fp, simulation& aktSim);
     void write_HMG_SUNRED_tree(FILE* fp, simulation& aktSim);
     void write_HMG_probes(FILE* fp, simulation& aktSim);

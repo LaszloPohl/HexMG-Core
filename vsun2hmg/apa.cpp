@@ -365,6 +365,24 @@ void apa::write_HMG_colors(FILE * fp, simulation & aktSim){
 
 
 //***********************************************************************
+void apa::write_HMG_junctions(FILE * fp, simulation & aktSim){
+//***********************************************************************
+    for (uns i = 0; i < colmax; i++)
+        if (aktSim.pmodel->tcolor[i].is && aktSim.pmodel->tcolor[i].tipus == SzinNormal && aktSim.pmodel->tcolor[i].terfogat>0.0) {
+            for (uns j = 0; j < aktSim.pmodel->tcolor[i].tsemi.size(); j++) {
+                //aktSim.pmodel->tcolor[i].tsemi[j].index; // elvileg nem kell, mert a vezetes::hmg_nonlin_index jó
+                //aktSim.pmodel->tcolor[i].tsemi[j].As;
+                aktSim.pmodel->tcolor[i].tsemi[j].par.hmg_write_nonlinfunction(fp, hnctSemiEq);
+                aktSim.pmodel->tcolor[i].tsemi[j].D.hmg_write_nonlinfunction(fp, hnctSemiD);
+                aktSim.pmodel->tcolor[i].tsemi[j].R.hmg_write_nonlinfunction(fp, hnctSemiR);
+                aktSim.pmodel->tcolor[i].tsemi[j].rad.hmg_write_nonlinfunction(fp, hnctSemiRad);
+                aktSim.pmodel->tcolor[i].tsemi[j].lum.hmg_write_nonlinfunction(fp, hnctSemiLum);
+            }
+        }
+}
+
+
+//***********************************************************************
 void apa::write_HMG_SUNRED_tree(FILE * fp, simulation & aktSim){
 //***********************************************************************
     model& aktMod = *aktSim.pmodel;
@@ -5843,7 +5861,7 @@ void model::read(PLString path){
                         else throw hiba(fvnev,"unknown semiconductor luminance type (%s) in line %u in %s",aktpar.c_str(),i,fileName.c_str());
                     }
                      else if(kisb=="equation"){
-                        throw hiba(fvnev,"semiconductor farmat is deprecated, use model=equation=... instead of equation=... in line %u in %s",i,fileName.c_str());
+                        throw hiba(fvnev,"semiconductor format is deprecated, use model=equation=... instead of equation=... in line %u in %s",i,fileName.c_str());
                     }
                      else if(kisb!="")printf("# unknown semiconductor parameter is ignored: %s\n",kisb.c_str());
                }
