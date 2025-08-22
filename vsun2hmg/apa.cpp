@@ -225,6 +225,7 @@ void apa::write_HMG_akt_sim(FILE *fp, simulation & aktSim){
     write_HMG_material_functions(fp, aktSim);
     write_HMG_boundary_cell_models(fp, aktSim);
     write_HMG_colors(fp, aktSim);
+    write_HMG_junctions(fp, aktSim);
     write_HMG_SUNRED_tree(fp, aktSim);
     write_HMG_cell_models(fp, aktSim);
 
@@ -372,11 +373,11 @@ void apa::write_HMG_junctions(FILE * fp, simulation & aktSim){
             for (uns j = 0; j < aktSim.pmodel->tcolor[i].tsemi.size(); j++) {
                 //aktSim.pmodel->tcolor[i].tsemi[j].index; // elvileg nem kell, mert a vezetes::hmg_nonlin_index jó
                 //aktSim.pmodel->tcolor[i].tsemi[j].As;
-                aktSim.pmodel->tcolor[i].tsemi[j].par.hmg_write_nonlinfunction(fp, hnctSemiEq);
-                aktSim.pmodel->tcolor[i].tsemi[j].D.hmg_write_nonlinfunction(fp, hnctSemiD);
-                aktSim.pmodel->tcolor[i].tsemi[j].R.hmg_write_nonlinfunction(fp, hnctSemiR);
-                aktSim.pmodel->tcolor[i].tsemi[j].rad.hmg_write_nonlinfunction(fp, hnctSemiRad);
-                aktSim.pmodel->tcolor[i].tsemi[j].lum.hmg_write_nonlinfunction(fp, hnctSemiLum);
+                aktSim.pmodel->tcolor[i].tsemi[j].par.hmg_write_nonlinfunction(fp, hnctSemiEq, aktSim.pmodel->tcolor[i].tsemi[j].As, true);
+                aktSim.pmodel->tcolor[i].tsemi[j].D.hmg_write_nonlinfunction(fp, hnctSemiD, aktSim.pmodel->tcolor[i].tsemi[j].As);
+                aktSim.pmodel->tcolor[i].tsemi[j].R.hmg_write_nonlinfunction(fp, hnctSemiR, aktSim.pmodel->tcolor[i].tsemi[j].As);
+                aktSim.pmodel->tcolor[i].tsemi[j].rad.hmg_write_nonlinfunction(fp, hnctSemiRad, aktSim.pmodel->tcolor[i].tsemi[j].As, true);
+                aktSim.pmodel->tcolor[i].tsemi[j].lum.hmg_write_nonlinfunction(fp, hnctSemiLum, aktSim.pmodel->tcolor[i].tsemi[j].As, true);
             }
         }
 }
@@ -881,11 +882,15 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
 
                 cella.xNodes = 0;
                 for (uns i = WEST; i < BASIC_SIDES; i++) {
-                    if (cella.core.is_el && cella.el_core_nodes[i].is_X) {
-                        cella.el_core_nodes[i].node_index = cella.xNodes++;
+                    if (cella.core.is_el && cella.el_out_nodes[i].coreResistor.is_X) {
+                        cella.el_out_nodes[i].coreResistor.set(true, cella.xNodes);
+                        cella.el_out_nodes[i].boundary.set(true, cella.xNodes);
+                        cella.xNodes++;
                     }
-                    if (cella.core.is_th && cella.th_core_nodes[i].is_X) {
-                        cella.th_core_nodes[i].node_index = cella.xNodes++;
+                    if (cella.core.is_th && cella.th_out_nodes[i].coreResistor.is_X) {
+                        cella.th_out_nodes[i].coreResistor.set(true, cella.xNodes);
+                        cella.th_out_nodes[i].boundary.set(true, cella.xNodes);
+                        cella.xNodes++;
                     }
                 }
 
@@ -952,78 +957,78 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                             fprintf(fp, "Cell_%u MODEL CELLMODEL_%u", hmg_modell_racs.getref(x, y, z).cell_index, hmg_modell_racs.getref(x, y, z).cella_vector_index);
                         hmg_cella& curr_cell = hmg_cella_vector[hmg_modell_racs.getref(x, y, z).cella_vector_index];
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[WEST].is_boundary && !curr_cell.el_boundaries[WEST].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[WEST].is_boundary && !curr_cell.el_out_nodes[WEST].is_field_change) {
                             if (nodegrid.getref(x - 1, y, z).E.el == ~0)
                                 nodegrid.getref(x - 1, y, z).E.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x - 1, y, z).E.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[WEST].is_boundary && !curr_cell.th_boundaries[WEST].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[WEST].is_boundary && !curr_cell.th_out_nodes[WEST].is_field_change) {
                             if (nodegrid.getref(x - 1, y, z).E.th == ~0)
                                 nodegrid.getref(x - 1, y, z).E.th = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x - 1, y, z).E.th);
                         }
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[EAST].is_boundary && !curr_cell.el_boundaries[EAST].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[EAST].is_boundary && !curr_cell.el_out_nodes[EAST].is_field_change) {
                             if (nodegrid.getref(x, y, z).E.el == ~0)
                                 nodegrid.getref(x, y, z).E.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z).E.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[EAST].is_boundary && !curr_cell.th_boundaries[EAST].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[EAST].is_boundary && !curr_cell.th_out_nodes[EAST].is_field_change) {
                             if (nodegrid.getref(x, y, z).E.th == ~0)
                                 nodegrid.getref(x, y, z).E.th = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z).E.th);
                         }
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[SOUTH].is_boundary && !curr_cell.el_boundaries[SOUTH].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[SOUTH].is_boundary && !curr_cell.el_out_nodes[SOUTH].is_field_change) {
                             if (nodegrid.getref(x, y - 1, z).N.el == ~0)
                                 nodegrid.getref(x, y - 1, z).N.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y - 1, z).N.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[SOUTH].is_boundary && !curr_cell.th_boundaries[SOUTH].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[SOUTH].is_boundary && !curr_cell.th_out_nodes[SOUTH].is_field_change) {
                             if (nodegrid.getref(x, y - 1, z).N.th == ~0)
                                 nodegrid.getref(x, y - 1, z).N.th = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y - 1, z).N.th);
                         }
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[NORTH].is_boundary && !curr_cell.el_boundaries[NORTH].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[NORTH].is_boundary && !curr_cell.el_out_nodes[NORTH].is_field_change) {
                             if (nodegrid.getref(x, y, z).N.el == ~0)
                                 nodegrid.getref(x, y, z).N.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z).N.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[NORTH].is_boundary && !curr_cell.th_boundaries[NORTH].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[NORTH].is_boundary && !curr_cell.th_out_nodes[NORTH].is_field_change) {
                             if (nodegrid.getref(x, y, z).N.th == ~0)
                                 nodegrid.getref(x, y, z).N.th = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z).N.th);
                         }
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[BOTTOM].is_boundary && !curr_cell.el_boundaries[BOTTOM].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[BOTTOM].is_boundary && !curr_cell.el_out_nodes[BOTTOM].is_field_change) {
                             if (nodegrid.getref(x, y, z - 1).T.el == ~0)
                                 nodegrid.getref(x, y, z - 1).T.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z - 1).T.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[BOTTOM].is_boundary && !curr_cell.th_boundaries[BOTTOM].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[BOTTOM].is_boundary && !curr_cell.th_out_nodes[BOTTOM].is_field_change) {
                             if (nodegrid.getref(x, y, z - 1).T.th == ~0)
                                 nodegrid.getref(x, y, z - 1).T.th = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z - 1).T.th);
                         }
 
-                        if (curr_cell.core.is_el && !curr_cell.el_boundaries[TOP].is_boundary && !curr_cell.el_boundaries[TOP].is_field_change) {
+                        if (curr_cell.core.is_el && !curr_cell.el_out_nodes[TOP].is_boundary && !curr_cell.el_out_nodes[TOP].is_field_change) {
                             if (nodegrid.getref(x, y, z).T.el == ~0)
                                 nodegrid.getref(x, y, z).T.el = curr_node_index++;
                             if (i == 1)
                                 fprintf(fp, " N%u", nodegrid.getref(x, y, z).T.el);
                         }
-                        if (curr_cell.core.is_th && !curr_cell.th_boundaries[TOP].is_boundary && !curr_cell.th_boundaries[TOP].is_field_change) {
+                        if (curr_cell.core.is_th && !curr_cell.th_out_nodes[TOP].is_boundary && !curr_cell.th_out_nodes[TOP].is_field_change) {
                             if (nodegrid.getref(x, y, z).T.th == ~0)
                                 nodegrid.getref(x, y, z).T.th = curr_node_index++;
                             if (i == 1)
@@ -1073,7 +1078,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                 fprintf(fp, " Cell_%u.N0", akt_cella.cell_index);
             }
             else {
-                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_core_nodes[akt_probe.oldal].is_X ? 'X' : 'N', curr_cell_model.el_core_nodes[akt_probe.oldal].node_index);
+                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_out_nodes[akt_probe.oldal].boundary.is_X ? 'X' : 'N', curr_cell_model.el_out_nodes[akt_probe.oldal].boundary.node_index);
             }
         }
         fprintf(fp, "\n");
@@ -1096,7 +1101,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                 fprintf(fp, " Cell_%u.N%u", akt_cella.cell_index, curr_cell_model.core.is_el ? 1 : 0);
             }
             else {
-                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_core_nodes[akt_probe.oldal].is_X ? 'X' : 'N', curr_cell_model.th_core_nodes[akt_probe.oldal].node_index);
+                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_out_nodes[akt_probe.oldal].boundary.is_X ? 'X' : 'N', curr_cell_model.th_out_nodes[akt_probe.oldal].boundary.node_index);
             }
         }
         fprintf(fp, "\n");
@@ -1291,7 +1296,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                         else {
                             hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
                             if (curr_cell_model.core.is_el)
-                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_core_nodes[BOTTOM].is_X ? 'X' : 'N', curr_cell_model.el_core_nodes[BOTTOM].node_index);
+                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', curr_cell_model.el_out_nodes[BOTTOM].boundary.node_index);
                             else
                                 fprintf(fp, " R0");
                         }
@@ -1315,7 +1320,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                             else {
                                 hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
                                 if (curr_cell_model.core.is_el)
-                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_core_nodes[TOP].is_X ? 'X' : 'N', curr_cell_model.el_core_nodes[TOP].node_index);
+                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.el_out_nodes[TOP].boundary.is_X ? 'X' : 'N', curr_cell_model.el_out_nodes[TOP].boundary.node_index);
                                 else
                                     fprintf(fp, " R0");
                             }
@@ -1369,7 +1374,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                         else {
                             hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
                             if (curr_cell_model.core.is_th)
-                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_core_nodes[BOTTOM].is_X ? 'X' : 'N', curr_cell_model.th_core_nodes[BOTTOM].node_index);
+                                fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', curr_cell_model.th_out_nodes[BOTTOM].boundary.node_index);
                             else
                                 fprintf(fp, " R1");
                         }
@@ -1393,7 +1398,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                             else {
                                 hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
                                 if (curr_cell_model.core.is_th)
-                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_core_nodes[TOP].is_X ? 'X' : 'N', curr_cell_model.th_core_nodes[TOP].node_index);
+                                    fprintf(fp, " Cell_%u.%c%u", akt_cella.cell_index, curr_cell_model.th_out_nodes[TOP].boundary.is_X ? 'X' : 'N', curr_cell_model.th_out_nodes[TOP].boundary.node_index);
                                 else
                                     fprintf(fp, " R1");
                             }

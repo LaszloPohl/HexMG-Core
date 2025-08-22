@@ -161,12 +161,13 @@ struct vezetes{
             throw hiba("vezetes::hmg_write_nonlinfunction", "broken line undefined: no value-pair defined");
 
     }
-    void hmg_write_nonlinfunction(FILE* fp, hmgNonlinComponentType ct) {
+    void hmg_write_nonlinfunction(FILE* fp, hmgNonlinComponentType ct, dbl As = 0, bool is_semi = false) {
+    // As csak junctionnál van
         if (is_resistivity)
             throw hiba("vezetes::hmg_write_nonlinfunction", "is_resistivity not implemented");
         if (is_his)
             throw hiba("vezetes::hmg_write_nonlinfunction", "is_his not implemented"); // csak a beolvasásánál látom, de a korábbi konverter sem mentette
-        switch (tipus) {
+        switch (is_semi ? semitip : tipus) {
             case nlt_lin: // nothing to do: constant
                 switch (ct) {
                     case hnctS: {
@@ -376,13 +377,37 @@ struct vezetes{
                     }
                     break;
                     case hnctSemiEq: {
-                        fprintf(fp, ".FUNCTION Semi_eq_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))*1MEG
-                        fprintf(fp, "_SUB V0 P0 P1\n");
-                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUBC V1 P1 25\n");
-                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "_EXP V1 V1\n");
-                        fprintf(fp, "_MUL RET V0 V1\n");
+                        fprintf(fp, ".FUNCTION Semi_eq_el_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, Tx
+                        dbl I0;
+                        dbl Utx = 1.3806504e-23 * (25 + 273.15) / 1.602176487e-19; // UT 25 fokon
+                        if (fabs(g[0]) < 0.01)
+                            I0 = g[0];
+                        else
+                            I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
+                        I0 *= 1.0e+006;
+                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
+                        fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
+                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Semi_eq_elth_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, Tx
+                        if (fabs(g[0]) < 0.01)
+                            I0 = g[0];
+                        else
+                            I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
+                        I0 *= 1.0e+006;
+                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
+                        dbl Utm = 1.3806504e-23 / 1.602176487e-19;
+                        fprintf(fp, "_ADDC V0 P2 273.15\n");
+                        fprintf(fp, "_MULC V0 V0 %g\n", Utm); // Ut aktuális hõmérséklettel
+                        fprintf(fp, "_MUL RET RET V0\n");
                         fprintf(fp, "_MULC RET RET 1MEG\n");
                         fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
                     }
@@ -1651,7 +1676,7 @@ struct hmg_core_cell_decr {
 //***********************************************************************
 struct hmg_cella {
 //***********************************************************************
-    struct boundary_cell {
+    /*struct boundary_cell {
         bool is_boundary = false;
         bool is_field_change = false; // ha ez a mezõ megszûkik a szomszéd cellában (pl. ez csak elektromos cella a szomszéd csak termikus, vagy ez elektrotermikus, az csak termikus)
         uns NNode_index = 0; // ehhez az N nodehoz csatlakozik a peremmodell
@@ -1659,15 +1684,42 @@ struct hmg_cella {
         bool operator==(const boundary_cell& other)const noexcept { return is_boundary == other.is_boundary && is_field_change == other.is_field_change 
             && NNode_index == other.NNode_index && global_var_index == other.global_var_index; }
         bool operator!=(const boundary_cell& other)const noexcept { return !(*this == other); }
-    };
-    struct core_nodes {
+    };*/
+    struct normal_node {
+        bool is_exists = false;
         bool is_X = true;
         uns node_index = 0; // X vagy N
-        uns Seebeck_B_node_index = 0;
-        bool operator==(const core_nodes& other)const noexcept { return is_X == other.is_X && node_index == other.node_index && Seebeck_B_node_index == other.Seebeck_B_node_index; }
-        bool operator!=(const core_nodes& other)const noexcept { return !(*this == other); }
+        void set(bool isX, uns nodeIndex) { is_exists = true; is_X = isX; node_index = nodeIndex; }
+        bool operator==(const normal_node& other)const noexcept { return is_exists == other.is_exists && is_X == other.is_X && node_index == other.node_index; }
+        bool operator!=(const normal_node& other)const noexcept { return !(*this == other); }
     };
-    struct junctions {
+    struct out_nodes_el { // sorrend: coreResistor, IMeasResistor, Seebeck, junction, boundary
+        bool is_boundary = false;
+        bool is_field_change = false; // ha ez a mezõ megszûkik a szomszéd cellában (pl. ez csak elektromos cella a szomszéd csak termikus, vagy ez elektrotermikus, az csak termikus)
+        uns global_var_index = 0; // 1..6 normál perem, 7.. belsõ perem
+        normal_node coreResistor;
+        normal_node IMeasResistor;
+        normal_node Seebeck;
+        normal_node junction;
+        normal_node boundary; // mindenképpen be van állítva
+        bool operator==(const out_nodes_el& other)const noexcept { return is_boundary == other.is_boundary && is_field_change == other.is_field_change && global_var_index == other.global_var_index
+            && coreResistor == other.coreResistor && IMeasResistor == other.IMeasResistor
+            && Seebeck == other.Seebeck && junction == other.junction && boundary == other.boundary; }
+        bool operator!=(const out_nodes_el& other)const noexcept { return !(*this == other); }
+    };
+    struct out_nodes_th {
+        bool is_boundary = false;
+        bool is_field_change = false; // ha ez a mezõ megszûkik a szomszéd cellában (pl. ez csak elektromos cella a szomszéd csak termikus, vagy ez elektrotermikus, az csak termikus)
+        uns global_var_index = 0; // 1..6 normál perem, 7.. belsõ perem
+        normal_node coreResistor;
+        normal_node boundary;
+        bool operator==(const out_nodes_th& other)const noexcept {
+            return is_boundary == other.is_boundary && is_field_change == other.is_field_change && global_var_index == other.global_var_index
+                && coreResistor == other.coreResistor && boundary == other.boundary;
+        }
+        bool operator!=(const out_nodes_th& other)const noexcept { return !(*this == other); }
+    };
+    /*struct junctions {
         bool is_junction = false;
         bool is_out_X = true;
         uns in_node_index = 0; // csak N node lehet
@@ -1677,25 +1729,27 @@ struct hmg_cella {
         bool operator==(const junctions& other)const noexcept { return is_junction == other.is_junction && is_out_X == other.is_out_X && in_node_index == other.in_node_index
             && out_node_index == other.out_node_index && A == other.A && junction_index == other.junction_index; }
         bool operator!=(const junctions& other)const noexcept { return !(*this == other); }
-    };
+    };*/
 
     hmg_core_cell_decr core;
-    boundary_cell el_boundaries[BASIC_SIDES];
-    boundary_cell th_boundaries[BASIC_SIDES];
-    core_nodes el_core_nodes[BASIC_SIDES];
-    core_nodes Seebeck_nodes[BASIC_SIDES]; // ha van Seebeck, akkor az el_core_nodes ide másolódik, az el_core_nodes-ba kerül a plusz node azonosítója, mert az íródik ki az ellenállás másik végéhez
-    core_nodes th_core_nodes[BASIC_SIDES];
-    junctions junctions[BASIC_SIDES];
+    //boundary_cell el_boundaries[BASIC_SIDES];
+    //boundary_cell th_boundaries[BASIC_SIDES];
+    //core_nodes el_core_nodes[BASIC_SIDES];
+    //core_nodes Seebeck_nodes[BASIC_SIDES]; // ha van Seebeck, akkor az el_core_nodes ide másolódik, az el_core_nodes-ba kerül a plusz node azonosítója, mert az íródik ki az ellenállás másik végéhez
+    //core_nodes th_core_nodes[BASIC_SIDES];
+    //junctions junctions[BASIC_SIDES];
+    out_nodes_el el_out_nodes[BASIC_SIDES];
+    out_nodes_th th_out_nodes[BASIC_SIDES];
     uns nNodes = 0; // number of N nodes
     uns xNodes = 0; // number of X nodes
-    uns bNodes = 0; // number of B nodes
+    //uns bNodes = 0; // number of B nodes
     bool is_Seebeck = false;
     uns Seebeck_index = 0;
 
     bool operator==(const hmg_cella& other)const noexcept {
         if (core != other.core)
             return false;
-        for (uns i = WEST; i < BASIC_SIDES; i++)
+        /*for (uns i = WEST; i < BASIC_SIDES; i++)
             if (el_boundaries[i] != other.el_boundaries[i])
                 return false;
         for (uns i = WEST; i < BASIC_SIDES; i++)
@@ -1709,12 +1763,18 @@ struct hmg_cella {
                 return false;
         for (uns i = WEST; i < BASIC_SIDES; i++)
             if (junctions[i] != other.junctions[i])
+                return false;*/
+        for (uns i = WEST; i < BASIC_SIDES; i++)
+            if (el_out_nodes[i] != other.el_out_nodes[i])
+                return false;
+        for (uns i = WEST; i < BASIC_SIDES; i++)
+            if (th_out_nodes[i] != other.th_out_nodes[i])
                 return false;
         return nNodes == other.nNodes && xNodes == other.xNodes;
     }
 
     void set_boundary(uns side, uns global_var_index) {
-        if (core.is_el) {
+        /*if (core.is_el) {
             el_boundaries[side].is_boundary = true;
             el_boundaries[side].is_field_change = false;
             el_boundaries[side].NNode_index = nNodes;
@@ -1731,26 +1791,40 @@ struct hmg_cella {
             th_core_nodes[side].is_X = false;
             th_core_nodes[side].node_index = nNodes;
             nNodes++;
+        }*/
+        if (core.is_el) {
+            el_out_nodes[side].is_boundary = true;
+            el_out_nodes[side].is_field_change = false;
+            el_out_nodes[side].global_var_index = global_var_index;
+            el_out_nodes[side].boundary.set(false, nNodes);
+            el_out_nodes[side].coreResistor.set(false, nNodes);
+            nNodes++;
+        }
+        if (core.is_th) {
+            th_out_nodes[side].is_boundary = true;
+            th_out_nodes[side].is_field_change = false;
+            th_out_nodes[side].global_var_index = global_var_index;
+            th_out_nodes[side].boundary.set(false, nNodes);
+            th_out_nodes[side].coreResistor.set(false, nNodes);
+            nNodes++;
         }
     }
 
     void set_field_change(uns side, bool is_el_change) {
         if (core.is_el && is_el_change) {
-            el_boundaries[side].is_boundary = false;
-            el_boundaries[side].is_field_change = true;
-            el_boundaries[side].NNode_index = nNodes;
-            el_boundaries[side].global_var_index = ~0; // not used
-            el_core_nodes[side].is_X = false;
-            el_core_nodes[side].node_index = nNodes;
+            el_out_nodes[side].is_boundary = false;
+            el_out_nodes[side].is_field_change = true;
+            el_out_nodes[side].global_var_index = ~0; // not used
+            el_out_nodes[side].boundary.set(false, nNodes);
+            el_out_nodes[side].coreResistor.set(false, nNodes);
             nNodes++;
         }
         else if (core.is_th && !is_el_change) {
-            th_boundaries[side].is_boundary = false;
-            th_boundaries[side].is_field_change = true;
-            th_boundaries[side].NNode_index = nNodes;
-            th_boundaries[side].global_var_index = ~0; // not used
-            th_core_nodes[side].is_X = false;
-            th_core_nodes[side].node_index = nNodes;
+            th_out_nodes[side].is_boundary = false;
+            th_out_nodes[side].is_field_change = true;
+            th_out_nodes[side].global_var_index = ~0; // not used
+            th_out_nodes[side].boundary.set(false, nNodes);
+            th_out_nodes[side].coreResistor.set(false, nNodes);
             nNodes++;
         }
         else
@@ -1760,18 +1834,10 @@ struct hmg_cella {
     void set_Seebeck(uns S_index) {
         is_Seebeck = true;
         for (uns i = WEST; i < BASIC_SIDES; i++) {
-            Seebeck_nodes[i] = el_core_nodes[i]; // az elektromosnak jobb, ha nem használjuk a Seebeck_B_node_index változóját, nehogy itt bajt okozzon
-            el_core_nodes[i].is_X = false;
-            el_core_nodes[i].node_index = nNodes;
-
+            el_out_nodes[i].Seebeck = el_out_nodes[i].coreResistor;
+            el_out_nodes[i].coreResistor.set(false, nNodes);
+            el_out_nodes[i].IMeasResistor.set(false, nNodes + 1);
             nNodes += 2; // 2 új N node kell, a mérõ ellenállás miatt
-            /*
-            nNodes++;
-            Seebeck_nodes[i].Seebeck_B_node_index = bNodes;
-            bNodes++;
-            th_core_nodes[i].Seebeck_B_node_index = bNodes; // ez a B node lesz az áram értéke, ami a Peltier-hez kell
-            bNodes++;
-            */
             Seebeck_index = S_index;
         }
     }
@@ -1790,9 +1856,9 @@ struct hmg_cella {
     }
 
     void write(FILE* fp, simulation& aktSim, uns model_index) {
-        if (bNodes != 0)
-            fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u B=%u", model_index, xNodes, nNodes, bNodes);
-        else
+        //if (bNodes != 0)
+        //    fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u B=%u", model_index, xNodes, nNodes, bNodes);
+        //else
             fprintf(fp, ".MODEL CELLMODEL_%u SUBCIRCUIT X=%u N=%u", model_index, xNodes, nNodes);
         if (core.is_th && core.pmat->Cth.tipus != nlt_lin) {
             fprintf(fp, " B=1"); // control node for nonlinear heat capacitor
@@ -1808,38 +1874,38 @@ struct hmg_cella {
             const vezetes& elvez = core.pmat->elvez;
             if (elvez.tipus == nlt_lin) {
                 if (core.is_th) { // eltherm => dissipators
-                    fprintf(fp, "ReW GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                    fprintf(fp, "ReE GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                    fprintf(fp, "ReS GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                    fprintf(fp, "ReN GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                    fprintf(fp, "ReB GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                    fprintf(fp, "ReT GD N0 %c%u N1 N1 1 %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReW GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReE GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReS GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReN GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReB GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReT GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
                 }
                 else {
-                    fprintf(fp, "ReW G N0 %c%u %g\n", el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                    fprintf(fp, "ReE G N0 %c%u %g\n", el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                    fprintf(fp, "ReS G N0 %c%u %g\n", el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                    fprintf(fp, "ReN G N0 %c%u %g\n", el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                    fprintf(fp, "ReB G N0 %c%u %g\n", el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                    fprintf(fp, "ReT G N0 %c%u %g\n", el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReW G N0 %c%u %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReE G N0 %c%u %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   elvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                    fprintf(fp, "ReS G N0 %c%u %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReN G N0 %c%u %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  elvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                    fprintf(fp, "ReB G N0 %c%u %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                    fprintf(fp, "ReT G N0 %c%u %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    elvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
                 }
             }
             else {
                 if (core.is_th) {
-                    fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReS FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReN FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReB FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReT FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReS FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReN FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReB FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReT FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
                 }
                 else {
-                    fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[WEST].is_X   ? 'X' : 'N', el_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[EAST].is_X   ? 'X' : 'N', el_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[SOUTH].is_X  ? 'X' : 'N', el_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReN FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[NORTH].is_X  ? 'X' : 'N', el_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReB FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[BOTTOM].is_X ? 'X' : 'N', el_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_core_nodes[TOP].is_X    ? 'X' : 'N', el_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReN FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReB FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    core.x_size * core.y_size / core.z_size * 2); // elvez.get_ertek(0) * 
                 }
             }
 
@@ -1852,71 +1918,49 @@ struct hmg_cella {
             // Seebeck
 
             if (is_Seebeck) {
-                fprintf(fp, "GmeasW G N%u N%u 1MEG\n", el_core_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1);
-                fprintf(fp, "VSW FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1,
-                    th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index);
+                fprintf(fp, "GmeasW G N%u N%u 1MEG\n", el_out_nodes[WEST].coreResistor.node_index, el_out_nodes[WEST].IMeasResistor.node_index);
+                fprintf(fp, "VSW FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[WEST].Seebeck.is_X ? 'X' : 'N', el_out_nodes[WEST].Seebeck.node_index, el_out_nodes[WEST].IMeasResistor.node_index,
+                    th_out_nodes[WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[WEST].boundary.node_index);
                 
-                fprintf(fp, "GmeasE G N%u N%u 1MEG\n", el_core_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1);
-                fprintf(fp, "VSE FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1,
-                    th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index);
+                fprintf(fp, "GmeasE G N%u N%u 1MEG\n", el_out_nodes[EAST].coreResistor.node_index, el_out_nodes[EAST].IMeasResistor.node_index);
+                fprintf(fp, "VSE FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[EAST].Seebeck.is_X ? 'X' : 'N', el_out_nodes[EAST].Seebeck.node_index, el_out_nodes[EAST].IMeasResistor.node_index,
+                    th_out_nodes[EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[EAST].boundary.node_index);
                 
-                fprintf(fp, "GmeasS G N%u N%u 1MEG\n", el_core_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1);
-                fprintf(fp, "VSS FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1,
-                    th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index);
+                fprintf(fp, "GmeasS G N%u N%u 1MEG\n", el_out_nodes[SOUTH].coreResistor.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index);
+                fprintf(fp, "VSS FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[SOUTH].Seebeck.is_X ? 'X' : 'N', el_out_nodes[SOUTH].Seebeck.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index,
+                    th_out_nodes[SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[SOUTH].boundary.node_index);
                 
-                fprintf(fp, "GmeasN G N%u N%u 1MEG\n", el_core_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1);
-                fprintf(fp, "VSN FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1,
-                    th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index);
+                fprintf(fp, "GmeasN G N%u N%u 1MEG\n", el_out_nodes[NORTH].coreResistor.node_index, el_out_nodes[NORTH].IMeasResistor.node_index);
+                fprintf(fp, "VSN FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[NORTH].Seebeck.is_X ? 'X' : 'N', el_out_nodes[NORTH].Seebeck.node_index, el_out_nodes[NORTH].IMeasResistor.node_index,
+                    th_out_nodes[NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[NORTH].boundary.node_index);
                 
-                fprintf(fp, "GmeasB G N%u N%u 1MEG\n", el_core_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1);
-                fprintf(fp, "VSB FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1,
-                    th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index);
+                fprintf(fp, "GmeasB G N%u N%u 1MEG\n", el_out_nodes[BOTTOM].coreResistor.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index);
+                fprintf(fp, "VSB FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[BOTTOM].Seebeck.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].Seebeck.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index,
+                    th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index);
                 
-                fprintf(fp, "GmeasT G N%u N%u 1MEG\n", el_core_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1);
-                fprintf(fp, "VST FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1,
-                    th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index);
+                fprintf(fp, "GmeasT G N%u N%u 1MEG\n", el_out_nodes[TOP].coreResistor.node_index, el_out_nodes[TOP].IMeasResistor.node_index);
+                fprintf(fp, "VST FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[TOP].Seebeck.is_X ? 'X' : 'N', el_out_nodes[TOP].Seebeck.node_index, el_out_nodes[TOP].IMeasResistor.node_index,
+                    th_out_nodes[TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[TOP].boundary.node_index);
             }
-/*
-            if (is_Seebeck) {
-                fprintf(fp, "BnW FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[WEST].Seebeck_B_node_index, th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index);
-                fprintf(fp, "VSW VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[WEST].is_X ? 'X' : 'N', Seebeck_nodes[WEST].node_index, el_core_nodes[WEST].node_index, 
-                    th_core_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index, Seebeck_nodes[WEST].Seebeck_B_node_index);
-                
-                fprintf(fp, "BnE FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[EAST].Seebeck_B_node_index, th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index);
-                fprintf(fp, "VSE VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[EAST].is_X ? 'X' : 'N', Seebeck_nodes[EAST].node_index, el_core_nodes[EAST].node_index,
-                    th_core_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index, Seebeck_nodes[EAST].Seebeck_B_node_index);
-                
-                fprintf(fp, "BnS FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index);
-                fprintf(fp, "VSS VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[SOUTH].is_X ? 'X' : 'N', Seebeck_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index,
-                    th_core_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index, Seebeck_nodes[SOUTH].Seebeck_B_node_index);
-                
-                fprintf(fp, "BnN FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index);
-                fprintf(fp, "VSN VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[NORTH].is_X ? 'X' : 'N', Seebeck_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index,
-                    th_core_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index, Seebeck_nodes[NORTH].Seebeck_B_node_index);
-                
-                fprintf(fp, "BnB FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index);
-                fprintf(fp, "VSB VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[BOTTOM].is_X ? 'X' : 'N', Seebeck_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index,
-                    th_core_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index, Seebeck_nodes[BOTTOM].Seebeck_B_node_index);
-                
-                fprintf(fp, "BnT FCB A=2 F=Seebeck_func_%u(A1 A2) B%u %c%u N1\n", Seebeck_index, Seebeck_nodes[TOP].Seebeck_B_node_index, th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index);
-                fprintf(fp, "VST VIB %c%u N%u B%u B%u B%u 0 0 1MEG\n", Seebeck_nodes[TOP].is_X ? 'X' : 'N', Seebeck_nodes[TOP].node_index, el_core_nodes[TOP].node_index,
-                    th_core_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index, Seebeck_nodes[TOP].Seebeck_B_node_index);
-            }
-*/
+
+            // junction
+
+
+
             // boundaries // initial value and DC set, AC unset
 
             for (uns i = WEST; i <= TOP; i++) {
-                if (el_boundaries[i].is_boundary) {
-                    fprintf(fp, "BGe%u G N%u R0 BG_%s_Ge\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str());
-                    fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_boundaries[i].NNode_index, getBoundaryName(el_boundaries[i].global_var_index).c_str(), getBoundaryName(el_boundaries[i].global_var_index).c_str());
+                if (el_out_nodes[i].is_boundary) {
+                    fprintf(fp, "BGe%u G N%u R0 BG_%s_Ge\n", i, el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str());
+                    fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str(), getBoundaryName(el_out_nodes[i].global_var_index).c_str());
                 }
             }
 
             // field change
 
             for (uns i = WEST; i <= TOP; i++) {
-                if (el_boundaries[i].is_field_change) {
-                    fprintf(fp, "STOPe%u G N%u R0 %g\n", i, el_boundaries[i].NNode_index, szakadas);
+                if (el_out_nodes[i].is_field_change) {
+                    fprintf(fp, "STOPe%u G N%u R0 %g\n", i, el_out_nodes[i].boundary.node_index, szakadas);
                 }
             }
         }
@@ -1925,20 +1969,20 @@ struct hmg_cella {
         if (core.is_th) {
             const vezetes& thvez = core.pmat->thvez;
             if (thvez.tipus == nlt_lin) {
-                fprintf(fp, "RthW G N%u %c%u %g\n", thcenter, th_core_nodes[WEST].is_X   ? 'X' : 'N', th_core_nodes[WEST].node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "RthE G N%u %c%u %g\n", thcenter, th_core_nodes[EAST].is_X   ? 'X' : 'N', th_core_nodes[EAST].node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
-                fprintf(fp, "RthS G N%u %c%u %g\n", thcenter, th_core_nodes[SOUTH].is_X  ? 'X' : 'N', th_core_nodes[SOUTH].node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "RthN G N%u %c%u %g\n", thcenter, th_core_nodes[NORTH].is_X  ? 'X' : 'N', th_core_nodes[NORTH].node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
-                fprintf(fp, "RthB G N%u %c%u %g\n", thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
-                fprintf(fp, "RthT G N%u %c%u %g\n", thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                fprintf(fp, "RthW G N%u %c%u %g\n", thcenter, th_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', th_out_nodes[WEST].coreResistor.node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                fprintf(fp, "RthE G N%u %c%u %g\n", thcenter, th_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', th_out_nodes[EAST].coreResistor.node_index,   thvez.get_ertek(0) * core.y_size * core.z_size / core.x_size * 2);
+                fprintf(fp, "RthS G N%u %c%u %g\n", thcenter, th_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', th_out_nodes[SOUTH].coreResistor.node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                fprintf(fp, "RthN G N%u %c%u %g\n", thcenter, th_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', th_out_nodes[NORTH].coreResistor.node_index,  thvez.get_ertek(0) * core.x_size * core.z_size / core.y_size * 2);
+                fprintf(fp, "RthB G N%u %c%u %g\n", thcenter, th_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].coreResistor.node_index, thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
+                fprintf(fp, "RthT G N%u %c%u %g\n", thcenter, th_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', th_out_nodes[TOP].coreResistor.node_index,    thvez.get_ertek(0) * core.x_size * core.y_size / core.z_size * 2);
             }
             else {
-                fprintf(fp, "RthW FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[WEST].is_X   ? 'X' : 'N', th_core_nodes[WEST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
-                fprintf(fp, "RthE FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[EAST].is_X   ? 'X' : 'N', th_core_nodes[EAST].node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
-                fprintf(fp, "RthS FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[SOUTH].is_X  ? 'X' : 'N', th_core_nodes[SOUTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
-                fprintf(fp, "RthN FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[NORTH].is_X  ? 'X' : 'N', th_core_nodes[NORTH].node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
-                fprintf(fp, "RthB FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
-                fprintf(fp, "RthT FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_core_nodes[TOP].is_X    ? 'X' : 'N', th_core_nodes[TOP].node_index,    core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthW FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', th_out_nodes[WEST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthE FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', th_out_nodes[EAST].coreResistor.node_index,   core.y_size * core.z_size / core.x_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthS FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', th_out_nodes[SOUTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthN FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', th_out_nodes[NORTH].coreResistor.node_index,  core.x_size * core.z_size / core.y_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthB FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].coreResistor.node_index, core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
+                fprintf(fp, "RthT FCI P=1 F=nonlinfunc_%u(X0 X1 P1) N%u %c%u 0 %g\n", (uns)thvez.hmg_nonlin_index, thcenter, th_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', th_out_nodes[TOP].coreResistor.node_index,    core.x_size * core.y_size / core.z_size * 2); // thvez.get_ertek(0) * 
             }
             const vezetes& cth = core.pmat->Cth;
             if (cth.tipus == nlt_lin) {
@@ -1962,97 +2006,75 @@ struct hmg_cella {
 
                 // Peltier: Tx, V1, V2
 
-                fprintf(fp, "PPW FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[WEST].is_X ? 'X' : 'N', th_core_nodes[WEST].node_index,
-                    el_core_nodes[WEST].node_index, el_core_nodes[WEST].node_index + 1);
-                fprintf(fp, "PPE FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[EAST].is_X ? 'X' : 'N', th_core_nodes[EAST].node_index,
-                    el_core_nodes[EAST].node_index, el_core_nodes[EAST].node_index + 1);
-                fprintf(fp, "PPS FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[SOUTH].is_X ? 'X' : 'N', th_core_nodes[SOUTH].node_index,
-                    el_core_nodes[SOUTH].node_index, el_core_nodes[SOUTH].node_index + 1);
-                fprintf(fp, "PPN FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[NORTH].is_X ? 'X' : 'N', th_core_nodes[NORTH].node_index,
-                    el_core_nodes[NORTH].node_index, el_core_nodes[NORTH].node_index + 1);
-                fprintf(fp, "PPB FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index,
-                    el_core_nodes[BOTTOM].node_index, el_core_nodes[BOTTOM].node_index + 1);
-                fprintf(fp, "PPT FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_core_nodes[TOP].is_X ? 'X' : 'N', th_core_nodes[TOP].node_index,
-                    el_core_nodes[TOP].node_index, el_core_nodes[TOP].node_index + 1);
+                fprintf(fp, "PPW FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[WEST].boundary.is_X   ? 'X' : 'N', th_out_nodes[WEST].boundary.node_index,
+                    el_out_nodes[WEST].coreResistor.node_index, el_out_nodes[WEST].IMeasResistor.node_index);
+                fprintf(fp, "PPE FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[EAST].boundary.is_X   ? 'X' : 'N', th_out_nodes[EAST].boundary.node_index,
+                    el_out_nodes[EAST].coreResistor.node_index, el_out_nodes[EAST].IMeasResistor.node_index);
+                fprintf(fp, "PPS FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[SOUTH].boundary.is_X  ? 'X' : 'N', th_out_nodes[SOUTH].boundary.node_index,
+                    el_out_nodes[SOUTH].coreResistor.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index);
+                fprintf(fp, "PPN FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[NORTH].boundary.is_X  ? 'X' : 'N', th_out_nodes[NORTH].boundary.node_index,
+                    el_out_nodes[NORTH].coreResistor.node_index, el_out_nodes[NORTH].IMeasResistor.node_index);
+                fprintf(fp, "PPB FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index,
+                    el_out_nodes[BOTTOM].coreResistor.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index);
+                fprintf(fp, "PPT FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[TOP].boundary.is_X    ? 'X' : 'N', th_out_nodes[TOP].boundary.node_index,
+                    el_out_nodes[TOP].coreResistor.node_index, el_out_nodes[TOP].IMeasResistor.node_index);
 
                 // Thomson: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, T2
 
                 fprintf(fp, "PT FCI Y=18 F=Thomson_func_%u(X1 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13 Y14 Y15 Y16 Y17) R0 N%u %c%u %c%u %c%u %c%u %c%u %c%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u\n",
                     Seebeck_index, thcenter, 
-                    th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index,
-                    th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index,
-                    th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index,
-                    th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index,
-                    th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index,
-                    th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index,
-                    el_core_nodes[  WEST].node_index + 1, el_core_nodes[  WEST].node_index,
-                    el_core_nodes[  EAST].node_index + 1, el_core_nodes[  EAST].node_index,
-                    el_core_nodes[ SOUTH].node_index + 1, el_core_nodes[ SOUTH].node_index,
-                    el_core_nodes[ NORTH].node_index + 1, el_core_nodes[ NORTH].node_index,
-                    el_core_nodes[BOTTOM].node_index + 1, el_core_nodes[BOTTOM].node_index,
-                    el_core_nodes[   TOP].node_index + 1, el_core_nodes[   TOP].node_index);
+                    th_out_nodes[  WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[  WEST].boundary.node_index,
+                    th_out_nodes[  EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[  EAST].boundary.node_index,
+                    th_out_nodes[ SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ SOUTH].boundary.node_index,
+                    th_out_nodes[ NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ NORTH].boundary.node_index,
+                    th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index,
+                    th_out_nodes[   TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[   TOP].boundary.node_index,
+                    el_out_nodes[  WEST].IMeasResistor.node_index, el_out_nodes[  WEST].coreResistor.node_index,
+                    el_out_nodes[  EAST].IMeasResistor.node_index, el_out_nodes[  EAST].coreResistor.node_index,
+                    el_out_nodes[ SOUTH].IMeasResistor.node_index, el_out_nodes[ SOUTH].coreResistor.node_index,
+                    el_out_nodes[ NORTH].IMeasResistor.node_index, el_out_nodes[ NORTH].coreResistor.node_index,
+                    el_out_nodes[BOTTOM].IMeasResistor.node_index, el_out_nodes[BOTTOM].coreResistor.node_index,
+                    el_out_nodes[   TOP].IMeasResistor.node_index, el_out_nodes[   TOP].coreResistor.node_index);
             }
-/*
-            if (is_Seebeck) {
 
-                // Thomson: szorzó: Tc, ref: Tx
-                
-                fprintf(fp, "TPW FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index, th_core_nodes[  WEST].Seebeck_B_node_index);
-                fprintf(fp, "TPE FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index, th_core_nodes[  EAST].Seebeck_B_node_index);
-                fprintf(fp, "TPS FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index, th_core_nodes[ SOUTH].Seebeck_B_node_index);
-                fprintf(fp, "TPN FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index, th_core_nodes[ NORTH].Seebeck_B_node_index);
-                fprintf(fp, "TPB FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, th_core_nodes[BOTTOM].Seebeck_B_node_index);
-                fprintf(fp, "TPT FCI Y=2 F=Peltier_func_%u(X0 Y0 Y1) N%u R0 %c%u B%u 0\n", Seebeck_index, thcenter, th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index, th_core_nodes[   TOP].Seebeck_B_node_index);
-                
-                // Peltier
-                
-                fprintf(fp, "PPW FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[  WEST].is_X ? 'X' : 'N', th_core_nodes[  WEST].node_index, th_core_nodes[  WEST].Seebeck_B_node_index);
-                fprintf(fp, "PPE FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[  EAST].is_X ? 'X' : 'N', th_core_nodes[  EAST].node_index, th_core_nodes[  EAST].Seebeck_B_node_index);
-                fprintf(fp, "PPS FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[ SOUTH].is_X ? 'X' : 'N', th_core_nodes[ SOUTH].node_index, th_core_nodes[ SOUTH].Seebeck_B_node_index);
-                fprintf(fp, "PPN FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[ NORTH].is_X ? 'X' : 'N', th_core_nodes[ NORTH].node_index, th_core_nodes[ NORTH].Seebeck_B_node_index);
-                fprintf(fp, "PPB FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[BOTTOM].is_X ? 'X' : 'N', th_core_nodes[BOTTOM].node_index, th_core_nodes[BOTTOM].Seebeck_B_node_index);
-                fprintf(fp, "PPT FCI Y=1 F=Peltier_func_%u(X1 X1 Y0) R0 %c%u B%u 0\n", Seebeck_index, th_core_nodes[   TOP].is_X ? 'X' : 'N', th_core_nodes[   TOP].node_index, th_core_nodes[   TOP].Seebeck_B_node_index);
-                
-            }
-*/
             // boundaries  // initial value and DC set, AC unset
 
-            if (th_boundaries[WEST].is_boundary) {
-                fprintf(fp, "BHTCW G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), core.y_size * core.z_size);
-                fprintf(fp, "BGthW G N%u R0 BG_%s_Gth\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str());
-                fprintf(fp, "BIthW I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[WEST].NNode_index, getBoundaryName(th_boundaries[WEST].global_var_index).c_str(), getBoundaryName(th_boundaries[WEST].global_var_index).c_str());
+            if (th_out_nodes[WEST].is_boundary) {
+                fprintf(fp, "BHTCW G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[WEST].boundary.node_index, getBoundaryName(th_out_nodes[WEST].global_var_index).c_str(), core.y_size * core.z_size);
+                fprintf(fp, "BGthW G N%u R0 BG_%s_Gth\n", th_out_nodes[WEST].boundary.node_index, getBoundaryName(th_out_nodes[WEST].global_var_index).c_str());
+                fprintf(fp, "BIthW I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[WEST].boundary.node_index, getBoundaryName(th_out_nodes[WEST].global_var_index).c_str(), getBoundaryName(th_out_nodes[WEST].global_var_index).c_str());
             }
-            if (th_boundaries[EAST].is_boundary) {
-                fprintf(fp, "BHTCE G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), core.y_size * core.z_size);
-                fprintf(fp, "BGthE G N%u R0 BG_%s_Gth\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str());
-                fprintf(fp, "BIthE I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[EAST].NNode_index, getBoundaryName(th_boundaries[EAST].global_var_index).c_str(), getBoundaryName(th_boundaries[EAST].global_var_index).c_str());
+            if (th_out_nodes[EAST].is_boundary) {
+                fprintf(fp, "BHTCE G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[EAST].boundary.node_index, getBoundaryName(th_out_nodes[EAST].global_var_index).c_str(), core.y_size * core.z_size);
+                fprintf(fp, "BGthE G N%u R0 BG_%s_Gth\n", th_out_nodes[EAST].boundary.node_index, getBoundaryName(th_out_nodes[EAST].global_var_index).c_str());
+                fprintf(fp, "BIthE I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[EAST].boundary.node_index, getBoundaryName(th_out_nodes[EAST].global_var_index).c_str(), getBoundaryName(th_out_nodes[EAST].global_var_index).c_str());
             }
-            if (th_boundaries[SOUTH].is_boundary) {
-                fprintf(fp, "BHTCS G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), core.x_size * core.z_size);
-                fprintf(fp, "BGthS G N%u R0 BG_%s_Gth\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str());
-                fprintf(fp, "BIthS I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[SOUTH].NNode_index, getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str(), getBoundaryName(th_boundaries[SOUTH].global_var_index).c_str());
+            if (th_out_nodes[SOUTH].is_boundary) {
+                fprintf(fp, "BHTCS G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[SOUTH].boundary.node_index, getBoundaryName(th_out_nodes[SOUTH].global_var_index).c_str(), core.x_size * core.z_size);
+                fprintf(fp, "BGthS G N%u R0 BG_%s_Gth\n", th_out_nodes[SOUTH].boundary.node_index, getBoundaryName(th_out_nodes[SOUTH].global_var_index).c_str());
+                fprintf(fp, "BIthS I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[SOUTH].boundary.node_index, getBoundaryName(th_out_nodes[SOUTH].global_var_index).c_str(), getBoundaryName(th_out_nodes[SOUTH].global_var_index).c_str());
             }
-            if (th_boundaries[NORTH].is_boundary) {
-                fprintf(fp, "BHTCN G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), core.x_size * core.z_size);
-                fprintf(fp, "BGthN G N%u R0 BG_%s_Gth\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str());
-                fprintf(fp, "BIthN I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[NORTH].NNode_index, getBoundaryName(th_boundaries[NORTH].global_var_index).c_str(), getBoundaryName(th_boundaries[NORTH].global_var_index).c_str());
+            if (th_out_nodes[NORTH].is_boundary) {
+                fprintf(fp, "BHTCN G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[NORTH].boundary.node_index, getBoundaryName(th_out_nodes[NORTH].global_var_index).c_str(), core.x_size * core.z_size);
+                fprintf(fp, "BGthN G N%u R0 BG_%s_Gth\n", th_out_nodes[NORTH].boundary.node_index, getBoundaryName(th_out_nodes[NORTH].global_var_index).c_str());
+                fprintf(fp, "BIthN I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[NORTH].boundary.node_index, getBoundaryName(th_out_nodes[NORTH].global_var_index).c_str(), getBoundaryName(th_out_nodes[NORTH].global_var_index).c_str());
             }
-            if (th_boundaries[BOTTOM].is_boundary) {
-                fprintf(fp, "BHTCB G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), core.x_size * core.y_size);
-                fprintf(fp, "BGthB G N%u R0 BG_%s_Gth\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str());
-                fprintf(fp, "BIthB I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[BOTTOM].NNode_index, getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str(), getBoundaryName(th_boundaries[BOTTOM].global_var_index).c_str());
+            if (th_out_nodes[BOTTOM].is_boundary) {
+                fprintf(fp, "BHTCB G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[BOTTOM].boundary.node_index, getBoundaryName(th_out_nodes[BOTTOM].global_var_index).c_str(), core.x_size * core.y_size);
+                fprintf(fp, "BGthB G N%u R0 BG_%s_Gth\n", th_out_nodes[BOTTOM].boundary.node_index, getBoundaryName(th_out_nodes[BOTTOM].global_var_index).c_str());
+                fprintf(fp, "BIthB I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[BOTTOM].boundary.node_index, getBoundaryName(th_out_nodes[BOTTOM].global_var_index).c_str(), getBoundaryName(th_out_nodes[BOTTOM].global_var_index).c_str());
             }
-            if (th_boundaries[TOP].is_boundary) {
-                fprintf(fp, "BHTCT G2 N%u R1 BG_%s_HTC %g\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), core.x_size * core.y_size);
-                fprintf(fp, "BGthT G N%u R0 BG_%s_Gth\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
-                fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_boundaries[TOP].NNode_index, getBoundaryName(th_boundaries[TOP].global_var_index).c_str(), getBoundaryName(th_boundaries[TOP].global_var_index).c_str());
+            if (th_out_nodes[TOP].is_boundary) {
+                fprintf(fp, "BHTCT G2 N%u R1 BG_%s_HTC %g\n", th_out_nodes[TOP].boundary.node_index, getBoundaryName(th_out_nodes[TOP].global_var_index).c_str(), core.x_size * core.y_size);
+                fprintf(fp, "BGthT G N%u R0 BG_%s_Gth\n", th_out_nodes[TOP].boundary.node_index, getBoundaryName(th_out_nodes[TOP].global_var_index).c_str());
+                fprintf(fp, "BIthT I N%u R0 BG_%s_Ith BG_%s_Ith 0 0\n", th_out_nodes[TOP].boundary.node_index, getBoundaryName(th_out_nodes[TOP].global_var_index).c_str(), getBoundaryName(th_out_nodes[TOP].global_var_index).c_str());
             }
 
             // field change
 
             for (uns i = WEST; i <= TOP; i++) {
-                if (th_boundaries[i].is_field_change) {
-                    fprintf(fp, "STOPth%u G N%u R0 %g\n", i, th_boundaries[i].NNode_index, szakadas);
+                if (th_out_nodes[i].is_field_change) {
+                    fprintf(fp, "STOPth%u G N%u R0 %g\n", i, th_out_nodes[i].boundary.node_index, szakadas);
                 }
             }
         }
