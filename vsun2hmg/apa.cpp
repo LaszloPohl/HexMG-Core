@@ -779,7 +779,7 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                 cella.xNodes = cella.core.is_el && cella.core.is_th ? 12 : 6;
                 cella.nNodes = cella.core.is_el && cella.core.is_th ? 2 : 1;
 
-                // boundaries
+                // boundaries, junction azonosítása (ugyanazok az információk kellenek hozzá, mint a peremhez, de itt még nem hozzuk létre a junctiont a cellában)
 
                 // TODO: speciális peremek: ezekhez vezérlõ bemenetek tartozhatnak, amelyek pl. egy nagy kontrollerre csatlakozhatnak. A cellán belül meg pl. egy függvényvezérelt áramforrás van.
 
@@ -796,7 +796,12 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if(cella.core.is_el && !iut_is_el)
                             cella.set_field_change(WEST, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(WEST, true);
+                            cella.set_field_change(WEST, false);
+                        for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                            if (cella_color.tsemi[j].col2 == iut) {
+                                cella.el_out_nodes[WEST].semi = &cella_color.tsemi[j];
+                                break;
+                            }
                     }
                 }
                 if (x == x_res - 1) cella.set_boundary(EAST, EAST);
@@ -812,7 +817,12 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if (cella.core.is_el && !iut_is_el)
                             cella.set_field_change(EAST, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(EAST, true);
+                            cella.set_field_change(EAST, false);
+                        for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                            if (cella_color.tsemi[j].col2 == iut) {
+                                cella.el_out_nodes[EAST].semi = &cella_color.tsemi[j];
+                                break;
+                            }
                     }
                 }
                 if (y == 0) cella.set_boundary(SOUTH, SOUTH);
@@ -828,7 +838,12 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if (cella.core.is_el && !iut_is_el)
                             cella.set_field_change(SOUTH, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(SOUTH, true);
+                            cella.set_field_change(SOUTH, false);
+                        for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                            if (cella_color.tsemi[j].col2 == iut) {
+                                cella.el_out_nodes[SOUTH].semi = &cella_color.tsemi[j];
+                                break;
+                            }
                     }
                 }
                 if (y == y_res - 1) cella.set_boundary(NORTH, NORTH);
@@ -844,7 +859,12 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if (cella.core.is_el && !iut_is_el)
                             cella.set_field_change(NORTH, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(NORTH, true);
+                            cella.set_field_change(NORTH, false);
+                        for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                            if (cella_color.tsemi[j].col2 == iut) {
+                                cella.el_out_nodes[NORTH].semi = &cella_color.tsemi[j];
+                                break;
+                            }
                     }
                 }
                 if (z == 0) cella.set_boundary(BOTTOM, BOTTOM);
@@ -860,7 +880,12 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if (cella.core.is_el && !iut_is_el)
                             cella.set_field_change(BOTTOM, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(BOTTOM, true);
+                            cella.set_field_change(BOTTOM, false);
+                        for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                            if (cella_color.tsemi[j].col2 == iut) {
+                                cella.el_out_nodes[BOTTOM].semi = &cella_color.tsemi[j];
+                                break;
+                            }
                     }
                 }
                 if (z == z_res - 1) cella.set_boundary(TOP, TOP);
@@ -876,8 +901,13 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         if (cella.core.is_el && !iut_is_el)
                             cella.set_field_change(TOP, true);
                         if (cella.core.is_th && !iut_is_th)
-                            cella.set_field_change(TOP, true);
+                            cella.set_field_change(TOP, false);
                     }
+                    for (uns j = 0; j < cella_color.tsemi.size(); j++)
+                        if (cella_color.tsemi[j].col2 == iut) {
+                            cella.el_out_nodes[TOP].semi = &cella_color.tsemi[j];
+                            break;
+                        }
                 }
 
                 cella.xNodes = 0;
@@ -899,7 +929,11 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                 if (cella_color.pmat->S.is_set && cella.core.is_el && cella.core.is_th && !(cella_color.pmat->S.tipus == nlt_lin && cella_color.pmat->S.g[0] == 0))
                     cella.set_Seebeck((uns)cella_color.pmat->S.hmg_nonlin_index);
 
-                // => ide jönnek a junction-ök => TODO
+                // junction
+
+                cella.set_junction();
+
+                // write cell
 
                 size_t cvi = hmg_cella_vector.size();
                 for (size_t i = 0; i < hmg_cella_vector.size(); i++)

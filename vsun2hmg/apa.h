@@ -377,7 +377,26 @@ struct vezetes{
                     }
                     break;
                     case hnctSemiEq: {
-                        fprintf(fp, ".FUNCTION Semi_eq_el_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, Tx
+                        fprintf(fp, ".FUNCTION Semi_eq_el_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Um1, Um2, Ax
+                        
+                        //fprintf(fp, "_PRINT P0\n");
+                        //fprintf(fp, "_PRINT P1\n");
+                        fprintf(fp, "_SUB RET P0 P1\n");
+                        //fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MULC RET RET 1e13\n");
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        //fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_LN RET RET\n");
+                        //fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MULC RET RET 0.026\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        //fprintf(fp, "_PRINTLN RET\n");
+
+
+/*
+                        fprintf(fp, "_PRINT P0\n");
+                        fprintf(fp, "_PRINT P1\n");
+                        fprintf(fp, "_PRINT P2\n");
                         dbl I0;
                         dbl Utx = 1.3806504e-23 * (25 + 273.15) / 1.602176487e-19; // UT 25 fokon
                         if (fabs(g[0]) < 0.01)
@@ -385,31 +404,49 @@ struct vezetes{
                         else
                             I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
                         I0 *= 1.0e+006;
-                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
-                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_SUB RET P0 P1\n");
+                        fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", I0);
+                        fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MUL RET RET P2\n");
+                        fprintf(fp, "_PRINT RET\n");
                         fprintf(fp, "_DIVC RET RET %g\n", As);
+                        fprintf(fp, "_PRINT RET\n");
                         fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_ABS RET RET\n");
+                        fprintf(fp, "_COPY V0 1.0e-200\n");
+                        fprintf(fp, "_TST RET RET V0 V0 RET\n");
+                        fprintf(fp, "_PRINT RET\n");
                         fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
+                        fprintf(fp, "_PRINT RET\n");
                         fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
-                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
-
-                        fprintf(fp, ".FUNCTION Semi_eq_elth_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, Tx
+                        fprintf(fp, "_PRINTLN RET\n");
+*/
+                        fprintf(fp, ".END FUNCTION Semi_eq_el_%u\n\n", (uns)hmg_nonlin_index);
+/*
+                        fprintf(fp, ".FUNCTION Semi_eq_elth_%u P=4 V=1\n", (uns)hmg_nonlin_index); // pars: Um1, Um2, Ax, Tx
                         if (fabs(g[0]) < 0.01)
                             I0 = g[0];
                         else
                             I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
                         I0 *= 1.0e+006;
-                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
-                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_SUB RET P0 P1\n");
+                        fprintf(fp, "_MULC RET RET 1MEG\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", I0);
+                        fprintf(fp, "_MUL RET RET P2\n");
                         fprintf(fp, "_DIVC RET RET %g\n", As);
                         fprintf(fp, "_ADDC RET RET 1\n");
                         fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
                         dbl Utm = 1.3806504e-23 / 1.602176487e-19;
-                        fprintf(fp, "_ADDC V0 P2 273.15\n");
+                        fprintf(fp, "_ADDC V0 P3 273.15\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", Utm); // Ut aktuális hõmérséklettel
                         fprintf(fp, "_MUL RET RET V0\n");
                         fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
+                        fprintf(fp, ".END FUNCTION Semi_eq_elth_%u\n\n", (uns)hmg_nonlin_index);
+*/
                     }
                     break;
                     default:
@@ -1697,13 +1734,14 @@ struct hmg_cella {
         bool is_boundary = false;
         bool is_field_change = false; // ha ez a mezõ megszûkik a szomszéd cellában (pl. ez csak elektromos cella a szomszéd csak termikus, vagy ez elektrotermikus, az csak termikus)
         uns global_var_index = 0; // 1..6 normál perem, 7.. belsõ perem
+        const semiconductor* semi = nullptr;
         normal_node coreResistor;
         normal_node IMeasResistor;
         normal_node Seebeck;
         normal_node junction;
         normal_node boundary; // mindenképpen be van állítva
         bool operator==(const out_nodes_el& other)const noexcept { return is_boundary == other.is_boundary && is_field_change == other.is_field_change && global_var_index == other.global_var_index
-            && coreResistor == other.coreResistor && IMeasResistor == other.IMeasResistor
+            && semi == other.semi && coreResistor == other.coreResistor && IMeasResistor == other.IMeasResistor
             && Seebeck == other.Seebeck && junction == other.junction && boundary == other.boundary; }
         bool operator!=(const out_nodes_el& other)const noexcept { return !(*this == other); }
     };
@@ -1842,6 +1880,23 @@ struct hmg_cella {
         }
     }
 
+    void set_junction() {
+        for (uns i = WEST; i < BASIC_SIDES; i++) 
+            if(el_out_nodes[i].semi != nullptr) {
+                if (el_out_nodes[i].Seebeck.is_exists) {
+                    el_out_nodes[i].junction = el_out_nodes[i].Seebeck;
+                    el_out_nodes[i].Seebeck.set(false, nNodes);
+                    nNodes++;
+                }
+                else {
+                    el_out_nodes[i].junction = el_out_nodes[i].coreResistor;
+                    el_out_nodes[i].coreResistor.set(false, nNodes);
+                    el_out_nodes[i].IMeasResistor.set(false, nNodes + 1);
+                    nNodes += 2;
+                }
+            }
+    }
+
     PLString getBoundaryName(uns index) {
         switch (index) {
             case WEST: return "WEST";
@@ -1865,8 +1920,8 @@ struct hmg_cella {
         }
         fprintf(fp, "\n");
 
-        //if(core.color_index==1)
-        //    fprintf(fp, ".PRINTNODE N0 N1\n");
+        if(core.color_index==2 || core.color_index == 3) // bmp szín
+            fprintf(fp, ".PRINTNODE N0\n");
 
         const dbl Vcell = core.x_size * core.y_size * core.z_size;
 
@@ -1918,41 +1973,43 @@ struct hmg_cella {
             // Seebeck
 
             if (is_Seebeck) {
-                fprintf(fp, "GmeasW G N%u N%u 1MEG\n", el_out_nodes[WEST].coreResistor.node_index, el_out_nodes[WEST].IMeasResistor.node_index);
-                fprintf(fp, "VSW FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[WEST].Seebeck.is_X ? 'X' : 'N', el_out_nodes[WEST].Seebeck.node_index, el_out_nodes[WEST].IMeasResistor.node_index,
-                    th_out_nodes[WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[WEST].boundary.node_index);
-                
-                fprintf(fp, "GmeasE G N%u N%u 1MEG\n", el_out_nodes[EAST].coreResistor.node_index, el_out_nodes[EAST].IMeasResistor.node_index);
-                fprintf(fp, "VSE FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[EAST].Seebeck.is_X ? 'X' : 'N', el_out_nodes[EAST].Seebeck.node_index, el_out_nodes[EAST].IMeasResistor.node_index,
-                    th_out_nodes[EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[EAST].boundary.node_index);
-                
-                fprintf(fp, "GmeasS G N%u N%u 1MEG\n", el_out_nodes[SOUTH].coreResistor.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index);
-                fprintf(fp, "VSS FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[SOUTH].Seebeck.is_X ? 'X' : 'N', el_out_nodes[SOUTH].Seebeck.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index,
-                    th_out_nodes[SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[SOUTH].boundary.node_index);
-                
-                fprintf(fp, "GmeasN G N%u N%u 1MEG\n", el_out_nodes[NORTH].coreResistor.node_index, el_out_nodes[NORTH].IMeasResistor.node_index);
-                fprintf(fp, "VSN FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[NORTH].Seebeck.is_X ? 'X' : 'N', el_out_nodes[NORTH].Seebeck.node_index, el_out_nodes[NORTH].IMeasResistor.node_index,
-                    th_out_nodes[NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[NORTH].boundary.node_index);
-                
-                fprintf(fp, "GmeasB G N%u N%u 1MEG\n", el_out_nodes[BOTTOM].coreResistor.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index);
-                fprintf(fp, "VSB FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[BOTTOM].Seebeck.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].Seebeck.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index,
-                    th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index);
-                
-                fprintf(fp, "GmeasT G N%u N%u 1MEG\n", el_out_nodes[TOP].coreResistor.node_index, el_out_nodes[TOP].IMeasResistor.node_index);
-                fprintf(fp, "VST FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", Seebeck_index, el_out_nodes[TOP].Seebeck.is_X ? 'X' : 'N', el_out_nodes[TOP].Seebeck.node_index, el_out_nodes[TOP].IMeasResistor.node_index,
-                    th_out_nodes[TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[TOP].boundary.node_index);
+                for (uns i = WEST; i <= TOP; i++) {
+                    fprintf(fp, "Gmeas%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index);
+                    fprintf(fp, "VS%c FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", getBoundaryName(i).c_str()[0], Seebeck_index, el_out_nodes[i].Seebeck.is_X ? 'X' : 'N', 
+                        el_out_nodes[i].Seebeck.node_index, el_out_nodes[i].IMeasResistor.node_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index);
+                }
             }
 
             // junction
 
-
+            for (uns i = WEST; i <= TOP; i++) {
+                if (el_out_nodes[i].semi != nullptr) {
+                    if (!el_out_nodes[i].Seebeck.is_exists)
+                        fprintf(fp, "Gmeas%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index);
+                    dbl A;
+                    if (i == WEST || i == EAST)
+                        A = core.y_size * core.z_size;
+                    else if(i==SOUTH || i==NORTH)
+                        A = core.x_size * core.z_size;
+                    else
+                        A = core.x_size * core.y_size;
+                    if(core.is_th) // eltherm  // pars: Um1, Um2, Ax, Tx
+                        fprintf(fp, "RJunct%c FCID Y=3 P=1 F=Semi_eq_elth_%u(Y0 Y1 P2 Y2) N%u %c%u N1 N1 N%u N%u 1 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index,
+                            el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, A);
+                    else // el only // pars: Um1, Um2, Ax
+                        fprintf(fp, "RJunct%c FCI Y=2 P=1 F=Semi_eq_el_%u(Y0 Y1 P1) N%u %c%u N%u N%u 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
+                            el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, A);
+                }
+            }
 
             // boundaries // initial value and DC set, AC unset
 
             for (uns i = WEST; i <= TOP; i++) {
                 if (el_out_nodes[i].is_boundary) {
-                    fprintf(fp, "BGe%u G N%u R0 BG_%s_Ge\n", i, el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str());
-                    fprintf(fp, "BIe%u I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", i, el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str(), getBoundaryName(el_out_nodes[i].global_var_index).c_str());
+                    fprintf(fp, "BGe%c G N%u R0 BG_%s_Ge\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str());
+                    fprintf(fp, "BIe%c I N%u R0 BG_%s_Ie BG_%s_Ie 0 0\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].boundary.node_index, getBoundaryName(el_out_nodes[i].global_var_index).c_str(), getBoundaryName(el_out_nodes[i].global_var_index).c_str());
                 }
             }
 
@@ -1960,7 +2017,7 @@ struct hmg_cella {
 
             for (uns i = WEST; i <= TOP; i++) {
                 if (el_out_nodes[i].is_field_change) {
-                    fprintf(fp, "STOPe%u G N%u R0 %g\n", i, el_out_nodes[i].boundary.node_index, szakadas);
+                    fprintf(fp, "STOPe%c G N%u R0 %g\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].boundary.node_index, szakadas);
                 }
             }
         }

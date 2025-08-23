@@ -2250,15 +2250,17 @@ public:
             ? model.controlFunction->devive(&model.indexField[0], &workField[0], const_cast<Component_Function_Controlled_I_with_const_G*>(this), 
                 model.nodeToFunctionParam[x], LineDescription(), functionComponentParams.size() == 0 ? nullptr : const_cast<ComponentAndControllerBase**>(&functionComponentParams.front()))
             : rvt0;
-        //printf("[%u %u] dFv_per_dUi = %g\n", y, x, dFv_per_dUi);
         //dFv_per_dUi = 0;
         if (dFv_per_dUi > gmax)
             dFv_per_dUi = gmax;
         if (dFv_per_dUi < -gmax)
             dFv_per_dUi = -gmax;
+        //dFv_per_dUi = -dFv_per_dUi;
         if (x == 0 && y == 0)
             dg = dFv_per_dUi;
-        return y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi; // y=0 => always -dFv_per_dUi, y=1 => always dFv_per_dUi !!!
+        rvt Y = y == 0 ? G - dFv_per_dUi : -G + dFv_per_dUi;
+        //printf("[%u %u] dFv_per_dUi = %g, Y = %g\n", y, x, dFv_per_dUi, Y);
+        return Y; // y=0 => always -dFv_per_dUi, y=1 => always dFv_per_dUi !!!
     }
     //***********************************************************************
     void calculateYiiDC() noexcept override {

@@ -113,14 +113,20 @@ public:
         rvt* workField = const_cast<rvt*>(cworkField); // changes and restores so no change
         crvt value = workField[index[0]];
         crvt var = workField[index[variableIndex]];
-        crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9) + 1.0e-20;
+        crvt dx = abs(var) * rvt(1.0e-9) + 1.0e-10;
+        //crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9) + 1.0e-20;
         workField[index[variableIndex]] += dx;
         evaluate(index, workField, owner, line, pComponentParams);
-        crvt ret = (workField[index[0]] - value) / dx;
+        crvt ret1 = (workField[index[0]] - value) / dx;
+        workField[index[0]] = value;
+        workField[index[variableIndex]] = var;
+        workField[index[variableIndex]] -= dx;
+        evaluate(index, workField, owner, line, pComponentParams);
+        crvt ret2 = (workField[index[0]] - value) / dx;
         // restoring the workfield
         workField[index[0]] = value;
         workField[index[variableIndex]] = var;
-        return ret;
+        return (ret1 - ret2) * 0.5;
     }
     uns getN_ComponentParam()const noexcept { return nComponentParam; }
     uns getN_Param()const noexcept { return nParam; }
@@ -690,7 +696,7 @@ class HmgBuiltInFunction_LN final : public HmgFunction{
 public:
     HmgBuiltInFunction_LN() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = log(workField[index[2]]);
+        workField[index[0]] = log(workField[index[2]] < 1.0e-100 ? 1.0e-100 : workField[index[2]]);
         return 0;
     }
 };
@@ -702,7 +708,7 @@ class HmgBuiltInFunction_LOG final : public HmgFunction{
 public:
     HmgBuiltInFunction_LOG() : HmgFunction{ 0, 2, 4, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = log(workField[index[3]]) / log(workField[index[2]]);
+        workField[index[0]] = log(workField[index[3]] < 1.0e-100 ? 1.0e-100 : workField[index[3]]) / log(workField[index[2]]);
         return 0;
     }
 };
@@ -714,7 +720,7 @@ class HmgBuiltInFunction_CLOG final : public HmgFunction{
 public:
     HmgBuiltInFunction_CLOG() : HmgFunction{ 0, 1, 3, 0, 1 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = log(workField[index[2]]) / log(line.value);
+        workField[index[0]] = log(workField[index[2]] < 1.0e-100 ? 1.0e-100 : workField[index[2]]) / log(line.value);
         return 0;
     }
 };

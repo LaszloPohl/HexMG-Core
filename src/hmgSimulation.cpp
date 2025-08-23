@@ -59,6 +59,7 @@ void Simulation::runDC() {
         bench_now("CalculateValuesAndCurrentsDC");
 
         CircuitStorage& gc = CircuitStorage::getInstance();
+/*
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
@@ -84,7 +85,7 @@ void Simulation::runDC() {
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
         bench_now("first iterations");
-
+*/
         rvt max_error = 1000.0;
         for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
@@ -94,15 +95,17 @@ void Simulation::runDC() {
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
             ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
 
-            max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
-            std::cout << "    error = " << max_error << std::endl;
+            rvt cErr = c.sumDefect / c.nodeNum + c.maxDefect;
+            rvt vErr = v.sumDefect / v.nodeNum + v.maxDefect;
+            max_error = cErr + vErr;
+            std::cout << "    error = " << max_error << "    I error = " << cErr << "    V error = " << vErr << std::endl;
 #ifdef HMG_DEBUGPRINT
             std::cout << std::endl;
             gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
             bench_now("iteration");
         }
-
+/*
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
         CircuitStorage::AcceptStepDC(fullCircuitID);
@@ -113,6 +116,7 @@ void Simulation::runDC() {
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
+*/
     }
     wasDC = true;
 }
