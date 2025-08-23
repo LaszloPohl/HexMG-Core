@@ -179,35 +179,16 @@ struct vezetes{
                         fprintf(fp, "_MULC RET RET 1MEG\n");
                         fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index);// pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * g[0]
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=2 V=1\n", (uns)hmg_nonlin_index);// pars: Tx, -Ix // ret = (Tx + 273.15) * Ix * g[0]
                         fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
                         fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_SUB V0 P2 P1\n");
-                        fprintf(fp, "_MUL RET RET V0\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", -g[0]); // -Ix miatt
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19\n", (uns)hmg_nonlin_index); // ret = 0 (if S=const, no Thomson effect)
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=13\n", (uns)hmg_nonlin_index); // ret = 0 (if S=const, no Thomson effect)
                         fprintf(fp, "_COPY RET 0\n");
                         fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
-/*
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*g[0]
-                        fprintf(fp, "_SUB RET P0 P1\n");
-                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
-                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
-
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3\n", (uns)hmg_nonlin_index);// pars: Tszorzo, Tref, I // ret = Tszorzo * I * g[0]
-                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
-                        fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_MUL RET RET P2\n");
-                        fprintf(fp, "_MULC RET RET %g\n", g[0]);
-                        //fprintf(fp, "_PRINT P0\n");
-                        //fprintf(fp, "_PRINT P1\n");
-                        //fprintf(fp, "_PRINT P2\n");
-                        //fprintf(fp, "_PRINTLN RET\n");
-                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
-*/
                     }
                     break;
                     default:
@@ -265,23 +246,21 @@ struct vezetes{
                         fprintf(fp, "_MULC RET RET 1MEG\n");
                         fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * G[0]*exp(gg[0]*(Tref-25))
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, -Ix // ret = (Tx + 273.15) * Ix * G[0]*exp(gg[0]*(Tref-25))
                         fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
                         fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_SUB V0 P2 P1\n");
-                        fprintf(fp, "_MUL RET RET V0\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, "_MULC V0 RET %g\n", g[0]);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_MULC V0 RET %g\n", -g[0]); // -Ix miatt
                         fprintf(fp, "_SUBC V1 P0 25\n");
                         fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
                         fprintf(fp, "_EXP V1 V1\n");
                         fprintf(fp, "_MUL RET V0 V1\n");
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        // pars: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, VT2
-                        //       0   1   2   3   4   5   6   7    8    9    10   11   12   13   14   15   16   17   18
+                        // pars: Tc, TW, TE, TS, TN, TB, TT, IW, IE, IS, IN, IB, IT
+                        //       0   1   2   3   4   5   6   7   8   9   10  11  12
 
-                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19 V=4\n", (uns)hmg_nonlin_index); // ret = 1MEG * sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * G[0]*exp(gg[0]*(Tx-25))
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=13 V=3\n", (uns)hmg_nonlin_index); // ret = sum((Tc/2 + Tx/2 + 273.15) * Ix * G[0]*exp(gg[0]*(Tx-25))
                         fprintf(fp, "_COPY RET 546.3 // 2*273.15\n");
                         fprintf(fp, "_ADD RET RET P0\n");                                           // RET = Tc + 2*273.15
 
@@ -289,114 +268,65 @@ struct vezetes{
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P8 P7\n");
-                        fprintf(fp, "_MUL V2 V0 V1\n"); // V2 !
-                        fprintf(fp, "_ADD V3 RET P1\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V2 V2 V3\n");
+                        fprintf(fp, "_MUL V1 V0 P7\n"); // V1 !
+                        fprintf(fp, "_ADD V2 RET P1\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V1 V1 V2\n");
 
                         fprintf(fp, "_SUBC V0 P2 25\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P10 P9\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P2\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_MUL V0 V0 P8\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P2\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_SUBC V0 P3 25\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P12 P11\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P3\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_MUL V0 V0 P9\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P3\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_SUBC V0 P4 25\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P14 P13\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P4\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_MUL V0 V0 P10\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P4\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_SUBC V0 P5 25\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P16 P15\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P5\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_MUL V0 V0 P11\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P5\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_SUBC V0 P6 25\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", gg[0]);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUB V1 P18 P17\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P6\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_MUL V0 V0 P12\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P6\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD RET V1 V0\n");
 
-                        fprintf(fp, "_MULC RET V2 1MEG\n");
                         fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
-
-/*
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=2\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*G[0]*exp(gg[0]*(Tc-25))
-                        fprintf(fp, "_SUB V0 P0 P1\n");
-                        fprintf(fp, "_MULC V0 V0 %g\n", g[0]);
-                        fprintf(fp, "_SUBC V1 P1 25\n");
-                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "_EXP V1 V1\n");
-                        fprintf(fp, "_MUL RET V0 V1\n");
-                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
-
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=2\n", (uns)hmg_nonlin_index); // pars: Tszorzo, Tref, I // ret = Tszorzo * I * G[0]*exp(gg[0]*(Tref-25))
-                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
-                        fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_MULC V0 RET %g\n", g[0]);
-                        fprintf(fp, "_MUL V0 V0 P2\n");
-                        fprintf(fp, "_SUBC V1 P1 25\n");
-                        fprintf(fp, "_MULC V1 V1 %g\n", gg[0]);
-                        fprintf(fp, "_EXP V1 V1\n");
-                        fprintf(fp, "_MUL RET V0 V1\n");
-                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
-*/
                     }
                     break;
                     case hnctSemiEq: {
-                        fprintf(fp, ".FUNCTION Semi_eq_el_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Um1, Um2, Ax
-                        
-                        //fprintf(fp, "_PRINT P0\n");
-                        //fprintf(fp, "_PRINT P1\n");
-                        fprintf(fp, "_SUB RET P0 P1\n");
-                        //fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_MULC RET RET 1e13\n");
-                        fprintf(fp, "_ADDC RET RET 1\n");
-                        //fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_LN RET RET\n");
-                        //fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_MULC RET RET 0.026\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        //fprintf(fp, "_PRINTLN RET\n");
-
-
-/*
-                        fprintf(fp, "_PRINT P0\n");
-                        fprintf(fp, "_PRINT P1\n");
-                        fprintf(fp, "_PRINT P2\n");
                         dbl I0;
                         dbl Utx = 1.3806504e-23 * (25 + 273.15) / 1.602176487e-19; // UT 25 fokon
                         if (fabs(g[0]) < 0.01)
@@ -404,49 +334,28 @@ struct vezetes{
                         else
                             I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
                         I0 *= 1.0e+006;
-                        fprintf(fp, "_SUB RET P0 P1\n");
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_DIVC RET RET %g\n", I0);
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_MUL RET RET P2\n");
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_DIVC RET RET %g\n", As);
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_ADDC RET RET 1\n");
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_ABS RET RET\n");
-                        fprintf(fp, "_COPY V0 1.0e-200\n");
-                        fprintf(fp, "_TST RET RET V0 V0 RET\n");
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
-                        fprintf(fp, "_PRINT RET\n");
-                        fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
-                        fprintf(fp, "_PRINTLN RET\n");
-*/
-                        fprintf(fp, ".END FUNCTION Semi_eq_el_%u\n\n", (uns)hmg_nonlin_index);
-/*
-                        fprintf(fp, ".FUNCTION Semi_eq_elth_%u P=4 V=1\n", (uns)hmg_nonlin_index); // pars: Um1, Um2, Ax, Tx
-                        if (fabs(g[0]) < 0.01)
-                            I0 = g[0];
-                        else
-                            I0 = g[0] < 0 ? -0.1 / (exp(fabs(g[0]) / Utx) - 1) : 0.1 / (exp(fabs(g[0]) / Utx) - 1);
-                        I0 *= 1.0e+006;
-                        fprintf(fp, "_SUB RET P0 P1\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, "_DIVC RET RET %g\n", I0);
-                        fprintf(fp, "_MUL RET RET P2\n");
-                        fprintf(fp, "_DIVC RET RET %g\n", As);
-                        fprintf(fp, "_ADDC RET RET 1\n");
-                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
                         dbl Utm = 1.3806504e-23 / 1.602176487e-19;
-                        fprintf(fp, "_ADDC V0 P3 273.15\n");
+
+                        fprintf(fp, ".FUNCTION Semi_eq_el_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax
+                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
+                        fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
+                        fprintf(fp, ".END FUNCTION Semi_eq_el_%u\n\n", (uns)hmg_nonlin_index);
+
+                        fprintf(fp, ".FUNCTION Semi_eq_elth_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, Tx
+                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_MUL RET RET P1\n");
+                        fprintf(fp, "_DIVC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*A/As+1)
+                        fprintf(fp, "_ADDC V0 P2 273.15\n");
                         fprintf(fp, "_MULC V0 V0 %g\n", Utm); // Ut aktuális hõmérséklettel
                         fprintf(fp, "_MUL RET RET V0\n");
                         fprintf(fp, "_MULC RET RET 1MEG\n");
                         fprintf(fp, ".END FUNCTION Semi_eq_elth_%u\n\n", (uns)hmg_nonlin_index);
-*/
                     }
                     break;
                     default:
@@ -507,27 +416,32 @@ struct vezetes{
                         //fprintf(fp, "_PRINTLN RET\n");
                         fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, V1, V2 // ret = (Tx + 273.15) * (V2 - V1) * 1MEG * PWL(Tx)
+                        fprintf(fp, ".FUNCTION Peltier_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, -Ix // ret = (Tx + 273.15) * Ix * PWL(Tx)
+                        //fprintf(fp, "_PRINT P0\n");
+                        //fprintf(fp, "_PRINT P1\n");
                         fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
                         fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_MULC RET RET 1MEG\n");
-                        fprintf(fp, "_SUB V0 P2 P1\n");
-                        fprintf(fp, "_MUL V0 RET V0\n");
+                        //fprintf(fp, "_PRINT RET\n");
+                        fprintf(fp, "_MUL V0 RET P1\n");
+                        fprintf(fp, "_MULC V0 V0 -1\n");
+                        //fprintf(fp, "_PRINT V0\n");
                         fprintf(fp, "_PWL RET P0");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
+                        //fprintf(fp, "_PRINT RET\n");
                         fprintf(fp, "_MUL RET RET V0\n");
+                        //fprintf(fp, "_PRINTLN RET\n");
                         fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
 
-                        // pars: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, VT2
-                        //       0   1   2   3   4   5   6   7    8    9    10   11   12   13   14   15   16   17   18
+                        // pars: Tc, TW, TE, TS, TN, TB, TT, IW, IE, IS, IN, IB, IT
+                        //       0   1   2   3   4   5   6   7   8   9   10  11  12
 
-                        fprintf(fp, ".FUNCTION Thomson_func_%u P=19 V=5\n", (uns)hmg_nonlin_index); // ret = 1MEG * sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * (PWL(Tx)-PWL(Tc)))
+                        fprintf(fp, ".FUNCTION Thomson_func_%u P=13 V=4\n", (uns)hmg_nonlin_index); // ret = sum((Tc/2 + Tx/2 + 273.15) * Ix * (PWL(Tx)-PWL(Tc)))
                         fprintf(fp, "_COPY RET 546.3 // 2*273.15\n");
                         fprintf(fp, "_ADD RET RET P0\n");                                           // RET = Tc + 2*273.15
 
-                        fprintf(fp, "_PWL V4 P0");                                                  // V4 = S(Tc)
+                        fprintf(fp, "_PWL V3 P0");                                                  // V2 = S(Tc)
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
@@ -536,97 +450,68 @@ struct vezetes{
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P8 P7\n");
-                        fprintf(fp, "_MUL V2 V0 V1\n"); // V2 !                                     // V2 = sum((Tc/2 + Tx/2 + 273.15) * (Vx2-Vx1) * (PWL(Tx)-PWL(Tc)))
-                        fprintf(fp, "_ADD V3 RET P1\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V2 V2 V3\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V1 V0 P7\n"); // V1 !                                     // V1 = sum((Tc/2 + Tx/2 + 273.15) * Ix * (PWL(Tx)-PWL(Tc)))
+                        fprintf(fp, "_ADD V2 RET P1\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V1 V1 V2\n");
 
                         fprintf(fp, "_PWL V0 P2");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P10 P9\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P2\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V0 V0 P8\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P2\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_PWL V0 P3");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P12 P11\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P3\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V0 V0 P9\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P3\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_PWL V0 P4");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P14 P13\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P4\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V0 V0 P10\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P4\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_PWL V0 P5");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P16 P15\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P5\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V0 V0 P11\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P5\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD V1 V1 V0\n");
 
                         fprintf(fp, "_PWL V0 P6");
                         for (uns i = 0; i < szakaszok.size(); i++)
                             fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
                         fprintf(fp, "\n");
-                        fprintf(fp, "_SUB V0 V0 V4\n");
-                        fprintf(fp, "_SUB V1 P18 P17\n");
-                        fprintf(fp, "_MUL V0 V0 V1\n"); // V0 !
-                        fprintf(fp, "_ADD V3 RET P6\n");
-                        fprintf(fp, "_MULC V3 V3 0.5\n");
-                        fprintf(fp, "_MUL V0 V0 V3\n");
-                        fprintf(fp, "_ADD V2 V2 V0\n");
+                        fprintf(fp, "_SUB V0 V0 V3\n");
+                        fprintf(fp, "_MUL V0 V0 P12\n"); // V0 !
+                        fprintf(fp, "_ADD V2 RET P6\n");
+                        fprintf(fp, "_MULC V2 V2 0.5\n");
+                        fprintf(fp, "_MUL V0 V0 V2\n");
+                        fprintf(fp, "_ADD RET V1 V0\n");
 
-                        fprintf(fp, "_MULC RET V2 1MEG\n");
                         fprintf(fp, ".END FUNCTION Thomson_func_%u\n\n", (uns)hmg_nonlin_index);
-
-/*
-                        fprintf(fp, ".FUNCTION Seebeck_func_%u P=2 V=1\n", (uns)hmg_nonlin_index); // pars: Tx, Tc // ret = (Tx-Tc)*PWL(Tc)
-                        fprintf(fp, "_SUB V0 P0 P1\n");
-                        fprintf(fp, "_PWL RET P1");
-                        for (uns i = 0; i < szakaszok.size(); i++)
-                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
-                        fprintf(fp, "\n");
-                        fprintf(fp, "_MUL RET RET V0\n");
-                        fprintf(fp, ".END FUNCTION Seebeck_func_%u\n\n", (uns)hmg_nonlin_index);
-
-                        fprintf(fp, ".FUNCTION Peltier_func_%u P=3 V=1\n", (uns)hmg_nonlin_index); // pars: Tszorzo, Tref, I // ret = Tszorzo * I * PWL(Tc)
-                        fprintf(fp, "_C_T0 RET\n"); // ! in Kelvin !
-                        fprintf(fp, "_ADD RET RET P0\n");
-                        fprintf(fp, "_MUL V0 RET P2\n");
-                        fprintf(fp, "_PWL RET P1");
-                        for (uns i = 0; i < szakaszok.size(); i++)
-                            fprintf(fp, " %g %g", szakaszok[i].T, szakaszok[i].G[0]);
-                        fprintf(fp, "\n");
-                        fprintf(fp, "_MUL RET RET V0\n");
-                        fprintf(fp, ".END FUNCTION Peltier_func_%u\n\n", (uns)hmg_nonlin_index);
-*/
                     }
                     break;
                     default:
@@ -1874,8 +1759,8 @@ struct hmg_cella {
         for (uns i = WEST; i < BASIC_SIDES; i++) {
             el_out_nodes[i].Seebeck = el_out_nodes[i].coreResistor;
             el_out_nodes[i].coreResistor.set(false, nNodes);
-            el_out_nodes[i].IMeasResistor.set(false, nNodes + 1);
-            nNodes += 2; // 2 új N node kell, a mérõ ellenállás miatt
+            el_out_nodes[i].IMeasResistor.set(false, nNodes + 1); // IMeasResistor.node_index + 1 lesz az áram kimenet
+            nNodes += 3; // 3 új N node kell, a mérõ miatt
             Seebeck_index = S_index;
         }
     }
@@ -1891,8 +1776,8 @@ struct hmg_cella {
                 else {
                     el_out_nodes[i].junction = el_out_nodes[i].coreResistor;
                     el_out_nodes[i].coreResistor.set(false, nNodes);
-                    el_out_nodes[i].IMeasResistor.set(false, nNodes + 1);
-                    nNodes += 2;
+                    el_out_nodes[i].IMeasResistor.set(false, nNodes + 1); // IMeasResistor.node_index + 1 lesz az áram kimenet
+                    nNodes += 3;
                 }
             }
     }
@@ -1920,8 +1805,8 @@ struct hmg_cella {
         }
         fprintf(fp, "\n");
 
-        if(core.color_index==2 || core.color_index == 3) // bmp szín
-            fprintf(fp, ".PRINTNODE N0\n");
+        //if(core.color_index==2 || core.color_index == 3) // bmp szín
+        //    fprintf(fp, ".PRINTNODE N0\n");
 
         const dbl Vcell = core.x_size * core.y_size * core.z_size;
 
@@ -1974,8 +1859,9 @@ struct hmg_cella {
 
             if (is_Seebeck) {
                 for (uns i = WEST; i <= TOP; i++) {
-                    fprintf(fp, "Gmeas%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index);
-                    fprintf(fp, "VS%c FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", getBoundaryName(i).c_str()[0], Seebeck_index, el_out_nodes[i].Seebeck.is_X ? 'X' : 'N', 
+                    fprintf(fp, "MI%c MIN N%u N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].IMeasResistor.node_index + 1);
+                    fprintf(fp, "Ri%c G N%u N%u 1u\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index); // ha a MI-vel párhuzamosan nincs vezetés, el nem tûnõ áramhiba keletkezik
+                    fprintf(fp, "VS%c FCI Y=2 F=Seebeck_func_%u(Y0 Y1) %c%u N%u %c%u N1 1MEG\n", getBoundaryName(i).c_str()[0], Seebeck_index, el_out_nodes[i].Seebeck.is_X ? 'X' : 'N',
                         el_out_nodes[i].Seebeck.node_index, el_out_nodes[i].IMeasResistor.node_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index);
                 }
             }
@@ -1984,8 +1870,10 @@ struct hmg_cella {
 
             for (uns i = WEST; i <= TOP; i++) {
                 if (el_out_nodes[i].semi != nullptr) {
-                    if (!el_out_nodes[i].Seebeck.is_exists)
-                        fprintf(fp, "Gmeas%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index);
+                    if (!el_out_nodes[i].Seebeck.is_exists) {
+                        fprintf(fp, "MI%c MIN N%u N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].IMeasResistor.node_index + 1);
+                        fprintf(fp, "Ri%c G N%u N%u 1u\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index); // ha a MI-vel párhuzamosan nincs vezetés, el nem tûnõ áramhiba keletkezik
+                    }
                     dbl A;
                     if (i == WEST || i == EAST)
                         A = core.y_size * core.z_size;
@@ -1994,13 +1882,13 @@ struct hmg_cella {
                     else
                         A = core.x_size * core.y_size;
                     if(core.is_th) // eltherm  // pars: Um1, Um2, Ax, Tx
-                        fprintf(fp, "RJunct%c FCID Y=3 P=1 F=Semi_eq_elth_%u(Y0 Y1 P2 Y2) N%u %c%u N1 N1 N%u N%u 1 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                        fprintf(fp, "RJunct%c FCID Y=2 P=1 F=Semi_eq_elth_%u(Y0 P2 Y1) N%u %c%u N1 N1 N%u %c%u 1 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
                             is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index,
-                            el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, A);
+                            el_out_nodes[i].IMeasResistor.node_index + 1, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index, A);
                     else // el only // pars: Um1, Um2, Ax
-                        fprintf(fp, "RJunct%c FCI Y=2 P=1 F=Semi_eq_el_%u(Y0 Y1 P1) N%u %c%u N%u N%u 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
-                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
-                            el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, A);
+                        fprintf(fp, "RJunct%c FCI Y=1 P=1 F=Semi_eq_el_%u(Y0 P1) N%u %c%u N%u 1MEG %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index,
+                            el_out_nodes[i].IMeasResistor.node_index + 1, A);
                 }
             }
 
@@ -2063,35 +1951,21 @@ struct hmg_cella {
 
                 // Peltier: Tx, V1, V2
 
-                fprintf(fp, "PPW FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[WEST].boundary.is_X   ? 'X' : 'N', th_out_nodes[WEST].boundary.node_index,
-                    el_out_nodes[WEST].coreResistor.node_index, el_out_nodes[WEST].IMeasResistor.node_index);
-                fprintf(fp, "PPE FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[EAST].boundary.is_X   ? 'X' : 'N', th_out_nodes[EAST].boundary.node_index,
-                    el_out_nodes[EAST].coreResistor.node_index, el_out_nodes[EAST].IMeasResistor.node_index);
-                fprintf(fp, "PPS FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[SOUTH].boundary.is_X  ? 'X' : 'N', th_out_nodes[SOUTH].boundary.node_index,
-                    el_out_nodes[SOUTH].coreResistor.node_index, el_out_nodes[SOUTH].IMeasResistor.node_index);
-                fprintf(fp, "PPN FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[NORTH].boundary.is_X  ? 'X' : 'N', th_out_nodes[NORTH].boundary.node_index,
-                    el_out_nodes[NORTH].coreResistor.node_index, el_out_nodes[NORTH].IMeasResistor.node_index);
-                fprintf(fp, "PPB FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index,
-                    el_out_nodes[BOTTOM].coreResistor.node_index, el_out_nodes[BOTTOM].IMeasResistor.node_index);
-                fprintf(fp, "PPT FCI Y=2 F=Peltier_func_%u(X1 Y0 Y1) R0 %c%u N%u N%u 0\n", Seebeck_index, th_out_nodes[TOP].boundary.is_X    ? 'X' : 'N', th_out_nodes[TOP].boundary.node_index,
-                    el_out_nodes[TOP].coreResistor.node_index, el_out_nodes[TOP].IMeasResistor.node_index);
+                for (uns i = WEST; i <= TOP; i++) {
+                    fprintf(fp, "PP%c FCI Y=1 F=Peltier_func_%u(X1 Y0) R0 %c%u N%u 0\n", getBoundaryName(i).c_str()[0], Seebeck_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N',
+                        th_out_nodes[i].boundary.node_index, el_out_nodes[i].IMeasResistor.node_index + 1);
+                }
 
                 // Thomson: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, T2
 
-                fprintf(fp, "PT FCI Y=18 F=Thomson_func_%u(X1 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13 Y14 Y15 Y16 Y17) R0 N%u %c%u %c%u %c%u %c%u %c%u %c%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u N%u\n",
+                fprintf(fp, "PT FCI Y=12 F=Thomson_func_%u(X1 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11) R0 N%u %c%u %c%u %c%u %c%u %c%u %c%u N%u N%u N%u N%u N%u N%u 0\n",
                     Seebeck_index, thcenter, 
-                    th_out_nodes[  WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[  WEST].boundary.node_index,
-                    th_out_nodes[  EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[  EAST].boundary.node_index,
-                    th_out_nodes[ SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ SOUTH].boundary.node_index,
-                    th_out_nodes[ NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ NORTH].boundary.node_index,
-                    th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index,
-                    th_out_nodes[   TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[   TOP].boundary.node_index,
-                    el_out_nodes[  WEST].IMeasResistor.node_index, el_out_nodes[  WEST].coreResistor.node_index,
-                    el_out_nodes[  EAST].IMeasResistor.node_index, el_out_nodes[  EAST].coreResistor.node_index,
-                    el_out_nodes[ SOUTH].IMeasResistor.node_index, el_out_nodes[ SOUTH].coreResistor.node_index,
-                    el_out_nodes[ NORTH].IMeasResistor.node_index, el_out_nodes[ NORTH].coreResistor.node_index,
-                    el_out_nodes[BOTTOM].IMeasResistor.node_index, el_out_nodes[BOTTOM].coreResistor.node_index,
-                    el_out_nodes[   TOP].IMeasResistor.node_index, el_out_nodes[   TOP].coreResistor.node_index);
+                    th_out_nodes[  WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[  WEST].boundary.node_index, th_out_nodes[  EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[  EAST].boundary.node_index,
+                    th_out_nodes[ SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ SOUTH].boundary.node_index, th_out_nodes[ NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ NORTH].boundary.node_index,
+                    th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index, th_out_nodes[   TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[   TOP].boundary.node_index,
+                    el_out_nodes[  WEST].IMeasResistor.node_index + 1, el_out_nodes[  EAST].IMeasResistor.node_index + 1, el_out_nodes[ SOUTH].IMeasResistor.node_index + 1, 
+                    el_out_nodes[ NORTH].IMeasResistor.node_index + 1, el_out_nodes[BOTTOM].IMeasResistor.node_index + 1, el_out_nodes[   TOP].IMeasResistor.node_index + 1);
+
             }
 
             // boundaries  // initial value and DC set, AC unset

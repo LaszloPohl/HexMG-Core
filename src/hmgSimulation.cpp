@@ -87,7 +87,7 @@ void Simulation::runDC() {
         bench_now("first iterations");
 */
         rvt max_error = 1000.0;
-        for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
+        for (uns i = 0; max_error > 1.0e-005 && i < 10; i++) {
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
             ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
             CircuitStorage::AcceptIterationDC(fullCircuitID);

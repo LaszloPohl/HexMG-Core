@@ -3251,9 +3251,13 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_N_Nodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getDDC());
+            //if(fabs(internalNodesAndVars[i].getDDC()) > 1.0e-010)
+            //    printf("%g\n", internalNodesAndVars[i].getDDC());
         }
-        for (auto& comp : components)
-            if (comp->isEnabled) d.addCollector(comp->collectCurrentDefectDC());
+        //for (auto& comp : components)
+        //    if (comp->isEnabled) d.addCollector(comp->collectCurrentDefectDC());
+        for (size_t i = 0; i < components.size(); i++)
+            if (components[i]->isEnabled) d.addCollector(components[i]->collectCurrentDefectDC());
         return d;
     }
     //***********************************************************************

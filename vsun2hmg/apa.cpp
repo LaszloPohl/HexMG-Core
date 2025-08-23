@@ -754,6 +754,9 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
         for (uns y = 0; y < y_res; y++)
             for (uns x = 0; x < x_res; x++) {
 
+                //if (x == 4 && y == 13 && z == 3)
+                //    printf("!\n");
+
                 cuns cella_szin = aktMod.tbmp[z].getpixel_also(x, y);
                 const color& cella_color = aktMod.tcolor[cella_szin];
                 hmg_cella cella;
@@ -1070,7 +1073,7 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                         }
 
                         if (i == 1)
-                            fprintf(fp, "\n");
+                            fprintf(fp, " // %u, %u, %u\n", x, y, z);
                     }
     }
 
