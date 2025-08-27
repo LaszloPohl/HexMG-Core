@@ -72,7 +72,7 @@ extern const char *OldalNev[];
 cuns BASIC_SIDES=        7; //oldalak száma (kocka 6 oldala+externals)
 cuns EXTENDED_SIDES=	20; //oldalak száma (kocka 6 oldala+externals+12 élközépi "oldal")(A CENTER-t is beleszámítom, 0. lépésben kell!)
 cu32 NEWKIVALTO=		32;
-enum monlintipus{nlt_lin,nlt_linearis,nlt_exp,nlt_diode,nlt_quadratic,nlt_erno,nlt_szakaszok,nlt_mizs1,nlt_lsfit};
+enum monlintipus{nlt_lin,nlt_linearis, nlt_exp, nlt_uexp, nlt_diode, nlt_udiode, nlt_quadratic,nlt_erno,nlt_szakaszok,nlt_mizs1,nlt_lsfit};
 enum lsfit_veg_tipus { lsv_none, lsv_lin, lsv_strong };
 enum lsfit_egyenlet_tipus{ lse_polinom };
 enum MezoTipus {FieldEl,FieldTherm,FieldElTherm}; // FieldEl,FieldTherm,FieldElTherm

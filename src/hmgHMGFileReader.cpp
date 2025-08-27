@@ -44,6 +44,7 @@ FileFunctionNameID biftNameID[] = {
     { "C_T0",	bift_C_T0 },
     { "C_K",	bift_C_K },
     { "C_Q",	bift_C_Q },
+    { "C_CURR_ITER", bift_C_CI},
     { "ADD",	bift_ADD },
     { "SUB",	bift_SUB },
     { "MUL",	bift_MUL },
@@ -2233,9 +2234,9 @@ void HMGFileMultiGrid::ReadOrReplaceBody(ReadALine& reader, char* line, LineInfo
 
 
 //***********************************************************************
-void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo) {
+void HMGFileFunction::ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo, bool isNoRetValue) {
 //***********************************************************************
-    if (nPar == 0) { // if no param, 1 param is set as RET
+    if (nPar == 0 || isNoRetValue) { // if no param, 1 param is set as RET
         ParameterIdentifier id;
         id.parType = ptParam;
         id.parIndex = 0;
@@ -2383,37 +2384,38 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 if(func.type == biftInvalid)
                     throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 switch (func.type) {
-                    case bift_CONST:    ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CONST:    ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case bift_C_PI:
+                    case bift_C_PI:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false); break;
                     case bift_PRINT:
-                    case bift_PRINTLN:  ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
-                    case bift_NOP:      ReadParams(func, 0, lineToken, reader, line, lineInfo); break;
+                    case bift_PRINTLN:  ReadParams(func, 1, lineToken, reader, line, lineInfo, true); break;
+                    case bift_NOP:      ReadParams(func, 0, lineToken, reader, line, lineInfo, true); break;
                     case bift_C_2PI:
                     case bift_C_PI2:
                     case bift_C_E:
                     case bift_C_T0:
                     case bift_C_K:
-                    case bift_C_Q:      ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case bift_C_Q:
+                    case bift_C_CI:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_ADD:
                     case bift_SUB:
                     case bift_MUL:
                     case bift_DIV:
                     case bift_IDIV:
-                    case bift_MOD:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_MOD:      ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
                     case bift_TRUNC:
                     case bift_ROUND:
                     case bift_CEIL:
-                    case bift_FLOOR:    ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_FLOOR:    ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_ADDC:
                     case bift_SUBC:
                     case bift_MULC:
                     case bift_DIVC:
                     case bift_IDIVC:
-                    case bift_MODC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_MODC:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_CADD:
@@ -2421,32 +2423,32 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_CMUL:
                     case bift_CDIV:                    
                     case bift_CIDIV:
-                    case bift_CMOD:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CMOD:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         break;
                     case bift_NEG:
                     case bift_INV:
-                    case bift_SQRT:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_SQRT:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_POW:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case bift_POWC:     ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_POW:      ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
+                    case bift_POWC:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case bift_CPOW:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_CPOW:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         break;
                     case bift_EXP:
                     case bift_NEXP:
                     case bift_IEXP:
                     case bift_INEXP:
-                    case bift_LN:       ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_LN:       ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_LOG:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case bift_CLOG:     ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_LOG:      ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
+                    case bift_CLOG:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         break;
 
                     case bift_ABS:
@@ -2461,12 +2463,12 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_TAN:
                     case bift_SINH:
                     case bift_COSH:
-                    case bift_TANH:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_TANH:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_RATIO:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_RATIO:    ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_PWL: {
-                            ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                            ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                             rvt x, y;
                             while (!lineToken.isSepEOL) {
                                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -2482,33 +2484,33 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                             }
                         }
                         break;
-                    case bift_DERIV:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
-                    case bift_DERIVC:   ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                    case bift_DERIV:    ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
+                    case bift_DERIVC:   ReadParams(func, 3, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
-                    case bift_VLENGTH2: ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
-                    case bift_VLENGTH3: ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
-                    case bift_DISTANCE2:ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
-                    case bift_DISTANCE3:ReadParams(func, 7, lineToken, reader, line, lineInfo); break;
+                    case bift_VLENGTH2: ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
+                    case bift_VLENGTH3: ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
+                    case bift_DISTANCE2:ReadParams(func, 5, lineToken, reader, line, lineInfo, false); break;
+                    case bift_DISTANCE3:ReadParams(func, 7, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_GT:
                     case bift_ST:
                     case bift_GE:
                     case bift_SE:
                     case bift_EQ:
-                    case bift_NEQ:      ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_NEQ:      ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_GT0:
                     case bift_ST0:
                     case bift_GE0:
                     case bift_SE0:
                     case bift_EQ0:
-                    case bift_NEQ0:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_NEQ0:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_AND:
-                    case bift_OR:       ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_OR:       ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_NOT:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_NOT:      ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo); break;
                     case bift_JGT:
@@ -2517,7 +2519,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_JSE:
                     case bift_JEQ:
                     case bift_JNEQ:     ReadLabel(func, lineToken, reader, lineInfo);
-                                        ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                                        ReadParams(func, 2, lineToken, reader, line, lineInfo, true); 
                                         break;
 
                     case bift_JGT0:
@@ -2526,45 +2528,45 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_JSE0:
                     case bift_JEQ0:
                     case bift_JNEQ0:    ReadLabel(func, lineToken, reader, lineInfo);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo); 
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, true);
                                         break;
 
-                    case bift_CPY:      ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_CPY:      ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_CGT:
                     case bift_CST:
                     case bift_CGE:
                     case bift_CSE:
                     case bift_CEQ:
-                    case bift_CNEQ:     ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_CNEQ:     ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_CGT0:
                     case bift_CST0:
                     case bift_CGE0:
                     case bift_CSE0:
                     case bift_CEQ0:
-                    case bift_CNEQ0:    ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_CNEQ0:    ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_TGT:
                     case bift_TST:
                     case bift_TGE:
                     case bift_TSE:
                     case bift_TEQ:
-                    case bift_TNEQ:     ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case bift_TNEQ:     ReadParams(func, 5, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_TGT0:
                     case bift_TST0:
                     case bift_TGE0:
                     case bift_TSE0:
                     case bift_TEQ0:
-                    case bift_TNEQ0:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_TNEQ0:    ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_CGTC:
                     case bift_CSTC:
                     case bift_CGEC:
                     case bift_CSEC:
                     case bift_CEQC:
-                    case bift_CNEQC:    ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                    case bift_CNEQC:    ReadParams(func, 3, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_CGT0C:
@@ -2572,7 +2574,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_CGE0C:
                     case bift_CSE0C:
                     case bift_CEQ0C:
-                    case bift_CNEQ0C:   ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_CNEQ0C:   ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
 
@@ -2582,14 +2584,14 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_JGER:
                     case bift_JSER:
                     case bift_JEQR:
-                    case bift_JNEQR:    ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                    case bift_JNEQR:    ReadParams(func, 2, lineToken, reader, line, lineInfo, true);
                                         break;
                     case bift_JGT0R:
                     case bift_JST0R:
                     case bift_JGE0R:
                     case bift_JSE0R:
                     case bift_JEQ0R:
-                    case bift_JNEQ0R:   ReadParams(func, 2, lineToken, reader, line, lineInfo); 
+                    case bift_JNEQ0R:   ReadParams(func, 2, lineToken, reader, line, lineInfo, true);
                                         break;
 
                     case bift_CGTR:
@@ -2597,35 +2599,35 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_CGER:
                     case bift_CSER:
                     case bift_CEQR:
-                    case bift_CNEQR:    ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_CNEQR:    ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_CGT0R:
                     case bift_CST0R:
                     case bift_CGE0R:
                     case bift_CSE0R:
                     case bift_CEQ0R:
-                    case bift_CNEQ0R:   ReadParams(func, 3, lineToken, reader, line, lineInfo); break;
+                    case bift_CNEQ0R:   ReadParams(func, 3, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_TGTR:
                     case bift_TSTR:
                     case bift_TGER:
                     case bift_TSER:
                     case bift_TEQR:
-                    case bift_TNEQR:    ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case bift_TNEQR:    ReadParams(func, 5, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_TGT0R:
                     case bift_TST0R:
                     case bift_TGE0R:
                     case bift_TSE0R:
                     case bift_TEQ0R:
-                    case bift_TNEQ0R:   ReadParams(func, 4, lineToken, reader, line, lineInfo); break;
+                    case bift_TNEQ0R:   ReadParams(func, 4, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_CGTCR:
                     case bift_CSTCR:
                     case bift_CGECR:
                     case bift_CSECR:
                     case bift_CEQCR:
-                    case bift_CNEQCR:   ReadParams(func, 3, lineToken, reader, line, lineInfo);
+                    case bift_CNEQCR:   ReadParams(func, 3, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
                     case bift_CGT0CR:
@@ -2633,46 +2635,46 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                     case bift_CGE0CR:
                     case bift_CSE0CR:
                     case bift_CEQ0CR:
-                    case bift_CNEQ0CR:  ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                    case bift_CNEQ0CR:  ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
 
-                    case bift_UNIT:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
-                    case bift_UNITT:    ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
-                    case bift_URAMP:    ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_UNIT:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
+                    case bift_UNITT:    ReadParams(func, 1, lineToken, reader, line, lineInfo, false); break;
+                    case bift_URAMP:    ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_TIME:
                     case bift_DT:
-                    case bift_FREQ:     ReadParams(func, 1, lineToken, reader, line, lineInfo); break;
+                    case bift_FREQ:     ReadParams(func, 1, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_RAIL:     ReadParams(func, 2, lineToken, reader, line, lineInfo); break;
+                    case bift_RAIL:     ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
                     case bift_LOAD:
                     case bift_LOADD:
                     case bift_LOADI:
-                    case bift_LOADSTS:  ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_LOADSTS:  ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
                                         break;
                     case bift_STORE:
                     case bift_STORED:
                     case bift_INCD:
                     case bift_STORESTS: ReadNodeVariable(func, lineToken, reader, line, lineInfo, true);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, true);
                                         break;
                     case bift_ILOAD:
                     case bift_ILOADD:
                     case bift_ILOADI:
-                    case bift_ILOADSTS: ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                    case bift_ILOADSTS: ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadNodeVariable(func, lineToken, reader, line, lineInfo, false);
-                                        ReadParams(func, 1, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         break;
                     case bift_ISTORE:
                     case bift_ISTORED:
                     case bift_IINCD:
                     case bift_ISTORESTS:ReadNodeVariable(func, lineToken, reader, line, lineInfo, false);
-                                        ReadParams(func, 2, lineToken, reader, line, lineInfo);
+                                        ReadParams(func, 2, lineToken, reader, line, lineInfo, true);
                                         break;
-                    case bift_HYS_1:    ReadParams(func, 5, lineToken, reader, line, lineInfo); break;
+                    case bift_HYS_1:    ReadParams(func, 5, lineToken, reader, line, lineInfo, false); break;
 
                     default:
                         throw hmgExcept("HMGFileFunction::Read", "unknown built in function type ID (%u) in %s, line %u: %s", func.type, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -2691,7 +2693,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 cuns nPar = f->nParams;
 
                 ReadComponentParams(func, nCompPar, lineToken, reader, line, lineInfo);
-                ReadParams(func, nPar, lineToken, reader, line, lineInfo);
+                ReadParams(func, nPar, lineToken, reader, line, lineInfo, false);
             }
         }
     } while (isFunctionNotEnded);

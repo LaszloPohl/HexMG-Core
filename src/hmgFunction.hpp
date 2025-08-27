@@ -114,19 +114,21 @@ public:
         crvt value = workField[index[0]];
         crvt var = workField[index[variableIndex]];
         crvt dx = abs(var) * rvt(1.0e-9) + 1.0e-10;
+        //crvt dx = abs(var) * rvt(1.0e-9) + 1.0e-5;
         //crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9) + 1.0e-20;
         workField[index[variableIndex]] += dx;
         evaluate(index, workField, owner, line, pComponentParams);
         crvt ret1 = (workField[index[0]] - value) / dx;
-        workField[index[0]] = value;
-        workField[index[variableIndex]] = var;
-        workField[index[variableIndex]] -= dx;
-        evaluate(index, workField, owner, line, pComponentParams);
-        crvt ret2 = (workField[index[0]] - value) / dx;
+        //workField[index[0]] = value;
+        //workField[index[variableIndex]] = var;
+        //workField[index[variableIndex]] -= dx;
+        //evaluate(index, workField, owner, line, pComponentParams);
+        //crvt ret2 = (workField[index[0]] - value) / dx;
         // restoring the workfield
         workField[index[0]] = value;
         workField[index[variableIndex]] = var;
-        return (ret1 - ret2) * 0.5;
+        //return (ret1 - ret2) * 0.5;
+        return ret1;
     }
     uns getN_ComponentParam()const noexcept { return nComponentParam; }
     uns getN_Param()const noexcept { return nParam; }
@@ -186,9 +188,9 @@ public:
 class HmgBuiltInFunction_PRINT final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_PRINT() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    HmgBuiltInFunction_PRINT() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        printf("> %g ", workField[index[0]]);
+        printf("> %g ", workField[index[2]]);
         return 0;
     }
 };
@@ -198,9 +200,9 @@ public:
 class HmgBuiltInFunction_PRINTLN final : public HmgFunction{
 //***********************************************************************
 public:
-    HmgBuiltInFunction_PRINTLN() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    HmgBuiltInFunction_PRINTLN() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        printf("> %g <\n", workField[index[0]]);
+        printf("> %g <\n", workField[index[2]]);
         return 0;
     }
 };
@@ -289,6 +291,18 @@ public:
     HmgBuiltInFunction_C_Q() : HmgFunction{ 0, 0, 2, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
         workField[index[0]] = hmgQ;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+class HmgBuiltInFunction_C_CI final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_C_CI() : HmgFunction{ 0, 0, 2, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
+        workField[index[0]] = curretIterN;
         return 0;
     }
 };
@@ -2838,6 +2852,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_C_T0] = std::make_unique<HmgBuiltInFunction_C_T0>();
     builtInFunctions[builtInFunctionType::bift_C_K] = std::make_unique<HmgBuiltInFunction_C_K>();
     builtInFunctions[builtInFunctionType::bift_C_Q] = std::make_unique<HmgBuiltInFunction_C_Q>();
+    builtInFunctions[builtInFunctionType::bift_C_CI] = std::make_unique<HmgBuiltInFunction_C_CI>();
     builtInFunctions[builtInFunctionType::bift_ADD] = std::make_unique<HmgBuiltInFunction_ADD>();
     builtInFunctions[builtInFunctionType::bift_SUB] = std::make_unique<HmgBuiltInFunction_SUB>();
     builtInFunctions[builtInFunctionType::bift_MUL] = std::make_unique<HmgBuiltInFunction_MUL>();

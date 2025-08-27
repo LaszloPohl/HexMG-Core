@@ -60,6 +60,7 @@ inline constexpr uns maxRails = 1'048'576;
 inline constexpr uns maxComponentPar = 12;
 inline constexpr rvt gmax = 1.0e+012;
 inline constexpr rvt gmin = 1.0e-012; // csak a VIN és MIN használja, ha e1-18, akkor elszáll a diódamodell
+extern uns curretIterN;
 //***********************************************************************
 
 
@@ -137,7 +138,7 @@ enum builtInFunctionType {
     biftInvalid, biftCustom,
     
     bift_CONST, bift_C_PI, bift_PRINT, bift_PRINTLN, bift_NOP, bift_C_2PI, 
-    bift_C_PI2, bift_C_E, bift_C_T0, bift_C_K, bift_C_Q,
+    bift_C_PI2, bift_C_E, bift_C_T0, bift_C_K, bift_C_Q, bift_C_CI,
     
     bift_ADD, bift_SUB, bift_MUL, bift_DIV, bift_IDIV, bift_MOD, 
     bift_TRUNC, bift_ROUND, bift_CEIL, bift_FLOOR, 

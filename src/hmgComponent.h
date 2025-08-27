@@ -3239,8 +3239,10 @@ public:
     void calculateValueDC() noexcept override {
     // TO PARALLEL
     //***********************************************************************
-        for (auto& comp : components)
-            if (comp->isEnabled) comp->calculateValueDC();
+        //for (auto& comp : components)
+        //    if (comp->isEnabled) comp->calculateValueDC();
+        for (size_t i = 0; i < components.size(); i++)
+            if (components[i]->isEnabled) components[i]->calculateValueDC();
         // setting own value should be here
     }
     //***********************************************************************
@@ -3268,9 +3270,13 @@ public:
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < model.getN_N_Nodes(); i++) {
             d.addDefectNonSquare(internalNodesAndVars[i].getVDC());
+            //if(fabs(internalNodesAndVars[i].getVDC()) > 1.0e-010)
+            //    printf("%g\n", internalNodesAndVars[i].getVDC());
         }
-        for (auto& comp : components)
-            if (comp->isEnabled) d.addCollector(comp->collectVoltageDefectDC());
+        //for (auto& comp : components)
+        //    if (comp->isEnabled) d.addCollector(comp->collectVoltageDefectDC());
+        for (size_t i = 0; i < components.size(); i++)
+            if (components[i]->isEnabled) d.addCollector(components[i]->collectVoltageDefectDC());
         return d;
     }
     //***********************************************************************

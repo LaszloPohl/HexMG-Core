@@ -846,7 +846,7 @@ struct HMGFileFunction: HMGFileListItem {
         }
     }
     //***********************************************************************
-    void ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo);
+    void ReadParams(FunctionDescription& dest, uns nPar, LineTokenizer& lineToken, ReadALine& reader, char* line, LineInfo& lineInfo, bool isNoRetValue);
     //***********************************************************************
     void ReadLabel(FunctionDescription& dest, LineTokenizer& lineToken, ReadALine& reader, LineInfo& lineInfo) {
     //***********************************************************************

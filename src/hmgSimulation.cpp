@@ -22,6 +22,10 @@ void Simulation::iterate() {
 
 }
 
+//***********************************************************************
+uns curretIterN = 0;
+//***********************************************************************
+
 
 //***********************************************************************
 void Simulation::runDC() {
@@ -29,95 +33,85 @@ void Simulation::runDC() {
 
     // TODO: SimControl::minIter
 
-    if (SimControl::nNonlinComponents == 10) {
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::AcceptStepDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        
-        CircuitStorage& gc = CircuitStorage::getInstance();
-#ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
-#endif
-    }
-    else {
-        bench_now("start DC");
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        bench_now("CalculateControllersDC");
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        bench_now("CalculateValuesAndCurrentsDC");
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        bench_now("ForwsubsBacksubsDC");
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
-        bench_now("AcceptIterationDC");
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        bench_now("CalculateControllersDC");
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        bench_now("CalculateValuesAndCurrentsDC");
+    curretIterN = 0;
 
-        CircuitStorage& gc = CircuitStorage::getInstance();
+    bench_now("start DC");
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    bench_now("CalculateControllersDC");
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    bench_now("CalculateValuesAndCurrentsDC");
+    CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+    bench_now("ForwsubsBacksubsDC");
+    CircuitStorage::AcceptIterationDC(fullCircuitID);
+    bench_now("AcceptIterationDC");
+
+    curretIterN++;
+
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    bench_now("CalculateControllersDC");
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    bench_now("CalculateValuesAndCurrentsDC");
+
+    CircuitStorage& gc = CircuitStorage::getInstance();
 /*
 #ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+    std::cout << std::endl;
+    gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
 
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+    CircuitStorage::AcceptIterationDC(fullCircuitID);
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
 #ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+    std::cout << std::endl;
+    gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
 
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+    CircuitStorage::AcceptIterationDC(fullCircuitID);
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
 
 #ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+    std::cout << std::endl;
+    gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
-        bench_now("first iterations");
+    bench_now("first iterations");
 */
-        rvt max_error = 1000.0;
-        for (uns i = 0; max_error > 1.0e-005 && i < 10; i++) {
-            CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-            ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
-            CircuitStorage::AcceptIterationDC(fullCircuitID);
-            CircuitStorage::CalculateControllersDC(fullCircuitID);
-            CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-            ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
-
-            rvt cErr = c.sumDefect / c.nodeNum + c.maxDefect;
-            rvt vErr = v.sumDefect / v.nodeNum + v.maxDefect;
-            max_error = cErr + vErr;
-            std::cout << "    error = " << max_error << "    I error = " << cErr << "    V error = " << vErr << std::endl;
-#ifdef HMG_DEBUGPRINT
-            std::cout << std::endl;
-            gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
-#endif
-            bench_now("iteration");
-        }
-/*
+    rvt max_error = 1000.0;
+    for (uns i = 0; max_error > 1.0e-005 && i < 100; i++) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
-        CircuitStorage::AcceptStepDC(fullCircuitID);
+        curretIterN++;
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
 
+        rvt cErr = c.sumDefect / c.nodeNum + c.maxDefect;
+        rvt vErr = v.sumDefect / v.nodeNum + v.maxDefect;
+        max_error = cErr + vErr;
+        std::cout << "Iter " << (i + 1) << "    error = " << max_error << "    I error = " << cErr << "    V error = " << vErr << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
         gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
-*/
+        bench_now("iteration");
     }
+/*
+    CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+    CircuitStorage::AcceptIterationDC(fullCircuitID);
+    CircuitStorage::AcceptStepDC(fullCircuitID);
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+
+#ifdef HMG_DEBUGPRINT
+    std::cout << std::endl;
+    gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+#endif
+*/
     wasDC = true;
 }
 

@@ -197,7 +197,16 @@ apa::apa(const char * ProjectFile)
 //***********************************************************************
 void apa::write_HMG(){
 //***********************************************************************
-
+    PLString HMG_nev = path + proj_nev + ".hmg";
+    FILE* fp = fopen(HMG_nev.c_str(), "wt");
+    if (fp == nullptr)
+        throw hiba("apa::write_HMG", "cannot open %s", HMG_nev.c_str());
+    printf("creating file: %s\n", HMG_nev.c_str());
+    write_HMG_akt_sim(fp, tsim[0]);
+    fclose(fp);
+    if(tsim.size() > 1)
+        printf("Warning: %u simulations defined, only one .hex was written. Multiple hex writing not supported.\n", tsim.size());
+    /*
     for (uns i = 0; i < tsim.size(); i++) {
         PLString HMG_nev = tsim.size() > 1 ? path + '_' + i + proj_nev + ".hmg" : path + proj_nev + ".hmg";
         FILE* fp = fopen(HMG_nev.c_str(), "wt");
@@ -207,6 +216,7 @@ void apa::write_HMG(){
         write_HMG_akt_sim(fp, tsim[i]);
         fclose(fp);
     }
+*/
 }
 
 
@@ -5847,9 +5857,23 @@ void model::read(PLString path){
                             if(!R_converter(fajl.lines()[i],3,aktsemi.par,m_dummy))
                                 throw hiba(fvnev,"equation value wrong in line %u in %s",i,fileName.c_str());
                         }
+                        else if (aktpar == "uequation") {
+                            if (!R_converter(fajl.lines()[i], 3, aktsemi.par, m_dummy))
+                                throw hiba(fvnev, "equation value wrong in line %u in %s", i, fileName.c_str());
+                            if (aktsemi.par.semitip == nlt_exp)
+                                aktsemi.par.semitip = nlt_uexp;
+                        }
                         else if(aktpar=="diode"){
                             if(!R_converter(fajl.lines()[i],3,aktsemi.par,m_dummy,true))
                                 throw hiba(fvnev,"equation value wrong in line %u in %s",i,fileName.c_str());
+                        }
+                        else if (aktpar == "udiode") {
+                            if (!R_converter(fajl.lines()[i], 3, aktsemi.par, m_dummy, true))
+                                throw hiba(fvnev, "equation value wrong in line %u in %s", i, fileName.c_str());
+                            if (aktsemi.par.semitip == nlt_exp)
+                                aktsemi.par.semitip = nlt_uexp;
+                            else if (aktsemi.par.semitip == nlt_diode)
+                                aktsemi.par.semitip = nlt_udiode;
                         }
                         else if(aktpar=="erno"){
                             if(!Erno_converter(path+fajl.lines()[i][3],aktsemi.par))

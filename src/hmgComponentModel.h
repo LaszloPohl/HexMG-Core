@@ -470,7 +470,7 @@ public:
     uns getN_N_Nodes()const noexcept final override{ return internalNs.nNNodes; }
     uns getN_InternalNodes()const noexcept final override{ return internalNs.nNNodes + internalNs.nBNodes; }
     //***********************************************************************
-    void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; internalNs.nBNodes = nAll - nNormal; internalNs.nNNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
+    //void setNInternalNodes(uns nAll, uns nNormal, bool defaultInternalNodeIsConcurrent) { version++; internalNs.nBNodes = nAll - nNormal; internalNs.nNNodes = nNormal; internalNodeIsConcurrent.resize(nNormal, defaultInternalNodeIsConcurrent); }
     //***********************************************************************
     uns push_back_component(std::unique_ptr<ComponentDefinition> ptr) { version++; components.push_back(std::move(ptr)); return uns(components.size()); }
     void setComponent(uns index, std::unique_ptr<ComponentDefinition> ptr) noexcept { version++; components[index] = std::move(ptr); }
