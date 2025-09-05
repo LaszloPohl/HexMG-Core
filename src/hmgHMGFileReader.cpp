@@ -73,6 +73,7 @@ FileFunctionNameID biftNameID[] = {
     { "POW",	bift_POW },
     { "POWC",	bift_POWC },
     { "CPOW",	bift_CPOW },
+    { "SIGN",	bift_SIGN },
     { "EXP",	bift_EXP },
     { "NEXP",	bift_NEXP },
     { "IEXP",	bift_IEXP },
@@ -936,6 +937,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,     "GD") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGD_1; parnum = 2; nodenum = 4; }
             else if (strcmp(token,     "G2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstG_2;  parnum = 2; }
             else if (strcmp(token,    "GD2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGD_2; parnum = 3; nodenum = 4; }
+            else if (strcmp(token,     "GM") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGM_1; parnum = 1; nodenum = 3; }
+            else if (strcmp(token,    "GM2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGM_2; parnum = 2; nodenum = 3; }
+            else if (strcmp(token,    "GMD") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstGMD_1; parnum = 2; nodenum = 5; }
+
             else if (strcmp(token,      "C") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_1; }
             else if (strcmp(token,     "C2") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstC_2;  parnum = 2; }
             else if (strcmp(token,      "L") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConstL_1; }
@@ -951,7 +956,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             else if (strcmp(token,     "IC") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtConst_Controlled_I; nodenum = 3; parnum = 1; }
             else if (strcmp(token, "XDIODE") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtXDiode;   parnum = 1; nodenum = 3; }
             else if (strcmp(token,  "HYS_1") == 0) { pxline->isBuiltIn = true; pxline->modelIndex = bimtHYS_1;    parnum = 3; nodenum = 2; pxline->isController = true; }
-            else if (strcmp(token,    "FCI") == 0 || strcmp(token, "FCID") == 0 || strcmp(token, "FCB") == 0) {
+            else if (strcmp(token,    "FCI") == 0 || strcmp(token, "FCID") == 0 || strcmp(token, "FCB") == 0 || strcmp(token, "FCIM") == 0 || strcmp(token, "FCIMD") == 0) {
                 pxline->isBuiltIn = true; 
 
                 pxline->modelIndex = bimFunc_Controlled_IG;
@@ -959,6 +964,10 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                     pxline->modelIndex = bimFunc_Controlled_Node; // !
                 else if (strcmp(token, "FCID") == 0)
                     pxline->modelIndex = bimFunc_Controlled_IGD;
+                else if (strcmp(token, "FCIM") == 0)
+                    pxline->modelIndex = bimFunc_Controlled_IGM;
+                else if (strcmp(token, "FCIMD") == 0)
+                    pxline->modelIndex = bimFunc_Controlled_IGMD;
 
                 pxline->isFunctionControlled = true;
                 bool isNotFinished = true;
@@ -1053,6 +1062,16 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
                             case bimFunc_Controlled_Node:
                                 nodenum = 1 + pxline->nIN + pxline->nCin;
                                 parnum = pxline->nPar;
+                                compnum = pxline->nCT;
+                                break;
+                            case bimFunc_Controlled_IGM:
+                                nodenum = 3 + pxline->nIN + pxline->nCin;
+                                parnum = 1 + pxline->nPar;
+                                compnum = pxline->nCT;
+                                break;
+                            case bimFunc_Controlled_IGMD:
+                                nodenum = 5 + pxline->nIN + pxline->nCin;
+                                parnum = 2 + pxline->nPar;
                                 compnum = pxline->nCT;
                                 break;
                             default:
@@ -2439,6 +2458,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         break;
+                    case bift_SIGN:
                     case bift_EXP:
                     case bift_NEXP:
                     case bift_IEXP:
@@ -2578,7 +2598,8 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                                         ReadValue(func, lineToken, reader, line, lineInfo);
                                         break;
 
-                    case bift_JMPR:     break;
+                    case bift_JMPR:     ReadParams(func, 0, lineToken, reader, line, lineInfo, true); 
+                                        break;
                     case bift_JGTR:
                     case bift_JSTR:
                     case bift_JGER:

@@ -605,6 +605,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                             globalVariables[pAct->nodeID.nodeID.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
                             poi = globalVariables[pAct->nodeID.nodeID.index].get();
                             poi->setDefaultValueIndex(0, true);
+                            poi->setId(pAct->nodeID.nodeID.index, 0, 0, 0);
                         }
                         poi->setValueDC(pAct->value);
                     }
@@ -1307,6 +1308,22 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                         xns.nParams = pAct->nPar;
                         xns.nComponentT = 0;
                     }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGM) {
+                        xns.nXNodes = 3;
+                        xns.nYNodes = pAct->nIN;
+                        xns.nANodes = pAct->nCIN;
+                        xns.nONodes = 0;
+                        xns.nParams = 1 + pAct->nPar;
+                        xns.nComponentT = 0;
+                    }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGMD) {
+                        xns.nXNodes = 5;
+                        xns.nYNodes = pAct->nIN;
+                        xns.nANodes = pAct->nCIN;
+                        xns.nONodes = 0;
+                        xns.nParams = 2 + pAct->nPar;
+                        xns.nComponentT = 0;
+                    }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
 
@@ -1372,6 +1389,18 @@ void ModelSubCircuit::processInstructions(IsInstruction*& first) {
                             ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
                             : gc.functions[pAct->functionIndex].get();
                         gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_Node>(1 + pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
+                    }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGM) {
+                        HmgFunction* fv = pAct->isFunctionBuiltIn
+                            ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
+                            : gc.functions[pAct->functionIndex].get();
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_GM>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
+                    }
+                    else if (pAct->modelIndex == bimFunc_Controlled_IGMD) {
+                        HmgFunction* fv = pAct->isFunctionBuiltIn
+                            ? HgmFunctionStorage::builtInFunctions[pAct->functionIndex].get()
+                            : gc.functions[pAct->functionIndex].get();
+                        gc.functionControlledBuiltInModels.push_back(std::make_unique<Model_Function_Controlled_I_with_const_GMD>(pAct->nIN, pAct->nCIN, 1 + pAct->nPar, functionSources, std::move(functionComponentParams), fv));
                     }
                     else
                         throw hmgExcept("ModelSubCircuit::processInstructions", "Function controlled component instance => unknown function controlled component (%u)", pAct->modelIndex);
@@ -1605,7 +1634,7 @@ void ComponentSubCircuit::allocForReductionAC() {
 
 
 //***********************************************************************
-void ComponentSubCircuit::buildOrReplace() {
+void ComponentSubCircuit::buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) {
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (version == model.getVersion()) {
@@ -1617,10 +1646,10 @@ void ComponentSubCircuit::buildOrReplace() {
         // replacing
 
         csiz nComponent = model.components.size();
-        for (auto& comp : components)
-            if (comp->isEnabled) comp->buildOrReplace();
-        for (auto& cont : controllers)
-            if (cont->isEnabled) cont->buildOrReplace();
+        for (size_t i = 0; i < components.size(); i++)
+            if (components[i]->isEnabled) components[i]->buildOrReplace((uns)(i + 1), id, parentId, parentParentParentId);
+        for (size_t i = 0; i < controllers.size(); i++)
+            if (controllers[i]->isEnabled) controllers[i]->buildOrReplace((uns)(i + 2'000'000'001), id, parentId, parentParentParentId);
 
         // isJacobianMXSymmetrical
 
@@ -1668,6 +1697,9 @@ void ComponentSubCircuit::buildOrReplace() {
 
     for (uns i = 0; i < model.internalNs.nBNodes; i++)
         internalNodesAndVars[model.internalNs.nNNodes + i].setDefaultValueIndex(0, true);
+
+    for (uns i = 0; i < nInternalNodesAndVars; i++)
+        internalNodesAndVars[i].setId(i, id, parentId, parentParentId);
 
     for (uns i = 0; i < nEndExtNodes; i++) {
         if (externalNodes[i] == nullptr)
@@ -1771,6 +1803,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     if (par.var == nullptr) {
                         CircuitStorage::getInstance().globalVariables[cdp.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
                         par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
+                        CircuitStorage::getInstance().globalVariables[cdp.index]->setId(cdp.index, 0, 0, 0);
                     }
                     par.var->setDefaultValueIndex(0, true);
                     break;
@@ -1802,6 +1835,7 @@ void ComponentSubCircuit::buildOrReplace() {
                     if (par.var == nullptr) {
                         CircuitStorage::getInstance().globalVariables[cdp.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
                         par.var = CircuitStorage::getInstance().globalVariables[cdp.index].get();
+                        CircuitStorage::getInstance().globalVariables[cdp.index]->setId(cdp.index, 0, 0, 0);
                     }
                     par.var->setDefaultValueIndex(0, true);
                     break;
@@ -1848,11 +1882,11 @@ void ComponentSubCircuit::buildOrReplace() {
     // building / replacing
 
     for (siz i = 0; i < nComponent; i++) {
-        components[i]->buildOrReplace();
+        components[i]->buildOrReplace((uns)(i + 1), id, parentId, parentParentParentId);
     }
 
     for (siz i = 0; i < nControllers; i++) {
-        controllers[i]->buildOrReplace();
+        controllers[i]->buildOrReplace((uns)(i + 2'000'000'001), id, parentId, parentParentParentId);
     }
 
     // isJacobianMXSymmetrical

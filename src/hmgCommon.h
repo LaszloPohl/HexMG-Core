@@ -97,11 +97,13 @@ enum SolutionType { stFullMatrix, stSunRed }; // , stMultiGrid
 
 //***********************************************************************
 enum builtInModelType { bimtCustom, bimtConstR_1, bimtConstRD_1, 
-    bimtConstR_2, bimtConstRD_2, bimtConstG_1, bimtConstGD_1, bimtConstG_2, 
-    bimtConstGD_2, bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
+    bimtConstR_2, bimtConstRD_2, bimtConstG_1, bimtConstGD_1, bimtConstG_2, bimtConstGD_2, 
+    bimtConstGM_1, bimtConstGM_2, bimtConstGMD_1,
+    bimtConstC_1, bimtConstC_2, bimtConstI_1, bimtConstI_2, 
     bimtConstV, bimtConst_V_Controlled_I, bimtConst_Controlled_I, 
     bimtGirator, bimtConstVIB, bimtConstVIN, bimtMIB, bimtMIN, 
     bimFunc_Controlled_IG, bimFunc_Controlled_IGD, bimFunc_Controlled_Node,
+    bimFunc_Controlled_IGM, bimFunc_Controlled_IGMD,
 
     bimtConstL_1, bimtXDiode, bimtHYS_1,
     
@@ -114,11 +116,13 @@ enum ComponentAndControllerModelType {
 //***********************************************************************
     ccmt_ConstR_1, ccmt_ConstRD_1, ccmt_ConstR_2, ccmt_ConstRD_2, 
     ccmt_ConstG_1, ccmt_ConstGD_1, ccmt_ConstG_2, ccmt_ConstGD_2,
+    ccmt_ConstGM_1, ccmt_ConstGM_2, ccmt_ConstGMD_1,
     ccmt_ConstC_1, ccmt_ConstC_2, ccmt_ConstI_1, ccmt_ConstI_2,
     ccmt_ConstV, ccmt_Const_V_Controlled_I_1, ccmt_Girator,
     ccmt_ConstVIB, ccmt_ConstVIN, ccmt_MIB, ccmt_MIN, ccmt_ConstIC,
     ccmt_Function_Controlled_I_with_const_G, ccmt_Function_Controlled_I_with_const_GD, 
-    ccmt_Function_Controlled_Node, ccmt_Controller, ccmt_SubCircuit
+    ccmt_Function_Controlled_Node, ccmt_Function_Controlled_I_with_const_GM,
+    ccmt_Function_Controlled_I_with_const_GMD, ccmt_Controller, ccmt_SubCircuit
 };
 
 
@@ -144,7 +148,7 @@ enum builtInFunctionType {
     bift_TRUNC, bift_ROUND, bift_CEIL, bift_FLOOR, 
     bift_ADDC, bift_SUBC, bift_MULC, bift_DIVC, bift_IDIVC, bift_MODC,
     bift_CADD, bift_CSUB, bift_CMUL, bift_CDIV, bift_CIDIV, bift_CMOD,
-    bift_NEG, bift_INV, bift_SQRT, bift_POW, bift_POWC, bift_CPOW,
+    bift_NEG, bift_INV, bift_SQRT, bift_POW, bift_POWC, bift_CPOW, bift_SIGN,
     bift_EXP, bift_NEXP, bift_IEXP, bift_INEXP, bift_LN, bift_LOG,
     bift_CLOG,
     bift_ABS, bift_ASIN,bift_ACOS, bift_ATAN, bift_ASINH, bift_ACOSH,

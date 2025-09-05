@@ -122,10 +122,24 @@ struct NodeVariable {
     bool isConcurrent = true;
     bool isGnd = false;
     std::unique_ptr<Extension> extension;
+    uns nid[4] = { 0 };
     //***********************************************************************
     // 
     //***********************************************************************
     NodeVariable() = default;
+    void setId(uns id, uns parentId, uns parentParentId, uns parentParentParentId) noexcept {
+        nid[0] = id; nid[1] = parentId; nid[2] = parentParentId; nid[3] = parentParentParentId;
+    }
+    void printNodeId()const noexcept {
+        for (uns i = 3; i > 0; i--)
+            if (nid[i] == 0)
+                printf("X->");
+            else if(nid[i]<2'000'000'000)
+                printf("Component_%u->", nid[i] - 1);
+            else
+                printf("Controller_%u->", nid[i] - 1);
+        printf("Node_%u-> ", nid[0]);
+    }
     void extend() { if (!extension) extension = std::make_unique<Extension>(); }
     void reset() noexcept; // DC + AC
     void setIsConcurrent(bool is) noexcept { isConcurrent = is; }

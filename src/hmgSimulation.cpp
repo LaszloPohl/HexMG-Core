@@ -34,15 +34,22 @@ void Simulation::runDC() {
     // TODO: SimControl::minIter
 
     curretIterN = 0;
+    CircuitStorage& gc = CircuitStorage::getInstance();
 
     bench_now("start DC");
     CircuitStorage::CalculateControllersDC(fullCircuitID);
     bench_now("CalculateControllersDC");
     CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+  //printf("CalculateValuesAndCurrents\n");
+  //gc.fullCircuitInstances[0].component->printNodeValue();
     bench_now("CalculateValuesAndCurrentsDC");
     CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+  //printf("ForwsubsBacksubs\n");
+  //gc.fullCircuitInstances[0].component->printNodeValue();
     bench_now("ForwsubsBacksubsDC");
     CircuitStorage::AcceptIterationDC(fullCircuitID);
+  //printf("AcceptIteration\n");
+  //gc.fullCircuitInstances[0].component->printNodeValue();
     bench_now("AcceptIterationDC");
 
     curretIterN++;
@@ -51,8 +58,9 @@ void Simulation::runDC() {
     bench_now("CalculateControllersDC");
     CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
     bench_now("CalculateValuesAndCurrentsDC");
+  //printf("CalculateValuesAndCurrents\n");
+  //gc.fullCircuitInstances[0].component->printNodeValue();
 
-    CircuitStorage& gc = CircuitStorage::getInstance();
 /*
 #ifdef HMG_DEBUGPRINT
     std::cout << std::endl;
@@ -81,13 +89,19 @@ void Simulation::runDC() {
     bench_now("first iterations");
 */
     rvt max_error = 1000.0;
-    for (uns i = 0; max_error > 1.0e-005 && i < 100; i++) {
+    for (uns i = 0; /*max_error > 1.0e-006 &&*/ i < 5; i++) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+      //printf("ForwsubsBacksubs\n");
+      //gc.fullCircuitInstances[0].component->printNodeValue();
         ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+      //printf("AcceptIteration\n");
+      //gc.fullCircuitInstances[0].component->printNodeValue();
         curretIterN++;
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+      //printf("CalculateValuesAndCurrents\n");
+      //gc.fullCircuitInstances[0].component->printNodeValue();
         ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
 
         rvt cErr = c.sumDefect / c.nodeNum + c.maxDefect;

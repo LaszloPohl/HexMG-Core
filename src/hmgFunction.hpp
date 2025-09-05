@@ -645,12 +645,31 @@ public:
 
 
 //***********************************************************************
+class HmgBuiltInFunction_SIGN final : public HmgFunction{
+//***********************************************************************
+public:
+    HmgBuiltInFunction_SIGN() : HmgFunction{ 0, 1, 3, 0, 0 } {}
+    int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
+        rvt x = workField[index[2]];
+        workField[index[0]] = x < 0.0 ? -1.0 : 1.0;
+        return 0;
+    }
+};
+
+
+//***********************************************************************
+inline constexpr rvt HMG_MAX_EXP = 200.0;
+//***********************************************************************
+
+
+//***********************************************************************
 class HmgBuiltInFunction_EXP final : public HmgFunction{
 //***********************************************************************
 public:
     HmgBuiltInFunction_EXP() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = exp(workField[index[2]]);
+        rvt x = workField[index[2]];
+        workField[index[0]] = x > HMG_MAX_EXP ? exp(HMG_MAX_EXP) : exp(x);
         return 0;
     }
 };
@@ -662,7 +681,8 @@ class HmgBuiltInFunction_NEXP final : public HmgFunction{
 public:
     HmgBuiltInFunction_NEXP() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = exp(-workField[index[2]]);
+        rvt x = -workField[index[2]];
+        workField[index[0]] = x > HMG_MAX_EXP ? exp(HMG_MAX_EXP) : exp(x);
         return 0;
     }
 };
@@ -674,7 +694,8 @@ class HmgBuiltInFunction_IEXP final : public HmgFunction{
 public:
     HmgBuiltInFunction_IEXP() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = exp(rvt1 / workField[index[2]]);
+        rvt x = rvt1 / workField[index[2]];
+        workField[index[0]] = x > HMG_MAX_EXP ? exp(HMG_MAX_EXP) : exp(x);
         return 0;
     }
 };
@@ -686,7 +707,8 @@ class HmgBuiltInFunction_INEXP final : public HmgFunction{
 public:
     HmgBuiltInFunction_INEXP() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = exp(-rvt1 / workField[index[2]]);
+        rvt x = -rvt1 / workField[index[2]];
+        workField[index[0]] = x > HMG_MAX_EXP ? exp(HMG_MAX_EXP) : exp(x);
         return 0;
     }
 };
@@ -698,7 +720,8 @@ class HmgBuiltInFunction_NIEXP final : public HmgFunction{
 public:
     HmgBuiltInFunction_NIEXP() : HmgFunction{ 0, 1, 3, 0, 0 } {}
     int evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept override {
-        workField[index[0]] = exp(-rvt1 / workField[index[2]]);
+        rvt x = -rvt1 / workField[index[2]];
+        workField[index[0]] = x > HMG_MAX_EXP ? exp(HMG_MAX_EXP) : exp(x);
         return 0;
     }
 };
@@ -2881,6 +2904,7 @@ inline HgmFunctionStorage::HgmFunctionStorage() {
     builtInFunctions[builtInFunctionType::bift_POW] = std::make_unique<HmgBuiltInFunction_POW>();
     builtInFunctions[builtInFunctionType::bift_POWC] = std::make_unique<HmgBuiltInFunction_POWC>();
     builtInFunctions[builtInFunctionType::bift_CPOW] = std::make_unique<HmgBuiltInFunction_CPOW>();
+    builtInFunctions[builtInFunctionType::bift_SIGN] = std::make_unique<HmgBuiltInFunction_SIGN>();
     builtInFunctions[builtInFunctionType::bift_EXP] = std::make_unique<HmgBuiltInFunction_EXP>();
     builtInFunctions[builtInFunctionType::bift_NEXP] = std::make_unique<HmgBuiltInFunction_NEXP>();
     builtInFunctions[builtInFunctionType::bift_IEXP] = std::make_unique<HmgBuiltInFunction_IEXP>();
