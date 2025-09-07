@@ -530,10 +530,10 @@ public:
         if (y < 2)
             return 0;
         // y = 2
-        switch (x) { // I3 = G(U1 - U2) - 1 * U3
-            case 0: return componentValue.getValueDC();
-            case 1: return -componentValue.getValueDC();
-            case 2: return -1.0;
+        switch (x) { // I3 = G(U2 - U1) + 1 * U3
+            case 0: return -componentValue.getValueDC();
+            case 1: return componentValue.getValueDC();
+            case 2: return 1.0;
         }
         return 0;
     }
@@ -555,7 +555,7 @@ public:
         crvt G = componentValue.getValueDC();
         N[0]->incYiiDC(G);
         N[1]->incYiiDC(G);
-        N[2]->incYiiDC(-1.0);
+        N[2]->incYiiDC(1.0);
     }
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
@@ -567,10 +567,10 @@ public:
         if (y < 2)
             return 0;
         // y = 2
-        switch (x) { // I3 = G(U1 - U2) - 1 * U3
-            case 0: return componentValue.getValueDC();
-            case 1: return -componentValue.getValueDC();
-            case 2: return -1.0;
+        switch (x) { // I3 = G(U2 - U1) + 1 * U3
+            case 0: return -componentValue.getValueDC();
+            case 1: return componentValue.getValueDC();
+            case 2: return 1.0;
         }
         return 0;
     }
@@ -582,7 +582,7 @@ public:
         ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
         N[0]->incYiiAC(G);
         N[1]->incYiiAC(G);
-        N[2]->incYiiDC(-1.0);
+        N[2]->incYiiDC(1.0);
     }
     //***********************************************************************
     cplx getCurrentAC(uns y) const noexcept override { 
@@ -994,12 +994,12 @@ public:
         if (x > 2)
             return rvt0;
         if (x == 2)
-            return y == 2 ? -1.0 : 0.0;// I3 = G(U1 - U2) - 1 * U3
+            return y == 2 ? 1.0 : 0.0;// I3 = G(U2 - U1) + 1 * U3
         rvt Gs = x == 0 ? componentValue.getValueDC() : -componentValue.getValueDC();
         switch (y) {
             case 0: return  Gs;
             case 1: return -Gs;
-            case 2: return  Gs;
+            case 2: return -Gs;
             case 3: return -2 * Gs * (N[0]->getValueDC() - N[1]->getValueDC()) * share.get(); // sign?
             case 4: return -2 * Gs * (N[0]->getValueDC() - N[1]->getValueDC()) * (rvt1 - share.get()); // sign?
         }
@@ -1025,7 +1025,7 @@ public:
         crvt G = componentValue.getValueDC();
         N[0]->incYiiDC(G);
         N[1]->incYiiDC(G);
-        N[2]->incYiiDC(-1.0);
+        N[2]->incYiiDC(1.0);
     }
     //************************** AC functions *******************************
     cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
@@ -1037,10 +1037,10 @@ public:
         if (y < 2)
             return cplx0;
         // y = 2
-        switch (x) { // I3 = G(U1 - U2) - 1 * U3
-            case 0: return componentValue.getValueDC();
-            case 1: return -componentValue.getValueDC();
-            case 2: return -1.0;
+        switch (x) { // I3 = G(U2 - U1) + 1 * U3
+            case 0: return -componentValue.getValueDC();
+            case 1: return componentValue.getValueDC();
+            case 2: return 1.0;
         }
         return 0;
     }
@@ -3221,10 +3221,10 @@ public:
             break;
             case 2:
                 switch (x) {
-                    case 0: return  pars[0].get() - dFv_per_dUi;
-                    case 1: return -pars[0].get() - dFv_per_dUi;
-                    case 2: return -1.0 - dFv_per_dUi;
-                    default: return  -dFv_per_dUi;
+                    case 0: return -pars[0].get() + dFv_per_dUi;
+                    case 1: return  pars[0].get() + dFv_per_dUi;
+                    case 2: return  1.0 + dFv_per_dUi;
+                    default: return   dFv_per_dUi;
                 }
             break;
             default: return 0;
@@ -3250,7 +3250,8 @@ public:
     }
     //***********************************************************************
     rvt getCurrentDC(uns y) const noexcept override { 
-        switch (y) {
+     //***********************************************************************
+       switch (y) {
             case 0: return -componentCurrent.getValueDC();
             case 1: return  componentCurrent.getValueDC();
             case 2: return -IMD;
@@ -3267,10 +3268,17 @@ public:
     //***********************************************************************
     cplx getYAC(uns y, uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 2)
+        if (x < 2 && y < 2)
+            return y == x ? pars[0].get() + dg : -pars[0].get() - dg; // ! dg differential conductance
+        if (y < 2)
             return cplx0;
-        crvt G = x == 0 ? pars[0].get() + dg : x == 1 ? -pars[0].get() - dg : rvt0; // ! dg differential conductance
-        return y == 0 ? G : -G;
+        // y = 2
+        switch (x) { // I3 = G(U2 - U1) + 1 * U3
+            case 0: return -pars[0].get() - dg;
+            case 1: return pars[0].get() + dg;
+            case 2: return 1.0;
+        }
+        return cplx0;
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -3280,6 +3288,7 @@ public:
         ccplx G = pars[0].get();
         externalNodes[0]->incYiiAC(G);
         externalNodes[1]->incYiiAC(G);
+        externalNodes[2]->incYiiAC(1.0);
     }
     //***********************************************************************
     cplx getCurrentAC(uns y) const noexcept override { 
@@ -3484,10 +3493,10 @@ public:
             }
             break;
             case 2: switch (x) {
-                case 0:  return  G   - dFv_per_dUi;
-                case 1:  return -G   - dFv_per_dUi;
-                case 2:  return -1.0 - dFv_per_dUi;
-                default: return   -dFv_per_dUi;
+                case 0:  return -G   + dFv_per_dUi;
+                case 1:  return  G   + dFv_per_dUi;
+                case 2:  return  1.0 + dFv_per_dUi;
+                default: return    dFv_per_dUi;
             }
             break;
             case 3: switch (x) {
@@ -3561,10 +3570,17 @@ public:
     //***********************************************************************
     cplx getYAC(uns y, uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 2)
+        if (x < 2 && y < 2)
+            return y == x ? pars[1].get() + dg : -pars[1].get() - dg; // ! dg differential conductance // pars[1] !
+        if (y < 2)
             return cplx0;
-        crvt G = x == 0 ? pars[1].get() + dg : x == 1 ? -pars[1].get() - dg : rvt0; // ! dg differential conductance // pars[1] !
-        return y == 0 ? G : -G;
+        // y = 2
+        switch (x) { // I3 = G(U2 - U1) + 1 * U3
+            case 0: return -pars[1].get() - dg;
+            case 1: return pars[1].get() + dg;
+            case 2: return 1.0;
+        }
+        return cplx0;
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -3574,6 +3590,7 @@ public:
         ccplx G = pars[1].get(); // pars[1] !
         externalNodes[0]->incYiiAC(G);
         externalNodes[1]->incYiiAC(G);
+        externalNodes[1]->incYiiAC(1.0);
     }
     //***********************************************************************
     cplx getCurrentAC(uns y) const noexcept override { 
