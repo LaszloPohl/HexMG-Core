@@ -339,12 +339,30 @@ struct vezetes{
                         dbl Utm = 1.3806504e-23 / 1.602176487e-19;
 
                         fprintf(fp, ".FUNCTION Semi_eq_el_duo_%u P=5 V=3\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, U1, U2, GM => U1 a magasabb fesz nyitóirányban
-                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+
+                        fprintf(fp, "_C_CURR_ITER V0\n");
+                        fprintf(fp, "_COPY V1 0\n");
+                        fprintf(fp, "_JGT normal: V0 V1\n");
+
+                        fprintf(fp, "_COPY V0 0.1\n");
+                        fprintf(fp, "_DIVC RET V0 %g\n", I0);
                         fprintf(fp, "_DIV RET RET P1\n");
                         fprintf(fp, "_MULC RET RET %g\n", As);
                         fprintf(fp, "_ADDC RET RET 1\n");
                         fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
-                        fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
+                        fprintf(fp, "_MULC RET RET %g\n", Utx);
+                        fprintf(fp, "_MUL RET RET P4\n");
+                        fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
+                        fprintf(fp, "_MUL V1 V0 P4\n");
+                        fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*1e6 - (U1-U2)*1e6 // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
+
+                        fprintf(fp, "normal: _DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_DIV RET RET P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
+                        fprintf(fp, "_MULC RET RET %g\n", Utx);
+                        fprintf(fp, "_MUL RET RET P4\n");
                         fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
                         fprintf(fp, "_MUL V1 V0 P4\n");
                         fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*1e6 - (U1-U2)*1e6 // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
@@ -408,13 +426,32 @@ struct vezetes{
                         dbl Utm = 1.3806504e-23 / 1.602176487e-19;
 
                         fprintf(fp, ".FUNCTION Semi_eq_el_duo_%u P=5 V=3\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, U1, U2, GM => U1 a magasabb fesz nyitóirányban
-                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+
+                        fprintf(fp, "_C_CURR_ITER V0\n");
+                        fprintf(fp, "_COPY V1 0\n");
+                        fprintf(fp, "_JGT normal: V0 V1\n");
+
+                        fprintf(fp, "_COPY V0 0.1\n");
+                        fprintf(fp, "_DIVC RET V0 %g\n", I0);
                         fprintf(fp, "_ABS RET RET\n");
                         fprintf(fp, "_DIV RET RET P1\n");
                         fprintf(fp, "_MULC RET RET %g\n", As);
                         fprintf(fp, "_ADDC RET RET 1\n");
                         fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
-                        fprintf(fp, "_MULC RET RET %g\n", Utx * 1.0e+006);
+                        fprintf(fp, "_MULC RET RET %g\n", Utx);
+                        fprintf(fp, "_MUL RET RET P4\n");
+                        fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
+                        fprintf(fp, "_MUL V1 V0 P4\n");
+                        fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*GM - (U1-U2)*GM // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
+
+                        fprintf(fp, "normal: _DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_ABS RET RET\n");
+                        fprintf(fp, "_DIV RET RET P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
+                        fprintf(fp, "_MULC RET RET %g\n", Utx);
+                        fprintf(fp, "_MUL RET RET P4\n");
                         fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
                         fprintf(fp, "_MUL V1 V0 P4\n");
                         fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*GM - (U1-U2)*GM // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
@@ -481,16 +518,35 @@ struct vezetes{
                         dbl Utmm = g[1] * 1.3806504e-23 / 1.602176487e-19;
 
                         fprintf(fp, ".FUNCTION Semi_eq_el_duo_%u P=5 V=3\n", (uns)hmg_nonlin_index); // pars: Ix, Ax, U1, U2, GM => U1 a magasabb fesz nyitóirányban
-                        fprintf(fp, "_DIVC RET P0 %g\n", I0);
+
+                        fprintf(fp, "_C_CURR_ITER V0\n");
+                        fprintf(fp, "_COPY V1 0\n");
+                        fprintf(fp, "_JGT normal: V0 V1\n");
+
+                        fprintf(fp, "_COPY V0 0.1\n");
+                        fprintf(fp, "_DIVC RET V0 %g\n", I0);
                         fprintf(fp, "_DIV RET RET P1\n");
                         fprintf(fp, "_MULC RET RET %g\n", As);
                         fprintf(fp, "_ADDC RET RET 1\n");
                         fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
-                        fprintf(fp, "_MULC RET RET %g\n", Utxm * 1.0e+006);
+                        fprintf(fp, "_MULC RET RET %g\n", Utxm);
+                        fprintf(fp, "_MUL RET RET P4\n");
                         fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
                         fprintf(fp, "_MUL V1 V0 P4\n");
                         fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*1e6 - (U1-U2)*1e6 // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
+                        fprintf(fp, "_RETURN\n");
 
+                        fprintf(fp, "normal: _DIVC RET P0 %g\n", I0);
+                        fprintf(fp, "_DIV RET RET P1\n");
+                        fprintf(fp, "_MULC RET RET %g\n", As);
+                        fprintf(fp, "_ADDC RET RET 1\n");
+                        fprintf(fp, "_LN RET RET\n"); // ln(I/I0*As/A+1)
+                        fprintf(fp, "_MULC RET RET %g\n", Utxm);
+                        fprintf(fp, "_MUL RET RET P4\n");
+                        fprintf(fp, "_SUB V0 P2 P3\n"); // U1 - U2
+                        fprintf(fp, "_MUL V1 V0 P4\n");
+                        fprintf(fp, "_SUB RET RET V1\n"); // RET = m*Ut*ln(I/I0*As/A+1)*1e6 - (U1-U2)*1e6 // az áramgenerátor árama, mínusz a párhuzamos ellenállás árama
+/*
                         fprintf(fp, "_DIVC V0 V0 %g\n", Utxm);
                         fprintf(fp, "_EXP V0 V0\n");
                         fprintf(fp, "_SUBC V0 V0 1\n");
@@ -498,10 +554,13 @@ struct vezetes{
                         fprintf(fp, "_MUL V0 V0 P1\n");
                         fprintf(fp, "_DIVC V0 V0 %g\n", As); // V0 = A/As*I0*(exp((U1-U2)/mUt)-1)
 
+                        //fprintf(fp, "_PRINT RET\n");
+                        //fprintf(fp, "_PRINT V0\n");
                         fprintf(fp, "_ABS V1 RET\n");
                         fprintf(fp, "_ABS V2 V0\n");
                         fprintf(fp, "_CST RET V2 V1 V0\n"); // RET = V2 < V1 ? V0 : RET
-                        //fprintf(fp, "_PRINTLN V1\n");
+*/
+                        //fprintf(fp, "_PRINTLN RET\n");
 
                         fprintf(fp, ".END FUNCTION Semi_eq_el_duo_%u\n\n", (uns)hmg_nonlin_index);
 
@@ -1993,12 +2052,11 @@ struct hmg_cella {
         uns global_var_index = 0; // 1..6 normál perem, 7.. belsõ perem
         const semiconductor* semi = nullptr;
         normal_node coreResistor;
-        normal_node IMeasResistor;
         normal_node Seebeck;
         normal_node junction;
         normal_node boundary; // mindenképpen be van állítva
         bool operator==(const out_nodes_el& other)const noexcept { return is_boundary == other.is_boundary && is_field_change == other.is_field_change && global_var_index == other.global_var_index
-            && semi == other.semi && coreResistor == other.coreResistor && IMeasResistor == other.IMeasResistor
+            && semi == other.semi && coreResistor == other.coreResistor 
             && Seebeck == other.Seebeck && junction == other.junction && boundary == other.boundary; }
         bool operator!=(const out_nodes_el& other)const noexcept { return !(*this == other); }
     };
@@ -2131,8 +2189,7 @@ struct hmg_cella {
         for (uns i = WEST; i < BASIC_SIDES; i++) {
             el_out_nodes[i].Seebeck = el_out_nodes[i].coreResistor;
             el_out_nodes[i].coreResistor.set(false, nNodes);
-            el_out_nodes[i].IMeasResistor.set(false, nNodes + 1); // IMeasResistor.node_index + 1 lesz az áram kimenet
-            nNodes += 3; // 3 új N node kell, a mérõ miatt
+            nNodes += 1;
             Seebeck_index = S_index;
         }
     }
@@ -2148,8 +2205,7 @@ struct hmg_cella {
                 else {
                     el_out_nodes[i].junction = el_out_nodes[i].coreResistor;
                     el_out_nodes[i].coreResistor.set(false, nNodes);
-                    el_out_nodes[i].IMeasResistor.set(false, nNodes + 1); // IMeasResistor.node_index + 1 lesz az áram kimenet
-                    nNodes += 3;
+                    nNodes += 1;
                 }
             }
     }
@@ -2222,38 +2278,38 @@ struct hmg_cella {
             const dbl GV[TOP + 1] = { 0, xGV, xGV, yGV, yGV, zGV, zGV };
             if (elvez.tipus == nlt_lin) {
                 if (core.is_th) { // eltherm => dissipators
-                    fprintf(fp, "ReW GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index, Gx);
-                    fprintf(fp, "ReE GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index, Gx);
-                    fprintf(fp, "ReS GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index, Gy);
-                    fprintf(fp, "ReN GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index, Gy);
-                    fprintf(fp, "ReB GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, Gz);
-                    fprintf(fp, "ReT GD N0 %c%u N1 N1 1 %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index, Gz);
+                    fprintf(fp, "ReW GMD N0 %c%u N1 N7 N7 1 %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index, Gx);
+                    fprintf(fp, "ReE GMD N0 %c%u N2 N7 N7 1 %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index, Gx);
+                    fprintf(fp, "ReS GMD N0 %c%u N3 N7 N7 1 %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index, Gy);
+                    fprintf(fp, "ReN GMD N0 %c%u N4 N7 N7 1 %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index, Gy);
+                    fprintf(fp, "ReB GMD N0 %c%u N5 N7 N7 1 %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, Gz);
+                    fprintf(fp, "ReT GMD N0 %c%u N6 N7 N7 1 %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index, Gz);
                 }
                 else {
-                    fprintf(fp, "ReW G N0 %c%u %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index, Gx);
-                    fprintf(fp, "ReE G N0 %c%u %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index, Gx);
-                    fprintf(fp, "ReS G N0 %c%u %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index, Gy);
-                    fprintf(fp, "ReN G N0 %c%u %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index, Gy);
-                    fprintf(fp, "ReB G N0 %c%u %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, Gz);
-                    fprintf(fp, "ReT G N0 %c%u %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index, Gz);
+                    fprintf(fp, "ReW GM N0 %c%u N1 %g\n", el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index, Gx);
+                    fprintf(fp, "ReE GM N0 %c%u N2 %g\n", el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index, Gx);
+                    fprintf(fp, "ReS GM N0 %c%u N3 %g\n", el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index, Gy);
+                    fprintf(fp, "ReN GM N0 %c%u N4 %g\n", el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index, Gy);
+                    fprintf(fp, "ReB GM N0 %c%u N5 %g\n", el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, Gz);
+                    fprintf(fp, "ReT GM N0 %c%u N6 %g\n", el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index, Gz);
                 }
             }
             else {
                 if (core.is_th) {
-                    fprintf(fp, "ReW FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReE FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReS FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReN FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReB FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, zMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReT FCID P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N1 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    zMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReW FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N1 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReE FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N2 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReS FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N3 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReN FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N4 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReB FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N5 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, zMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReT FCIMD P=1 F=nonlinfunc_%u(X0 X1 X2 P2) N0 %c%u N6 N7 N7 1 0 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    zMul); // elvez.get_ertek(0) * 
                 }
                 else {
-                    fprintf(fp, "ReW FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReE FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReS FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReN FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReB FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, zMul); // elvez.get_ertek(0) * 
-                    fprintf(fp, "ReT FCI P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    zMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReW FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N1 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[WEST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[WEST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReE FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N2 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[EAST].coreResistor.is_X   ? 'X' : 'N', el_out_nodes[EAST].coreResistor.node_index,   xMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReS FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N3 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[SOUTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[SOUTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReN FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N4 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[NORTH].coreResistor.is_X  ? 'X' : 'N', el_out_nodes[NORTH].coreResistor.node_index,  yMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReB FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N5 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[BOTTOM].coreResistor.is_X ? 'X' : 'N', el_out_nodes[BOTTOM].coreResistor.node_index, zMul); // elvez.get_ertek(0) * 
+                    fprintf(fp, "ReT FCIM P=2 F=nonlinfunc_%u(X0 X1 P1 P2) N0 %c%u N6 0 R1 %g\n", (uns)elvez.hmg_nonlin_index, el_out_nodes[TOP].coreResistor.is_X    ? 'X' : 'N', el_out_nodes[TOP].coreResistor.node_index,    zMul); // elvez.get_ertek(0) * 
                 }
             }
 
@@ -2267,11 +2323,8 @@ struct hmg_cella {
 
             if (is_Seebeck) {
                 for (uns i = WEST; i <= TOP; i++) {
-                    fprintf(fp, "MI%c MIN N%u N%u N%u %g\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].IMeasResistor.node_index + 1, GV[i]);
-                    //fprintf(fp, "Ri%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index); // ha a MI-vel párhuzamosan nincs vezetés, el nem tûnõ áramhiba keletkezik
-                    //fprintf(fp, "Rix%c G N%u N%u 1MEG\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index + 1); // ha a MI-vel párhuzamosan nincs vezetés, el nem tûnõ áramhiba keletkezik
-                    fprintf(fp, "VS%c FCI Y=2 F=Seebeck_func_%u(Y0 Y1 P0) %c%u N%u %c%u N1 %g\n", getBoundaryName(i).c_str()[0], Seebeck_index, el_out_nodes[i].Seebeck.is_X ? 'X' : 'N',
-                        el_out_nodes[i].Seebeck.node_index, el_out_nodes[i].IMeasResistor.node_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index, GV[i]);
+                    fprintf(fp, "VS%c FCI Y=2 F=Seebeck_func_%u(Y0 Y1 P0) %c%u N%u %c%u N7 %g\n", getBoundaryName(i).c_str()[0], Seebeck_index, el_out_nodes[i].Seebeck.is_X ? 'X' : 'N',
+                        el_out_nodes[i].Seebeck.node_index, el_out_nodes[i].coreResistor.node_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index, GV[i]);
                 }
             }
 
@@ -2279,11 +2332,6 @@ struct hmg_cella {
 
             for (uns i = WEST; i <= TOP; i++) {
                 if (el_out_nodes[i].semi != nullptr) {
-                    if (!el_out_nodes[i].Seebeck.is_exists) {
-                        fprintf(fp, "MI%c MIN N%u N%u N%u %g\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].IMeasResistor.node_index + 1, GV[i]);
-                        fprintf(fp, "Ri%c G N%u N%u 1u\n", getBoundaryName(i).c_str()[0], el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].IMeasResistor.node_index); // ha a MI-vel párhuzamosan nincs vezetés, el nem tûnõ áramhiba keletkezik
-                        //fprintf(fp, ".PRINTNODE N%u\n", el_out_nodes[i].IMeasResistor.node_index + 1);
-                    }
                     dbl A;
                     if (i == WEST || i == EAST)
                         A = core.y_size * core.z_size;
@@ -2291,14 +2339,14 @@ struct hmg_cella {
                         A = core.x_size * core.z_size;
                     else
                         A = core.x_size * core.y_size;
-                    if(core.is_th) // eltherm // pars: Ix, Ax, U1, U2, Tx
-                        fprintf(fp, "RJunct%c FCID Y=2 P=1 F=Semi_eq_elth_duo_%u(Y0 P2 X0 X1 Y1 P3) N%u %c%u N1 N1 N%u %c%u 1 1e-12 %g %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
-                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
-                            el_out_nodes[i].IMeasResistor.node_index + 1, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index, A, GV[i]);
-                    else // el only // pars: Ix, Ax, U1, U2
-                        fprintf(fp, "RJunct%c FCI Y=1 P=1 F=Semi_eq_el_duo_%u(Y0 P1 X0 X1 P2) N%u %c%u N%u 1e-12 %g %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
-                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].IMeasResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
-                            el_out_nodes[i].IMeasResistor.node_index + 1, A, GV[i]);
+                    if(core.is_th) // eltherm // pars: Ix, Ax, U1, U2, Tx, GM
+                        fprintf(fp, "RJunct%c FCID Y=2 P=2 F=Semi_eq_elth_duo_%u(Y0 P2 X0 X1 Y1 P3) N%u %c%u N7 N7 N%u %c%u 1 1e-12 %g %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
+                            i, th_out_nodes[i].boundary.is_X ? 'X' : 'N', th_out_nodes[i].boundary.node_index, A, GV[i]);
+                    else // el only // pars: Ix, Ax, U1, U2, GM
+                        fprintf(fp, "RJunct%c FCI Y=1 P=2 F=Semi_eq_el_duo_%u(Y0 P1 X0 X1 P2) N%u %c%u N%u 1e-12 %g %g\n", getBoundaryName(i).c_str()[0], (uns)el_out_nodes[i].semi->par.hmg_nonlin_index,
+                            is_Seebeck ? el_out_nodes[i].Seebeck.node_index : el_out_nodes[i].coreResistor.node_index, el_out_nodes[i].boundary.is_X ? 'X' : 'N', el_out_nodes[i].boundary.node_index, 
+                            i, A, GV[i]);
                 }
             }
 
@@ -2320,7 +2368,7 @@ struct hmg_cella {
             }
         }
 
-        uns thcenter = core.is_el ? 1 : 0;
+        uns thcenter = core.is_el ? 7 : 0;
         if (core.is_th) {
             const vezetes& thvez = core.pmat->thvez;
             if (thvez.tipus == nlt_lin) {
@@ -2363,7 +2411,7 @@ struct hmg_cella {
 
                 for (uns i = WEST; i <= TOP; i++) {
                     fprintf(fp, "PP%c FCI Y=1 F=Peltier_func_%u(X1 Y0) R0 %c%u N%u 0\n", getBoundaryName(i).c_str()[0], Seebeck_index, th_out_nodes[i].boundary.is_X ? 'X' : 'N',
-                        th_out_nodes[i].boundary.node_index, el_out_nodes[i].IMeasResistor.node_index + 1);
+                        th_out_nodes[i].boundary.node_index, i);//el_out_nodes[i].IMeasResistor.node_index + 1
                 }
 
                 // Thomson: Tc, TW, TE, TS, TN, TB, TT, VW1, VW2, VE1, VE2, VS1, VS2, VN1, VN2, VB1, VB2, VT1, T2
@@ -2373,8 +2421,8 @@ struct hmg_cella {
                     th_out_nodes[  WEST].boundary.is_X ? 'X' : 'N', th_out_nodes[  WEST].boundary.node_index, th_out_nodes[  EAST].boundary.is_X ? 'X' : 'N', th_out_nodes[  EAST].boundary.node_index,
                     th_out_nodes[ SOUTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ SOUTH].boundary.node_index, th_out_nodes[ NORTH].boundary.is_X ? 'X' : 'N', th_out_nodes[ NORTH].boundary.node_index,
                     th_out_nodes[BOTTOM].boundary.is_X ? 'X' : 'N', th_out_nodes[BOTTOM].boundary.node_index, th_out_nodes[   TOP].boundary.is_X ? 'X' : 'N', th_out_nodes[   TOP].boundary.node_index,
-                    el_out_nodes[  WEST].IMeasResistor.node_index + 1, el_out_nodes[  EAST].IMeasResistor.node_index + 1, el_out_nodes[ SOUTH].IMeasResistor.node_index + 1, 
-                    el_out_nodes[ NORTH].IMeasResistor.node_index + 1, el_out_nodes[BOTTOM].IMeasResistor.node_index + 1, el_out_nodes[   TOP].IMeasResistor.node_index + 1);
+                    1, 2, 3, 
+                    4, 5, 6);
 
             }
 

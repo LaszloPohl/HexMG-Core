@@ -791,6 +791,8 @@ void apa::write_HMG_cell_models(FILE *fp, simulation & aktSim){
                 cella.core.szin_terfogat = cella_color.terfogat;
                 cella.xNodes = cella.core.is_el && cella.core.is_th ? 12 : 6;
                 cella.nNodes = cella.core.is_el && cella.core.is_th ? 2 : 1;
+                if (cella.core.is_el)
+                    cella.nNodes += 6; // árammkérõ node-ok
 
                 // boundaries, junction azonosítása (ugyanazok az információk kellenek hozzá, mint a peremhez, de itt még nem hozzuk létre a junctiont a cellában)
 
@@ -1398,7 +1400,7 @@ void apa::write_HMG_probes(FILE * fp, simulation & aktSim){
                             else {
                                 hmg_cella& curr_cell_model = hmg_cella_vector[akt_cella.cella_vector_index];
                                 if(curr_cell_model.core.is_th)
-                                    fprintf(fp, " Cell_%u.N%u", akt_cella.cell_index, curr_cell_model.core.is_el ? 1 : 0);
+                                    fprintf(fp, " Cell_%u.N%u", akt_cella.cell_index, curr_cell_model.core.is_el ? 7 : 0);
                                 else
                                     fprintf(fp, " R1");
                             }

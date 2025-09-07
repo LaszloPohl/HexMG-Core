@@ -664,6 +664,7 @@ public:
             componentCurrent.setValueDC(I);
             N[0]->incDDC(-I);
             N[1]->incDDC(I);
+            if(fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I)<1e-12?0:I, fabs(P1)<1e-12?0:P1);
             N[2]->incDDC(P1);
             N[3]->incDDC(P2);
             //printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), N[2]->getValueDC(), N[3]->getValueDC());
@@ -957,7 +958,7 @@ public:
 
             IMD = I - N[2]->getValueDC() * 1.0; // RM = 1 Ohm
             N[2]->incDDC(IMD);
-
+            if (fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I) < 1e-12 ? 0 : I, fabs(P1) < 1e-12 ? 0 : P1);
             N[3]->incDDC(P1);
             N[4]->incDDC(P2);
         }
