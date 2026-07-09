@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstring>
 #include <chrono>
+#include <boost/multiprecision/cpp_bin_float.hpp>
 //***********************************************************************
 
 
@@ -31,14 +32,18 @@ namespace nsHMG {
 
 //***********************************************************************
 using rvt = double;
+using qvt = boost::multiprecision::number<boost::multiprecision::cpp_bin_float<106, boost::multiprecision::digit_base_2, void, std::int32_t>>;
 using uns = unsigned;
 using siz = size_t;
 using cuns = const uns;
 using cint = const int;
 using crvt = const rvt;
+using cqvt = const qvt;
 using csiz = const siz;
 using cplx = std::complex<rvt>;
+using qcplx = std::complex<qvt>;
 using ccplx = const cplx;
+using cqcplx = const qcplx;
 using ush = unsigned short;
 //***********************************************************************
 
