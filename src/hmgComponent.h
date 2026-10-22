@@ -664,7 +664,7 @@ public:
             componentCurrent.setValueDC(I);
             N[0]->incDDC(-I);
             N[1]->incDDC(I);
-            if(fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I)<1e-12?0:I, fabs(P1)<1e-12?0:P1);
+            //if(fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I)<1e-12?0:I, fabs(P1)<1e-12?0:P1);
             N[2]->incDDC(P1);
             N[3]->incDDC(P2);
             //printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), N[2]->getValueDC(), N[3]->getValueDC());
@@ -958,7 +958,7 @@ public:
 
             IMD = I - N[2]->getValueDC() * 1.0; // RM = 1 Ohm
             N[2]->incDDC(IMD);
-            if (fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I) < 1e-12 ? 0 : I, fabs(P1) < 1e-12 ? 0 : P1);
+            //if (fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I) < 1e-12 ? 0 : I, fabs(P1) < 1e-12 ? 0 : P1);
             N[3]->incDDC(P1);
             N[4]->incDDC(P2);
         }
@@ -4063,10 +4063,12 @@ public:
             for (uns i = 0; i < currSiz; i++)
                 getRe(externalCurrents[i]) = rvt0;
             for (auto& comp : components) {
+//std::cout << "*** a" << std::endl;
                 if (comp->isEnabled) comp->calculateCurrent(true);
                 
                 // calculating the external node currents
                 
+//std::cout << "*** b" << std::endl;
                 const std::vector<CDNode>& nodesConnectedTo = comp->def->nodesConnectedTo;
                 for (uns i = 0; i < nodesConnectedTo.size();i++) {
                     const CDNode& node = nodesConnectedTo[i];
@@ -4575,11 +4577,11 @@ class SubCircuitFullMatrixReductorDC {
 //***********************************************************************
     friend class ComponentSubCircuit;
     //***********************************************************************
-    matrix<rvt> YRED; // forwsubs sets
-    vektor<rvt> JRED; // forwsubs sets
-    matrix<rvt> YAwork, YAcopy, XATwork, XATcopy, XBwork, XBcopy, YBwork, YBcopy; // step 1: fill "work" YA, XA, XB, YB; step2: update all "copy". If no change, no need for matrix reduction. 
-    matrix<rvt> NZB, NZBXA, NZBXAT;
-    vektor<rvt> JA, JB, NZBJB, UA, UB;
+    matrix<xxt> YRED; // forwsubs sets
+    vektor<xxt> JRED; // forwsubs sets
+    matrix<xxt> YAwork, YAcopy, XATwork, XATcopy, XBwork, XBcopy, YBwork, YBcopy; // step 1: fill "work" YA, XA, XB, YB; step2: update all "copy". If no change, no need for matrix reduction. 
+    matrix<xxt> NZB, NZBXA, NZBXAT;
+    vektor<xxt> JA, JB, NZBJB, UA, UB;
     //***********************************************************************
     ComponentSubCircuit* pSubCircuit;
     //***********************************************************************
@@ -4726,13 +4728,13 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
 inline rvt ComponentSubCircuit::getJreducedDC(uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
-        return y < sfmrDC->JRED.size() ? sfmrDC->JRED[y] : rvt0;
+        return y < sfmrDC->JRED.size() ? hmg_to_double(sfmrDC->JRED[y]) : rvt0;
     return rvt0;
 }
 inline rvt ComponentSubCircuit::getYDC(uns y, uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
-        return y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? sfmrDC->YRED.get_elem(y, x) : rvt0;
+        return y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? hmg_to_double(sfmrDC->YRED.get_elem(y, x)) : rvt0;
     return rvt0;
 }
 inline cplx ComponentSubCircuit::getJreducedAC(uns y) const noexcept {

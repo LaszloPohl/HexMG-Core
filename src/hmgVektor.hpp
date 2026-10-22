@@ -137,8 +137,8 @@ public:
     //***********************************************************************
     bool refresh_unsafe(unsigned i, const datatype & thenew)noexcept { // return: false, if not refreshed (equals)
     //***********************************************************************
-        double diff = abs(arr[i] - thenew);
-        if (diff == 0)
+        datatype diff = abs(arr[i] - thenew);
+        if (diff == 0.0)
             return false;
         arr[i] = thenew;
         return true;

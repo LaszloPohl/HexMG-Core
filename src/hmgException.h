@@ -66,7 +66,7 @@ public:
 
 //***********************************************************************
 template<typename T>
-inline void is_equal_error(T num_1, T num_2, const char * who_threw) noexcept(!hmgVErrorCheck) {
+inline void is_equal_error([[maybe_unused]] T num_1, [[maybe_unused]] T num_2, [[maybe_unused]] const char * who_threw) noexcept(!hmgVErrorCheck) {
 //***********************************************************************
 #ifndef NDEBUG
     if (num_1 != num_2) {
@@ -80,7 +80,7 @@ inline void is_equal_error(T num_1, T num_2, const char * who_threw) noexcept(!h
 
 //***********************************************************************
 template<typename T>
-inline void is_smaller_error(T num_1, T num_2, const char * who_threw) noexcept(!hmgVErrorCheck) {
+inline void is_smaller_error([[maybe_unused]] T num_1, [[maybe_unused]] T num_2, [[maybe_unused]] const char * who_threw) noexcept(!hmgVErrorCheck) {
 //***********************************************************************
 #ifndef NDEBUG
     if (num_1 >= num_2) {
@@ -94,7 +94,7 @@ inline void is_smaller_error(T num_1, T num_2, const char * who_threw) noexcept(
 
 //***********************************************************************
 template<typename T>
-inline void is_bigger_error(T num_1, T num_2, const char * who_threw) noexcept(!hmgVErrorCheck) {
+inline void is_bigger_error([[maybe_unused]] T num_1, [[maybe_unused]] T num_2, [[maybe_unused]] const char * who_threw) noexcept(!hmgVErrorCheck) {
 //***********************************************************************
 #ifndef NDEBUG
     if (num_1 <= num_2) {
@@ -107,7 +107,7 @@ inline void is_bigger_error(T num_1, T num_2, const char * who_threw) noexcept(!
 
 
 //***********************************************************************
-inline void is_true_error(bool is_hiba, const char * who_threw, const char * what) noexcept(!hmgVErrorCheck) {
+inline void is_true_error([[maybe_unused]] bool is_hiba, [[maybe_unused]] const char * who_threw, [[maybe_unused]] const char * what) noexcept(!hmgVErrorCheck) {
 //***********************************************************************
 #ifndef NDEBUG
     if (is_hiba) {
@@ -118,7 +118,7 @@ inline void is_true_error(bool is_hiba, const char * who_threw, const char * wha
 
 
 //***********************************************************************
-inline void TODO(const char * what) {
+inline void TODO([[maybe_unused]] const char * what) {
 //***********************************************************************
 #ifdef todo_error
     throw hmgExcept("TODO", what);

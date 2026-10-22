@@ -10,6 +10,9 @@
 #define	HMG_COMMON_HEADER
 //***********************************************************************
 
+//***********************************************************************
+#define HMG_PRECISE 2 // 0: rvt, 1: boost multiprecision, 2: QD
+//***********************************************************************
 
 //***********************************************************************
 #include <iostream>
@@ -21,7 +24,11 @@
 #include <algorithm>
 #include <cstring>
 #include <chrono>
-#include <boost/multiprecision/cpp_bin_float.hpp>
+#if HMG_PRECISE == 1
+    #include <boost/multiprecision/cpp_bin_float.hpp>
+#elif HMG_PRECISE == 2
+    #include "qd_single.h" // https://github.com/lhprojects/qdpp
+#endif
 //***********************************************************************
 
 
@@ -32,18 +39,29 @@ namespace nsHMG {
 
 //***********************************************************************
 using rvt = double;
-using qvt = boost::multiprecision::number<boost::multiprecision::cpp_bin_float<106, boost::multiprecision::digit_base_2, void, std::int32_t>>;
+
+#if HMG_PRECISE == 1
+    #define hmg_to_double rvt // double és boost esetén ez kell, qd esetén a másik
+    using xxt = boost::multiprecision::number<boost::multiprecision::cpp_bin_float<106, boost::multiprecision::digit_base_2, void, std::int32_t>>;
+#elif HMG_PRECISE == 2
+    #define hmg_to_double to_double
+    using xxt = dd_real; // qd esetén ez kell, double és boost esetén a másik
+#else
+    #define hmg_to_double rvt // double és boost esetén ez kell, qd esetén a másik
+    using xxt = rvt;
+#endif
+
 using uns = unsigned;
 using siz = size_t;
 using cuns = const uns;
 using cint = const int;
 using crvt = const rvt;
-using cqvt = const qvt;
+using cxxt = const xxt;
 using csiz = const siz;
 using cplx = std::complex<rvt>;
-using qcplx = std::complex<qvt>;
+using xcplx = std::complex<xxt>;
 using ccplx = const cplx;
-using cqcplx = const qcplx;
+using cxcplx = const xcplx;
 using ush = unsigned short;
 //***********************************************************************
 

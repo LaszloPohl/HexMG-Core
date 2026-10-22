@@ -2139,12 +2139,12 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
     // v of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        subckt.internalNodesAndVars[i].setVDC(UB[i]);
+        subckt.internalNodesAndVars[i].setVDC(hmg_to_double(UB[i]));
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         cuns ONodes_start = model.getN_Start_Of_O_Nodes();
         for (uns i = 0; i < B2_nNONodes; i++)
-            subckt.externalNodes[ONodes_start + i]->setVDC(UB[B1_nNInternalNodes + i]);
+            subckt.externalNodes[ONodes_start + i]->setVDC(hmg_to_double(UB[B1_nNInternalNodes + i]));
     }
 }
 
