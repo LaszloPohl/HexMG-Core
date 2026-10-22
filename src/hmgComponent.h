@@ -101,13 +101,13 @@ public:
     //***********************************************************************
     ComponentAndControllerBase(const ComponentDefinition* def_, uns defaultNodeValueIndex_);
     const ComponentAndControllerModelBase& getModel() const noexcept { return *pModel; }
-    virtual void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) = 0; // should only be called after the nodes and params have been set!, buildForAC() do this for AC
-    virtual bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept = 0;
+    virtual void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) = 0; // should only be called after the nodes and params have been set!, buildForAC() do this for AC
+    virtual bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept = 0;
     NodeVariable* getNodeVariableSimpleInterfaceNodeID(const SimpleInterfaceNodeID& nodeID) noexcept;
-    virtual NodeVariable* getNode(siz nodeIndex) noexcept = 0;
-    virtual NodeVariable* getInternalNode(siz nodeIndex) noexcept = 0;
-    virtual rvt getCurrentDC(uns y) const noexcept = 0;
-    virtual cplx getCurrentAC(uns y) const noexcept = 0;
+    virtual NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept = 0;
+    virtual NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept = 0;
+    virtual rvt getCurrentDC([[maybe_unused]] uns y) const noexcept = 0;
+    virtual cplx getCurrentAC([[maybe_unused]] uns y) const noexcept = 0;
     //***********************************************************************
 
     //***********************************************************************
@@ -143,41 +143,41 @@ public:
 
     //***********************************************************************
     virtual const NodeVariable& getComponentValue() const noexcept = 0;
-    virtual void setNode(siz nodeIndex, NodeVariable* pNode) noexcept = 0;
-    virtual void setParam(siz parIndex, const Param& par) noexcept = 0;
+    virtual void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode) noexcept = 0;
+    virtual void setParam([[maybe_unused]] siz parIndex, const Param& par) noexcept = 0;
     virtual const ComponentBase* getContainedComponent(uns componentIndex)const noexcept = 0;
     //***********************************************************************
     virtual const NodeVariable& getComponentCurrent() const noexcept = 0;
     //************************** AC / DC functions *******************************
-    virtual bool isJacobianMXSymmetrical(bool isDC)const noexcept = 0; // e.g. controlled source is alway asymmetrical, in AC, too
-    virtual void resetNodes(bool isDC) noexcept = 0;
-    virtual void deleteD(bool isDC) noexcept = 0;
-    virtual void deleteF(bool isDC) noexcept = 0;
-    virtual void deleteYii(bool isDC) noexcept = 0;
-    virtual void loadFtoD(bool isDC) noexcept = 0;
-    virtual void calculateCurrent(bool isDC) noexcept = 0;
-    virtual void forwsubs(bool isDC) = 0;
-    virtual void backsubs(bool isDC) = 0;
-    virtual void jacobiIteration(bool isDC) noexcept = 0;
-    virtual rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept = 0;
-    virtual rvt calculateResidual(bool isDC) const noexcept = 0;
+    virtual bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept = 0; // e.g. controlled source is alway asymmetrical, in AC, too
+    virtual void resetNodes([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void deleteD([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void deleteF([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void deleteYii([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void loadFtoD([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void calculateCurrent([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual void forwsubs([[maybe_unused]] bool isDC) = 0;
+    virtual void backsubs([[maybe_unused]] bool isDC) = 0;
+    virtual void jacobiIteration([[maybe_unused]] bool isDC) noexcept = 0;
+    virtual rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept = 0;
+    virtual rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept = 0;
     //************************** DC functions *******************************
-    virtual void acceptIterationDC(bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
+    virtual void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept = 0; // Vnode = Vnode + v*alpha; isNoAlpha => Vnode = Vnode + v
     virtual void acceptStepDC() noexcept = 0; // VstepStart = Vnode // no AC version
     virtual void calculateComponentControllerValueDC() noexcept {} // no AC version, runs before any calculateValueDC is evaluated => the other components can use what this calcaulated (FCB uses)
     virtual void calculateValueDC() noexcept = 0; // no AC version
-    virtual uns calculateControllersDC(uns level, controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
+    virtual uns calculateControllersDC([[maybe_unused]] uns level, [[maybe_unused]] controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
     virtual DefectCollector collectCurrentDefectDC() const noexcept = 0; // no AC version
     virtual DefectCollector collectVoltageDefectDC() const noexcept = 0; // no AC version
     virtual void printNodeValue() const noexcept = 0;
-    virtual rvt getJreducedDC(uns y) const noexcept = 0;
-    virtual rvt getYDC(uns y, uns x) const noexcept = 0;
+    virtual rvt getJreducedDC([[maybe_unused]] uns y) const noexcept = 0;
+    virtual rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept = 0;
     virtual void calculateYiiDC() noexcept = 0;
     //************************** AC functions *******************************
     virtual void acceptIterationAndStepAC() noexcept = 0; // Vnode = Vnode + v
     virtual void buildForAC() = 0; // buildOrReplace() do this for DC
-    virtual cplx getJreducedAC(uns y) const noexcept = 0;
-    virtual cplx getYAC(uns y, uns x) const noexcept = 0;
+    virtual cplx getJreducedAC([[maybe_unused]] uns y) const noexcept = 0;
+    virtual cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept = 0;
     virtual void calculateYiiAC() noexcept = 0;
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
@@ -203,8 +203,8 @@ public:
     const NodeVariable& getComponentValue() const noexcept override { return componentValue; }
     const NodeVariable& getComponentCurrent() const noexcept override { return componentCurrent; }
     void buildForAC() override {}
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {}
-    const ComponentBase* getContainedComponent(uns componentIndex)const noexcept override { return nullptr; };
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {}
+    const ComponentBase* getContainedComponent([[maybe_unused]] uns componentIndex)const noexcept override { return nullptr; };
 #ifdef HMG_DEBUGPRINT
     void testPrint() const noexcept override {}
 #endif
@@ -220,15 +220,15 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return nodeIndex == 0 ? N0 : N1;
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         pNode->extend();
@@ -238,21 +238,21 @@ public:
             N1 = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -277,36 +277,36 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -331,36 +331,36 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -385,36 +385,36 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -441,9 +441,9 @@ public:
     //***********************************************************************
     using Component_2Node::Component_2Node;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if(isDC) {
             rvt I = componentValue.getValueDC() * (N0->getValueDC() - N1->getValueDC());
@@ -458,9 +458,9 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); }
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
     //***********************************************************************
@@ -471,8 +471,8 @@ public:
         N1->incYiiDC(G);
     }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); } // componentValue.getValueDC() !
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); } // componentValue.getValueDC() !
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
@@ -483,7 +483,7 @@ public:
         N1->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? -IAC : IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -IAC : IAC; }
     //***********************************************************************
 };
 
@@ -500,9 +500,9 @@ public:
     //***********************************************************************
     using ComponentConstGMeasBase::ComponentConstGMeasBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if(isDC) {
             rvt I = componentValue.getValueDC() * (N[0]->getValueDC() - N[1]->getValueDC());
@@ -521,9 +521,9 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x < 2 && y < 2)
             return y == x ? componentValue.getValueDC() : -componentValue.getValueDC();
@@ -538,7 +538,7 @@ public:
         return 0;
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { 
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -558,9 +558,9 @@ public:
         N[2]->incYiiDC(1.0);
     }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x < 2 && y < 2)
             return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); // componentValue.getValueDC() !
@@ -585,7 +585,7 @@ public:
         N[2]->incYiiDC(1.0);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -IAC;
@@ -610,7 +610,7 @@ public:
     //***********************************************************************
     using ComponentConstGMeas::ComponentConstGMeas;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param.get()); }
     //***********************************************************************
@@ -629,7 +629,7 @@ public:
     //***********************************************************************
     using ComponentConstGMeas::ComponentConstGMeas;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param1.get() * param2.get()); }
     //***********************************************************************
@@ -651,9 +651,9 @@ public:
     //***********************************************************************
     using Component_RDissBase::Component_RDissBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if(isDC) {
             rvt V = N[0]->getValueDC() - N[1]->getValueDC();
@@ -691,9 +691,9 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 1)
             return rvt0;
@@ -707,7 +707,7 @@ public:
         return rvt0;
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -727,9 +727,9 @@ public:
         N[1]->incYiiDC(G);
     }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 1 || y > 1)
             return cplx0;
@@ -745,7 +745,7 @@ public:
         N[1]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -IAC;
@@ -771,7 +771,7 @@ public:
     //***********************************************************************
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(rvt1 / param.get()); }
     //***********************************************************************
@@ -790,7 +790,7 @@ public:
     //***********************************************************************
     using ComponentConstRDiss::ComponentConstRDiss;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(rvt1 / param.get()); }
     //***********************************************************************
@@ -809,7 +809,7 @@ public:
     //***********************************************************************
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(rvt1 / (param1.get() * param2.get())); }
     //***********************************************************************
@@ -828,7 +828,7 @@ public:
     //***********************************************************************
     using ComponentConstRDiss::ComponentConstRDiss;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { 
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { 
     //***********************************************************************
         switch (parIndex) { 
             case 0: share  = par; break; 
@@ -854,7 +854,7 @@ public:
     //***********************************************************************
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param.get()); }
     //***********************************************************************
@@ -873,7 +873,7 @@ public:
     //***********************************************************************
     using ComponentConstRDiss::ComponentConstRDiss;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param.get()); }
     //***********************************************************************
@@ -892,7 +892,7 @@ public:
     //***********************************************************************
     using ComponentConstR::ComponentConstR;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param1.get() * param2.get()); }
     //***********************************************************************
@@ -911,7 +911,7 @@ public:
     //***********************************************************************
     using ComponentConstRDiss::ComponentConstRDiss;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { 
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { 
     //***********************************************************************
         switch (parIndex) { 
             case 0: share  = par; break; 
@@ -942,9 +942,9 @@ public:
     //***********************************************************************
     using Component_GMDBase::Component_GMDBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if(isDC) {
             rvt V = N[0]->getValueDC() - N[1]->getValueDC();
@@ -988,9 +988,9 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 2)
             return rvt0;
@@ -1007,7 +1007,7 @@ public:
         return rvt0;
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -1029,9 +1029,9 @@ public:
         N[2]->incYiiDC(1.0);
     }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x < 2 && y < 2)
             return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); // componentValue.getValueDC() !
@@ -1056,7 +1056,7 @@ public:
         N[2]->incYiiDC(-1.0);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -IAC;
@@ -1083,7 +1083,7 @@ public:
     //***********************************************************************
     using ComponentConstGMD::ComponentConstGMD;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) share = par; else param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override { componentValue.setValueDC(param.get()); }
     //***********************************************************************
@@ -1102,7 +1102,7 @@ public:
     //***********************************************************************
     using ComponentConstGMD::ComponentConstGMD;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { 
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { 
     //***********************************************************************
         switch (parIndex) { 
             case 0: share  = par; break; 
@@ -1126,9 +1126,9 @@ public:
     //***********************************************************************
     using Component_2Node::Component_2Node;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt V_start = N0->getStepStartDC() - N1->getStepStartDC();
@@ -1146,8 +1146,8 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return y == x ? Gc : -Gc; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? Gc : -Gc; }
     void acceptStepDC() noexcept override { I_stepStart = componentCurrent.getValueDC(); }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
@@ -1158,11 +1158,11 @@ public:
         N1->incYiiDC(Gc);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         return y == x  // componentValue.getValueDC() !
             ?  componentValue.getValueDC() * SimControl::getComplexFrequency()
@@ -1178,7 +1178,7 @@ public:
         N1->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? -IAC : IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -IAC : IAC; }
     //***********************************************************************
 };
 
@@ -1193,7 +1193,7 @@ public:
     //***********************************************************************
     using ComponentConstC::ComponentConstC;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -1215,7 +1215,7 @@ public:
     //***********************************************************************
     using ComponentConstC::ComponentConstC;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { if (parIndex == 0) param1 = par; else param2 = par; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -1234,14 +1234,14 @@ public:
     //***********************************************************************
     using Component_2Node::Component_2Node;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return rvt0; }
     void calculateYiiDC() noexcept override {}
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return cplx0; }
     void calculateYiiAC() noexcept override {}
     //***********************************************************************
 };
@@ -1258,9 +1258,9 @@ public:
     //***********************************************************************
     using ComponentConstI::ComponentConstI;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     //************************** AC / DC functions *******************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             rvt I = componentValue.getValueDC();
@@ -1284,9 +1284,9 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //************************** AC functions *******************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
     //***********************************************************************
 };
 
@@ -1302,9 +1302,9 @@ public:
     //***********************************************************************
     using ComponentConstI::ComponentConstI;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     //************************** AC / DC functions *******************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             rvt I = componentValue.getValueDC();
@@ -1328,9 +1328,9 @@ public:
             : param[1].get() * param[4].get());
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //************************** AC functions *******************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
     //***********************************************************************
 };
 
@@ -1346,9 +1346,9 @@ public:
     //***********************************************************************
     using Component_2Node::Component_2Node;
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     //************************** AC / DC functions *******************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt V = componentValue.getValueDC();
@@ -1369,7 +1369,7 @@ public:
         }
     }
     //***********************************************************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -1378,9 +1378,9 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() * param[4].get() : componentCurrent.getValueDC() * param[4].get(); }
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() * param[4].get() : componentCurrent.getValueDC() * param[4].get(); }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
     //***********************************************************************
@@ -1391,9 +1391,9 @@ public:
         N1->incYiiDC(G);
     }
     //************************** AC functions *******************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
@@ -1417,31 +1417,31 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param[parIndex] = par; }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override final { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override final {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -1468,7 +1468,7 @@ public:
     //***********************************************************************
     using Component_4Node_4Par::Component_4Node_4Par;
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < 2) {
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -1477,9 +1477,9 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             rvt I = componentValue.getValueDC() * (N[2]->getValueDC() - N[3]->getValueDC());
@@ -1503,9 +1503,9 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y > 1 || x < 2)
             return rvt0;
@@ -1524,10 +1524,10 @@ public:
         if (N[1] == N[3]) N[1]->incYiiDC( componentValue.getValueDC());
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y > 1 ? 0 : (y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC()); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y > 1 ? 0 : (y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC()); }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y > 1 || x < 2)
             return cplx0;
@@ -1552,7 +1552,7 @@ public:
         if (N[1] == N[3]) N[1]->incYiiAC( S);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return y > 1 ? cplx0 : (y == 0 ? IAC : -IAC); }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y > 1 ? cplx0 : (y == 0 ? IAC : -IAC); }
     //***********************************************************************
 };
 
@@ -1566,15 +1566,15 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override final {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override final {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override final {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override final {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         if (nodeIndex < 2)
@@ -1582,21 +1582,21 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override final {}
-    void deleteD(bool isDC) noexcept override final {}
-    void deleteF(bool isDC) noexcept override final {}
-    void deleteYii(bool isDC) noexcept override final {}
-    void loadFtoD(bool isDC) noexcept override final {}
-    void forwsubs(bool isDC) override final {}
-    void backsubs(bool isDC) override final {}
-    void jacobiIteration(bool isDC) noexcept override final {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override final {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override final {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override final {}
+    void forwsubs([[maybe_unused]] bool isDC) override final {}
+    void backsubs([[maybe_unused]] bool isDC) override final {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override final {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
     DefectCollector collectCurrentDefectDC() const noexcept override final { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override final {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override final {}
     void acceptStepDC() noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override final {}
@@ -1620,11 +1620,11 @@ public:
     //***********************************************************************
     using Component_2Node_1Control::Component_2Node_1Control;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override final { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override final { param = par; }
     //************************** AC / DC functions *******************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             rvt I = componentValue.getValueDC();
@@ -1639,8 +1639,8 @@ public:
         }
     }
     //************************** DC functions *******************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return rvt0; }
     void calculateYiiDC() noexcept override {}
     //************************** DC functions *******************************
     void calculateValueDC() noexcept override {
@@ -1648,12 +1648,12 @@ public:
         componentValue.setValueDC(param.get() * N[2]->getValueDC());
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //************************** AC functions *******************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return cplx0; }
     void calculateYiiAC() noexcept override {}
-    cplx getCurrentAC(uns y) const noexcept override { return getCurrentDC(y); }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return getCurrentDC(y); }
     //***********************************************************************
 };
 
@@ -1670,36 +1670,36 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
         pNode->extend();
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             IDC1 = -param[0].get() * (N[2]->getValueDC() - N[3]->getValueDC());
@@ -1722,7 +1722,7 @@ public:
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
     void calculateValueDC() noexcept override {
@@ -1730,9 +1730,9 @@ public:
         //componentValue.setValueDC(rvt0); // value of a girator is pointless
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y < 2) {
             if (x < 2)  return rvt0;
@@ -1757,13 +1757,13 @@ public:
         if (N[1] == N[3]) N[1]->incYiiDC( s);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { switch (y) { case 0: return IDC1; case 1: return -IDC1; case 2: return IDC2; default: return -IDC2; } }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return IDC1; case 1: return -IDC1; case 2: return IDC2; default: return -IDC2; } }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
     //***********************************************************************
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override { return getYDC(y,x); }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return getYDC(y,x); }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
@@ -1778,7 +1778,7 @@ public:
         if (N[1] == N[3]) N[1]->incYiiAC( s);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { switch (y) { case 0: return IAC1; case 1: return -IAC1; case 2: return IAC2; default: return -IAC2; } }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return IAC1; case 1: return -IAC1; case 2: return IAC2; default: return -IAC2; } }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -1807,17 +1807,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
             pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
@@ -1829,19 +1829,19 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
-    void deleteD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
-    void deleteF(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
-    void deleteYii(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
-    void loadFtoD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
+    void deleteD([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
+    void deleteF([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
             crvt V = -componentValue.getValueDC();
-            crvt G = 1.0 / param[4].get();
+            [[maybe_unused]] crvt G = 1.0 / param[4].get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(UB);
             N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
@@ -1854,7 +1854,7 @@ public:
             crvt A = -param[2].get();
             crvt Phi = param[3].get();
             ccplx V = cplx{ A * cos(Phi), A * sin(Phi) };
-            crvt G = 1.0 / param[4].get();
+            [[maybe_unused]] crvt G = 1.0 / param[4].get();
             ccplx UB = N[2]->getValueAC();
             N[0]->incDAC(-UB); // S1 = -1 => I1 = -1 * UB
             N[1]->incDAC(UB);
@@ -1863,7 +1863,7 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {
+    void forwsubs([[maybe_unused]] bool isDC) override {
     //***********************************************************************
         crvt G = 1.0 / param[4].get();
         crvt NZB = -1.0 / G;
@@ -1877,7 +1877,7 @@ public:
         }
     }
     //***********************************************************************
-    void backsubs(bool isDC) override {
+    void backsubs([[maybe_unused]] bool isDC) override {
     //***********************************************************************
         if (isDC) {
             crvt UA1 = N[0]->getVDC();
@@ -1902,7 +1902,7 @@ public:
         }
     }
     //***********************************************************************
-    void jacobiIteration(bool isDC) noexcept override {
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             N[2]->setValue0DC(N[2]->getValue0DC() + param[4].get() * N[2]->getDDC()); // + or - ? I'm not sure
@@ -1912,7 +1912,7 @@ public:
         }
     }
     //***********************************************************************
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final {
     //***********************************************************************
         ComponentConstVIB* coarseVgen = static_cast<ComponentConstVIB*>(coarse);
         rvt sumRet = rvt0;
@@ -1947,13 +1947,13 @@ public:
         return sumRet;
     }
     //***********************************************************************
-    rvt calculateResidual(bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
     //***********************************************************************
     // If the current node is not connected, buildOrReplace creates an internal node and connect the current node to it.
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         if (N[2] == nullptr) { 
             possibleCurrentNode = std::make_unique<NodeVariable>(); 
@@ -1968,7 +1968,7 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { 
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         if (y > 1)
             return rvt0;
@@ -1977,7 +1977,7 @@ public:
         return y == 0 ? NZBJB_DC : -NZBJB_DC;
     }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 1 || y > 1)
             return rvt0;
@@ -1997,11 +1997,11 @@ public:
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    rvt getCurrentDC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueDC(); case 1: return N[2]->getValueDC(); default: return rvt0; } }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueDC(); case 1: return N[2]->getValueDC(); default: return rvt0; } }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override { N[2]->setValueAcceptedAC(); }
     //***********************************************************************
-    cplx getJreducedAC(uns y) const noexcept override {
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         if (y > 1)
             return cplx0;
@@ -2010,7 +2010,7 @@ public:
         return y == 0 ? NZBJB_AC : -NZBJB_AC;
     }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 1 || y > 1)
             return cplx0;
@@ -2027,7 +2027,7 @@ public:
         N[1]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueAC(); case 1: return N[2]->getValueAC(); default: return cplx0; } }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueAC(); case 1: return N[2]->getValueAC(); default: return cplx0; } }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -2055,17 +2055,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { param[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) {
             pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
@@ -2076,19 +2076,19 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
             crvt V = componentValue.getValueDC();
-            crvt G = 1.0 / param[4].get();
+            [[maybe_unused]] crvt G = 1.0 / param[4].get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(-UB);
             N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
@@ -2101,7 +2101,7 @@ public:
             crvt A = param[2].get();
             crvt Phi = param[3].get();
             ccplx V = cplx{ A * cos(Phi), A * sin(Phi) };
-            crvt G = 1.0 / param[4].get();
+            [[maybe_unused]] crvt G = 1.0 / param[4].get();
             ccplx UB = N[2]->getValueAC();
             N[0]->incDAC(-UB); // S1 = -1 => I1 = -1 * UB
             N[1]->incDAC(UB);
@@ -2110,15 +2110,15 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {}
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {}
     //***********************************************************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
@@ -2127,9 +2127,9 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: 
@@ -2160,7 +2160,7 @@ public:
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -2171,8 +2171,8 @@ public:
     }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override { N[2]->setValueAcceptedAC(); }
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return getYDC(y, x); }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return getYDC(y, x); }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
@@ -2182,7 +2182,7 @@ public:
         N[2]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -N[2]->getValueAC();
@@ -2218,17 +2218,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nodeIndex == 0 ? N[2] : nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { param = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) { // this is an internal node from outside, only this component changes it
             pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
@@ -2240,16 +2240,16 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
-    void deleteD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
-    void deleteF(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
-    void deleteYii(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
-    void loadFtoD(bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->reset(); else possibleCurrentNode->resetAC(); }
+    void deleteD([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteDDC(); else possibleCurrentNode->deleteDAC(); }
+    void deleteF([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteFDC(); else possibleCurrentNode->deleteFAC(); }
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->deleteYiiDC(); else possibleCurrentNode->deleteYiiAC(); }
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override { if (!possibleCurrentNode) return; if (isDC) possibleCurrentNode->loadFtoDDC(); else possibleCurrentNode->loadFtoDAC(); }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
-        crvt G = 1.0 / param.get();
+        [[maybe_unused]] crvt G = 1.0 / param.get();
         if (isDC) {
             crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
             crvt UB = N[2]->getValueDC();
@@ -2269,7 +2269,7 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {
+    void forwsubs([[maybe_unused]] bool isDC) override {
     //***********************************************************************
         crvt NZB = -param.get(); // crvt G = 1.0 / param.get(); crvt NZB = -1.0 / G;
         if (isDC) {
@@ -2282,7 +2282,7 @@ public:
         }
     }
     //***********************************************************************
-    void backsubs(bool isDC) override {
+    void backsubs([[maybe_unused]] bool isDC) override {
     //***********************************************************************
         if (isDC) {
             crvt UA1 = N[0]->getVDC();
@@ -2299,7 +2299,7 @@ public:
         }
     }
     //***********************************************************************
-    void jacobiIteration(bool isDC) noexcept override {
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             N[2]->setValue0DC(N[2]->getValue0DC() + param.get() * N[2]->getDDC()); // + or - ? I'm not sure
@@ -2309,7 +2309,7 @@ public:
         }
     }
     //***********************************************************************
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final {
     //***********************************************************************
         ComponentMIB* coarseVgen = static_cast<ComponentMIB*>(coarse);
         rvt sumRet = rvt0;
@@ -2344,13 +2344,13 @@ public:
         return sumRet;
     }
     //***********************************************************************
-    rvt calculateResidual(bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return isDC ? square(N[2]->getDDC()) : absSquare(N[2]->getDAC()); }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
     //***********************************************************************
     // If the current node is not connected, buildOrReplace creates an internal node and connect the current node to it.
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         if (N[2] == nullptr) { 
             possibleCurrentNode = std::make_unique<NodeVariable>(); 
@@ -2359,12 +2359,12 @@ public:
     }
     //***********************************************************************
     void calculateValueDC() noexcept override {}
-    rvt getJreducedDC(uns y) const noexcept override {
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override {
         if (y > 1)
             return rvt0;
         return y == 0 ? NZBJB_DC : -NZBJB_DC; 
     }
-    rvt getYDC(uns y, uns x) const noexcept override { 
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { 
         if (x > 1 || y > 1)
             return rvt0;
         return y == x ? param.get() : -param.get();
@@ -2383,11 +2383,11 @@ public:
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
-    rvt getCurrentDC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueDC(); case 1: return N[2]->getValueDC(); default: return rvt0; } }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueDC(); case 1: return N[2]->getValueDC(); default: return rvt0; } }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override { N[2]->setValueAcceptedAC(); }
     //***********************************************************************
-    cplx getJreducedAC(uns y) const noexcept override {
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         if (y > 1)
             return cplx0;
@@ -2396,7 +2396,7 @@ public:
         return y == 0 ? NZBJB_AC : -NZBJB_AC;
     }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x > 1 || y > 1)
             return cplx0;
@@ -2413,7 +2413,7 @@ public:
         N[1]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueAC(); case 1: return N[2]->getValueAC(); default: return cplx0; } }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { switch (y) { case 0: return -N[2]->getValueAC(); case 1: return N[2]->getValueAC(); default: return cplx0; } }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -2441,17 +2441,17 @@ public:
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return N[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { return false; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { return false; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { param = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { param = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if(nodeIndex == 2) {
             pNode->setDefaultValueIndex(0, true); // the default value is mandatory 0
@@ -2462,18 +2462,18 @@ public:
         N[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return true; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return true; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
-            crvt G = 1.0 / param.get();
+            [[maybe_unused]] crvt G = 1.0 / param.get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(-UB);
             N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
@@ -2483,7 +2483,7 @@ public:
         }
         else {
             ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
-            crvt G = 1.0 / param.get();
+            [[maybe_unused]] crvt G = 1.0 / param.get();
             ccplx UB = N[2]->getValueAC();
             N[0]->incDAC(-UB); // S1 = -1 => I1 = -1 * UB
             N[1]->incDAC(UB);
@@ -2492,24 +2492,24 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override { if (isNoAlpha) N[2]->setValueAcceptedNoAlphaDC(); else N[2]->setValueAcceptedDC(); }
     void acceptStepDC() noexcept override { N[2]->setStepStartFromAcceptedDC(); }
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {}
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {}
     //***********************************************************************
     void calculateValueDC() noexcept override {
     //***********************************************************************
         componentValue.setValueDC(0);
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: 
@@ -2540,7 +2540,7 @@ public:
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -2551,8 +2551,8 @@ public:
     }
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override { N[2]->setValueAcceptedAC(); }
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return getYDC(y, x); }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return getYDC(y, x); }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
@@ -2562,7 +2562,7 @@ public:
         N[2]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return -N[2]->getValueAC();
@@ -2607,18 +2607,18 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) { // There are 2 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -2627,14 +2627,14 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt G = pars[0].get();
@@ -2654,16 +2654,16 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         const Model_Function_Controlled_I_with_const_G* pMod = static_cast<const Model_Function_Controlled_I_with_const_G*>(pModel);
         csiz siz = pMod->functionComponentParams.size();
@@ -2696,9 +2696,9 @@ public:
         // printf("** Value = %g **\n", workField[0]);
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 2)
             return rvt0;
@@ -2753,16 +2753,16 @@ public:
         externalNodes[1]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     //***********************************************************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 2)
             return cplx0;
@@ -2779,7 +2779,7 @@ public:
         externalNodes[1]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -2818,18 +2818,18 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1); // ??
     }
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) { // There are 4 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -2838,14 +2838,14 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt G = pars[1].get();
@@ -2886,16 +2886,16 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         const Model_Function_Controlled_I_with_const_GD* pMod = static_cast<const Model_Function_Controlled_I_with_const_GD*>(pModel);
         csiz siz = pMod->functionComponentParams.size();
@@ -2928,9 +2928,9 @@ public:
         // printf("** Value = %g **\n", workField[0]);
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 4)
             return rvt0;
@@ -3009,7 +3009,7 @@ public:
         externalNodes[3]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -3025,9 +3025,9 @@ public:
     void printNodeValue() const noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 2)
             return cplx0;
@@ -3044,7 +3044,7 @@ public:
         externalNodes[1]->incYiiAC(G);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return  IAC;
@@ -3091,18 +3091,18 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) { // There are 2 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -3111,14 +3111,14 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt G = pars[0].get();
@@ -3142,16 +3142,16 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         const Model_Function_Controlled_I_with_const_GM* pMod = static_cast<const Model_Function_Controlled_I_with_const_GM*>(pModel);
         csiz siz = pMod->functionComponentParams.size();
@@ -3184,9 +3184,9 @@ public:
         // printf("** Value = %g **\n", workField[0]);
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 3)
             return rvt0;
@@ -3250,7 +3250,7 @@ public:
         externalNodes[1]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { 
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { 
      //***********************************************************************
        switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -3265,9 +3265,9 @@ public:
     void printNodeValue() const noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x < 2 && y < 2)
             return y == x ? pars[0].get() + dg : -pars[0].get() - dg; // ! dg differential conductance
@@ -3292,7 +3292,7 @@ public:
         externalNodes[2]->incYiiAC(1.0);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
         switch (y) {
             case 0: return  IAC;
             case 1: return -IAC;
@@ -3340,18 +3340,18 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1); // ??
     }
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) { // There are 4 IO nodes.
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -3360,14 +3360,14 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
             crvt G = pars[1].get();
@@ -3414,16 +3414,16 @@ public:
         }
     }
     //***********************************************************************
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         const Model_Function_Controlled_I_with_const_GMD* pMod = static_cast<const Model_Function_Controlled_I_with_const_GMD*>(pModel);
         csiz siz = pMod->functionComponentParams.size();
@@ -3456,9 +3456,9 @@ public:
         // printf("** Value = %g **\n", workField[0]);
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC(uns y, uns x) const noexcept override {
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (y >= 4)
             return rvt0;
@@ -3550,7 +3550,7 @@ public:
         externalNodes[4]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override {
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override {
     //***********************************************************************
         switch (y) {
             case 0: return -componentCurrent.getValueDC();
@@ -3567,9 +3567,9 @@ public:
     void printNodeValue() const noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    cplx getYAC(uns y, uns x) const noexcept override {
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
         if (x < 2 && y < 2)
             return y == x ? pars[1].get() + dg : -pars[1].get() - dg; // ! dg differential conductance // pars[1] !
@@ -3594,7 +3594,7 @@ public:
         externalNodes[1]->incYiiAC(1.0);
     }
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { 
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
     //***********************************************************************
         switch (y) {
             case 0: return  IAC;
@@ -3640,18 +3640,18 @@ public:
         workField.resize(pM->controlFunction->getN_WorkingField() + pM->controlFunction->getN_Param() + 1);
     }
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override {
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override {
     //***********************************************************************
         return externalNodes[nodeIndex];
     }
     //***********************************************************************
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return nullptr; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return nullptr; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         if (nodeIndex < pModel->getN_X_Nodes() + pModel->getN_Y_Nodes()) {
             pNode->setDefaultValueIndex(defaultNodeValueIndex, false);
@@ -3660,23 +3660,23 @@ public:
         externalNodes[nodeIndex] = pNode;
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {}
-    void deleteD(bool isDC) noexcept override {}
-    void deleteF(bool isDC) noexcept override {}
-    void deleteYii(bool isDC) noexcept override {}
-    void loadFtoD(bool isDC) noexcept override {}
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override { return false; }
-    void calculateCurrent(bool isDC) noexcept override {}
-    void forwsubs(bool isDC) override {}
-    void backsubs(bool isDC) override {}
-    void jacobiIteration(bool isDC) noexcept override {}
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final { return rvt0; }
-    rvt calculateResidual(bool isDC) const noexcept override final { return rvt0; }
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteD([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {}
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override {}
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {}
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {}
+    void forwsubs([[maybe_unused]] bool isDC) override {}
+    void backsubs([[maybe_unused]] bool isDC) override {}
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {}
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final { return rvt0; }
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { return rvt0; }
     //************************** DC functions *******************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {}
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {}
     void acceptStepDC() noexcept override {}
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         const Model_Function_Controlled_Node* pMod = static_cast<const Model_Function_Controlled_Node*>(pModel);
         csiz siz = pMod->functionComponentParams.size();
@@ -3711,19 +3711,19 @@ public:
     //***********************************************************************
     void calculateValueDC() noexcept override {}
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override { return rvt0; }
-    rvt getYDC(uns y, uns x) const noexcept override { return rvt0; }
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return rvt0; }
     void calculateYiiDC() noexcept override {}
-    rvt getCurrentDC(uns y) const noexcept override { return rvt0; }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
     //************************** AC functions *******************************
     void acceptIterationAndStepAC() noexcept override {}
-    cplx getJreducedAC(uns y) const noexcept override { return cplx0; }
-    cplx getYAC(uns y, uns x) const noexcept override { return cplx0; }
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return cplx0; }
     void calculateYiiAC() noexcept override { }
-    cplx getCurrentAC(uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -3770,7 +3770,7 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId) override {
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId) override {
     //***********************************************************************
         if (mVars.size() != 0)
             return;
@@ -3808,16 +3808,16 @@ public:
     }
 
     //***********************************************************************
-    NodeVariable* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return &mVars[nodeIndex]; }
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
-    void setParam(siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
-    rvt getCurrentDC(uns y) const noexcept override { return rvt0; }
-    cplx getCurrentAC(uns y) const noexcept override { return cplx0; }
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return &mVars[nodeIndex]; }
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept { externalNodes[nodeIndex] = pNode; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept { pars[parIndex] = par; }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //***********************************************************************
-    Param& getParam(siz parIndex) noexcept { return pars[parIndex]; }
+    Param& getParam([[maybe_unused]] siz parIndex) noexcept { return pars[parIndex]; }
     //***********************************************************************
     void loadNodesAndParamsToFunction() noexcept {
     //***********************************************************************
@@ -3955,26 +3955,26 @@ public:
     //***********************************************************************
     const NodeVariable& getComponentValue() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentValue(); }
     const NodeVariable& getComponentCurrent() const noexcept override { return getNContainedComponents() == 0 ? Rails::V[0]->rail : getContainedComponent(0)->getComponentCurrent(); }
-    NodeVariable* getNode(siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
-    NodeVariable* getInternalNode(siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
+    NodeVariable* getNode([[maybe_unused]] siz nodeIndex) noexcept override { return externalNodes[nodeIndex]; }
+    NodeVariable* getInternalNode([[maybe_unused]] siz nodeIndex) noexcept override final { return &internalNodesAndVars[nodeIndex]; }
     //***********************************************************************
-    void setNode(siz nodeIndex, NodeVariable* pNode)noexcept override {
+    void setNode([[maybe_unused]] siz nodeIndex, NodeVariable* pNode)noexcept override {
     //***********************************************************************
         externalNodes[nodeIndex] = pNode;
     }
     //***********************************************************************
-    void setParam(siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
+    void setParam([[maybe_unused]] siz parIndex, const Param& par)noexcept override { pars[parIndex] = par; }
     //***********************************************************************
-    bool setComponentParam(siz parIndex, ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
+    bool setComponentParam([[maybe_unused]] siz parIndex, [[maybe_unused]] ComponentAndControllerBase* ct) noexcept override { componentParams[parIndex] = ct; return true; }
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical(bool isDC)const noexcept override {
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override {
     //***********************************************************************
         return isDC ? isJacobianMXSymmetricalDC_ : isJacobianMXSymmetricalAC_;
     }
     //***********************************************************************
     uns getNContainedComponents() const noexcept { return (uns)components.size(); }
     const ComponentBase* getContainedComponent(uns i) const noexcept override { return components[i].get(); }
-    void buildOrReplace(uns id, uns parentId, uns parentParentId, uns parentParentParentId)override;
+    void buildOrReplace([[maybe_unused]] uns id, [[maybe_unused]] uns parentId, [[maybe_unused]] uns parentParentId, [[maybe_unused]] uns parentParentParentId)override;
     //***********************************************************************
     void setNodesToComponents() {
     // how many components are connecting to a node (multiple connection from the same component is counted as 1)
@@ -4015,7 +4015,7 @@ public:
         }
     }
     //************************** AC / DC functions *******************************
-    void resetNodes(bool isDC) noexcept override {
+    void resetNodes([[maybe_unused]] bool isDC) noexcept override {
     // TO PARALLEL
     // !!! External nodes of disabled components will be reseted! 
     // !!! This cannot be avoided because at the place of the creation 
@@ -4038,7 +4038,7 @@ public:
         }
     }
     //***********************************************************************
-    void deleteD(bool isDC) noexcept override { 
+    void deleteD([[maybe_unused]] bool isDC) noexcept override { 
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
@@ -4055,7 +4055,7 @@ public:
         }
     }
     //***********************************************************************
-    void calculateCurrent(bool isDC) noexcept override {
+    void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
@@ -4125,26 +4125,26 @@ public:
         return nextLevel;
     }
     //***********************************************************************
-    void forwsubs(bool isDC)override { if (isDC) forwsubsDC(); else forwsubsAC(); }
-    void backsubs(bool isDC)override { if (isDC) backsubsDC(); else backsubsAC(); }
+    void forwsubs([[maybe_unused]] bool isDC)override { if (isDC) forwsubsDC(); else forwsubsAC(); }
+    void backsubs([[maybe_unused]] bool isDC)override { if (isDC) backsubsDC(); else backsubsAC(); }
     //***********************************************************************
-    void jacobiIteration(bool isDC) noexcept override {
+    void jacobiIteration([[maybe_unused]] bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         GaussSeidelRed(isDC);
         GaussSeidelBlack(isDC);
     }
     //***********************************************************************
-    void GaussSeidelRed(bool isDC) {
+    void GaussSeidelRed([[maybe_unused]] bool isDC) {
     // TO PARALLEL
     //***********************************************************************
-        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+        [[maybe_unused]] const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         
         for (auto& comp : components)
             if (comp->isEnabled) comp->jacobiIteration(isDC);
     }
     //***********************************************************************
-    void GaussSeidelBlack(bool isDC) {
+    void GaussSeidelBlack([[maybe_unused]] bool isDC) {
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
@@ -4167,12 +4167,12 @@ public:
         }
     }
     //***********************************************************************
-    rvt recursiveProlongRestrictCopy(bool isDC, RecursiveProlongRestrictType type, ComponentBase* coarse) noexcept override final {
+    rvt recursiveProlongRestrictCopy([[maybe_unused]] bool isDC, [[maybe_unused]] RecursiveProlongRestrictType type, [[maybe_unused]] ComponentBase* coarse) noexcept override final {
     // coarse is the same type as this
     //***********************************************************************
         ComponentSubCircuit* coarseSubckt = static_cast<ComponentSubCircuit*>(coarse);
         cuns NInternal = pModel->getN_InternalNodes();
-        cuns NNormalInternal = pModel->getN_N_Nodes(); // ?? What about ONodes?
+        [[maybe_unused]] cuns NNormalInternal = pModel->getN_N_Nodes(); // ?? What about ONodes?
         rvt sumRet = rvt0;
         if (isDC) {
             switch (type) {
@@ -4235,7 +4235,7 @@ public:
         return sumRet;
     }
     //***********************************************************************
-    rvt calculateResidual(bool isDC) const noexcept override final { 
+    rvt calculateResidual([[maybe_unused]] bool isDC) const noexcept override final { 
     //***********************************************************************
         rvt residual = rvt0;
         cuns NInodes = pModel->getN_N_Nodes(); // ?? What about ONodes?
@@ -4329,8 +4329,8 @@ public:
             if (components[i]->isEnabled) components[i]->printNodeValue();
     }
     //***********************************************************************
-    rvt getJreducedDC(uns y) const noexcept override;
-    rvt getYDC(uns y, uns x) const noexcept override;
+    rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override;
+    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override;
     //***********************************************************************
     void calculateYiiDC() noexcept override {
     // TO PARALLEL
@@ -4341,7 +4341,7 @@ public:
     //***********************************************************************
 
     //***********************************************************************
-    void acceptIterationDC(bool isNoAlpha) noexcept override {
+    void acceptIterationDC([[maybe_unused]] bool isNoAlpha) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
@@ -4381,7 +4381,7 @@ public:
     void acceptStepDC() noexcept override {
     // TO PARALLEL
     //***********************************************************************
-        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
+        [[maybe_unused]] const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         for (uns i = 0; i < nInternalNodesAndVars; i++)
             internalNodesAndVars[i].setStepStartFromAcceptedDC();
         for (auto& comp : components)
@@ -4390,7 +4390,7 @@ public:
             if (ctrl.get()->isEnabled) ctrl.get()->setStepStartFromValue();
     }
     //***********************************************************************
-    rvt getCurrentDC(uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y].real() : rvt0; }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y].real() : rvt0; }
     //************************** AC functions *******************************
     void allocForReductionAC();
     //***********************************************************************
@@ -4401,8 +4401,8 @@ public:
         allocForReductionAC();
     }
     //***********************************************************************
-    cplx getJreducedAC(uns y) const noexcept override;
-    cplx getYAC(uns y, uns x) const noexcept override;
+    cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override;
+    cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override;
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     // TO PARALLEL
@@ -4421,7 +4421,7 @@ public:
             if (comp->isEnabled) comp->acceptIterationAndStepAC();
     }
     //************************  Multigrid Functions  ************************
-    void deleteF(bool isDC) noexcept override {
+    void deleteF([[maybe_unused]] bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
@@ -4438,7 +4438,7 @@ public:
         }
     }
     //***********************************************************************
-    void deleteYii(bool isDC) noexcept override { 
+    void deleteYii([[maybe_unused]] bool isDC) noexcept override { 
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
@@ -4455,7 +4455,7 @@ public:
         }
     }
     //***********************************************************************
-    void loadFtoD(bool isDC) noexcept override {
+    void loadFtoD([[maybe_unused]] bool isDC) noexcept override {
     // TO PARALLEL
     //***********************************************************************
         if (isDC) {
@@ -4481,14 +4481,14 @@ public:
     void prolongateDHNCAddToUhDC(const FineCoarseConnectionDescription&, const hmgMultigrid&);     // uh = uh + P(dH_NonConcurrent)
     //***********************  AC Multigrid Functions  **********************
     void solveAC() {} // d0 += f0 kell!
-    void relaxAC(uns nRelax) {} // f-et is figyelembe kell venni!
+    void relaxAC([[maybe_unused]] uns nRelax) {} // f-et is figyelembe kell venni!
     void prolongeteUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
     void restrictUAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}
     rvt restrictFDDAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) { return rvt0; }  // fH = R(fh) + dH – R(dh), ret: truncation error => saját fv kell a re*re+im*im-hez
     void uHMinusRestrictUhToDHNCAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}   // dH_NonConcurrent = uH – R(uh)
     void prolongateDHNCAddToUhAC(const FineCoarseConnectionDescription&, const hmgMultigrid&) {}     // uh = uh + P(dH_NonConcurrent)
     //***********************************************************************
-    cplx getCurrentAC(uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y] : cplx0; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y < externalCurrents.size() ? externalCurrents[y] : cplx0; }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     //***********************************************************************
@@ -4725,25 +4725,25 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
 #endif
 
 //***********************************************************************
-inline rvt ComponentSubCircuit::getJreducedDC(uns y) const noexcept {
+inline rvt ComponentSubCircuit::getJreducedDC([[maybe_unused]] uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrDC->JRED.size() ? hmg_to_double(sfmrDC->JRED[y]) : rvt0;
     return rvt0;
 }
-inline rvt ComponentSubCircuit::getYDC(uns y, uns x) const noexcept {
+inline rvt ComponentSubCircuit::getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? hmg_to_double(sfmrDC->YRED.get_elem(y, x)) : rvt0;
     return rvt0;
 }
-inline cplx ComponentSubCircuit::getJreducedAC(uns y) const noexcept {
+inline cplx ComponentSubCircuit::getJreducedAC([[maybe_unused]] uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrAC->JRED.size() ? sfmrAC->JRED[y] : cplx0;
     return cplx0;
 }
-inline cplx ComponentSubCircuit::getYAC(uns y, uns x) const noexcept {
+inline cplx ComponentSubCircuit::getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
         return y < sfmrAC->YRED.get_row() && x < sfmrAC->YRED.get_col() ? sfmrAC->YRED.get_elem(y, x) : cplx0;
@@ -5384,7 +5384,7 @@ public:
         gc.fullCircuitInstances[fullCircuitID].component->backsubs(false);
     }
     //***********************************************************************
-    static void AcceptIterationAC(uns fullCircuitID) {
+    static void AcceptIterationAC([[maybe_unused]] uns fullCircuitID) {
     // no iterations in AC => do nothing
     //***********************************************************************
 

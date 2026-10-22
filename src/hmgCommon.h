@@ -27,7 +27,9 @@
 #if HMG_PRECISE == 1
     #include <boost/multiprecision/cpp_bin_float.hpp>
 #elif HMG_PRECISE == 2
-    #include "qd_single.h" // https://github.com/lhprojects/qdpp
+#pragma warning(push, 3)
+#include "qd_single.h" // https://github.com/lhprojects/qdpp
+#pragma warning(pop)
 #endif
 //***********************************************************************
 

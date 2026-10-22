@@ -356,7 +356,7 @@ void probaSzimulacio2() {
 	CircuitStorage& gc = CircuitStorage::getInstance();
 	constexpr rvt Cth = rvt(0.00642); // 0.625
 	constexpr rvt G = rvt(0.5*1.0 / 375.0); // 0.0025
-	constexpr rvt I = rvt(0.01); // 0.125
+	[[maybe_unused]] constexpr rvt I = rvt(0.01); // 0.125
 
 	//***********************************************************************
 	// cellamodellek
@@ -703,6 +703,7 @@ int main(int n, const char** params) {
 	}
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;
+		return 1;
 	}
 	//cout << "\n\n" << sizeof(NodeVariable) << endl;
 	//cout << sizeof(NodeVariable) << '\n' << sizeof(NodeVariable::Extension) << endl;
@@ -772,7 +773,7 @@ int main_1() {
 	Rails::SetVoltage(1, 20.0);
 	Rails::reset();
 
-	CircuitStorage& gc = CircuitStorage::getInstance();
+	[[maybe_unused]] CircuitStorage& gc = CircuitStorage::getInstance();
 
 	HmgBuiltInFunction_SQRT fsqr;
 	rvt wf[3] = { 0.0, 1.0, 3.5 };
@@ -908,7 +909,7 @@ int main_1() {
 	cuns ifSize2 = fuggveny2.getN_IndexField();
 	cuns wfSize2 = fuggveny2.getN_WorkingField(); // local vars (including nested function calls)
 	indexField.resize(ifSize2);
-	workField.resize(wfSize + 6); // 1 ret + 5 param
+	workField.resize(wfSize2 + 6); // 1 ret + 5 param
 
 	indexField[0] = 0;
 	indexField[1] = 6;

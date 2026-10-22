@@ -113,7 +113,7 @@ NodeVariable* ComponentAndControllerBase::getNodeVariableSimpleInterfaceNodeID(c
 
 
 //***********************************************************************
-int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_UNITT::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::timeStepStop.getValueDC() > rvt0 ? rvt1 : rvt0;
     return 0;
@@ -121,7 +121,7 @@ int HmgBuiltInFunction_UNITT::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_TIME::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::timeStepStop.getValueDC();
     return 0;
@@ -129,7 +129,7 @@ int HmgBuiltInFunction_TIME::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_DT::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::dt.getValueDC();
     return 0;
@@ -137,7 +137,7 @@ int HmgBuiltInFunction_DT::evaluate(cuns* index, rvt* workField, ComponentAndCon
 
 
 //***********************************************************************
-int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_FREQ::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = SimControl::getFrequency();
     return 0;
@@ -145,7 +145,7 @@ int HmgBuiltInFunction_FREQ::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_RAIL::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     workField[index[0]] = Rails::V[(uns)workField[index[2]]]->rail.getValueDC();
     return 0;
@@ -153,7 +153,7 @@ int HmgBuiltInFunction_RAIL::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_LOAD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_LOAD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -163,7 +163,7 @@ int HmgBuiltInFunction_LOAD::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_LOADD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_LOADD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -173,7 +173,7 @@ int HmgBuiltInFunction_LOADD::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_LOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_LOADI::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     if (line.xSrc.type == nvtX)
         workField[index[0]] = pComponentParams[0]->getCurrentDC(line.xSrc.index);
@@ -182,7 +182,7 @@ int HmgBuiltInFunction_LOADI::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_LOADSTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_LOADSTS::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -192,7 +192,7 @@ int HmgBuiltInFunction_LOADSTS::evaluate(cuns* index, rvt* workField, ComponentA
 
 
 //***********************************************************************
-int HmgBuiltInFunction_STORE::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_STORE::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -202,7 +202,7 @@ int HmgBuiltInFunction_STORE::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_STORED::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_STORED::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -212,7 +212,7 @@ int HmgBuiltInFunction_STORED::evaluate(cuns* index, rvt* workField, ComponentAn
 
 
 //***********************************************************************
-int HmgBuiltInFunction_INCD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_INCD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -222,7 +222,7 @@ int HmgBuiltInFunction_INCD::evaluate(cuns* index, rvt* workField, ComponentAndC
 
 
 //***********************************************************************
-int HmgBuiltInFunction_STORESTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_STORESTS::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     NodeVariable* nv = pComponentParams[0]->getNodeVariableSimpleInterfaceNodeID(line.xSrc);
     if(nv != nullptr)
@@ -232,7 +232,7 @@ int HmgBuiltInFunction_STORESTS::evaluate(cuns* index, rvt* workField, Component
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ILOAD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ILOAD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -244,7 +244,7 @@ int HmgBuiltInFunction_ILOAD::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ILOADD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ILOADD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -256,7 +256,7 @@ int HmgBuiltInFunction_ILOADD::evaluate(cuns* index, rvt* workField, ComponentAn
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ILOADI::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ILOADI::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     uns n = (uns)(workField[index[2]] + 0.5);
     if (line.xSrc.type == nvtX)
@@ -266,7 +266,7 @@ int HmgBuiltInFunction_ILOADI::evaluate(cuns* index, rvt* workField, ComponentAn
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ILOADSTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ILOADSTS::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -278,7 +278,7 @@ int HmgBuiltInFunction_ILOADSTS::evaluate(cuns* index, rvt* workField, Component
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ISTORE::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ISTORE::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -290,7 +290,7 @@ int HmgBuiltInFunction_ISTORE::evaluate(cuns* index, rvt* workField, ComponentAn
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ISTORED::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ISTORED::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -302,7 +302,7 @@ int HmgBuiltInFunction_ISTORED::evaluate(cuns* index, rvt* workField, ComponentA
 
 
 //***********************************************************************
-int HmgBuiltInFunction_IINCD::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_IINCD::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -314,7 +314,7 @@ int HmgBuiltInFunction_IINCD::evaluate(cuns* index, rvt* workField, ComponentAnd
 
 
 //***********************************************************************
-int HmgBuiltInFunction_ISTORESTS::evaluate(cuns* index, rvt* workField, ComponentAndControllerBase* owner, const LineDescription& line, ComponentAndControllerBase** pComponentParams)const noexcept {
+int HmgBuiltInFunction_ISTORESTS::evaluate([[maybe_unused]] cuns* index, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
 //***********************************************************************
     SimpleInterfaceNodeID src = line.xSrc;
     src.index = (uns)(workField[index[2]] + 0.5);
@@ -473,7 +473,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                         : gc.functions[pAct->functionCustomIndex].get();
 
                     if (pAct->isReplace) {
-                        ModelController* mc = static_cast<ModelController*>(models[pAct->index].get());
+                        [[maybe_unused]] ModelController* mc = static_cast<ModelController*>(models[pAct->index].get());
                         models[pAct->index] = std::make_unique<ModelController>(pAct->externalNs, pAct->internalNs.nBNodes, std::move(defaultNodeValues), 
                             std::move(functionSources), std::move(functionComponentParams), fu);
                     }
@@ -850,8 +850,8 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                     act = first;
                     first = first->next;
                     while (act->instruction == sitMgOneLocalSimple) {
-                        IsDefMgOneLocalNodeInstruction* pAct = static_cast<IsDefMgOneLocalNodeInstruction*>(act);
-                        instr.instr.push_back({ pAct->isDestLevel, pAct->srcIndex, pAct->nodeID, pAct->weight });
+                        IsDefMgOneLocalNodeInstruction* qAct = static_cast<IsDefMgOneLocalNodeInstruction*>(act);
+                        instr.instr.push_back({ qAct->isDestLevel, qAct->srcIndex, qAct->nodeID, qAct->weight });
                         delete act;
                         if (first == nullptr)
                             throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
@@ -859,9 +859,9 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                         first = first->next;
                     }
                     if (act->instruction == sitEndInstruction) {
-                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
-                        if (pAct->whatEnds != sitMgLocalSimple)
-                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        IsEndDefInstruction* qAct = static_cast<IsEndDefInstruction*>(act);
+                        if (qAct->whatEnds != sitMgLocalSimple)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", qAct->whatEnds);
                         if(instr.instr.size() != nInstructions)
                             throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u instruction expected, %u arrived", nInstructions, (uns)instr.instr.size());
                     }
@@ -887,14 +887,14 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                     first = first->next;
                     while (act->instruction == sitMgOneRecursiveInstr || act->instruction == sitUns) {
                         if (act->instruction == sitMgOneRecursiveInstr) {
-                            IsDefMgOneRecursiveInstruction* pAct = static_cast<IsDefMgOneRecursiveInstruction*>(act);
+                            IsDefMgOneRecursiveInstruction* qAct = static_cast<IsDefMgOneRecursiveInstruction*>(act);
                             instr.instr.emplace_back(OneRecursiveInstruction());
                             OneRecursiveInstruction& one = instr.instr.back();
-                            one.isDestLevel = pAct->isDestLevel;
-                            one.weight = pAct->weight;
-                            one.nodeID.nodeID = pAct->nodeID;
-                            one.nodeID.componentID.reserve(pAct->compDepth);
-                            cuns oneCompDept = pAct->compDepth;
+                            one.isDestLevel = qAct->isDestLevel;
+                            one.weight = qAct->weight;
+                            one.nodeID.nodeID = qAct->nodeID;
+                            one.nodeID.componentID.reserve(qAct->compDepth);
+                            cuns oneCompDept = qAct->compDepth;
 
                             delete act;
                             if (first == nullptr)
@@ -903,8 +903,8 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                             act = first;
                             first = first->next;
                             while (act->instruction == sitUns) {
-                                IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
-                                one.nodeID.componentID.push_back(pAct->data);
+                                IsUnsInstruction* rAct = static_cast<IsUnsInstruction*>(act);
+                                one.nodeID.componentID.push_back(rAct->data);
                                 delete act;
                                 if (first == nullptr)
                                     throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
@@ -912,9 +912,9 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                                 first = first->next;
                             }
                             if (act->instruction == sitEndInstruction) {
-                                IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
-                                if (pAct->whatEnds != sitMgRecursiveInstr)
-                                    throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                                IsEndDefInstruction* rAct = static_cast<IsEndDefInstruction*>(act);
+                                if (rAct->whatEnds != sitMgRecursiveInstr)
+                                    throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", rAct->whatEnds);
                                 if (one.nodeID.componentID.size() != oneCompDept)
                                     throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u component depth expected, %u arrived", oneCompDept, (uns)one.nodeID.componentID.size());
                             }
@@ -922,8 +922,8 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                                 throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u is not a local restriction / prolongation instruction", act->instruction);
                         }
                         else {
-                            IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
-                            instr.nodeID.componentID.push_back(pAct->data);
+                            IsUnsInstruction* qAct = static_cast<IsUnsInstruction*>(act);
+                            instr.nodeID.componentID.push_back(qAct->data);
                             delete act;
                             if (first == nullptr)
                                 throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "The instruction stream has ended during multigrid definition.");
@@ -932,9 +932,9 @@ void LocalProlongationOrRestrictionInstructions::processInstructions(IsInstructi
                         }
                     }
                     if (act->instruction == sitEndInstruction) {
-                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
-                        if (pAct->whatEnds != sitMgRecursiveInstr)
-                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        IsEndDefInstruction* qAct = static_cast<IsEndDefInstruction*>(act);
+                        if (qAct->whatEnds != sitMgRecursiveInstr)
+                            throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "illegal ending instruction type (%u)", qAct->whatEnds);
                         if (instr.instr.size() != nInstructions)
                             throw hmgExcept("LocalProlongationOrRestrictionInstructions::processInstructions", "%u instruction expected, %u arrived", nInstructions, (uns)instr.instr.size());
                         if (instr.nodeID.componentID.size() != compDepth)
@@ -1001,16 +1001,16 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
                     act = first;
                     first = first->next;
                     while (act->instruction == sitMgOne) {
-                        IsDefMgOneInstruction* pAct = static_cast<IsDefMgOneInstruction*>(act);
+                        IsDefMgOneInstruction* qAct = static_cast<IsDefMgOneInstruction*>(act);
 
-                        const ComponentBase* component = pAct->srcIndex == unsMax ? &srcSubckt : srcSubckt.components[pAct->srcIndex].get();
+                        const ComponentBase* component = qAct->srcIndex == unsMax ? &srcSubckt : srcSubckt.components[qAct->srcIndex].get();
                         const ComponentSubCircuit* subckt = dynamic_cast<const ComponentSubCircuit*>(component);
 
-                        CDNode sNode = SimpleInterfaceNodeID2CDNode(pAct->nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs);
+                        CDNode sNode = SimpleInterfaceNodeID2CDNode(qAct->nodeID, component->pModel->externalNs, subckt == nullptr ? dummyInternalPack : static_cast<const ModelSubCircuit*>(subckt->pModel)->internalNs);
                         if (sNode.type != cdntInternal)
                             throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%s SRC node must be internal", isRestrict ? ".GLOBALRESTRICTION" : ".GLOBALPROLONGATION");
 
-                        instr.instr.push_back({ pAct->srcIndex, sNode.index, pAct->weight });
+                        instr.instr.push_back({ qAct->srcIndex, sNode.index, qAct->weight });
 
                         delete act;
                         if (first == nullptr)
@@ -1019,9 +1019,9 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
                         first = first->next;
                     }
                     if (act->instruction == sitEndInstruction) {
-                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
-                        if (pAct->whatEnds != sitMgNodeInstruction)
-                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        IsEndDefInstruction* qAct = static_cast<IsEndDefInstruction*>(act);
+                        if (qAct->whatEnds != sitMgNodeInstruction)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", qAct->whatEnds);
                         if (instr.instr.size() != nInstr)
                             throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u instruction expected, %u arrived", nInstr, (uns)instr.instr.size());
                     }
@@ -1051,8 +1051,8 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
                     for (uns i = 0; i < cg.fineCells.size(); i++) {
                         if(act->instruction != sitUns)
                             throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "Not enough fine cell sent to the component group.");
-                        IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
-                        cg.fineCells[i] = pAct->data;
+                        IsUnsInstruction* qAct = static_cast<IsUnsInstruction*>(act);
+                        cg.fineCells[i] = qAct->data;
 
                         delete act;
                         if (first == nullptr)
@@ -1064,8 +1064,8 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
                     for (uns i = 0; i < cg.coarseCells.size(); i++) {
                         if (act->instruction != sitUns)
                             throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "Not enough coarse cell sent to the component group.");
-                        IsUnsInstruction* pAct = static_cast<IsUnsInstruction*>(act);
-                        cg.coarseCells[i] = pAct->data;
+                        IsUnsInstruction* qAct = static_cast<IsUnsInstruction*>(act);
+                        cg.coarseCells[i] = qAct->data;
 
                         delete act;
                         if (first == nullptr)
@@ -1075,9 +1075,9 @@ void FineCoarseConnectionDescription::processInstructions(IsInstruction*& first)
                     }
 
                     if (act->instruction == sitEndInstruction) {
-                        IsEndDefInstruction* pAct = static_cast<IsEndDefInstruction*>(act);
-                        if (pAct->whatEnds != sitMgComponentGroup)
-                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", pAct->whatEnds);
+                        IsEndDefInstruction* qAct = static_cast<IsEndDefInstruction*>(act);
+                        if (qAct->whatEnds != sitMgComponentGroup)
+                            throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "illegal ending instruction type (%u)", qAct->whatEnds);
                     }
                     else
                         throw hmgExcept("FineCoarseConnectionDescription::processInstructions", "%u is not a global restriction / prolongation instruction", act->instruction);
@@ -1942,8 +1942,8 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
     JA.zero(); // the defect of the external nodes is addad to the defect of the subckt component's JB so here not used
     // JB.zero(); // initialized with the defect of the internal nodes
 
-    cuns A1_nIONodes = model.getN_X_Nodes();
-    cuns A2_nNINodes = model.getN_Y_Nodes();
+    [[maybe_unused]] cuns A1_nIONodes = model.getN_X_Nodes();
+    [[maybe_unused]] cuns A2_nNINodes = model.getN_Y_Nodes();
     cuns B1_nNInternalNodes = model.getN_N_Nodes();
     cuns B2_nNONodes = model.getN_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
@@ -2116,7 +2116,7 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
 //***********************************************************************
     ComponentSubCircuit& subckt = *pSubCircuit;
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*subckt.pModel);
-    const bool isSymm = subckt.isJacobianMXSymmetrical(true);
+    [[maybe_unused]] const bool isSymm = subckt.isJacobianMXSymmetrical(true);
 
     // fill UA
 
@@ -2162,8 +2162,8 @@ void SubCircuitFullMatrixReductorAC::forwsubs() {
     YB_NZB.zero_unsafe();
     JA.zero(); // the defect of the external nodes is addad to the defect of the subckt component's JB so here not used
 
-    cuns A1_nIONodes = model.getN_X_Nodes();
-    cuns A2_nNINodes = model.getN_Y_Nodes();
+    [[maybe_unused]] cuns A1_nIONodes = model.getN_X_Nodes();
+    [[maybe_unused]] cuns A2_nNINodes = model.getN_Y_Nodes();
     cuns B1_nNInternalNodes = model.getN_N_Nodes();
     cuns B2_nNONodes = model.getN_O_Nodes();
     cuns ONodes_start = model.getN_Start_Of_O_Nodes();
@@ -2319,7 +2319,7 @@ void SubCircuitFullMatrixReductorAC::backsubs() {
 //***********************************************************************
     ComponentSubCircuit& subckt = *pSubCircuit;
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*subckt.pModel);
-    const bool isSymm = subckt.isJacobianMXSymmetrical(false);
+    [[maybe_unused]] const bool isSymm = subckt.isJacobianMXSymmetrical(false);
 
     // fill UA
 
@@ -2419,8 +2419,8 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
         // the same cell in both levels
 
         if (componentGroup.isCopy) {
-            for (uns i = 0; i < componentGroup.fineCells.size(); i++) { // size of fineCells and coarseCells must be the same
-                auto& comp = components[componentGroup.fineCells[i]];
+            for (uns j = 0; j < componentGroup.fineCells.size(); j++) { // size of fineCells and coarseCells must be the same
+                auto& comp = components[componentGroup.fineCells[j]];
                 if(comp->isEnabled)
                     comp->recursiveProlongRestrictCopy(true, rprProlongateU, coarse.components[componentGroup.coarseCells[i]].get());
             }
@@ -2470,8 +2470,8 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
                 // going through the chain
 
-                for (uns i = 1; i < src.nodeID.componentID.size(); i++) {
-                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[i]].get();
+                for (uns j = 1; j < src.nodeID.componentID.size(); j++) {
+                    srcComponent = static_cast<ComponentSubCircuit*>(srcComponent)->components[src.nodeID.componentID[j]].get();
                 }
 
                 // adding the weighted node value
@@ -2486,8 +2486,8 @@ void ComponentSubCircuit::prolongateUDC(const FineCoarseConnectionDescription& c
 
             // finding the destination component: going through the chain
 
-            for (uns i = 1; i < dest.nodeID.componentID.size(); i++) {
-                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[i]].get();
+            for (uns j = 1; j < dest.nodeID.componentID.size(); j++) {
+                destComponent = static_cast<ComponentSubCircuit*>(destComponent)->components[dest.nodeID.componentID[j]].get();
             }
 
             // setting the voltage
@@ -3019,8 +3019,8 @@ void hmgMultigrid::solveDC() {
                     
                 const FineCoarseConnectionDescription& hLevel = levels[iUp];
                 ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
-                ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
-
+                [[maybe_unused]] ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
+                throw hmgExcept("hmgMultigrid::solveDC", "Why HGrid is not used? Maybe error in the algorithm?");
                 // uh
 
                 hGrid.uHMinusRestrictUhToDHNCDC(hLevel, *this); // dH_NonConcurrent = uH – R(uh)
@@ -3037,7 +3037,7 @@ void hmgMultigrid::solveDC() {
             destGrid.calculateValueDC();
             destGrid.deleteD(true);
             destGrid.calculateCurrent(true);
-            rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
+            [[maybe_unused]] rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
             //if (residual < errorRate * truncationError)
                 iV = nVcycles; // break
         }

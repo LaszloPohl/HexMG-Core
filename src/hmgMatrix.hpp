@@ -96,7 +96,7 @@ public:
     //***********************************************************************
     bool refresh_unsafe(unsigned i, const datatype & thenew) noexcept { return t.refresh_unsafe(i, thenew); }
     //***********************************************************************
-    bool refresh_unsafe(unsigned row, unsigned col, const datatype & thenew) noexcept { return rows[row].refresh_unsafe(col, thenew); }
+    bool refresh_unsafe(unsigned row_, unsigned col_, const datatype & thenew) noexcept { return rows[row_].refresh_unsafe(col_, thenew); }
     //***********************************************************************
     bool refresh_unsafe(const matrix& src) {
     //***********************************************************************

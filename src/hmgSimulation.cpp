@@ -134,7 +134,7 @@ void Simulation::runDC() {
 void Simulation::runTimeStep() {
 //***********************************************************************
     if (SimControl::nNonlinComponents == 10) {
-        CircuitStorage& gc = CircuitStorage::getInstance();
+        [[maybe_unused]] CircuitStorage& gc = CircuitStorage::getInstance();
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);

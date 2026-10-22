@@ -189,7 +189,7 @@ class hmgSaver {
         if (is_AC_type)
             head.sizeofdata = 16;
 
-        if(sizeof(rvt) != 8)
+        if constexpr (sizeof(rvt) != 8)
             throw hmgExcept("hmgSaver::saveFimCore", "TODO: rvt size is not 8");
 
         if(!is_AC_type && currentSave->saveValuesDC.size()!=nProbe)

@@ -1006,7 +1006,7 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
 
                                 cuns nPar = HgmFunctionStorage::builtInFunctions[pxline->functionIndex]->getN_Param();
 
-                                for (uns i = 0; i < nPar; i++) {
+                                for (uns j = 0; j < nPar; j++) {
                                     token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                                     pxline->functionParams.emplace_back(SimpleInterfaceNodeID());
                                     if (!textToSimpleInterfaceNodeID(token, pxline->functionParams.back(), globalNames.globalVarNames))
@@ -2364,17 +2364,17 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
             throw hmgExcept("HMGFileFunction::Read", "incomplete .FUNCTION definition, missing .END in %s", reader.getFileName(lineInfo).c_str());
         
         lineToken.init(line);
-        char* token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        char* btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         
-        if (strcmp(token, ".END") == 0) {
-            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (strcmp(token, "FUNCTION") != 0)
-                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION expected, %s arrived in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if (!globalNames.functionNames.contains(token))
+        if (strcmp(btoken, ".END") == 0) {
+            btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(btoken, "FUNCTION") != 0)
+                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION expected, %s arrived in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (!globalNames.functionNames.contains(btoken))
                 throw hmgExcept("HMGFileFunction::Read", "END .FUNCTION %s: unknown function name in %s, line %u: %s", lineToken.getActToken(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-            if (globalNames.functionNames[token] != functionIndex)
-                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION %s: wrong function name in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            if (globalNames.functionNames[btoken] != functionIndex)
+                throw hmgExcept("HMGFileFunction::Read", ".END FUNCTION %s: wrong function name in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
             isFunctionNotEnded = false;
         }
         else {
@@ -2383,11 +2383,11 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
             sprintf(labelstring, "@label%u", labelnum);
 
-            if (token[strlen(token) - 1] == ':') {
-                if (labels.contains(token))
-                    throw hmgExcept("HMGFileFunction::Read", "%s label redefinition in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                labels[token] = (uns)labels.size();
-                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (btoken[strlen(btoken) - 1] == ':') {
+                if (labels.contains(btoken))
+                    throw hmgExcept("HMGFileFunction::Read", "%s label redefinition in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                labels[btoken] = (uns)labels.size();
+                btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             }
             else {
                 labels[labelstring] = (uns)labels.size();
@@ -2398,10 +2398,10 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
             instructions.emplace_back(FunctionDescription());
             FunctionDescription& func = instructions.back();
-            if (token[0] == '_') { // built in function
-                func.type = identifyFileFunctionType(token);
+            if (btoken[0] == '_') { // built in function
+                func.type = identifyFileFunctionType(btoken);
                 if(func.type == biftInvalid)
-                    throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                    throw hmgExcept("HMGFileFunction::Read", "unknown built in function: %s in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 switch (func.type) {
                     case bift_CONST:    ReadParams(func, 1, lineToken, reader, line, lineInfo, false);
                                         ReadValue(func, lineToken, reader, line, lineInfo);
@@ -2491,14 +2491,14 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                             ReadParams(func, 2, lineToken, reader, line, lineInfo, false);
                             rvt x, y;
                             while (!lineToken.isSepEOL) {
-                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                                if (!spiceTextToRvt(token, x))
-                                    throw hmgExcept("HMGFileFunction::Read", "x value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                if (!spiceTextToRvt(btoken, x))
+                                    throw hmgExcept("HMGFileFunction::Read", "x value not a number: %s in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 if(lineToken.isSepEOL)
                                     throw hmgExcept("HMGFileFunction::Read", "unexpected end of line: y value is missing in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
-                                token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-                                if (!spiceTextToRvt(token, y))
-                                    throw hmgExcept("HMGFileFunction::Read", "y value not a number: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                                btoken = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+                                if (!spiceTextToRvt(btoken, y))
+                                    throw hmgExcept("HMGFileFunction::Read", "y value not a number: %s in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                                 func.values.push_back(x);
                                 func.values.push_back(y);
                             }
@@ -2703,11 +2703,11 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
             }
             else { // custom function
                 
-                if (!globalNames.functionNames.contains(token))
-                    throw hmgExcept("HMGFileFunction::Read", "unknown function name %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+                if (!globalNames.functionNames.contains(btoken))
+                    throw hmgExcept("HMGFileFunction::Read", "unknown function name %s in %s, line %u: %s", btoken, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
                 
                 func.type = biftCustom;
-                func.customIndex = globalNames.functionNames[token];
+                func.customIndex = globalNames.functionNames[btoken];
 
                 HMGFileFunction* f = globalNames.functionData[func.customIndex];
                 cuns nCompPar = f->nComponentParams;
