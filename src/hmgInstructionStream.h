@@ -471,8 +471,14 @@ struct IsProbeInstruction: public IsInstruction {
     uns nNodes = 0;
     uns xy_k = 0;
     uns z_k = 0;
-    IsProbeInstruction(uns indx, uns type, uns fullCkt, uns nNode, uns xy_, uns z_) 
-        :IsInstruction{ sitProbe }, probeIndex{ indx }, probeType{ type }, fullCircuitID{ fullCkt }, nNodes{ nNode }, xy_k{ xy_ }, z_k{ z_ } {}
+    uns hflags = 0;
+    char gridId[33] = { '\0' };
+    char runId[33] = { '\0' };
+    IsProbeInstruction(uns indx, uns type, uns fullCkt, uns nNode, uns xy_, uns z_, uns hflags_, std::string& gridId_, std::string& runId_)
+        :IsInstruction{ sitProbe }, probeIndex{ indx }, probeType{ type }, fullCircuitID{ fullCkt }, nNodes{ nNode }, xy_k{ xy_ }, z_k{ z_ }, hflags{ hflags_ } {
+        strcpy_s(gridId, gridId_.c_str());
+        strcpy_s(runId, runId_.c_str());
+    }
 };
 
 
@@ -504,14 +510,15 @@ struct IsSetInstruction: public IsInstruction {
 //***********************************************************************
 struct IsSaveInstruction: public IsInstruction {
 //***********************************************************************
-    bool isFIM = false;
+    bool isSFIM = false;
+    bool isHXIM = false;
     bool isRaw = false;
     bool isAppend = false;
     uns maxResultsPerRow = 100;
     char fileName[4000] = { '\0' };
     uns nProbeIDs = 0;
-    IsSaveInstruction(bool isFim, bool isRw, bool isAppnd, uns maxResultsPerRow_, std::string& fleName, uns nProbe)
-        :IsInstruction{ sitSave }, isFIM{isFim}, isRaw{isRw}, isAppend{isAppnd}, maxResultsPerRow{maxResultsPerRow_}, nProbeIDs{nProbe} {
+    IsSaveInstruction(bool isFim, bool isHxim, bool isRw, bool isAppnd, uns maxResultsPerRow_, std::string& fleName, uns nProbe)
+        :IsInstruction{ sitSave }, isSFIM{isFim}, isHXIM{isHxim}, isRaw{isRw}, isAppend{isAppnd}, maxResultsPerRow{maxResultsPerRow_}, nProbeIDs{nProbe} {
         strcpy_s(fileName, fleName.c_str());
     }
 };

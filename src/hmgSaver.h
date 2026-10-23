@@ -16,6 +16,7 @@
 #include <condition_variable>
 #include "hmgException.h"
 #include "hmgCommon.h"
+#include "HximHeader.h"
 //***********************************************************************
 
 
@@ -31,6 +32,7 @@ class hmgSaver {
     SimulationToSaveData* pListLast = &first;
     std::mutex listLockMutex;
     std::condition_variable waitingForSaveDataCV;
+    std::atomic<unsigned> counter = 0;
     bool canBeFinished = false;
     //***********************************************************************
     void saveTxtCore(SimulationToSaveData* currentSave) {
@@ -151,7 +153,7 @@ class hmgSaver {
         fclose(fp);
     }
     //***********************************************************************
-    void saveFimCore(SimulationToSaveData* currentSave) {
+    void saveSFimCore(SimulationToSaveData* currentSave) {
     //***********************************************************************
 #pragma pack(push)
 #pragma pack(8)
@@ -190,20 +192,106 @@ class hmgSaver {
             head.sizeofdata = 16;
 
         if constexpr (sizeof(rvt) != 8)
-            throw hmgExcept("hmgSaver::saveFimCore", "TODO: rvt size is not 8");
+            throw hmgExcept("hmgSaver::saveSFimCore", "TODO: rvt size is not 8");
 
         if(!is_AC_type && currentSave->saveValuesDC.size()!=nProbe)
-            throw hmgExcept("hmgSaver::saveFimCore", "probe number for the FIM file should be %u, %u found", nProbe, (uns)currentSave->saveValuesDC.size());
+            throw hmgExcept("hmgSaver::saveSFimCore", "probe number for the FIM file should be %u, %u found", nProbe, (uns)currentSave->saveValuesDC.size());
 
         FILE* fp = nullptr;
         if (fopen_s(&fp, currentSave->fileName.c_str(), "wb") != 0)
-            throw hmgExcept("hmgSaver::saveFimCore", "cannot open file to write: %s", currentSave->fileName.c_str());
+            throw hmgExcept("hmgSaver::saveSFimCore", "cannot open file to write: %s", currentSave->fileName.c_str());
 
         fwrite(&head, sizeof(head), 1, fp);
         if (is_AC_type)
             fwrite(&currentSave->saveValuesAC[0], sizeof(cplx), nProbe, fp);
         else
             fwrite(&currentSave->saveValuesDC[0], sizeof(rvt), nProbe, fp);
+
+        fclose(fp);
+    }
+    //***********************************************************************
+    std::uint8_t char_to_hexadecimal(char ch) {
+    //***********************************************************************
+        if (ch >= '0' && ch <= '9')
+            return (std::uint8_t)(ch - '0');
+        else if (ch >= 'A' && ch <= 'F')
+            return (std::uint8_t)(ch - 'A');
+        else
+            throw hmgExcept("hmgSaver::char_to_hexadecimal", "Not 0-9, A-F character (%c)", ch);
+    }
+    //***********************************************************************
+    void saveHximCore(SimulationToSaveData* currentSave) {
+    //***********************************************************************
+        simulator::results::HximHeaderV1 head;
+
+        head.flags = (std::uint8_t)currentSave->hflags; // Complex flag is set in CircuitStorage::save()
+        head.stepOrdinal = (std::uint32_t)counter;
+
+        switch (currentSave->analysisType) {
+            case atDC:          
+                head.analysisKind = 0; 
+                head.analysisExtra1 = 0;
+                break;
+            case atTimeStep:    
+                head.analysisKind = 1; 
+                head.analysisExtra1 = currentSave->timeFreqValue;
+                head.analysisExtra2 = currentSave->dtValue;
+                break;
+            case atAC:          
+                head.analysisKind = 2; 
+                head.analysisExtra1 = currentSave->timeFreqValue;
+                break;
+            case atTimeConst:   
+                head.analysisKind = 3; 
+                head.analysisExtra1 = currentSave->timeFreqValue;
+                break;
+        }
+
+        for (uns i = 0; i < 16; i++) {
+            head.gridId[i] = char_to_hexadecimal(currentSave->gridId[2 * i]) * 16 + char_to_hexadecimal(currentSave->gridId[2 * i + 1]);
+        }
+
+        for (uns i = 0; i < 16; i++) {
+            head.runId[i] = char_to_hexadecimal(currentSave->runId[2 * i]) * 16 + char_to_hexadecimal(currentSave->runId[2 * i + 1]);
+        }
+
+        FILE* fp = nullptr;
+        if (fopen_s(&fp, currentSave->fileName.c_str(), "wb") != 0)
+            throw hmgExcept("hmgSaver::saveHximCore", "cannot open file to write: %s", currentSave->fileName.c_str());
+
+        if constexpr (sizeof(rvt) != 8)
+            throw hmgExcept("hmgSaver::saveHximCore", "TODO: rvt size is not 8");
+        if constexpr (sizeof(cplx) != 16)
+            throw hmgExcept("hmgSaver::saveHximCore", "TODO: cplx size is not 16");
+        if constexpr (sizeof(float) != 4)
+            throw hmgExcept("hmgSaver::saveHximCore", "TODO: float size is not 4");
+
+        fwrite(&head, sizeof(head), 1, fp);
+        if ((head.flags & hftComplex) != 0) {
+            if ((head.flags & hftDouble) != 0)
+                fwrite(&currentSave->saveValuesAC[0], sizeof(cplx), currentSave->saveValuesAC.size(), fp);
+            else {
+                std::vector<float> buff;
+                buff.resize(currentSave->saveValuesAC.size() * 2);
+                for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
+                    cplx value = currentSave->saveValuesAC[i];
+                    buff[2 * i]     = static_cast<float>(value.real());
+                    buff[2 * i + 1] = static_cast<float>(value.imag());
+                }
+                fwrite(&buff[0], sizeof(float), buff.size(), fp);
+            }
+        }
+        else {
+            if ((head.flags & hftDouble) != 0)
+                fwrite(&currentSave->saveValuesDC[0], sizeof(rvt), currentSave->saveValuesDC.size(), fp);
+            else {
+                std::vector<float> buff;
+                buff.resize(currentSave->saveValuesDC.size());
+                for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++)
+                    buff[i] = static_cast<float>(currentSave->saveValuesDC[i]);
+                fwrite(&buff[0], sizeof(float), buff.size(), fp);
+            }
+        }
 
         fclose(fp);
     }
@@ -230,9 +318,11 @@ class hmgSaver {
                 listLockMutex.unlock();
 
                 if (currentSave != nullptr) {
-
-                    if (currentSave->isFIM)
-                        saveFimCore(currentSave);
+                    counter++;
+                    if (currentSave->isSFIM)
+                        saveSFimCore(currentSave);
+                    else if (currentSave->isHXIM)
+                        saveHximCore(currentSave);
                     else
                         saveTxtCore(currentSave);
                     delete currentSave;

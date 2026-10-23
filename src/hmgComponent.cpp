@@ -346,7 +346,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     IsSaveInstruction* pAct = static_cast<IsSaveInstruction*>(act);
                     std::vector<uns> probeIndex;
                     processSaveInstructions(first, probeIndex);
-                    save(pAct->isFIM, pAct->isRaw, pAct->isAppend, pAct->maxResultsPerRow, pAct->fileName, probeIndex);
+                    save(pAct->isSFIM, pAct->isHXIM, pAct->isRaw, pAct->isAppend, pAct->maxResultsPerRow, pAct->fileName, probeIndex);
                 }
                 break;
             case sitDefModelSubcircuit: {
@@ -584,7 +584,10 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     probes[pAct->probeIndex]->probeType = (ProbeType)pAct->probeType;
                     probes[pAct->probeIndex]->fullCircuitID = pAct->fullCircuitID;
                     probes[pAct->probeIndex]->xy_k = pAct->xy_k;
-                    probes[pAct->probeIndex]->z_k  = pAct->z_k;
+                    probes[pAct->probeIndex]->z_k = pAct->z_k;
+                    probes[pAct->probeIndex]->z_k = pAct->hflags;
+                    strcpy_s(probes[pAct->probeIndex]->gridId, pAct->gridId);
+                    strcpy_s(probes[pAct->probeIndex]->runId, pAct->runId);
                     probes[pAct->probeIndex]->nodes.reserve(pAct->nNodes);
                     processProbesInstructions(first, pAct->probeIndex);
                 }

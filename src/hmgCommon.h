@@ -264,7 +264,14 @@ enum StreamInstructionType {
 //***********************************************************************
 enum ProbeType {
 //***********************************************************************
-    ptV, ptI, ptVSum, ptVAverage, ptISum, ptIAverage, ptFIM
+    ptV, ptI, ptVSum, ptVAverage, ptISum, ptIAverage, ptSFIM, ptHXIM
+};
+
+
+//***********************************************************************
+enum HFlagType {
+//***********************************************************************
+    hftDouble = 1, hftComplex = 2, hftI = 4
 };
 
 
@@ -428,12 +435,16 @@ struct ComponentIndex {
 //***********************************************************************
 struct SimulationToSaveData {
 //***********************************************************************
-    bool isFIM = false;
+    bool isSFIM = false;
+    bool isHXIM = false;
     bool isRaw = false;
     bool isAppend = false;
     bool isTau = false;
     uns xy_k = 0;
     uns z_k = 0;
+    uns hflags = 0;
+    char gridId[33] = { '\0' };
+    char runId[33] = { '\0' };
     AnalysisType analysisType = atDC;
     uns maxResultsPerRow = 100;
     rvt timeFreqValue = rvt0;

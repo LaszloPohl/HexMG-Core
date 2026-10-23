@@ -1548,7 +1548,7 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
         else if (strcmp(token, "IAVERAGE") == 0) probeType = ptIAverage;
         else if (strcmp(token, "FIM"     ) == 0) {
             
-            probeType = ptFIM;
+            probeType = ptSFIM;
 
             if (lineToken.isSepEOL)
                 throw hmgExcept("HMGFileProbe::Read", "empty .PROBE line: %s in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1563,6 +1563,45 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
 
             if (xy_k + z_k > 12)
                 throw hmgExcept("HMGFileProbe::Read", ".PROBE xy_k+z_k must be <= 12, %u arrived (%s) in %s, line %u", xy_k + z_k, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        }
+        else if (strcmp(token, "HXIM"     ) == 0) {
+            
+            probeType = ptHXIM;
+
+            if (lineToken.isSepEOL)
+                throw hmgExcept("HMGFileProbe::Read", "empty .PROBE line: %s in %s, line %u", line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "DEF")!=0)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE DEF expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            hflag = 0;
+            if (strcmp(token, "FLOAT") == 0)
+                ;
+            else if (strcmp(token, "DOUBLE") == 0)
+                hflag |= hftDouble;
+            else
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE FLOAT|DOUBLE expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            hflag = 0;
+            if (strcmp(token, "V") == 0)
+                ;
+            else if (strcmp(token, "I") == 0)
+                hflag |= hftI;
+            else
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE V|I expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            gridId = token;
+            if(!is_UUID(gridId))
+                throw hmgExcept("HMGFileProbe::Read", "UUID expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            runId = token;
+            if (!is_UUID(runId))
+                throw hmgExcept("HMGFileProbe::Read", "UUID expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         }
         else
             throw hmgExcept("HMGFileProbe::Read", "Unknown probe type (%s) in %s, line %u", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1605,7 +1644,7 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
                 throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "FIM") == 0) {
-            if (probeType != ptFIM)
+            if (probeType != ptSFIM)
                 throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 
             uns new_k;
@@ -1620,6 +1659,14 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
                 throw hmgExcept("HMGFileProbe::Read", ".PROBE z_k is not a number, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
             if (new_k != z_k)
                 throw hmgExcept("HMGFileProbe::Read", ".PROBE z_k is not the same number as previously (%u!=%u), (%s) in %s, line %u", new_k, z_k, line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+        }
+        else if (strcmp(token, "HXIM") == 0) {
+            if (probeType != ptHXIM)
+                throw hmgExcept("HMGFileProbe::Read", "A different node type than previously specified: %s in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+
+            token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+            if (strcmp(token, "NODES") != 0)
+                throw hmgExcept("HMGFileProbe::Read", ".PROBE NODES expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         }
         else
             throw hmgExcept("HMGFileProbe::Read", "Unknown probe type (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
@@ -1756,7 +1803,8 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
     while (true) {
         token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
         if (strcmp(token, "RAW") == 0) isRaw = true;
-        else if (strcmp(token, "FIM") == 0) isFIM = true;
+        else if (strcmp(token, "FIM") == 0)  isSFIM = true;
+        else if (strcmp(token, "HXIM") == 0) isHXIM = true;
         else if (strcmp(token, "APPEND") == 0) isAppend = true;
         else if (strcmp(token, "MAXRESULTSPERROW") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
@@ -1784,8 +1832,8 @@ void HMGFileSave::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         else
             throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM line unknown probe: %s, in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
     }
-    if (isFIM && probeIDs.size() != 1)
-        throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM line exactly 1 FIM probe must be given, in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+    if ((isSFIM || isHXIM) && probeIDs.size() != 1)
+        throw hmgExcept("HMGFileSave::Read", "in a .SAVE FIM/HXIM line exactly 1 FIM/HXIM probe must be given, in %s, line %u: %s", reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
 }
 
 

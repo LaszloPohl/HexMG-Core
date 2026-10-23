@@ -4983,6 +4983,9 @@ class CircuitStorage {
         ProbeType probeType = ptV;
         uns fullCircuitID = 0;
         uns xy_k = 0, z_k = 0;
+        uns hflags = 0;
+        char gridId[33] = { '\0' };
+        char runId[33] = { '\0' };
         std::vector<DeepCDNodeID> nodes;
     };
 
@@ -5150,7 +5153,7 @@ private:
     void getProbeValuesDC(const Probe& probe, std::vector<rvt>& saveValuesDC) const {
     //***********************************************************************
         switch (probe.probeType) {
-            case ptFIM:
+            case ptSFIM:
             case ptV: {
                 saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
@@ -5191,6 +5194,18 @@ private:
                 saveValuesDC.push_back(sum / probe.nodes.size());
             }
             break;
+            case ptHXIM: {
+                saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
+                if ((probe.hflags & hftI) == 0) { // current 
+                    for (const auto& nodeID : probe.nodes)
+                        saveValuesDC.push_back(getCurrentDC(probe.fullCircuitID, nodeID));
+                }
+                else { // voltage
+                    for (const auto& nodeID : probe.nodes)
+                        saveValuesDC.push_back(getNode(probe.fullCircuitID, nodeID).getValueDC());
+                }
+            }
+            break;
             default:
                 throw hmgExcept("CircuitStorage::getProbeValuesDC", "unknown probe Type: %u", (uns)probe.probeType);
         }
@@ -5200,7 +5215,7 @@ private:
     void getProbeValuesAC(const Probe& probe, std::vector<cplx>& saveValuesAC) const {
     //***********************************************************************
         switch (probe.probeType) {
-            case ptFIM:
+            case ptSFIM:
             case ptV: {
                 saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
                 for (const auto& nodeID : probe.nodes)
@@ -5241,22 +5256,35 @@ private:
                 saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
             }
             break;
+            case ptHXIM: {
+                saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
+                if ((probe.hflags & hftI) == 0) { // current 
+                    for (const auto& nodeID : probe.nodes)
+                        saveValuesAC.push_back(getCurrentAC(probe.fullCircuitID, nodeID));
+                }
+                else { // voltage
+                    for (const auto& nodeID : probe.nodes)
+                        saveValuesAC.push_back(getNode(probe.fullCircuitID, nodeID).getValueAC());
+                }
+            }
+            break;
             default:
                 throw hmgExcept("CircuitStorage::getProbeValuesAC", "unknown probe Type: %u", (uns)probe.probeType);
         }
     }
 
     //***********************************************************************
-    void save(bool isFIM, bool isRaw, bool isAppend, uns maxResultsPerRow, const char* fileName, const std::vector<uns>& probeIndex) {
+    void save(bool isSFIM, bool isHXIM, bool isRaw, bool isAppend, uns maxResultsPerRow, const char* fileName, const std::vector<uns>& probeIndex) {
     //***********************************************************************
         SimulationToSaveData* src = new SimulationToSaveData;
-        src->isFIM = isFIM;
+        src->isSFIM = isSFIM;
+        src->isHXIM = isHXIM;
         src->isRaw = isRaw;
         src->isAppend = isAppend;
         src->maxResultsPerRow = maxResultsPerRow;
         src->fileName = fileName;
 
-        if (isFIM && probeIndex.size() != 1)
+        if ((isSFIM || isHXIM) && probeIndex.size() != 1)
             throw hmgExcept("CircuitStorage::save", ".SAVE FIM: exactly 1 probe must be defined, %u found", (uns)probeIndex.size());
 
         sim.fillSaveData(src);
@@ -5264,8 +5292,15 @@ private:
             case atDC:
             case atTimeStep: {
                 for (auto pi : probeIndex) {
-                    src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
-                    src->z_k  = probes[pi].get()->z_k;  // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    if (isSFIM) {
+                        src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                        src->z_k = probes[pi].get()->z_k;   // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    }
+                    if (isHXIM) {
+                        src->hflags = probes[pi].get()->hflags;
+                        strcpy_s(src->gridId, probes[pi].get()->gridId);
+                        strcpy_s(src->runId, probes[pi].get()->runId);
+                    }
                     getProbeValuesDC(*probes[pi].get(), src->saveValuesDC);
                 }
             }
@@ -5273,8 +5308,15 @@ private:
             case atAC:
             case atTimeConst: {
                 for (auto pi : probeIndex) {
-                    src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
-                    src->z_k  = probes[pi].get()->z_k;  // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    if (isSFIM) {
+                        src->xy_k = probes[pi].get()->xy_k; // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                        src->z_k  = probes[pi].get()->z_k;  // ! only then does it matter if isFIM is defined and in this case probeIndex contains exactly 1 element
+                    }
+                    if (isHXIM) {
+                        src->hflags = probes[pi].get()->hflags | hftComplex; // ! 
+                        strcpy_s(src->gridId, probes[pi].get()->gridId);
+                        strcpy_s(src->runId, probes[pi].get()->runId);
+                    }
                     getProbeValuesAC(*probes[pi].get(), src->saveValuesAC);
                 }
             }
