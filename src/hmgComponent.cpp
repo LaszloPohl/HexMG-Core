@@ -585,7 +585,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     probes[pAct->probeIndex]->fullCircuitID = pAct->fullCircuitID;
                     probes[pAct->probeIndex]->xy_k = pAct->xy_k;
                     probes[pAct->probeIndex]->z_k = pAct->z_k;
-                    probes[pAct->probeIndex]->z_k = pAct->hflags;
+                    probes[pAct->probeIndex]->hflags = pAct->hflags;
                     strcpy_s(probes[pAct->probeIndex]->gridId, pAct->gridId);
                     strcpy_s(probes[pAct->probeIndex]->runId, pAct->runId);
                     probes[pAct->probeIndex]->nodes.reserve(pAct->nNodes);

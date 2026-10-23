@@ -1585,7 +1585,6 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
                 throw hmgExcept("HMGFileProbe::Read", ".PROBE FLOAT|DOUBLE expected, %s arrived (%s) in %s, line %u", lineToken.getActToken(), line, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
 
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            hflag = 0;
             if (strcmp(token, "V") == 0)
                 ;
             else if (strcmp(token, "I") == 0)

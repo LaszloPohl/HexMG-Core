@@ -5196,7 +5196,7 @@ private:
             break;
             case ptHXIM: {
                 saveValuesDC.reserve(saveValuesDC.size() + probe.nodes.size());
-                if ((probe.hflags & hftI) == 0) { // current 
+                if ((probe.hflags & hftI) != 0) { // current 
                     for (const auto& nodeID : probe.nodes)
                         saveValuesDC.push_back(getCurrentDC(probe.fullCircuitID, nodeID));
                 }
@@ -5258,7 +5258,7 @@ private:
             break;
             case ptHXIM: {
                 saveValuesAC.reserve(saveValuesAC.size() + probe.nodes.size());
-                if ((probe.hflags & hftI) == 0) { // current 
+                if ((probe.hflags & hftI) != 0) { // current 
                     for (const auto& nodeID : probe.nodes)
                         saveValuesAC.push_back(getCurrentAC(probe.fullCircuitID, nodeID));
                 }

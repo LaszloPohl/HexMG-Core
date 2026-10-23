@@ -215,7 +215,7 @@ class hmgSaver {
         if (ch >= '0' && ch <= '9')
             return (std::uint8_t)(ch - '0');
         else if (ch >= 'A' && ch <= 'F')
-            return (std::uint8_t)(ch - 'A');
+            return (std::uint8_t)(ch - 'A' + 10);
         else
             throw hmgExcept("hmgSaver::char_to_hexadecimal", "Not 0-9, A-F character (%c)", ch);
     }
@@ -318,11 +318,12 @@ class hmgSaver {
                 listLockMutex.unlock();
 
                 if (currentSave != nullptr) {
-                    counter++;
                     if (currentSave->isSFIM)
                         saveSFimCore(currentSave);
-                    else if (currentSave->isHXIM)
+                    else if (currentSave->isHXIM) {
+                        counter++;
                         saveHximCore(currentSave);
+                    }
                     else
                         saveTxtCore(currentSave);
                     delete currentSave;

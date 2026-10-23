@@ -965,7 +965,7 @@ struct HMGFileProbe: HMGFileListItem {
             return false;
         uns zeros = 0;
         for (uns i = 0; i < 32; i++) {
-            if (!((id[i] >= '0' && id[i] <= 9) || (id[i] >= 'A' && id[i] <= 'F')))
+            if (!((id[i] >= '0' && id[i] <= '9') || (id[i] >= 'A' && id[i] <= 'F')))
                 return false;
             if (id[i] == '0')
                 zeros++;
