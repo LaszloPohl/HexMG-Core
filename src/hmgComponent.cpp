@@ -559,7 +559,7 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
             case sitMgComponentGroup:               isImpossibleInstruction = true; break;
             case sitRails: {
                     IsDefRailsInstruction* pAct = static_cast<IsDefRailsInstruction*>(act);
-                    Rails::resize(pAct->nRailValues + 1);
+                    Rails::resize(pAct->rails + 1);
                     processRailsInstructions(first);
                     Rails::reset();
                 }
