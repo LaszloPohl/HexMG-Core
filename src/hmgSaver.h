@@ -203,9 +203,9 @@ class hmgSaver {
 
         fwrite(&head, sizeof(head), 1, fp);
         if (is_AC_type)
-            fwrite(&currentSave->saveValuesAC[0], sizeof(cplx), nProbe, fp);
+            fwrite(currentSave->saveValuesAC.data(), sizeof(cplx), nProbe, fp);
         else
-            fwrite(&currentSave->saveValuesDC[0], sizeof(rvt), nProbe, fp);
+            fwrite(currentSave->saveValuesDC.data(), sizeof(rvt), nProbe, fp);
 
         fclose(fp);
     }
@@ -269,7 +269,7 @@ class hmgSaver {
         fwrite(&head, sizeof(head), 1, fp);
         if ((head.flags & hftComplex) != 0) {
             if ((head.flags & hftDouble) != 0)
-                fwrite(&currentSave->saveValuesAC[0], sizeof(cplx), currentSave->saveValuesAC.size(), fp);
+                fwrite(currentSave->saveValuesAC.data(), sizeof(cplx), currentSave->saveValuesAC.size(), fp);
             else {
                 std::vector<float> buff;
                 buff.resize(currentSave->saveValuesAC.size() * 2);
@@ -278,18 +278,18 @@ class hmgSaver {
                     buff[2 * i]     = static_cast<float>(value.real());
                     buff[2 * i + 1] = static_cast<float>(value.imag());
                 }
-                fwrite(&buff[0], sizeof(float), buff.size(), fp);
+                fwrite(buff.data(), sizeof(float), buff.size(), fp);
             }
         }
         else {
             if ((head.flags & hftDouble) != 0)
-                fwrite(&currentSave->saveValuesDC[0], sizeof(rvt), currentSave->saveValuesDC.size(), fp);
+                fwrite(currentSave->saveValuesDC.data(), sizeof(rvt), currentSave->saveValuesDC.size(), fp);
             else {
                 std::vector<float> buff;
                 buff.resize(currentSave->saveValuesDC.size());
                 for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++)
                     buff[i] = static_cast<float>(currentSave->saveValuesDC[i]);
-                fwrite(&buff[0], sizeof(float), buff.size(), fp);
+                fwrite(buff.data(), sizeof(float), buff.size(), fp);
             }
         }
 
