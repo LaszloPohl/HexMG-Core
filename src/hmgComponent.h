@@ -5174,10 +5174,15 @@ private:
             }
             break;
             case ptVAverage: {
-                rvt sum = rvt0;
-                for (const auto& nodeID : probe.nodes)
-                    sum += getNode(probe.fullCircuitID, nodeID).getValueDC();
-                saveValuesDC.push_back(sum / probe.nodes.size());
+                if (probe.nodes.size() == 0) {
+                    saveValuesDC.push_back(rvt0);
+                }
+                else {
+                    rvt sum = rvt0;
+                    for (const auto& nodeID : probe.nodes)
+                        sum += getNode(probe.fullCircuitID, nodeID).getValueDC();
+                    saveValuesDC.push_back(sum / probe.nodes.size());
+                }
             }
             break;
             case ptISum: {
@@ -5236,10 +5241,15 @@ private:
             }
             break;
             case ptVAverage: {
-                cplx sum = cplx0;
-                for (const auto& nodeID : probe.nodes)
-                    sum += getNode(probe.fullCircuitID, nodeID).getValueAC();
-                saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
+                if (probe.nodes.size() == 0) {
+                    saveValuesAC.push_back(cplx0);
+                }
+                else {
+                    cplx sum = cplx0;
+                    for (const auto& nodeID : probe.nodes)
+                        sum += getNode(probe.fullCircuitID, nodeID).getValueAC();
+                    saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
+                }
             }
             break;
             case ptISum: {

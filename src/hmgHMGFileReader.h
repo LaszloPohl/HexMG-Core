@@ -951,8 +951,8 @@ struct HMGFileProbe: HMGFileListItem {
     uns xy_k = 0; // SFIM probe
     uns z_k  = 0; // SFIM probe
     uns hflag = 0;// HXIM probe, 0|1 : float|double, 0|4 : voltage|current, (0|2 : real|complex => set by the solver)
-    std::string gridId;
-    std::string runId;
+    std::string gridId = "00000000000000000000000000000000";
+    std::string runId  = "00000000000000000000000000000000";
     std::vector<DeepInterfaceNodeID> nodes;
     //***********************************************************************
 

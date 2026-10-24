@@ -333,7 +333,7 @@ class hmgSaver {
         }
         catch (const hmgExcept& err) {
             std::cerr << err.what() << std::endl;
-            throw;
+            std::quick_exit(1);
         }
     }
 public:

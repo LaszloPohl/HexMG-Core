@@ -524,7 +524,9 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
 //***********************************************************************
     dest.componentID.clear();
     if (strcmp(token, "0") == 0) {
-        dest.nodeID.index = unsMax;
+        dest.nodeID.type = nvtRail;
+        dest.nodeID.index = 0;
+        dest.isController = false;
         return true;
     }
     uns componentIndex = 0;
