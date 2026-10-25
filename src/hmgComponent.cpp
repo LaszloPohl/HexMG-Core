@@ -1152,6 +1152,16 @@ void CircuitStorage::processProbesInstructions(IsInstruction*& first, uns curren
             case sitProbeNode: {
                     IsProbeNodeInstruction* pAct = static_cast<IsProbeNodeInstruction*>(act);
 
+                    if (pAct->nodeID.nodeID.type == nvtBG) {
+                        NodeVariable* poi = vectorForcedGet(globalVariables, pAct->nodeID.nodeID.index).get();
+                        if (poi == nullptr) {
+                            globalVariables[pAct->nodeID.nodeID.index] = std::unique_ptr<NodeVariable>(new NodeVariable);
+                            poi = globalVariables[pAct->nodeID.nodeID.index].get();
+                            poi->setDefaultValueIndex(0, true);
+                            poi->setId(pAct->nodeID.nodeID.index, 0, 0, 0);
+                        }
+                    }
+
                     if (pAct->nodeID.isController) {
                         const ComponentBase* component = fullCircuitInstances[probes[currentProbe]->fullCircuitID].component.get();
                         const Controller* controller = nullptr;
