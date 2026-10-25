@@ -534,6 +534,8 @@ struct HMGFileListItem {
 //***********************************************************************
 struct HMGFileComponentInstanceLine : HMGFileListItem {
 //***********************************************************************
+    ExternalConnectionSizePack probeExternalNs;
+    InternalNodeSizePack probeInternalNs;
     uns instanceIndex = 0; // component index or controller index
 
     uns modelIndex = 0; // modelNames, BuiltInComponentTemplateType

@@ -126,6 +126,7 @@ void Simulation::runDC() {
     gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
 */
+    CircuitStorage::AcceptStepDC(fullCircuitID);
     wasDC = true;
 }
 

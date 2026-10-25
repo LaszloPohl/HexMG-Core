@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <stack>
 #include <set>
+#include <charconv>
 //***********************************************************************
 
 
@@ -522,40 +523,99 @@ label_NR:
 //***********************************************************************
 bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitIndex, DeepInterfaceNodeID& dest) {
 //***********************************************************************
-    dest.componentID.clear();
-    if (strcmp(token, "0") == 0) {
-        dest.nodeID.type = nvtRail;
-        dest.nodeID.index = 0;
-        dest.isController = false;
-        return true;
-    }
-    uns componentIndex = 0;
+    dest = DeepInterfaceNodeID{};
+
+//    uns componentIndex = 0;
     HMGFileModelDescription* currentComponent = modelData[fullCircuitData[fullCircuitIndex]->modelID];
+    if (currentComponent == nullptr) 
+        return false;
+    ExternalConnectionSizePack externalNs = currentComponent->externalNs;
+    InternalNodeSizePack internalNs = currentComponent->internalNs;
     while (true) {
         uns i = 0;
+
         while (token[i] != '\0' && token[i] != '.')
             i++;
-        if (token[i] == '.') {
-            token[i] = '\0';
-            if (currentComponent == nullptr)
-                return false;
-            if (!currentComponent->instanceListIndex.contains(token))
-                throw hmgExcept("GlobalHMGFileNames::textToDeepInterfaceNodeID", "unknown instance name (%s)", token);
-            uns ci = currentComponent->instanceListIndex[token];
-            HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
-            dest.isController = pxline->isController;
-            dest.componentID.push_back(pxline->instanceIndex);
-            currentComponent = pxline->isBuiltIn ? nullptr : modelData[pxline->modelIndex];
-            token[i] = '.';
-            componentIndex++;
-            token += i + 1;
+        if (token[i] != '.')
+            break;
+
+        token[i] = '\0'; // STEPSTART is hiden from the remaining part of this function !
+        bool is_stepstart = false;
+        if (strcmp(token + i + 1, "STEPSTART")) {
+            dest.nodeID.isStepStart = true;
+            is_stepstart = true;
+            break;
+        }
+
+        if (currentComponent == nullptr)
+            return false;
+        if (!currentComponent->instanceListIndex.contains(token))
+            throw hmgExcept("GlobalHMGFileNames::textToDeepInterfaceNodeID", "unknown instance name (%s)", token);
+        uns ci = currentComponent->instanceListIndex[token];
+        HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
+        dest.isController = pxline->isController;
+        dest.componentID.push_back(pxline->instanceIndex);
+        if (pxline->isBuiltIn) {
+            currentComponent = nullptr;
+            externalNs = pxline->probeExternalNs;
+            internalNs = pxline->probeInternalNs;
         }
         else {
-            if (!textToSimpleInterfaceNodeID(token, dest.nodeID, globalVarNames))
-                return false;
-            return true;
+            currentComponent = modelData[pxline->modelIndex];
+            externalNs = currentComponent->externalNs; 
+            internalNs = currentComponent->internalNs;
         }
+        if (is_stepstart)
+            break;
+        token[i] = '.';
+//        componentIndex++;
+        token += i + 1;
     }
+
+    if (strcmp(token, "0") == 0) { 
+        dest.nodeID.type = nvtRail; 
+        dest.nodeID.index = 0; 
+        return true; 
+    }
+
+    if (strcmp(token, "GND") == 0) { 
+        dest.nodeID.type = nvtGND; 
+        dest.nodeID.index = 0; 
+        return true; 
+    }
+
+    if (strcmp(token, "BG") == 0) {
+        dest.nodeID.type = nvtBG;
+        if (!globalVarNames.contains(token)) {
+            dest.nodeID.index = (uns)globalVarNames.size();
+            globalVarNames[token] = dest.nodeID.index;
+        }
+        else
+            dest.nodeID.index = globalVarNames[token];
+        return true;
+    }
+
+    const size_t length = strlen(token);
+    if (length < 2 || token[1] < '0' || token[1] > '9') 
+        return false;
+
+    uns index = 0;
+    const auto parsed = std::from_chars(token + 1, token + length, index);
+    if (parsed.ec != std::errc{} || parsed.ptr != token + length) return false;
+    uns count = 0;
+    switch (token[0]) {
+        case 'X': dest.nodeID.type = nvtX; count = externalNs.nXNodes; break;
+        case 'Y': dest.nodeID.type = nvtY; count = externalNs.nYNodes; break;
+        case 'A': dest.nodeID.type = nvtA; count = externalNs.nANodes; break;
+        case 'O': dest.nodeID.type = nvtO; count = externalNs.nONodes; break;
+        case 'N': dest.nodeID.type = nvtN; count = internalNs.nNNodes; break;
+        case 'B': dest.nodeID.type = nvtB; count = internalNs.nBNodes; break;
+        case 'R': dest.nodeID.type = nvtRail; dest.nodeID.index = index; return index <= HMGFileListItem::globalNRails;
+        default: return false;
+    }
+    if (index >= count) return false;
+    dest.nodeID.index = index;
+    return true;
 }
 
 
@@ -1087,6 +1147,35 @@ void HMGFileModelDescription::ReadOrReplaceBodySubcircuit(ReadALine& reader, cha
             }
             // don't forget to set pxline->isController if needed !
             // don't forget to set startONodes and stopONodes if there are normal O nodes !
+
+            // node number check for probes
+
+            if (pxline->isBuiltIn) {
+                ExternalConnectionSizePack & prExt = pxline->probeExternalNs;
+                prExt.nXNodes = nodenum; // XNode only components
+                if (pxline->isFunctionControlled) {
+                    prExt.nXNodes = nodenum - pxline->nIN - pxline->nCin;
+                    prExt.nYNodes = pxline->nIN;
+                    prExt.nANodes = pxline->nCin;
+                    if (pxline->modelIndex == bimFunc_Controlled_Node) {
+                        prExt.nXNodes = 0; 
+                        prExt.nANodes = nodenum;
+                    }
+                }
+                else {
+                    switch (pxline->modelIndex) {
+                        case bimtConst_V_Controlled_I:  prExt.nXNodes = 2; prExt.nYNodes = 2;   break;
+                        case bimtConst_Controlled_I:    prExt.nXNodes = 2; prExt.nANodes = 1;   break;
+                        case bimtConstVIB: 
+                        case bimtMIB:                   prExt.nXNodes = 2; prExt.nONodes = 1;   break;
+                        case bimtXDiode:                prExt.nXNodes = 2; prExt.nYNodes = 1;   break;
+                        case bimtConstL_1:              pxline->probeInternalNs.nNNodes  = 1;   break;
+                        case bimtHYS_1:                 prExt.nXNodes = 0; prExt.nANodes = 2;   break;
+                        default: 
+                            break;
+                    }
+                }
+            }
 
             // read component parameters, nodes and parameters
             
