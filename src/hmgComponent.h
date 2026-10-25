@@ -5110,6 +5110,8 @@ private:
     //***********************************************************************
     const NodeVariable& getNode(uns fullCircuitID, const DeepCDNodeID& nodeID) const {
     //***********************************************************************
+        if(nodeID.nodeID.type == cdntGlobalVariable)
+            return *globalVariables[nodeID.nodeID.index];
         if (nodeID.isController) {
             const Controller& controller = getController(fullCircuitID, nodeID);
             switch (nodeID.nodeID.type) {

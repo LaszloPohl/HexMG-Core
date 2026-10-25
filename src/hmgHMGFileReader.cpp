@@ -541,9 +541,11 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
 
         token[i] = '\0'; // STEPSTART is hiden from the remaining part of this function !
         bool is_stepstart = false;
-        if (strcmp(token + i + 1, "STEPSTART")) {
+        if (strcmp(token + i + 1, "STEPSTART") == 0) {
             dest.nodeID.isStepStart = true;
             is_stepstart = true;
+            // stepstart is not implemented in probe handling, textToDeepInterfaceNodeID is OK, but...
+            TODO("STEPSTART is not accepted for probes");
             break;
         }
 
@@ -584,7 +586,7 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
         return true; 
     }
 
-    if (strcmp(token, "BG") == 0) {
+    if (token[0] == 'B' && token[1] == 'G') {
         dest.nodeID.type = nvtBG;
         if (!globalVarNames.contains(token)) {
             dest.nodeID.index = (uns)globalVarNames.size();

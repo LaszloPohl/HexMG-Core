@@ -54,6 +54,10 @@ inline CDNode SimpleInterfaceNodeID2CDNode(const SimpleInterfaceNodeID& src, con
             res.type = CDNodeType::cdntInternal;
             delta = internalNs.nNNodes;
             break;
+        case nvtBG:
+            res.type = CDNodeType::cdntGlobalVariable;
+            delta = 0;
+            break;
         case nvtRail:
             res.type = CDNodeType::cdntRail;
             break;
