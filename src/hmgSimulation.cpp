@@ -89,7 +89,7 @@ void Simulation::runDC() {
     bench_now("first iterations");
 */
     rvt max_error = 1000.0;
-    for (uns i = 0; /*max_error > 1.0e-006 &&*/ i < 5; i++) {
+    for (uns i = 0; (i == 0 || max_error > err) && i < 100; i++) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
       //printf("ForwsubsBacksubs\n");
       //gc.fullCircuitInstances[0].component->printNodeValue();
@@ -134,45 +134,27 @@ void Simulation::runDC() {
 //***********************************************************************
 void Simulation::runTimeStep() {
 //***********************************************************************
-    if (SimControl::nNonlinComponents == 10) {
-        [[maybe_unused]] CircuitStorage& gc = CircuitStorage::getInstance();
+    rvt max_error = 1000.0;
+    CircuitStorage& gc = CircuitStorage::getInstance();
+    for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+        ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
-        // Original order: AcceptStepDC => CalculateControllersDC => CalculateValuesAndCurrentsDC
-        // Codex recommended order due to incorrect capacity calculation CalculateControllersDC => CalculateValuesAndCurrentsDC => AcceptStepDC
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        CircuitStorage::AcceptStepDC(fullCircuitID);
-#ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
-#endif
+        max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
+        std::cout << "    error = " << max_error << std::endl;
     }
-    else {
-        rvt max_error = 1000.0;
-        CircuitStorage& gc = CircuitStorage::getInstance();
-        for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
-            CircuitStorage::CalculateControllersDC(fullCircuitID);
-            CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-            ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
-            CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-            ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
-            CircuitStorage::AcceptIterationDC(fullCircuitID);
-            max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
-            std::cout << "    error = " << max_error << std::endl;
-        }
-        // Original order: AcceptStepDC => CalculateControllersDC => CalculateValuesAndCurrentsDC
-        // Codex recommended order due to incorrect capacity calculation CalculateControllersDC => CalculateValuesAndCurrentsDC => AcceptStepDC
-        CircuitStorage::CalculateControllersDC(fullCircuitID);
-        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        CircuitStorage::AcceptStepDC(fullCircuitID);
+    // Original order: AcceptStepDC => CalculateControllersDC => CalculateValuesAndCurrentsDC
+    // Codex recommended order due to incorrect capacity calculation CalculateControllersDC => CalculateValuesAndCurrentsDC => AcceptStepDC
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    CircuitStorage::AcceptStepDC(fullCircuitID);
 #ifdef HMG_DEBUGPRINT
-        std::cout << std::endl;
-        gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
+    std::cout << std::endl;
+    gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
-    }
 }
 
 

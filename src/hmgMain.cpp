@@ -695,6 +695,7 @@ int main(int n, const char** params) {
 		InstructionQueue ip;
 		ip.addInstructionStream(is);
 		InstructionQueue::waitToFinish(ip);
+		CircuitStorage::getInstance().finishSaving();
 		//most("process instructions");
 		//esemenyek_kiirasa();
 
@@ -703,6 +704,7 @@ int main(int n, const char** params) {
 	}
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;
+		CircuitStorage::getInstance().finishSaving();
 		return 1;
 	}
 	//cout << "\n\n" << sizeof(NodeVariable) << endl;

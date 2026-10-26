@@ -1736,10 +1736,10 @@ public:
     //***********************************************************************
         if (y < 2) {
             if (x < 2)  return rvt0;
-            else        return y + 2 == x ? -param[0].get() : param[0].get();
+            else        return y + 2 == x ? param[0].get() : -param[0].get();
         }
         else {
-            if (x < 2)  return x + 2 == y ? param[1].get() : -param[1].get();
+            if (x < 2)  return x + 2 == y ? -param[1].get() : param[1].get();
             else        return rvt0;
         }
     }
@@ -1750,7 +1750,7 @@ public:
             return;
         if (N[2] == N[3])
             return;
-        crvt s = -(param[0].get() + param[1].get()); // I set -S because in getYDC -S is used but I don't know why
+        crvt s = param[0].get() - param[1].get();
         if (N[0] == N[2]) N[0]->incYiiDC( s);
         if (N[0] == N[3]) N[0]->incYiiDC(-s);
         if (N[1] == N[2]) N[1]->incYiiDC(-s);
@@ -1771,7 +1771,7 @@ public:
             return;
         if (N[2] == N[3])
             return;
-        ccplx s = -(param[0].get() + param[1].get()); // I set -S because in getYAC -S is used but I don't know why
+        ccplx s = param[0].get() - param[1].get();
         if (N[0] == N[2]) N[0]->incYiiAC( s);
         if (N[0] == N[3]) N[0]->incYiiAC(-s);
         if (N[1] == N[2]) N[1]->incYiiAC(-s);
@@ -5200,7 +5200,7 @@ private:
                 rvt sum = rvt0;
                 for (const auto& nodeID : probe.nodes)
                     sum += getCurrentDC(probe.fullCircuitID, nodeID);
-                saveValuesDC.push_back(sum / probe.nodes.size());
+                saveValuesDC.push_back(probe.nodes.empty() ? rvt0 : sum / probe.nodes.size());
             }
             break;
             case ptHXIM: {
@@ -5267,7 +5267,7 @@ private:
                 cplx sum = cplx0;
                 for (const auto& nodeID : probe.nodes)
                     sum += getCurrentAC(probe.fullCircuitID, nodeID);
-                saveValuesAC.push_back(sum / (rvt)probe.nodes.size());
+                saveValuesAC.push_back(probe.nodes.empty() ? cplx0 : sum / (rvt)probe.nodes.size());
             }
             break;
             case ptHXIM: {
@@ -5355,10 +5355,17 @@ public:
     CircuitStorage& operator=(const CircuitStorage&) = delete;
 
     //***********************************************************************
-    ~CircuitStorage() {
+    void finishSaving() {
     //***********************************************************************
         saver.finish();
-        saverThread.join();
+        if (saverThread.joinable()) 
+            saverThread.join();
+    }
+
+    //***********************************************************************
+    ~CircuitStorage() {
+    //***********************************************************************
+        finishSaving();
     }
 
     //***********************************************************************
