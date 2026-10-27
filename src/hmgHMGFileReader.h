@@ -436,7 +436,7 @@ class ReadALine {
         buffer1->index = buffer1->elementNum = buffer2->index = buffer2->elementNum = 0;
     }
     //***********************************************************************
-    int getChar() {
+    int getRawChar() {
     //***********************************************************************
         if (buffer1->index == buffer1->elementNum) {
             fClose();
@@ -446,8 +446,23 @@ class ReadALine {
         buffer1->index++;
         if (buffer1->index == buffer1->elementNum)
             readNextBlock();
-        return ret == '\'' ? getChar() : ret; // removes ' from the input
+        return static_cast<unsigned char>(ret);
     }
+    // Raw access is used only for OPTIONAL framing; ordinary input keeps its
+    // historical apostrophe handling.
+    int getChar() {
+        const int ch = getRawChar();
+        return ch == '\'' ? getChar() : ch;
+    }
+    int peekRawChar(unsigned offset) const {
+        const unsigned available = buffer1->elementNum - buffer1->index;
+        if (offset < available)
+            return static_cast<unsigned char>(buffer1->buffer[buffer1->index + offset]);
+        offset -= available;
+        return offset < buffer2->elementNum
+            ? static_cast<unsigned char>(buffer2->buffer[offset]) : EOF;
+    }
+    bool skipOptionalBlock();
     //***********************************************************************
     int peekChar()const {
     //***********************************************************************

@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.24)
+project(HexMGCoreOptimized LANGUAGES CXX)
+include(CTest)
+add_library(hexmg_core STATIC src/hmgComponent.cpp src/hmgComponentCreate.cpp
+    src/hmgHMGFileReader.cpp src/hmgSimulation.cpp src/hmgSunred.cpp)
+target_include_directories(hexmg_core PUBLIC src)
+target_compile_features(hexmg_core PUBLIC cxx_std_20)
+add_executable(hexmg_core_optimized src/hmgMain.cpp)
+target_link_libraries(hexmg_core_optimized PRIVATE hexmg_core)
+if(BUILD_TESTING)
+    add_executable(optional_reader_tests tests/optional_reader_tests.cpp)
+    target_link_libraries(optional_reader_tests PRIVATE hexmg_core)
+    add_test(NAME optional_reader COMMAND ${CMAKE_COMMAND}
+        "-DREADER=$<TARGET_FILE:optional_reader_tests>"
+        "-DFIXTURE_ROOT=${CMAKE_CURRENT_BINARY_DIR}/optional-fixtures"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_optional_reader.cmake")
+endif()
+foreach(target hexmg_core hexmg_core_optimized optional_reader_tests)
+    if(TARGET ${target} AND MSVC)
+        target_compile_options(${target} PRIVATE /W4 /WX /EHsc /permissive- /Zc:__cplusplus)
+    endif()
+endforeach()

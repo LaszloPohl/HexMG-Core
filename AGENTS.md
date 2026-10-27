@@ -16,10 +16,17 @@ User authorization, 2026-10-27:
   checkout/binary for comparison, and record the baseline commit for tests.
 - Bring new official changes into this branch deliberately, with regression
   checks. Do not modify the baseline as part of that synchronization.
-- The optional HMG extension syntax is currently a proposal, not approved.
-  The user requested a baseline skip-code excerpt only AFTER approving the
-  format. Do not implement the parser extension before that approval.
+- The user approved OPTIONAL framing: from an opening `.OPTIONAL` line to
+  the FIRST `.END OPTIONAL` line, both in the same physical file, anywhere
+  in HMG (including models/functions). Inner openers are ignored content,
+  not a nesting stack. Baseline skip code is delivered for manual adoption.
+- No future merge of the optimized version back into the baseline is planned.
+  This does not prevent deliberately taking official changes into this branch.
+- Proper fixes for previously deferred or worked-around solver bugs are
+  authorized in this branch. Verify current source and reproduce before fixing.
+  Optimization ideas live in `doc/OPTIMIZATION_BACKLOG_HU.md`; planned ideas
+  are not implemented capabilities. Keep GUI compatibility with the baseline.
 - This worktree is source code even though its current path is under the
   GUI's build directory. Never delete it as regenerable build output.
 
-See `doc/OPTIMIZED_VARIANT_HU.md` for the branch's initial state.
+See `doc/OPTIMIZED_VARIANT_HU.md` for the branch's current state.
