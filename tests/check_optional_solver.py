@@ -42,7 +42,9 @@ for name, exe, content in [('baseline', baseline, deck),
                                capture_output=True, timeout=60)
     (folder / 'stdout.txt').write_bytes(completed.stdout)
     (folder / 'stderr.txt').write_bytes(completed.stderr)
-    if completed.returncode or completed.stderr.strip():
+    stderr = completed.stderr.replace(b'\r', b'').strip()
+    expected_warning = b'HEXMG_OPT: unsupported OPTIONAL header; block ignored'
+    if completed.returncode or (stderr and not (name == 'optimized_optional' and stderr == expected_warning)):
         raise RuntimeError(f'{name}: {completed.returncode}: {completed.stderr!r}')
     images = {f.name: f.read_bytes() for f in folder.glob('*.hxim')}
     if not images:

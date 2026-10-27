@@ -1,7 +1,7 @@
 # Optimalizált solver – ötletek és feladatok
 
 2026-10-27. Élő lista, új ötletekkel bővítendő. Az alábbi képességek
-**tervezettek**, nem kész optimalizációk. Külön solverágon fejlesztjük őket;
+állapota soronként jelölt; kész gyorsulást nem következtetünk puszta típusválasztásból. Külön solverágon fejlesztjük őket;
 az alap- és optimalizált változat későbbi összevonása sincs tervben.
 A hivatalos ág fejlesztéseit ettől függetlenül követjük, és szükség szerint
 egyirányúan átvesszük az optimalizált ágba. A közös HMG/fizika/kimenet szerződés
@@ -9,7 +9,7 @@ megmarad, a GUI mindkét változattal használható marad.
 
 | ID | Részfeladat | Következő konkrét eredmény / feltétel | Állapot |
 |---|---|---|---|
-| OPT-01 | 0. szintű DC-redukció dd_real/double választása | Típusos, helyi reduktor; a többi szint és a hivatalos alapút változatlan. EXTENDED/DOUBLE/AUTO támogatás külön, igazolt numerikus kapukkal. | Elsőbbségi következő fejlesztés; még nincs implementálva |
+| OPT-01 | 0. szintű DC-redukció dd_real/double választása | Típusos helyi EXTENDED/DOUBLE/AUTO kész, referenciaellenőrzéssel. Következő: a kettős kiértékelés költségének igazolt kiváltása, majd sebességmérés. | Első funkcionális változat kész; gyorsulás még nem igazolt. [Részletek](LEVEL0_PRECISION_HU.md) |
 | OPT-02 | Specializált cellamodell-családok | Külön modell rögzített és időben átváltható peremhez, szükséges fizikai mezők és csomópontok szerint. Minden modellhez teljes hagyományos HMG-leírás és független referencia. | Tervezett |
 | OPT-03 | Teljesen lineáris modell: egy megoldás | Bizonyított linearitásnál DC-ben egy megoldás, időtartományban egy megoldás/megkísérelt időlépés. Az állapotelfogadás és mérő-/áramfrissítés megmarad. | Felhasználói új ötlet |
 | OPT-04 | Egyirányúan csatolt elektrotermikus modell szétválasztása | Elektromos megoldás → hőforrások → termikus megoldás; külön kisebb hálózatok, megőrzött cím- és eredményhozzárendelés. | Felhasználói új ötlet |

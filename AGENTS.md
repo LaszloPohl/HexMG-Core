@@ -12,8 +12,10 @@ User authorization, 2026-10-27:
   may be ignored by a baseline reader after its agreed skip support is added.
   Physics, excitation, boundary changes and required output declarations
   must remain completely specified in ordinary baseline-compatible HMG.
-- Do not silently switch the GUI to this variant. Keep an untouched official
-  checkout/binary for comparison, and record the baseline commit for tests.
+- The user requested optimized-first, optimized-by-default GUI selection on
+  2026-10-27, with baseline also available. Precision defaults to EXTENDED.
+  Keep an untouched official checkout/binary for comparison, and record the
+  baseline commit for tests. Never silently substitute a missing executable.
 - Bring new official changes into this branch deliberately, with regression
   checks. Do not modify the baseline as part of that synchronization.
 - The user approved OPTIONAL framing: from an opening `.OPTIONAL` line to

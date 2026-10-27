@@ -153,13 +153,13 @@ public:
     //***********************************************************************
     const vektor<datatype> & operator[](unsigned i) const noexcept(!hmgVErrorCheck) { return rows[i]; }
     //***********************************************************************
-    const datatype & get_elem(unsigned row, unsigned col) const noexcept {
+    const datatype & get_elem(unsigned rw, unsigned cl) const noexcept {
     //***********************************************************************
         if (is_symm) {// so m[i][j] is indeed the element with index i,j, but j>=i is mandatory!
-            return (col < row) ? rows[col][row] : rows[row][col];
+            return (cl < rw) ? rows[cl][rw] : rows[rw][cl];
         }
         else {
-            return rows[row][col];
+            return rows[rw][cl];
         }
     }
     //***********************************************************************

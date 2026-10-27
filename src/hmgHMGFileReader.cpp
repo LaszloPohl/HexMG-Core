@@ -9,6 +9,7 @@
 //***********************************************************************
 #include <iostream>
 #include "hmgHMGFileReader.h"
+#include "hmgOptimization.h"
 #include <cstdio>
 #include <stack>
 #include <set>
@@ -311,7 +312,10 @@ bool ReadALine::skipOptionalBlock() {
             names[fileNameIndex].name.c_str(), openingLine);
     };
     int ch;
-    while ((ch = getRawChar()) != EOF && ch != '\n') {} // opaque header
+    std::string header;
+    while ((ch = getRawChar()) != EOF && ch != '\n') { if(header.size()<256)header.push_back(static_cast<char>(ch)); }
+    const bool interpret=optimization::knownHeader(header,names[fileNameIndex].name,openingLine);
+    std::vector<std::string> lines;
     if (ch == EOF) missingEnd();
     if (peekRawChar(0) == '\r') getRawChar(); // historical LF-CR support
     ++actLine;
@@ -319,9 +323,13 @@ bool ReadALine::skipOptionalBlock() {
     for (;;) {
         // A bounded, whitespace-normalized prefix is enough to recognize the
         // end marker. Arbitrarily long skipped lines do not grow memory.
-        std::string prefix;
+        std::string prefix, raw;
         bool comment = false;
         while ((ch = getRawChar()) != EOF && ch != '\n') {
+            if(interpret) {
+                if(raw.size()>=4096 || lines.size()>=128)throw hmgExcept("HEXMG_OPT","option block too large in %s, line %u",names[fileNameIndex].name.c_str(),openingLine);
+                raw.push_back(static_cast<char>(ch));
+            }
             if (comment) continue;
             if (ch == ';' || (ch == '/' && peekRawChar(0) == '/')) {
                 comment = true;
@@ -339,7 +347,11 @@ bool ReadALine::skipOptionalBlock() {
             if (peekRawChar(0) == '\r') getRawChar();
             ++actLine;
         }
-        if (prefix == closing) return true; // first closing marker, no nesting
+        if (prefix == closing) {
+            if(interpret)optimization::parse(lines,names[fileNameIndex].name,openingLine);
+            return true;
+        }
+        if(interpret)lines.push_back(raw); // first closing marker, no nesting
         if (ch == EOF) missingEnd(); // never continue in a parent/include file
     }
 }

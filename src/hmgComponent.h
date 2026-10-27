@@ -3901,7 +3901,8 @@ public:
 
 
 //***********************************************************************
-class SubCircuitFullMatrixReductorDC;
+template<class Scalar> class TypedFullMatrixReductorDC;
+using SubCircuitFullMatrixReductorDC = TypedFullMatrixReductorDC<xxt>;
 class SubCircuitFullMatrixReductorAC;
 struct CellReductionDescription;
 //***********************************************************************
@@ -3911,7 +3912,7 @@ struct CellReductionDescription;
 class ComponentSubCircuit final : public ComponentBase {
 //***********************************************************************
     //***********************************************************************
-    friend class SubCircuitFullMatrixReductorDC;
+    template<class Scalar> friend class TypedFullMatrixReductorDC;
     friend class SubCircuitFullMatrixReductorAC;
     friend class hmgSunred;
     friend class SunredTreeNode;
@@ -3926,6 +3927,8 @@ class ComponentSubCircuit final : public ComponentBase {
     std::vector<Param> pars;
     std::vector<ComponentAndControllerBase*> componentParams;
     std::unique_ptr<SubCircuitFullMatrixReductorDC> sfmrDC;
+    std::unique_ptr<TypedFullMatrixReductorDC<double>> sfmrDoubleDC;
+    bool useDoubleDC = false;
     std::unique_ptr<SubCircuitFullMatrixReductorAC> sfmrAC;
     uns nInternalNodesAndVars = 0;
     uns version = 0; // buildOrReplace must be run if this->version != model->version
@@ -4573,21 +4576,22 @@ public:
 
 
 //***********************************************************************
-class SubCircuitFullMatrixReductorDC {
+template<class Scalar>
+class TypedFullMatrixReductorDC {
 //***********************************************************************
     friend class ComponentSubCircuit;
     //***********************************************************************
-    matrix<xxt> YRED; // forwsubs sets
-    vektor<xxt> JRED; // forwsubs sets
-    matrix<xxt> YAwork, YAcopy, XATwork, XATcopy, XBwork, XBcopy, YBwork, YBcopy; // step 1: fill "work" YA, XA, XB, YB; step2: update all "copy". If no change, no need for matrix reduction. 
-    matrix<xxt> NZB, NZBXA, NZBXAT;
-    vektor<xxt> JA, JB, NZBJB, UA, UB;
+    matrix<Scalar> YRED; // forwsubs sets
+    vektor<Scalar> JRED; // forwsubs sets
+    matrix<Scalar> YAwork, YAcopy, XATwork, XATcopy, XBwork, XBcopy, YBwork, YBcopy; // step 1: fill "work" YA, XA, XB, YB; step2: update all "copy". If no change, no need for matrix reduction.
+    matrix<Scalar> NZB, NZBXA, NZBXAT;
+    vektor<Scalar> JA, JB, NZBJB, UA, UB;
     //***********************************************************************
     ComponentSubCircuit* pSubCircuit;
     //***********************************************************************
 public:
     //***********************************************************************
-    SubCircuitFullMatrixReductorDC(ComponentSubCircuit* pOwner) :pSubCircuit{ pOwner } {}
+    TypedFullMatrixReductorDC(ComponentSubCircuit* pOwner) :pSubCircuit{ pOwner } {}
     //***********************************************************************
     void alloc() {
     //***********************************************************************
@@ -4617,7 +4621,8 @@ public:
     }
     //***********************************************************************
     void forwsubs();
-    void backsubs();
+    void backsubs(bool commit = true);
+    void commitValues();
     //***********************************************************************
 };
 
@@ -4728,13 +4733,15 @@ inline void ComponentSubCircuit::testPrint() const noexcept {
 inline rvt ComponentSubCircuit::getJreducedDC([[maybe_unused]] uns y) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
-        return y < sfmrDC->JRED.size() ? hmg_to_double(sfmrDC->JRED[y]) : rvt0;
+        return useDoubleDC ? (y < sfmrDoubleDC->JRED.size() ? sfmrDoubleDC->JRED[y] : rvt0) :
+            (y < sfmrDC->JRED.size() ? hmg_to_double(sfmrDC->JRED[y]) : rvt0);
     return rvt0;
 }
 inline rvt ComponentSubCircuit::getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept {
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
     if (model.solutionType == SolutionType::stFullMatrix)
-        return y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? hmg_to_double(sfmrDC->YRED.get_elem(y, x)) : rvt0;
+        return useDoubleDC ? (y < sfmrDoubleDC->YRED.get_row() && x < sfmrDoubleDC->YRED.get_col() ? sfmrDoubleDC->YRED.get_elem(y,x) : rvt0) :
+            (y < sfmrDC->YRED.get_row() && x < sfmrDC->YRED.get_col() ? hmg_to_double(sfmrDC->YRED.get_elem(y,x)) : rvt0);
     return rvt0;
 }
 inline cplx ComponentSubCircuit::getJreducedAC([[maybe_unused]] uns y) const noexcept {

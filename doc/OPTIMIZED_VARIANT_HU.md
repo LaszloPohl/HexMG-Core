@@ -11,8 +11,9 @@ változata; oda az asszisztens sem commitot, sem merge-et, sem push-t nem végez
 az első, ugyanabban a fájlban lévő `.END OPTIONAL` sorig. Ez modellben,
 függvényben és sorfolytatások között is működik. A baseline-be kézzel
 beépíthető [pontos kód és ellenőrzés](OPTIONAL_SKIP_BASELINE_HU.md) kész.
-Az optimalizálási beállításokat ez a változat még nem értelmezi;
-a numerikus algoritmus és a konverter forrása változatlan.
+A v1 LEVEL0 EXTENDED/DOUBLE/AUTO beállítás már értelmezett;
+a helyi reduktor két típuson futtatható, nagy pontosságú referenciaellenőrzéssel.
+Gyorsulást még nem állítunk. [Pontos hatókör](LEVEL0_PRECISION_HU.md).
 
 A GUI-nak az alap- és az optimalizált solver között csereszabatosnak kell
 maradnia. A közös HMG-rész teljesen definiálja a fizikát; az opcionális
@@ -22,8 +23,8 @@ mérősorrend és fizikailag értelmezett eredmény közös szerződés.
 
 Jövőbeli témák és a korábban halasztott hibajavítások a bővítendő
 [optimalizációs feladatlistában](OPTIMIZATION_BACKLOG_HU.md) vannak.
-A 0. szintű dd_real/double választás az elsőbbségi következő fejlesztés;
-nem globális típusként állítjuk át. A teljesen lineáris és az egyirányúan
+A 0. szintű dd_real/double választás első ellenőrzött változata kész;
+referenciaköltségének biztonságos csökkentése következhet. A teljesen lineáris és az egyirányúan
 csatolt elektrotermikus megoldás külön téma. Ezek még nem kész képességek.
 
 Az opcionális HMG-blokk keretezését a felhasználó jóváhagyta és pontosította.
@@ -34,7 +35,8 @@ az alapbináris nem fogadja el; a GUI továbbra blokk nélküli HMG-t exportál.
 
 A hivatalos ág új változásait ebbe az ágba átvesszük és összevetjük;
 az optimalizált és alapváltozat későbbi összevonása sincs tervben.
-A GUI solverválasztása nem változik meg attól, hogy ez az ág létezik.
+A felhasználó kérésére a GUI 0.352.1-ben az optimalizált az első és
+alapértelmezett választás; a pontosság alapból EXTENDED.
 
 ## Fordítás és célzott ellenőrzés
 

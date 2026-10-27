@@ -13,6 +13,7 @@
 #include <chrono>
 #include <ratio>
 #include "hmgHMGFileReader.h"
+#include "hmgOptimization.h"
 #include "hmgInstructionQueue.h"
 //***********************************************************************
 
@@ -665,6 +666,7 @@ void nsHMG::bench_print() {
 
 //***********************************************************************
 int main(int n, const char** params) {
+    optimization::enabled=true;
 //***********************************************************************
 	Rails::resize(1);
 	Rails::reset();
@@ -701,6 +703,7 @@ int main(int n, const char** params) {
 
 		bench_now("stop");
 		bench_print();
+        optimization::report();
 	}
 	catch (const hmgExcept& err) {
 		std::cerr << err.what() << std::endl;

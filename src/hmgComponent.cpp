@@ -7,6 +7,7 @@
 
 //***********************************************************************
 #include "hmgComponent.h"
+#include "hmgOptimization.h"
 #include "hmgMultigrid.hpp"
 //***********************************************************************
 
@@ -17,14 +18,60 @@ namespace nsHMG {
 
 
 //***********************************************************************
+namespace {
+double reducedDouble(double value) { return value; }
+double reducedDouble(const xxt& value) { return hmg_to_double(value); }
+bool nearReference(double value, const xxt& reference, double scale = 0) {
+    const double ref = hmg_to_double(reference);
+    return std::isfinite(value) && std::isfinite(ref) &&
+        abs(xxt(value) - reference) <= xxt(1e-11) * std::max(std::abs(ref), scale);
+}
+bool matrixAgrees(const matrix<double>& value, const matrix<xxt>& reference) {
+    if(value.get_row()!=reference.get_row() || value.get_col()!=reference.get_col()) return false;
+    for(uns row=0;row<value.get_row();++row)for(uns col=0;col<value.get_col();++col)
+        if(!nearReference(value.get_elem(row,col),reference.get_elem(row,col))) return false;
+    return true;
+}
+bool vectorAgrees(const vektor<double>& value, const vektor<xxt>& reference, double scale) {
+    if(value.size()!=reference.size()) return false;
+    for(uns i=0;i<value.size();++i) if(!nearReference(value[i],reference[i],scale)) return false;
+    return true;
+}
+double vectorScale(const vektor<xxt>& value) {
+    double scale=0; for(uns i=0;i<value.size();++i) scale=std::max(scale,std::abs(hmg_to_double(value[i])));
+    return scale;
+}
+}
+
 void ComponentSubCircuit::forwsubsDC() {
 // TO PARALLEL
 //***********************************************************************
     for (auto& comp : components)
         if (comp->isEnabled) comp->forwsubs(true);
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrDC->forwsubs();
+    if (model.solutionType == SolutionType::stFullMatrix) {
+        sfmrDC->forwsubs(); // Extended reference retained in this first validated implementation.
+        useDoubleDC = false;
+        if(sfmrDoubleDC) {
+            try { sfmrDoubleDC->forwsubs(); }
+            catch(const hmgExcept&) {
+                if(optimization::precision==optimization::Precision::Double)throw;
+                ++optimization::extendedFallbacks;
+                sfmrDoubleDC=std::make_unique<TypedFullMatrixReductorDC<double>>(this);
+                sfmrDoubleDC->alloc();
+                return; // Extended reference succeeded; retry double on the next evaluation.
+            }
+            const double scale=std::max(vectorScale(sfmrDC->JA),vectorScale(sfmrDC->JB));
+            useDoubleDC = matrixAgrees(sfmrDoubleDC->YRED,sfmrDC->YRED) &&
+                matrixAgrees(sfmrDoubleDC->NZB,sfmrDC->NZB) && matrixAgrees(sfmrDoubleDC->NZBXA,sfmrDC->NZBXA) &&
+                vectorAgrees(sfmrDoubleDC->JRED,sfmrDC->JRED,scale) &&
+                vectorAgrees(sfmrDoubleDC->NZBJB,sfmrDC->NZBJB,vectorScale(sfmrDC->NZBJB));
+            if(useDoubleDC) ++optimization::doubleSteps;
+            else if(optimization::precision==optimization::Precision::Double)
+                throw hmgExcept("LEVEL0 DOUBLE", "local reduction differs from the extended reference; use EXTENDED or AUTO");
+            else ++optimization::extendedFallbacks;
+        }
+    }
     else if (model.solutionType == SolutionType::stSunRed)
         sunred.forwsubsDC();
 }
@@ -36,8 +83,16 @@ void ComponentSubCircuit::backsubsDC() {
 // UA is input in subcircuits, it must be set with setV before calling its backsubs
 //***********************************************************************
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-    if (model.solutionType == SolutionType::stFullMatrix)
-        sfmrDC->backsubs();
+    if (model.solutionType == SolutionType::stFullMatrix) {
+        if(useDoubleDC) {
+            sfmrDC->backsubs(false);sfmrDoubleDC->backsubs(false);
+            const double scale=std::max(vectorScale(sfmrDC->UA),vectorScale(sfmrDC->NZBJB));
+            if(vectorAgrees(sfmrDoubleDC->UB,sfmrDC->UB,scale)) sfmrDoubleDC->commitValues();
+            else if(optimization::precision==optimization::Precision::Double)
+                throw hmgExcept("LEVEL0 DOUBLE", "local back substitution differs from the extended reference; use EXTENDED or AUTO");
+            else { ++optimization::extendedFallbacks; sfmrDC->commitValues(); }
+        } else sfmrDC->backsubs();
+    }
     else if (model.solutionType == SolutionType::stSunRed)
         sunred.backsubsDC();
     for (auto& comp : components)
@@ -1620,6 +1675,15 @@ void ComponentSubCircuit::allocForReductionDC() {
             if (!sfmrDC)
                 sfmrDC = std::make_unique<SubCircuitFullMatrixReductorDC>(this);
             sfmrDC->alloc();
+            // LEVEL0 is a structural leaf, never a parent circuit or multigrid level.
+            bool leaf=true;
+            for(const auto& component:components)
+                if(dynamic_cast<const ComponentSubCircuit*>(component.get())) { leaf=false;break; }
+            if(leaf && optimization::precision!=optimization::Precision::Extended) {
+                if(!sfmrDoubleDC)sfmrDoubleDC=std::make_unique<TypedFullMatrixReductorDC<double>>(this);
+                sfmrDoubleDC->alloc();
+            } else sfmrDoubleDC.reset();
+            useDoubleDC=false;
         }
         else if (model.solutionType == SolutionType::stSunRed) {
             sunred.buildTree(*model.srTreeInstructions, this);
@@ -1942,7 +2006,8 @@ void ComponentSubCircuit::buildOrReplace(uns id, uns parentId, uns parentParentI
 
 
 //***********************************************************************
-void SubCircuitFullMatrixReductorDC::forwsubs() {
+template<class Scalar>
+void TypedFullMatrixReductorDC<Scalar>::forwsubs() {
 //***********************************************************************
     ComponentSubCircuit& subckt = *pSubCircuit;
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*subckt.pModel);
@@ -2125,7 +2190,8 @@ void SubCircuitFullMatrixReductorDC::forwsubs() {
 
 
 //***********************************************************************
-void SubCircuitFullMatrixReductorDC::backsubs() {
+template<class Scalar>
+void TypedFullMatrixReductorDC<Scalar>::backsubs(bool commit) {
 //***********************************************************************
     ComponentSubCircuit& subckt = *pSubCircuit;
     const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*subckt.pModel);
@@ -2136,8 +2202,6 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
     cuns A1_nIONodes = model.getN_X_Nodes();
     cuns A2_nNINodes = model.getN_Y_Nodes();
     cuns nA = A1_nIONodes + A2_nNINodes;
-    cuns B1_nNInternalNodes = model.getN_N_Nodes();
-    cuns B2_nNONodes = model.getN_O_Nodes();
 
     for (uns i = 0; i < nA; i++) {
         UA[i] = subckt.externalNodes[i]->getVDC();
@@ -2149,20 +2213,31 @@ void SubCircuitFullMatrixReductorDC::backsubs() {
     else if (UB.size() == 2) math_2_add_mul_ub(UB, NZBJB, NZBXA, UA);
     else                         math_add_mul(UB, NZBJB, NZBXA, UA);
 
+    if(commit)commitValues();
+}
+
+template<class Scalar>
+void TypedFullMatrixReductorDC<Scalar>::commitValues() {
+    ComponentSubCircuit& subckt=*pSubCircuit;
+    const ModelSubCircuit& model=static_cast<const ModelSubCircuit&>(*subckt.pModel);
+    cuns B1_nNInternalNodes=model.getN_N_Nodes(), B2_nNONodes=model.getN_O_Nodes();
     // v of the internal nodes
 
     for (uns i = 0; i < B1_nNInternalNodes; i++)
-        subckt.internalNodesAndVars[i].setVDC(hmg_to_double(UB[i]));
+        subckt.internalNodesAndVars[i].setVDC(reducedDouble(UB[i]));
 
     if (B2_nNONodes != 0) { // some internal nodes are routed out (they are stored among the external nodes)
         cuns ONodes_start = model.getN_Start_Of_O_Nodes();
         for (uns i = 0; i < B2_nNONodes; i++)
-            subckt.externalNodes[ONodes_start + i]->setVDC(hmg_to_double(UB[B1_nNInternalNodes + i]));
+            subckt.externalNodes[ONodes_start + i]->setVDC(reducedDouble(UB[B1_nNInternalNodes + i]));
     }
 }
 
 
 //***********************************************************************
+template class TypedFullMatrixReductorDC<xxt>;
+template class TypedFullMatrixReductorDC<double>;
+
 void SubCircuitFullMatrixReductorAC::forwsubs() {
 //***********************************************************************
     ComponentSubCircuit& subckt = *pSubCircuit;
