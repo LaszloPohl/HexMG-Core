@@ -17,6 +17,29 @@ namespace nsHMG {
 
 
 //***********************************************************************
+static inline rvt defectError(const ComponentBase::DefectCollector& d) {
+//***********************************************************************
+    return (d.nodeNum == 0 ? rvt0 : d.sumDefect / d.nodeNum) + d.maxDefect;
+}
+
+
+//***********************************************************************
+static inline void requireValidErr(rvt e) {
+//***********************************************************************
+    if (!(std::isfinite(e) && e > rvt0))
+        throw hmgExcept("requireValidErr", "ERR must be finite and positive: %g", e);
+}
+
+
+//***********************************************************************
+static inline void requireConverged(rvt e, rvt limit) {
+//***********************************************************************
+    if (!(std::isfinite(e) && e <= limit))
+        throw hmgExcept("requireConverged", "Did not converge: error=%g, ERR=%g", e, limit);
+}
+
+
+//***********************************************************************
 void Simulation::iterate() {
 //***********************************************************************
 
@@ -30,6 +53,7 @@ uns curretIterN = 0;
 //***********************************************************************
 void Simulation::runDC() {
 //***********************************************************************
+    requireValidErr(err);
 
     // TODO: SimControl::minIter
 
@@ -104,8 +128,8 @@ void Simulation::runDC() {
       //gc.fullCircuitInstances[0].component->printNodeValue();
         ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
 
-        rvt cErr = c.sumDefect / c.nodeNum + c.maxDefect;
-        rvt vErr = v.sumDefect / v.nodeNum + v.maxDefect;
+        rvt cErr = defectError(c);
+        rvt vErr = defectError(v);
         max_error = cErr + vErr;
         std::cout << "Iter " << (i + 1) << "    error = " << max_error << "    I error = " << cErr << "    V error = " << vErr << std::endl;
 #ifdef HMG_DEBUGPRINT
@@ -126,6 +150,7 @@ void Simulation::runDC() {
     gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
 */
+    requireConverged(max_error, err);
     CircuitStorage::AcceptStepDC(fullCircuitID);
     wasDC = true;
 }
@@ -134,20 +159,20 @@ void Simulation::runDC() {
 //***********************************************************************
 void Simulation::runTimeStep() {
 //***********************************************************************
-    rvt max_error = 1000.0;
+    requireValidErr(err);
+    rvt max_error = 1000.0 * err;
     CircuitStorage& gc = CircuitStorage::getInstance();
-    for (uns i = 0; max_error > 1.0e-004 && i < 100; i++) {
+    for (uns i = 0; (i == 0 || max_error > err) && i < 100; i++) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
-        max_error = c.sumDefect / c.nodeNum + c.maxDefect + v.sumDefect / v.nodeNum + v.maxDefect;
+        max_error = defectError(c) + defectError(v);
         std::cout << "    error = " << max_error << std::endl;
     }
-    // Original order: AcceptStepDC => CalculateControllersDC => CalculateValuesAndCurrentsDC
-    // Codex recommended order due to incorrect capacity calculation CalculateControllersDC => CalculateValuesAndCurrentsDC => AcceptStepDC
+    requireConverged(max_error, err);
     CircuitStorage::CalculateControllersDC(fullCircuitID);
     CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
     CircuitStorage::AcceptStepDC(fullCircuitID);

@@ -2644,8 +2644,8 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
         }
         NodeVariable& destNode = coarse.internalNodesAndVars[instruction.destNodeIndex];
         crvt dH = destNode.getDDC();
-        truncationError += square(dH - sumRdh);
-        destNode.setFDC(sumRfh + dH - sumRdh);
+        truncationError += square(sumRdh - dH);
+        destNode.setFDC(sumRfh + sumRdh - dH);
     }
 
     // contained components
@@ -2687,8 +2687,8 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
                 : *coarse.components[componentGroup.coarseCells[dest.destIndex]]->getInternalNode(dest.nodeID.index);
                 
             crvt dH = destNode.getDDC();
-            truncationError += square(dH - sumRdh);
-            destNode.setFDC(sumRfh + dH - sumRdh);
+            truncationError += square(sumRdh - dH);
+            destNode.setFDC(sumRfh + sumRdh - dH);
         }
 
         // deep components (in most cases there are no deep components)
@@ -2738,8 +2738,8 @@ rvt ComponentSubCircuit::restrictFDDC(const FineCoarseConnectionDescription& con
                 : *destComponent->getInternalNode(dest.nodeID.nodeID.index);
 
             crvt dH = destNode.getDDC();
-            truncationError += square(dH - sumRdh);
-            destNode.setFDC(sumRfh + dH - sumRdh);
+            truncationError += square(sumRdh - dH);
+            destNode.setFDC(sumRfh + sumRdh - dH);
         }
     }
     return truncationError;
@@ -3033,7 +3033,7 @@ void hmgMultigrid::solveDC() {
                 const FineCoarseConnectionDescription& hLevel = levels[iUp];
                 ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
                 [[maybe_unused]] ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
-                throw hmgExcept("hmgMultigrid::solveDC", "Why HGrid is not used? Maybe error in the algorithm?");
+
                 // uh
 
                 hGrid.uHMinusRestrictUhToDHNCDC(hLevel, *this); // dH_NonConcurrent = uH – R(uh)
@@ -3052,7 +3052,7 @@ void hmgMultigrid::solveDC() {
             destGrid.calculateCurrent(true);
             [[maybe_unused]] rvt residual = destGrid.calculateResidual(true); // the residual and the truncationError would be (sqrt(this thing) / nodenum) but not needed
             //if (residual < errorRate * truncationError)
-                iV = nVcycles; // break
+            //    iV = nVcycles; // break
         }
     }
 }

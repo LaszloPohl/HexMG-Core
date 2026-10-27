@@ -1920,8 +1920,8 @@ public:
             switch (type) {
                 case rprProlongateU: N[2]->setValue0DC(coarseVgen->N[2]->getValue0DC()); break; // uh = uH
                 case rprRestrictU:   coarseVgen->N[2]->setValue0DC(N[2]->getValue0DC()); break; // uH = uh
-                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
-                        rvt diff = coarseVgen->N[2]->getDDC() - N[2]->getDDC();
+                case rprRestrictFDD: { // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
+                        rvt diff = N[2]->getDDC() - coarseVgen->N[2]->getDDC();
                         coarseVgen->N[2]->setFDC(N[2]->getFDC() + diff);
                         sumRet += diff * diff;
                     }
@@ -1934,8 +1934,8 @@ public:
             switch (type) {
                 case rprProlongateU: N[2]->setValue0AC(coarseVgen->N[2]->getValue0AC()); break; // uh = uH
                 case rprRestrictU:   coarseVgen->N[2]->setValue0AC(N[2]->getValue0AC()); break; // uH = uh
-                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
-                        cplx diff = coarseVgen->N[2]->getDAC() - N[2]->getDAC();
+                case rprRestrictFDD: { // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
+                        cplx diff = N[2]->getDAC() - coarseVgen->N[2]->getDAC();
                         coarseVgen->N[2]->setFAC(N[2]->getFAC() + diff);
                         sumRet = absSquare(diff);
                     }
@@ -2317,8 +2317,8 @@ public:
             switch (type) {
                 case rprProlongateU: N[2]->setValue0DC(coarseVgen->N[2]->getValue0DC()); break; // uh = uH
                 case rprRestrictU:   coarseVgen->N[2]->setValue0DC(N[2]->getValue0DC()); break; // uH = uh
-                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
-                        rvt diff = coarseVgen->N[2]->getDDC() - N[2]->getDDC();
+                case rprRestrictFDD: { // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
+                        rvt diff = N[2]->getDDC() - coarseVgen->N[2]->getDDC();
                         coarseVgen->N[2]->setFDC(N[2]->getFDC() + diff);
                         sumRet += diff * diff;
                     }
@@ -2331,8 +2331,8 @@ public:
             switch (type) {
                 case rprProlongateU: N[2]->setValue0AC(coarseVgen->N[2]->getValue0AC()); break; // uh = uH
                 case rprRestrictU:   coarseVgen->N[2]->setValue0AC(N[2]->getValue0AC()); break; // uH = uh
-                case rprRestrictFDD: { // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
-                        cplx diff = coarseVgen->N[2]->getDAC() - N[2]->getDAC();
+                case rprRestrictFDD: { // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
+                        cplx diff = N[2]->getDAC() - coarseVgen->N[2]->getDAC();
                         coarseVgen->N[2]->setFAC(N[2]->getFAC() + diff);
                         sumRet = absSquare(diff);
                     }
@@ -4184,9 +4184,9 @@ public:
                     for (uns i = 0; i < NInternal; i++)
                         coarseSubckt->internalNodesAndVars[i].setValue0DC(internalNodesAndVars[i].getValue0DC());
                     break;
-                case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                case rprRestrictFDD: // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        rvt diff = coarseSubckt->internalNodesAndVars[i].getDDC() - internalNodesAndVars[i].getDDC();
+                        rvt diff = internalNodesAndVars[i].getDDC() - coarseSubckt->internalNodesAndVars[i].getDDC();
                         coarseSubckt->internalNodesAndVars[i].setFDC(internalNodesAndVars[i].getFDC() + diff);
                         sumRet += diff * diff;
                     }
@@ -4211,9 +4211,9 @@ public:
                     for (uns i = 0; i < NInternal; i++)
                         coarseSubckt->internalNodesAndVars[i].setValue0AC(internalNodesAndVars[i].getValue0AC());
                     break;
-                case rprRestrictFDD: // fH = R(fh) + dH – R(dh), ret: sum (dHi – R(dh)i)^2
+                case rprRestrictFDD: // fH = R(fh) + R(dh) – dH, ret: sum (R(dh)i – dHi)^2
                     for (uns i = 0; i < NInternal; i++) {
-                        cplx diff = coarseSubckt->internalNodesAndVars[i].getDAC() - internalNodesAndVars[i].getDAC();
+                        cplx diff = internalNodesAndVars[i].getDAC() - coarseSubckt->internalNodesAndVars[i].getDAC();
                         coarseSubckt->internalNodesAndVars[i].setFAC(internalNodesAndVars[i].getFAC() + diff);
                         sumRet += absSquare(diff);
                     }
