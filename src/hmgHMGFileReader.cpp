@@ -270,6 +270,65 @@ std::string getPath(const std::string& fileNameWithPath) {
 
 
 //***********************************************************************
+bool ReadALine::skipOptionalBlock() {
+// OPTIONAL is a physical-file filter, before INCLUDE and '+' processing.
+// actLine already denotes the physical line at the current cursor.
+//***********************************************************************
+    constexpr char opening[] = ".OPTIONAL";
+    constexpr char closing[] = ".END OPTIONAL";
+    constexpr unsigned openingSize = sizeof(opening) - 1;
+    for (unsigned i = 0; i < openingSize; ++i) {
+        const int ch = peekRawChar(i);
+        if (ch == EOF || toupper(static_cast<unsigned char>(ch)) != opening[i])
+            return false;
+    }
+    const int after = peekRawChar(openingSize);
+    if (!(after == EOF || isspace(static_cast<unsigned char>(after)) ||
+        after == ';' || (after == '/' && peekRawChar(openingSize + 1) == '/')))
+        return false; // .OPTIONALLY is not an OPTIONAL directive.
+
+    const unsigned openingLine = actLine;
+    const auto missingEnd = [&]() {
+        throw hmgExcept("ReadALine::skipOptionalBlock",
+            "missing .END OPTIONAL in the same file as .OPTIONAL in %s, line %u",
+            names[fileNameIndex].name.c_str(), openingLine);
+    };
+    int ch;
+    while ((ch = getRawChar()) != EOF && ch != '\n') {} // opaque header
+    if (ch == EOF) missingEnd();
+    if (peekRawChar(0) == '\r') getRawChar(); // historical LF-CR support
+    ++actLine;
+
+    for (;;) {
+        // A bounded, whitespace-normalized prefix is enough to recognize the
+        // end marker. Arbitrarily long skipped lines do not grow memory.
+        std::string prefix;
+        bool comment = false;
+        while ((ch = getRawChar()) != EOF && ch != '\n') {
+            if (comment) continue;
+            if (ch == ';' || (ch == '/' && peekRawChar(0) == '/')) {
+                comment = true;
+                continue;
+            }
+            if (isspace(static_cast<unsigned char>(ch))) {
+                if (!prefix.empty() && prefix.back() != ' ' && prefix.size() <= sizeof(closing))
+                    prefix.push_back(' ');
+            }
+            else if (prefix.size() <= sizeof(closing))
+                prefix.push_back(static_cast<char>(toupper(static_cast<unsigned char>(ch))));
+        }
+        if (!prefix.empty() && prefix.back() == ' ') prefix.pop_back();
+        if (ch == '\n') {
+            if (peekRawChar(0) == '\r') getRawChar();
+            ++actLine;
+        }
+        if (prefix == closing) return true; // first closing marker, no nesting
+        if (ch == EOF) missingEnd(); // never continue in a parent/include file
+    }
+}
+
+
+//***********************************************************************
 bool ReadALine::open(const std::string& filePath, const std::string& fileName) {
 //***********************************************************************
     fileNameIndex = unsigned(names.size());
@@ -306,6 +365,7 @@ void ReadALine::appendLine(char* result, unsigned resultSize, LineInfo& lineInfo
     enum States { stStart, stEOF, stEOL, stCommentLine };
     States st = stStart;
     while (isNotFinished) {
+        if (st == stStart && skipOptionalBlock()) continue;
         int ch = isPeek ? peekChar() : getChar();
         if (ch == EOF)
             st = stEOF;
@@ -395,6 +455,7 @@ bool ReadALine::getLine(char* result, unsigned resultSize, LineInfo& lineInfo, b
     const char* includeString = ".INCLUDE";
     unsigned resultIndex = 0, includeIndex = 0;
     while (isNotFinished) {
+        if (st == stStart && skipOptionalBlock()) continue;
         int ch = getChar();
         if (ch == EOF)
             st = stEOF;
