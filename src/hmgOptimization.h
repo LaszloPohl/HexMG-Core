@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <charconv>
 #include <cctype>
 #include <iostream>
 #include <sstream>
@@ -14,6 +15,8 @@ inline bool enabled = false; // Explicitly enabled by the optimized executable.
 inline Precision precision = Precision::Extended;
 inline bool precisionSeen = false;
 inline bool threadsSeen = false;
+inline unsigned maxIterations = 0; // Zero preserves legacy full-solve bounds.
+inline bool maxIterationsSeen = false;
 inline bool unsupportedWarned = false;
 inline std::atomic<unsigned long long> doubleSteps{0}, extendedFallbacks{0};
 inline std::vector<std::string> tokens(std::string line) {
@@ -34,6 +37,7 @@ inline bool knownHeader(const std::string& header, const std::string& file, unsi
     return known;
 }
 inline void parse(const std::vector<std::string>& lines, const std::string& file, unsigned openingLine) {
+    unsigned nextMax = maxIterations; bool seenMax = maxIterationsSeen;
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
     for (unsigned i = 0; i < lines.size(); ++i) {
         const auto t = tokens(lines[i]); if (t.empty()) continue;
@@ -49,8 +53,14 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
             if (seenThreads) fail();
             seenThreads = true;
             std::cout << "HEXMG_OPT: numerical execution is serial\n";
+        } else if (t.size() == 2 && t[0] == "MAX_ITERATIONS") {
+            if (seenMax) fail();
+            const auto parsed = std::from_chars(t[1].data(), t[1].data() + t[1].size(), nextMax);
+            if (parsed.ec != std::errc{} || parsed.ptr != t[1].data() + t[1].size() || nextMax == 0) fail();
+            seenMax = true;
         } else fail();
     }
+    maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;
 }
 inline void report() {

@@ -9,6 +9,7 @@
 #include "hmgComponent.h"
 #include "hmgSimulation.h"
 #include <cmath>
+#include "hmgOptimization.h"
 //***********************************************************************
 
 
@@ -66,7 +67,7 @@ void Simulation::runDC(uns requestedIterations) {
     // A positive request instead means exactly that many TOTAL updates.
     for (uns i = 0; requestedIterations != 0
         ? i < requestedIterations - 1
-        : (i == 0 || max_error > err) && i < 100; ++i) {
+        : (i == 0 || max_error > err) && curretIterN < (optimization::maxIterations ? optimization::maxIterations : 101u); ++i) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         const rvt vErr = defectError(component->collectVoltageDefectDC());
         CircuitStorage::AcceptIterationDC(fullCircuitID);
@@ -91,7 +92,7 @@ void Simulation::runTimeStep(uns requestedIterations) {
     auto* component = CircuitStorage::getInstance().fullCircuitInstances[fullCircuitID].component.get();
     for (uns i = 0; requestedIterations != 0
         ? i < requestedIterations
-        : (i == 0 || max_error > err) && i < 100; ++i) {
+        : (i == 0 || max_error > err) && i < (optimization::maxIterations ? optimization::maxIterations : 100u); ++i) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         const rvt cErr = defectError(component->collectCurrentDefectDC());
