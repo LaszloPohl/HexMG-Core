@@ -35,8 +35,8 @@ class Simulation {
     bool isTau = false;
 
     void iterate(); // always DC
-    void runDC();
-    void runTimeStep();
+    void runDC(uns requestedIterations = 0);
+    void runTimeStep(uns requestedIterations = 0);
     void runAC();
 public:
     //***********************************************************************
