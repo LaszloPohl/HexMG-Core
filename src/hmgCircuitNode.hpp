@@ -16,6 +16,9 @@
 #include "hmgException.h"
 #include <atomic>
 #include <memory>
+#include <optional>
+#include "hmgOptimization.h"
+#include "hmgConvergenceMetric.h"
 //***********************************************************************
 
 
@@ -106,6 +109,7 @@ struct NodeVariable {
         cplx valueAC = cplx0;        // voltage/temperature/... of the node
         //***********************************************************************
         // Variables used alternately for DC and AC:
+        ConcurrentValue physicalMagnitude; // Reset only before physical current stamping.
         ConcurrentValue d;           // defect (current)
         cplx v = cplx0;              // error (voltage)
         cplx f = cplx0;              // multigrid defect
@@ -113,6 +117,10 @@ struct NodeVariable {
         //***********************************************************************
     };
     //***********************************************************************
+    std::optional<optimization::ConvergenceProfile> convergenceProfile;
+    enum class ConvergenceRole { Potential, FlowConstraint, FlowMonitor };
+    ConvergenceRole convergenceRole = ConvergenceRole::Potential;
+    const NodeVariable* convergencePotential = nullptr;
     inline static rvt alpha = 1; // multiplicator for getValue
     //***********************************************************************
     // Variables that must retain their value after a DC-AC switch:
@@ -165,6 +173,45 @@ struct NodeVariable {
     void setDNonConcurrentDC(rvt d_)noexcept { extension->d.storeToNonConcurrent(d_); }
     void setVDC(rvt v_)noexcept { extension->v = v_; }
     void incDDC(rvt d_)noexcept { if (!isGnd) extension->d.fetch_add(d_, isConcurrent); }
+    void clearPhysicalMagnitude() noexcept {
+        if(extension) extension->physicalMagnitude.store(rvt0,isConcurrent);
+        convergenceRole=ConvergenceRole::Potential;
+        convergencePotential=nullptr;
+    }
+    void addPhysicalCurrentDC(rvt current) noexcept {
+        incDDC(current);
+        if(optimization::relativeConvergence && !isGnd && extension)
+            extension->physicalMagnitude.fetch_add(std::abs(current),isConcurrent);
+    }
+    void addPhysicalEquationDC(rvt residual, rvt magnitude, const NodeVariable* potential, ConvergenceRole role, bool replace=false) noexcept {
+        if(replace) setDDC(residual); else incDDC(residual);
+        if(optimization::relativeConvergence && !isGnd && extension) {
+            convergenceRole=role; convergencePotential=potential;
+            if(replace) extension->physicalMagnitude.store(magnitude,isConcurrent);
+            else extension->physicalMagnitude.fetch_add(magnitude,isConcurrent);
+        }
+    }
+    optimization::ConvergenceProfile effectiveConvergenceProfile() const {
+        if(convergenceProfile) return *convergenceProfile;
+        auto profile = convergencePotential && convergencePotential->convergenceProfile
+            ? *convergencePotential->convergenceProfile : optimization::convergenceDefault;
+        if(convergenceRole!=ConvergenceRole::Potential) {
+            profile.reference=0;
+            if(convergenceRole==ConvergenceRole::FlowConstraint) std::swap(profile.stateAbsolute,profile.balanceAbsolute);
+            else profile.stateAbsolute=profile.balanceAbsolute;
+        }
+        return profile;
+    }
+    double relativeChangeError(double relative) const {
+        const auto profile=effectiveConvergenceProfile();
+        return convergence::normalized(getValueDC()-getAcceptedValueDC(),
+            std::max(std::abs(getValueDC()-profile.reference),std::abs(getAcceptedValueDC()-profile.reference)),profile.stateAbsolute,relative);
+    }
+    double relativeBalanceError(double relative) const {
+        const auto profile=effectiveConvergenceProfile();
+        return convergence::normalized(getDDC(),extension->physicalMagnitude.loadRvt(isConcurrent),profile.balanceAbsolute,relative);
+    }
+
     void incYiiDC(rvt y)noexcept { if (!isGnd) extension->yii.fetch_add(y, isConcurrent); }
     void deleteDDC()noexcept { if (!extension) return; if (!isGnd) extension->d.store(rvt0, isConcurrent); }
     void deleteYiiDC()noexcept { if (!isGnd) extension->yii.store(rvt0, isConcurrent); }

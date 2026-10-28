@@ -48,7 +48,75 @@ static void requireConverged(rvt e, rvt limit) {
         throw hmgExcept("requireConverged", "Did not converge: error=%g, ERR=%g", e, limit);
 }
 
+// A separate path leaves legacy decks and multigrid stopping rules unchanged.
+void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
+    if(requestedIterations==0) requireValidErr(err);
+    const double relative=requestedIterations ? RunData{}.err : err;
+    auto& storage=CircuitStorage::getInstance();
+    std::vector<NodeVariable*> nodes;
+    storage.fullCircuitInstances[fullCircuitID].component->collectConvergenceNodes(nodes);
+    std::sort(nodes.begin(),nodes.end(),std::less<NodeVariable*>{});
+    nodes.erase(std::unique(nodes.begin(),nodes.end()),nodes.end());
+    for(auto* node:nodes) node->convergenceProfile.reset();
+    std::set<NodeVariable*> configured;
+    for(const auto& option:optimization::convergenceNodes) {
+        if(option.circuitId!=fullCircuitID) continue;
+        const ComponentBase* component=storage.fullCircuitInstances[fullCircuitID].component.get();
+        for(auto index:option.id.componentID) {
+            const auto* sub=dynamic_cast<const ComponentSubCircuit*>(component);
+            if(!sub || index>=sub->getNContainedComponents()) throw hmgExcept("convergence","Invalid component path %s",option.node.c_str());
+            component=sub->getContainedComponent(index);
+        }
+        const auto* sub=dynamic_cast<const ComponentSubCircuit*>(component);
+        DeepCDNodeID id{SimpleInterfaceNodeID2CDNode(option.id.nodeID,component->pModel->externalNs,
+            sub?static_cast<const ModelSubCircuit*>(sub->pModel)->getInternalNodeSizes():InternalNodeSizePack{}),option.id.componentID,false};
+        if(id.nodeID.type!=cdntInternal && id.nodeID.type!=cdntExternal)
+            throw hmgExcept("convergence","Not a solved node: %s",option.node.c_str());
+        auto* node=const_cast<NodeVariable*>(&storage.getNode(fullCircuitID,id));
+        if(!std::binary_search(nodes.begin(),nodes.end(),node,std::less<NodeVariable*>{}) || !configured.insert(node).second)
+            throw hmgExcept("convergence","Unsolved or aliased repeated node: %s",option.node.c_str());
+        node->convergenceProfile=option.profile;
+    }
+    const auto refresh=[&] {
+        for(auto* node:nodes) node->clearPhysicalMagnitude();
+        CircuitStorage::CalculateControllersDC(fullCircuitID);
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    };
+    const auto measure=[&](bool change) {
+        convergence::Collector result;
+        for(auto* node:nodes) {
+            try { result.add(change?node->relativeChangeError(relative):node->relativeBalanceError(relative)); }
+            catch(const std::exception& e) {
+                throw hmgExcept("convergence","Circuit %u node %u/%u/%u/%u %s: %s",fullCircuitID,
+                    node->nid[3],node->nid[2],node->nid[1],node->nid[0],change?"state":"balance",e.what());
+            }
+        }
+        return result.maximum();
+    };
+    curretIterN=0;
+    double stateError=0, balanceError=0;
+    const unsigned limit=requestedIterations?requestedIterations:
+        optimization::maxIterations?optimization::maxIterations:(timeStep?100u:101u);
+    refresh();
+    (void)measure(false); // Reject an invalid starting physical state before reduction.
+    do {
+        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        stateError=measure(true);
+        CircuitStorage::AcceptIterationDC(fullCircuitID);
+        ++curretIterN;
+        refresh(); // Includes capacitor currents before accepting the step history.
+        balanceError=measure(false);
+        std::cout << "Relative iter " << curretIterN << " state=" << stateError << " balance=" << balanceError << std::endl;
+    } while(curretIterN<limit && (requestedIterations || stateError>1 || balanceError>1));
+    if(!requestedIterations && !(stateError<=1 && balanceError<=1))
+        throw hmgExcept("convergence","Circuit %u did not converge in %u updates: normalized state=%g, balance=%g (both must be <=1)",
+            fullCircuitID,curretIterN,stateError,balanceError);
+    CircuitStorage::AcceptStepDC(fullCircuitID);
+    if(!timeStep) wasDC=true;
+}
+
 void Simulation::runDC(uns requestedIterations) {
+    if(optimization::relativeConvergence) { runRelativeDC(false,requestedIterations); return; }
     if (requestedIterations == 0) requireValidErr(err);
     curretIterN = 0;
     auto* component = CircuitStorage::getInstance().fullCircuitInstances[fullCircuitID].component.get();
@@ -86,6 +154,7 @@ void Simulation::runDC(uns requestedIterations) {
 }
 
 void Simulation::runTimeStep(uns requestedIterations) {
+    if(optimization::relativeConvergence) { runRelativeDC(true,requestedIterations); return; }
     if (requestedIterations == 0) requireValidErr(err);
     curretIterN = 0;
     rvt max_error = 0;
@@ -148,6 +217,7 @@ void Simulation::run(const RunData& runData) {
     // ******************************************************************
 
     if (runData.isMultigrid) {
+        if(optimization::relativeConvergence) throw hmgExcept("convergence","Relative convergence is not implemented for multigrid runs");
 
         if (runData.isInitial)
             SimControl::setInitialDC();

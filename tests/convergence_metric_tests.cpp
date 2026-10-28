@@ -35,6 +35,6 @@ int main() { try {
     reject([&]{normalized(1,-1,1,.01);});
     reject([&]{normalized(1,1e308,1e308,10);});
     check(std::isinf(normalized(1e308,0,1e-308,.01)));
-    std::cout<<checks<<" convergence arithmetic checks PASS; not wired into runtime\n";
+    std::cout<<checks<<" convergence arithmetic checks PASS\n";
     return 0;
 } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;} }

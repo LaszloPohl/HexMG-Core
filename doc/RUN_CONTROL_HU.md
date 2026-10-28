@@ -23,9 +23,15 @@ ERR-je a RunData alapértéke (0.0001), mert a rögzített kérés ERR-jét igno
 Az elfogadott időlépés előtti áramfrissítés megmarad; kondenzátor-előzmény
 elfogadása után nem számítjuk újra az áramokat.
 
-Az ERR továbbra a régi átlag+maximum, áram- és feszültséghibákból képzett
-mérték, nem dimenziótlan relatív tolerancia. A GUI relatív hibaszázalékát
-nem szabad közvetlenül erre leképezni. Nemlineáris GUI-indítás még nincs.
+Explicit relatív mód nélkül az ERR továbbra a régi átlag+maximum,
+áram- és feszültséghibákból képzett mérték. A
+`CONVERGENCE RELATIVE referencia állapot_abs egyensúly_abs` opcionális sor
+viszont bekapcsolja az új, dimenzió nélküli kritériumot: az ERR ilyenkor
+arány (0,5% = 0.005). Állapotváltozás és új fizikai áramegyenleg külön
+normalizált maximuma egyaránt legfeljebb 1 kell legyen.
+[Szintaxis, fizikai egységek és kézi beépítés](BASELINE_RELATIVE_CONVERGENCE_HU.md).
+A GUI csak az explicit relatív mód mellett képezheti rá a százalékot;
+nemlineáris GUI-indítás még nincs.
 Az alap solver OPTIONAL-kihagyással ignorálja a maximumot; a GUI nem
 állíthatja, hogy azon ez a korlát érvényesült. A közös ITER/ITERS-javítás
 pontos kézi útmutatója a GUI docs/solver/CORE_CONVERGENCE_FIXES_20261027_HU.md.

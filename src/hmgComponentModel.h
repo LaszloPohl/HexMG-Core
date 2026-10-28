@@ -566,6 +566,7 @@ public:
         internalNodeIsConcurrent.resize(internalNs_.nNNodes, defaultInternalNodeIsConcurrent_);
     }
     //***********************************************************************
+    InternalNodeSizePack getInternalNodeSizes() const noexcept { return internalNs; }
     uns getN_N_Nodes()const noexcept final override{ return internalNs.nNNodes; }
     uns getN_InternalNodes()const noexcept final override{ return internalNs.nNNodes + internalNs.nBNodes; }
     //***********************************************************************

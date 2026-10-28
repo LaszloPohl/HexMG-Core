@@ -167,6 +167,7 @@ public:
     virtual void calculateComponentControllerValueDC() noexcept {} // no AC version, runs before any calculateValueDC is evaluated => the other components can use what this calcaulated (FCB uses)
     virtual void calculateValueDC() noexcept = 0; // no AC version
     virtual uns calculateControllersDC([[maybe_unused]] uns level, [[maybe_unused]] controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
+    virtual void collectConvergenceNodes(std::vector<NodeVariable*>&) {}
     virtual DefectCollector collectCurrentDefectDC() const noexcept = 0; // no AC version
     virtual DefectCollector collectVoltageDefectDC() const noexcept = 0; // no AC version
     virtual void printNodeValue() const noexcept = 0;
@@ -448,8 +449,8 @@ public:
         if(isDC) {
             rvt I = componentValue.getValueDC() * (N0->getValueDC() - N1->getValueDC());
             componentCurrent.setValueDC(I);
-            N0->incDDC(-I);
-            N1->incDDC(I);
+            N0->addPhysicalCurrentDC(-I);
+            N1->addPhysicalCurrentDC(I);
         }
         else {
             IAC = componentValue.getValueDC() * (N0->getValueAC() - N1->getValueAC()); // componentValue.getValueDC() !
@@ -507,10 +508,10 @@ public:
         if(isDC) {
             rvt I = componentValue.getValueDC() * (N[0]->getValueDC() - N[1]->getValueDC());
             componentCurrent.setValueDC(I);
-            N[0]->incDDC(-I);
-            N[1]->incDDC(I);
+            N[0]->addPhysicalCurrentDC(-I);
+            N[1]->addPhysicalCurrentDC(I);
             IMD = I - N[2]->getValueDC() * 1.0; // RM = 1 Ohm
-            N[2]->incDDC(IMD);
+            N[2]->addPhysicalEquationDC(IMD, std::abs(I)+std::abs(N[2]->getValueDC()), N[0], NodeVariable::ConvergenceRole::FlowMonitor);
         }
         else {
             IAC = componentValue.getValueDC() * (N[0]->getValueAC() - N[1]->getValueAC()); // componentValue.getValueDC() !
@@ -662,11 +663,11 @@ public:
             rvt P1 = PDC * share.get();
             rvt P2 = PDC - P1;
             componentCurrent.setValueDC(I);
-            N[0]->incDDC(-I);
-            N[1]->incDDC(I);
+            N[0]->addPhysicalCurrentDC(-I);
+            N[1]->addPhysicalCurrentDC(I);
             //if(fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I)<1e-12?0:I, fabs(P1)<1e-12?0:P1);
-            N[2]->incDDC(P1);
-            N[3]->incDDC(P2);
+            N[2]->addPhysicalCurrentDC(P1);
+            N[3]->addPhysicalCurrentDC(P2);
             //printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), N[2]->getValueDC(), N[3]->getValueDC());
         }
         else {
@@ -953,14 +954,14 @@ public:
             rvt P1 = PDC * share.get();
             rvt P2 = PDC - P1;
             componentCurrent.setValueDC(I);
-            N[0]->incDDC(-I);
-            N[1]->incDDC(I);
+            N[0]->addPhysicalCurrentDC(-I);
+            N[1]->addPhysicalCurrentDC(I);
 
             IMD = I - N[2]->getValueDC() * 1.0; // RM = 1 Ohm
-            N[2]->incDDC(IMD);
+            N[2]->addPhysicalEquationDC(IMD, std::abs(I)+std::abs(N[2]->getValueDC()), N[0], NodeVariable::ConvergenceRole::FlowMonitor);
             //if (fabs(P1) > 1e-12)printf("%g %g %g %g\n", N[0]->getValueDC(), N[1]->getValueDC(), fabs(I) < 1e-12 ? 0 : I, fabs(P1) < 1e-12 ? 0 : P1);
-            N[3]->incDDC(P1);
-            N[4]->incDDC(P2);
+            N[3]->addPhysicalCurrentDC(P1);
+            N[4]->addPhysicalCurrentDC(P2);
         }
         else {
             cplx V = N[0]->getValueAC() - N[1]->getValueAC();
@@ -1136,8 +1137,8 @@ public:
             crvt dV = V - V_start;
             crvt I = isTrapezoid ? (dV * Gc - (SimControl::dt.getValueDC() == 0 ? rvt0 : I_stepStart)) : (dV * Gc);
             componentCurrent.setValueDC(I);
-            N0->incDDC(-I);
-            N1->incDDC(I);
+            N0->addPhysicalCurrentDC(-I);
+            N1->addPhysicalCurrentDC(I);
         }
         else {
             IAC = componentValue.getValueDC() * SimControl::getComplexFrequency() * (N0->getValueAC() - N1->getValueAC()); // componentValue.getValueDC() !
@@ -1265,8 +1266,8 @@ public:
         if (isDC) {
             rvt I = componentValue.getValueDC();
             componentCurrent.setValueDC(-I);
-            N0->incDDC(I);
-            N1->incDDC(-I);
+            N0->addPhysicalCurrentDC(I);
+            N1->addPhysicalCurrentDC(-I);
         }
         else {
             crvt A = param[2].get();
@@ -1309,8 +1310,8 @@ public:
         if (isDC) {
             rvt I = componentValue.getValueDC();
             componentCurrent.setValueDC(-I);
-            N0->incDDC(I);
-            N1->incDDC(-I);
+            N0->addPhysicalCurrentDC(I);
+            N1->addPhysicalCurrentDC(-I);
         }
         else {
             crvt A = param[2].get() * param[4].get();
@@ -1355,8 +1356,8 @@ public:
             crvt G = param[4].get();
             crvt I = G * (V + N1->getValueDC() - N0->getValueDC());
             componentCurrent.setValueDC(-I);
-            N0->incDDC(I);
-            N1->incDDC(-I);
+            N0->addPhysicalCurrentDC(I);
+            N1->addPhysicalCurrentDC(-I);
         }
         else {
             crvt G = param[4].get();
@@ -1484,8 +1485,8 @@ public:
         if (isDC) {
             rvt I = componentValue.getValueDC() * (N[2]->getValueDC() - N[3]->getValueDC());
             componentCurrent.setValueDC(-I);
-            N[0]->incDDC(I);
-            N[1]->incDDC(-I);
+            N[0]->addPhysicalCurrentDC(I);
+            N[1]->addPhysicalCurrentDC(-I);
         }
         else {
             crvt A = param[2].get();
@@ -1629,8 +1630,8 @@ public:
         if (isDC) {
             rvt I = componentValue.getValueDC();
             componentCurrent.setValueDC(-I);
-            N[0]->incDDC(I);
-            N[1]->incDDC(-I);
+            N[0]->addPhysicalCurrentDC(I);
+            N[1]->addPhysicalCurrentDC(-I);
         }
         else {
             rvt I = componentValue.getValueDC();
@@ -1704,10 +1705,10 @@ public:
         if (isDC) {
             IDC1 = -param[0].get() * (N[2]->getValueDC() - N[3]->getValueDC());
             IDC2 = param[1].get() * (N[0]->getValueDC() - N[1]->getValueDC());
-            N[0]->incDDC(IDC1);
-            N[1]->incDDC(-IDC1);
-            N[2]->incDDC(IDC2);
-            N[3]->incDDC(-IDC2);
+            N[0]->addPhysicalCurrentDC(IDC1);
+            N[1]->addPhysicalCurrentDC(-IDC1);
+            N[2]->addPhysicalCurrentDC(IDC2);
+            N[3]->addPhysicalCurrentDC(-IDC2);
         }
         else {
             IAC1 = -param[0].get() * (N[2]->getValueAC() - N[3]->getValueAC());
@@ -1844,10 +1845,10 @@ public:
             [[maybe_unused]] crvt G = 1.0 / param[4].get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(UB);
-            N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
-            N[1]->incDDC(UB);
+            N[0]->addPhysicalCurrentDC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->addPhysicalCurrentDC(UB);
             crvt JB = -IB + V;// - G * UB
-            N[2]->setDDC(JB);
+            N[2]->addPhysicalEquationDC(JB, std::abs(IB) + std::abs(V), N[0], NodeVariable::ConvergenceRole::FlowConstraint, true);
         }
         else {
             ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
@@ -1994,6 +1995,9 @@ public:
         N[1]->incYiiDC(G);
     }
     //***********************************************************************
+    void collectConvergenceNodes(std::vector<NodeVariable*>& nodes) override {
+        if(possibleCurrentNode && !possibleCurrentNode->isGnd) nodes.push_back(possibleCurrentNode.get());
+    }
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
@@ -2091,10 +2095,10 @@ public:
             [[maybe_unused]] crvt G = 1.0 / param[4].get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(-UB);
-            N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
-            N[1]->incDDC(UB);
+            N[0]->addPhysicalCurrentDC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->addPhysicalCurrentDC(UB);
             RJB = IB + V;// - G * UB    => After removing the current of the resistor the voltage of the voltage source is more precise (= the error caused the resistor is added as (-G * UB) + (G * UB) = 0
-            N[2]->incDDC(RJB);
+            N[2]->addPhysicalEquationDC(RJB, std::abs(IB) + std::abs(V), N[0], NodeVariable::ConvergenceRole::FlowConstraint);
         }
         else {
             ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
@@ -2254,10 +2258,10 @@ public:
             crvt IB = N[1]->getValueDC() - N[0]->getValueDC(); // S2 = -1
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(UB);
-            N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
-            N[1]->incDDC(UB);
+            N[0]->addPhysicalCurrentDC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->addPhysicalCurrentDC(UB);
             crvt JB = -IB;// - G * UB
-            N[2]->setDDC(JB);
+            N[2]->addPhysicalEquationDC(JB, std::abs(IB), N[0], NodeVariable::ConvergenceRole::FlowConstraint, true);
         }
         else {
             ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
@@ -2380,6 +2384,9 @@ public:
         N[1]->incYiiDC(G);
     }
     //***********************************************************************
+    void collectConvergenceNodes(std::vector<NodeVariable*>& nodes) override {
+        if(possibleCurrentNode && !possibleCurrentNode->isGnd) nodes.push_back(possibleCurrentNode.get());
+    }
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
     void printNodeValue() const noexcept override {}
@@ -2476,10 +2483,10 @@ public:
             [[maybe_unused]] crvt G = 1.0 / param.get();
             crvt UB = N[2]->getValueDC();
             componentCurrent.setValueDC(-UB);
-            N[0]->incDDC(-UB); // S1 = -1 => I1 = -1 * UB
-            N[1]->incDDC(UB);
+            N[0]->addPhysicalCurrentDC(-UB); // S1 = -1 => I1 = -1 * UB
+            N[1]->addPhysicalCurrentDC(UB);
             RJB = IB;// - G * UB
-            N[2]->incDDC(RJB);
+            N[2]->addPhysicalEquationDC(RJB, std::abs(IB), N[0], NodeVariable::ConvergenceRole::FlowConstraint);
         }
         else {
             ccplx IB = N[1]->getValueAC() - N[0]->getValueAC(); // S2 = -1
@@ -2641,8 +2648,8 @@ public:
             crvt IG = G * (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
             crvt Ifull = componentValue.getValueDC() - IG;
             componentCurrent.setValueDC(-Ifull);
-            externalNodes[0]->incDDC(Ifull);
-            externalNodes[1]->incDDC(-Ifull);
+            externalNodes[0]->addPhysicalCurrentDC(Ifull);
+            externalNodes[1]->addPhysicalCurrentDC(-Ifull);
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
@@ -2853,14 +2860,14 @@ public:
             crvt IG = G * V;
             crvt Ifull = componentValue.getValueDC() - IG; // R or G components: I sign is opposite !
             componentCurrent.setValueDC(-Ifull);
-            externalNodes[0]->incDDC(Ifull);
-            externalNodes[1]->incDDC(-Ifull);
+            externalNodes[0]->addPhysicalCurrentDC(Ifull);
+            externalNodes[1]->addPhysicalCurrentDC(-Ifull);
 
             PDC = -Ifull * V;
             rvt P1 = PDC * pars[0].get(); // dissipated power share
             rvt P2 = PDC - P1;
-            externalNodes[2]->incDDC(P1);
-            externalNodes[3]->incDDC(P2);
+            externalNodes[2]->addPhysicalCurrentDC(P1);
+            externalNodes[3]->addPhysicalCurrentDC(P2);
         }
         else {
             crvt G = pars[1].get();
@@ -3125,10 +3132,10 @@ public:
             crvt IG = G * (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
             crvt Ifull = componentValue.getValueDC() - IG;
             componentCurrent.setValueDC(-Ifull);
-            externalNodes[0]->incDDC(Ifull);
-            externalNodes[1]->incDDC(-Ifull);
+            externalNodes[0]->addPhysicalCurrentDC(Ifull);
+            externalNodes[1]->addPhysicalCurrentDC(-Ifull);
             IMD = -Ifull - externalNodes[2]->getValueDC() * 1.0; // RM = 1 Ohm
-            externalNodes[2]->incDDC(IMD);
+            externalNodes[2]->addPhysicalEquationDC(IMD, std::abs(Ifull)+std::abs(externalNodes[2]->getValueDC()), externalNodes[0], NodeVariable::ConvergenceRole::FlowMonitor);
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
@@ -3375,17 +3382,17 @@ public:
             crvt IG = G * V;
             crvt Ifull = componentValue.getValueDC() - IG; // R or G components: I sign is opposite !
             componentCurrent.setValueDC(-Ifull);
-            externalNodes[0]->incDDC(Ifull);
-            externalNodes[1]->incDDC(-Ifull);
+            externalNodes[0]->addPhysicalCurrentDC(Ifull);
+            externalNodes[1]->addPhysicalCurrentDC(-Ifull);
 
             IMD = -Ifull - externalNodes[2]->getValueDC() * 1.0; // RM = 1 Ohm
-            externalNodes[2]->incDDC(IMD);
+            externalNodes[2]->addPhysicalEquationDC(IMD, std::abs(Ifull)+std::abs(externalNodes[2]->getValueDC()), externalNodes[0], NodeVariable::ConvergenceRole::FlowMonitor);
 
             PDC = -Ifull * V;
             rvt P1 = PDC * pars[0].get(); // dissipated power share
             rvt P2 = PDC - P1;
-            externalNodes[3]->incDDC(P1);
-            externalNodes[4]->incDDC(P2);
+            externalNodes[3]->addPhysicalCurrentDC(P1);
+            externalNodes[4]->addPhysicalCurrentDC(P2);
         }
         else {
             crvt G = pars[1].get();
@@ -4280,6 +4287,17 @@ public:
         // setting own value should be here
     }
     //***********************************************************************
+    void collectConvergenceNodes(std::vector<NodeVariable*>& nodes) override {
+        const auto& model=static_cast<const ModelSubCircuit&>(*pModel);
+        for(uns i=0;i<model.getN_N_Nodes();++i)
+            if(internalNodesAndVars[i].extension && !internalNodesAndVars[i].isGnd) nodes.push_back(&internalNodesAndVars[i]);
+        // O ports are reduced here, but stored in externalNodes, not internalNodesAndVars.
+        for(uns i=0;i<model.getN_O_Nodes();++i) {
+            auto* node=externalNodes[model.getN_Start_Of_O_Nodes()+i];
+            if(node->extension && !node->isGnd) nodes.push_back(node);
+        }
+        for(auto& component:components) if(component->isEnabled) component->collectConvergenceNodes(nodes);
+    }
     DefectCollector collectCurrentDefectDC() const noexcept override {
     // TO PARALLEL
     //***********************************************************************
@@ -4349,10 +4367,10 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
-            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+            for (uns i = 0; i < nInternalNodesAndVars; i++) // Includes locally owned, unconnected O ports.
                 internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
         else {
-            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+            for (uns i = 0; i < nInternalNodesAndVars; i++) // Includes locally owned, unconnected O ports.
                 internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
@@ -4417,8 +4435,7 @@ public:
     void acceptIterationAndStepAC() noexcept override { // sunred and multigrid
     // TO PARALLEL
     //***********************************************************************
-        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+        for (uns i = 0; i < nInternalNodesAndVars; i++) // Includes locally owned, unconnected O ports.
             internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationAndStepAC();

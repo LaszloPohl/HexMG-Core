@@ -316,6 +316,7 @@ bool ReadALine::skipOptionalBlock() {
     while ((ch = getRawChar()) != EOF && ch != '\n') { if(header.size()<256)header.push_back(static_cast<char>(ch)); }
     const bool interpret=optimization::knownHeader(header,names[fileNameIndex].name,openingLine);
     std::vector<std::string> lines;
+    size_t optionBytes=0;
     if (ch == EOF) missingEnd();
     if (peekRawChar(0) == '\r') getRawChar(); // historical LF-CR support
     ++actLine;
@@ -327,7 +328,7 @@ bool ReadALine::skipOptionalBlock() {
         bool comment = false;
         while ((ch = getRawChar()) != EOF && ch != '\n') {
             if(interpret) {
-                if(raw.size()>=4096 || lines.size()>=128)throw hmgExcept("HEXMG_OPT","option block too large in %s, line %u",names[fileNameIndex].name.c_str(),openingLine);
+                if(raw.size()>=4096 || lines.size()>=1000000 || ++optionBytes>64u*1024u*1024u)throw hmgExcept("HEXMG_OPT","option block too large in %s, line %u",names[fileNameIndex].name.c_str(),openingLine);
                 raw.push_back(static_cast<char>(ch));
             }
             if (comment) continue;
@@ -836,6 +837,19 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
     // reading the simulation
 
     globalCircuit.Read(reader, line, lineInfo);
+    if (!optimization::convergenceNodes.empty() && !optimization::relativeConvergence)
+        throw hmgExcept("convergence", "CONVERGENCE_NODE requires CONVERGENCE RELATIVE");
+    for(auto& option : optimization::convergenceNodes) {
+        auto& names=HMGFileListItem::globalNames;
+        const auto circuit=names.fullCircuitNames.find(option.circuit);
+        if(circuit==names.fullCircuitNames.end()) throw hmgExcept("convergence", "Unknown circuit %s",option.circuit.c_str());
+        option.circuitId=circuit->second;
+        std::vector<char> node(option.node.begin(),option.node.end()); node.push_back(0);
+        if(!names.textToDeepInterfaceNodeID(node.data(),option.circuitId,option.id) || option.id.isController ||
+           option.id.nodeID.isStepStart || option.id.nodeID.type==nvtBG || option.id.nodeID.type==nvtRail || option.id.nodeID.type==nvtGND)
+            throw hmgExcept("convergence", "Expected a solved circuit node: %s",option.node.c_str());
+    }
+
     //most("Read");
     //globalCircuit.ProcessXLines();
     //most("ProcessXLines");

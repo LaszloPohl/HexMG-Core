@@ -1,6 +1,8 @@
-# Relatív konvergencia: matematikai alap és bekötési feltételek
+# Relatív konvergencia: matematikai alap és futási bekötés
 
-2026-10-28. Ez előkészítés, nem bekapcsolt solverfunkció.
+2026-10-28. Az optimalizált solverben elkészült az explicit módon
+bekapcsolható DC/időlépési futási út. A [részletes leírás és alapváltozathoz
+szóló kézi útmutató](BASELINE_RELATIVE_CONVERGENCE_HU.md) az aktuális szerződés.
 
 `src/hmgConvergenceMetric.h` fizikai alapértékek nélkül számol:
 
@@ -13,7 +15,7 @@ hálózat hibája = max(minden csomópont hibája)
 
 A konvergencia feltétele legfeljebb 1. A referencia és az abszolút küszöb
 azonos egységű. A segéd nem ismer Celsius/Kelvin, V/A/K/W típusokat;
-azokat a későbbi hívónak kell megadnia. Nincs rejtett küszöb vagy skála.
+azokat a hívó adja meg. Nincs rejtett küszöb vagy skála.
 A nem véges bemenet, negatív referencia, nem pozitív tolerancia és
 nem ábrázolható küszöb elutasított. Osztási túlcsordulás végtelen hibát ad,
 amely nem konvergens. A nulla elemszámú gyűjtő matematikailag konvergens;
@@ -25,27 +27,36 @@ egy rossz csomópont egymillió pontos mellett, NaN/Inf/hibás tolerancia,
 túlcsordulás. CMake BUILD_TESTING mellett `convergence_metric_tests`,
 CTest-név: `convergence_metric`.
 
-## Bekötés előtt
+## Megvalósult futási bekötés
 
 - A `NodeVariable` tényleges változása `getValueDC()-getAcceptedValueDC()`;
   a nyers `getVDC()` nem veszi figyelembe az alpha csillapítást.
 - A `CalculateValuesAndCurrentsDC` sorrendje: kontrollerérték,
-  komponensérték, deleteD, calculateCurrent. Itt kell külön nullázni az
+  komponensérték, deleteD, calculateCurrent. Előtte külön nullázódik az
   új fizikai referenciaösszeget; redukció vagy multigrid nem nullázhatja.
-- A `calculateCurrent` fizikai bélyegzését kell műszerezni, nem az általános
+- A `calculateCurrent` fizikai bélyegzését műszerezése készült el, nem az általános
   incDDC-t. A komponensfejléc 54 incDDC-előfordulása nem jelent 54 egyforma
   ágat: többkapus elemek és segédegyenletek is vannak. A feladat nem
   oldható meg vak szövegcserével.
 - A gyűjtők most noexcept függvények. A dobó új segédet nem szabad
   közvetlenül ezekbe hívni, mert az std::terminate-hez vezetne. Külön,
-  nem noexcept validálási út, vagy jelzett hibastátusz és a Simulation
-  határán dobott kivétel kell, csomópont-/komponensazonosítóval.
+  nem noexcept validálási út dob a Simulation határán,
+  csomópont-/komponensazonosítóval.
 - Az új egyenleghiba az új állapot fizikai áramfrissítése UTÁN értendő.
   Időlépésben a kondenzátor előző állapotát AcceptStepDC-ig meg kell őrizni.
 - A generikus Core nem tudja a csomópont fizikai típusát. Metadata nélküli
   hálózaton nem lehet automatikusan K/W-ként értelmezni a számokat.
-- A meglévő ERR jelentése és a kiadott solverek megállása nem változott.
-  Új OPTIONAL szintaxis még nincs elfogadva vagy beépítve a relatív módhoz.
+- A fent felsorolt feltételek teljesülnek a külön `runRelativeDC` útban.
+  A régi `DefectCollector` és a relatív mód nélküli ERR megmaradt.
+  `CONVERGENCE RELATIVE` adja a globális profilt, `CONVERGENCE_NODE` az
+  egyedi csomópontprofilt. A potenciálváltozás referenciája az előírt
+  környezethez / 0 V-hoz viszonyított új és régi érték abszolút maximuma.
+  A gyűjtés kiterjed a kivezetett O csomópontokra és a VIB/MIB saját
+  áramváltozóira; a megosztott csomópontokat egyszer értékeljük.
+- 51 valódi CLI/HXIM célpróba és a korábbi 42 állapot/probe próba az új
+  módban is sikeres. A kézi recept külön alapmásolatán ugyanezek is sikeresek.
+  Az FCI meglévő numerikus deriváltja miatt a Newton-pálya nem bitazonos
+  egységváltáskor. Multigrid relatív megállása nem támogatott.
 
 ## Anyagérvényesség
 
