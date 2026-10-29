@@ -127,7 +127,7 @@ void Simulation::runDC(uns requestedIterations) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
       //printf("ForwsubsBacksubs\n");
       //gc.fullCircuitInstances[0].component->printNodeValue();
-        ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
+        ComponentBase::DefectCollector v = gc.fullCircuitInstances[fullCircuitID].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
       //printf("AcceptIteration\n");
       //gc.fullCircuitInstances[0].component->printNodeValue();
@@ -136,7 +136,7 @@ void Simulation::runDC(uns requestedIterations) {
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
       //printf("CalculateValuesAndCurrents\n");
       //gc.fullCircuitInstances[0].component->printNodeValue();
-        ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
+        ComponentBase::DefectCollector c = gc.fullCircuitInstances[fullCircuitID].component->collectCurrentDefectDC();
 
         rvt cErr = defectError(c);
         rvt vErr = defectError(v);
@@ -182,9 +182,9 @@ void Simulation::runTimeStep(uns requestedIterations) {
     for (uns i = 0; requestedIterations != 0 ? i < requestedIterations : (i == 0 || max_error > err) && i < 100; i++) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
-        ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
+        ComponentBase::DefectCollector c = gc.fullCircuitInstances[fullCircuitID].component->collectCurrentDefectDC();
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
-        ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
+        ComponentBase::DefectCollector v = gc.fullCircuitInstances[fullCircuitID].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
         curretIterN++;
         max_error = defectError(c) + defectError(v);
