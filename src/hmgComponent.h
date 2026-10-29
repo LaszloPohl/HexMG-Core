@@ -4346,10 +4346,10 @@ public:
     //***********************************************************************
         const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
         if (isNoAlpha)
-            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+            for (uns i = 0; i < nInternalNodesAndVars; i++) // the connected ONodes come from outside, unconnected O nodes accepted here
                 internalNodesAndVars[i].setValueAcceptedNoAlphaDC();
         else {
-            for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+            for (uns i = 0; i < nInternalNodesAndVars; i++) // the connected ONodes come from outside, unconnected O nodes accepted here
                 internalNodesAndVars[i].setValueAcceptedDC();
         }
         for (auto& comp : components)
@@ -4414,8 +4414,7 @@ public:
     void acceptIterationAndStepAC() noexcept override { // sunred and multigrid
     // TO PARALLEL
     //***********************************************************************
-        const ModelSubCircuit& model = static_cast<const ModelSubCircuit&>(*pModel);
-        for (uns i = 0; i < model.getN_InternalNodes(); i++) // the ONodes come from outside
+        for (uns i = 0; i < nInternalNodesAndVars; i++) // the connected ONodes come from outside, unconnected O nodes accepted here
             internalNodesAndVars[i].setValueAcceptedAC();
         for (auto& comp : components)
             if (comp->isEnabled) comp->acceptIterationAndStepAC();
