@@ -10,6 +10,7 @@
 #include <vector>
 #include "hmgCommon.h"
 #include "hmgException.h"
+#include "hmgFunctionGuard.h"
 
 namespace nsHMG::optimization {
 enum class Precision { Extended, Double, Auto };
@@ -29,6 +30,7 @@ struct NodeConvergenceOption {
     DeepInterfaceNodeID id;
 };
 inline std::vector<NodeConvergenceOption> convergenceNodes;
+inline std::vector<function_guard::Rule> functionGuards;
 inline bool unsupportedWarned = false;
 inline std::atomic<unsigned long long> doubleSteps{0}, extendedFallbacks{0};
 inline std::vector<std::string> tokens(std::string line) {
@@ -53,6 +55,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     bool nextRelative = relativeConvergence;
     auto nextProfile = convergenceDefault;
     auto nextNodes = convergenceNodes;
+    auto nextGuards = functionGuards;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
@@ -93,9 +96,32 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                 if(!nodeKeys.emplace(t[1],t[2]).second) fail();
                 nextNodes.push_back({t[1],t[2],profile,0,{}});
             }
+        } else if(t.size()==6 && t[0]=="FUNCTION_GUARD") {
+            function_guard::Rule rule;rule.name=t[1];
+            const auto index=[&](size_t at,char prefix) {
+                unsigned result=0;
+                if(t[at].size()<2||t[at][0]!=prefix)fail();
+                const auto parsed=std::from_chars(t[at].data()+1,t[at].data()+t[at].size(),result);
+                if(parsed.ec!=std::errc{}||parsed.ptr!=t[at].data()+t[at].size())fail();
+                return result;
+            };
+            rule.parameter=index(2,'P');rule.variable=index(3,'V');
+            const auto bound=[&](size_t at)->std::optional<double> {
+                if(t[at]=="*")return {};
+                double value=0;
+                const auto parsed=std::from_chars(t[at].data(),t[at].data()+t[at].size(),value);
+                if(parsed.ec!=std::errc{}||parsed.ptr!=t[at].data()+t[at].size()||!std::isfinite(value))fail();
+                return value;
+            };
+            rule.minimum=bound(4);rule.maximum=bound(5);
+            if(rule.minimum&&rule.maximum&&*rule.minimum>*rule.maximum)fail();
+            for(const auto& previous:nextGuards)if(previous.name==rule.name)fail();
+            nextGuards.push_back(std::move(rule));
         } else fail();
     }
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
+    functionGuards=std::move(nextGuards);
+    function_guard::enabled=!functionGuards.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;
 }

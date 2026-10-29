@@ -837,6 +837,15 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
     // reading the simulation
 
     globalCircuit.Read(reader, line, lineInfo);
+    for(auto& rule:optimization::functionGuards) {
+        const auto& names=HMGFileListItem::globalNames;
+        const auto found=names.functionNames.find(rule.name);
+        if(found==names.functionNames.end())throw hmgExcept("FUNCTION_GUARD","Unknown function %s",rule.name.c_str());
+        rule.functionId=found->second;
+        const auto* function=names.functionData[rule.functionId];
+        if(rule.parameter>=function->nParams||rule.variable>=function->declaredVars)
+            throw hmgExcept("FUNCTION_GUARD","Invalid parameter/local index for %s",rule.name.c_str());
+    }
     if (!optimization::convergenceNodes.empty() && !optimization::relativeConvergence)
         throw hmgExcept("convergence", "CONVERGENCE_NODE requires CONVERGENCE RELATIVE");
     for(auto& option : optimization::convergenceNodes) {
@@ -2584,6 +2593,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
     // read function lines
 
+    declaredVars = nVars;
     bool isFunctionNotEnded = true;
     uns labelnum = 0;
     char labelstring[100];

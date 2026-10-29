@@ -182,6 +182,7 @@ void Simulation::runTimeStep(uns requestedIterations) {
 }
 
 void Simulation::runAC() {
+    if(!optimization::functionGuards.empty())throw hmgExcept("FUNCTION_GUARD","Guarded functions currently support DC/time steps only");
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
     if (!isBuiltForAC) {
@@ -217,6 +218,7 @@ void Simulation::run(const RunData& runData) {
     // ******************************************************************
 
     if (runData.isMultigrid) {
+        if(!optimization::functionGuards.empty())throw hmgExcept("FUNCTION_GUARD","Guarded functions are not implemented for multigrid runs");
         if(optimization::relativeConvergence) throw hmgExcept("convergence","Relative convergence is not implemented for multigrid runs");
 
         if (runData.isInitial)

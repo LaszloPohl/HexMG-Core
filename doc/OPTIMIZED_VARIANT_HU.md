@@ -54,3 +54,8 @@ kibővített HMG bájtra azonos HXIM-eredménye sikeres. A numerikus összeveté
 `--baseline`, `--optimized`, `--output` argumentumokkal. Alapból a mellékelt
 `tests/fixtures/thermal18.hmg` szintetikus GUI-exportot használja;
 a `--deck` kapcsolóval más önálló, relatív HXIM-kimenetű bemenet adható meg.
+
+## 2026-10-29 — anyagérvényesség
+
+Jóváhagyott FUNCTION_GUARD DC/időlépés-védelem elkészült.
+[Pontos szerződés, korlátok és tesztek](FUNCTION_GUARD_HU.md).

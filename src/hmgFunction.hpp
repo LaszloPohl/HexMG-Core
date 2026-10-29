@@ -15,6 +15,7 @@
 #include <cmath>
 #include "hmgCommon.h"
 #include "hmgException.h"
+#include "hmgFunctionGuard.h"
 //***********************************************************************
 
 
@@ -117,6 +118,7 @@ public:
         //crvt dx = abs(var) * rvt(1.0e-9) + 1.0e-5;
         //crvt dx = (abs(value) + abs(var)) * rvt(1.0e-9) + 1.0e-20;
         workField[index[variableIndex]] += dx;
+        function_guard::DerivativeScope derivativeScope;
         evaluate(index, workField, owner, line, pComponentParams);
         crvt ret1 = (workField[index[0]] - value) / dx;
         //workField[index[0]] = value;
@@ -128,6 +130,8 @@ public:
         workField[index[0]] = value;
         workField[index[variableIndex]] = var;
         //return (ret1 - ret2) * 0.5;
+        if(function_guard::enabled&&!std::isfinite(ret1))
+            function_guard::record(nullptr,owner,var,ret1,"nonfinite numerical derivative");
         return ret1;
     }
     uns getN_ComponentParam()const noexcept { return nComponentParam; }
@@ -2733,6 +2737,7 @@ public:
     uns nComponentParams = 0;
     uns nParams = 0;
     uns nLocal = 0;
+    std::optional<function_guard::Rule> guard;
     std::vector<LineDescription> lines;
     //***********************************************************************
 };
@@ -2814,6 +2819,23 @@ public:
     //***********************************************************************
     int evaluate([[maybe_unused]] cuns* indexField, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& ownerLine, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept override {
     //***********************************************************************
+        // Capture input before the function can modify parameter storage.
+        // A NaN sentinel prevents stale/unassigned locals passing the guard.
+        struct GuardScope {
+            const function_guard::Rule* rule;
+            const ComponentAndControllerBase* owner;
+            double temperature;
+            rvt* conductivity;
+            rvt* result;
+            ~GuardScope() {
+                if(!rule||function_guard::derivativeDepth)return;
+                function_guard::check(*rule,owner,temperature,*conductivity);
+                if(!std::isfinite(*result))function_guard::record(rule,owner,temperature,*conductivity,"nonfinite function result");
+            }
+        } check{model.guard?&*model.guard:nullptr,owner,
+            model.guard?workField[indexField[2+model.guard->parameter]]:0,
+            model.guard?workField+indexField[1]+model.guard->variable:nullptr,workField+indexField[0]};
+        if(check.rule)*check.conductivity=std::numeric_limits<double>::quiet_NaN();
         uns base = model.nParams + 2;
         for (uns i = 0; i < model.lines.size(); i++) {
             const auto& line = model.lines[i];

@@ -835,6 +835,7 @@ struct HMGFileFunction: HMGFileListItem {
     uns functionIndex = 0;
     uns nParams = 0;
     uns nVars = 0;
+    uns declaredVars = 0; // Excludes parser-created constant slots.
     uns nComponentParams = 0;
     std::map<std::string, uns> labels;
     std::map<rvt, uns> constants; // constant, variable index

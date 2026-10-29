@@ -5415,6 +5415,29 @@ public:
     //***********************************************************************
  
     //***********************************************************************
+    static void RequireValidFunctionState(uns fullCircuitID) {
+        const auto& error=function_guard::failure;
+        if(!error.reason)return;
+        const auto find=[&](const auto& self,const ComponentBase* part,const std::string& path)->std::string {
+            if(part==error.owner)return path;
+            if(const auto* sub=dynamic_cast<const ComponentSubCircuit*>(part)) {
+                for(size_t i=0;i<sub->controllers.size();++i)
+                    if(sub->controllers[i].get()==error.owner)return path+".controller["+std::to_string(i)+"]";
+                for(size_t i=0;i<sub->components.size();++i) {
+                    auto result=self(self,sub->components[i].get(),path+".component["+std::to_string(i)+"]");
+                    if(!result.empty())return result;
+                }
+            }
+            return {};
+        };
+        const auto path=find(find,getInstance().fullCircuitInstances[fullCircuitID].component.get(),
+            "circuit["+std::to_string(fullCircuitID)+"]");
+        const auto* rule=error.rule;
+        throw hmgExcept("FUNCTION_GUARD","%s at %s: %s; temperature=%.17g, conductivity/derivative=%.17g; range=[%.17g, %.17g]",
+            rule?rule->name.c_str():"derivative",path.c_str(),error.reason,error.temperature,error.conductivity,
+            rule&&rule->minimum?*rule->minimum:-std::numeric_limits<double>::infinity(),
+            rule&&rule->maximum?*rule->maximum:std::numeric_limits<double>::infinity());
+    }
     static void CalculateControllersDC(uns fullCircuitID) {
     //***********************************************************************
         CircuitStorage& gc = getInstance();
@@ -5424,6 +5447,7 @@ public:
             currentLevel = nextLevel;
             nextLevel = gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosLoad);
             gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosEvaluateAndStore);
+            RequireValidFunctionState(fullCircuitID);
         } while (nextLevel > currentLevel);
     }
 
@@ -5432,7 +5456,9 @@ public:
     //***********************************************************************
         CircuitStorage& gc = getInstance();
         gc.fullCircuitInstances[fullCircuitID].component->calculateComponentControllerValueDC();
+        RequireValidFunctionState(fullCircuitID);
         gc.fullCircuitInstances[fullCircuitID].component->calculateValueDC();
+        RequireValidFunctionState(fullCircuitID);
         gc.fullCircuitInstances[fullCircuitID].component->deleteD(true);
         gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
     }
@@ -5440,7 +5466,9 @@ public:
     static void ForwsubsBacksubsDC(uns fullCircuitID) {
     //***********************************************************************
         CircuitStorage& gc = getInstance();
+        RequireValidFunctionState(fullCircuitID);
         gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
+        RequireValidFunctionState(fullCircuitID);
         gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
     }
     //***********************************************************************
