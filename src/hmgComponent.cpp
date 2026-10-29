@@ -3032,7 +3032,6 @@ void hmgMultigrid::solveDC() {
                     
                 const FineCoarseConnectionDescription& hLevel = levels[iUp];
                 ComponentSubCircuit& hGrid = *gc.fullCircuitInstances[hLevel.indexFineFullCircuit].component;
-                [[maybe_unused]] ComponentSubCircuit& HGrid = *gc.fullCircuitInstances[hLevel.indexCoarseFullCircuit].component;
 
                 // uh
 

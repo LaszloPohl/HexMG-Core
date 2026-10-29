@@ -1892,8 +1892,11 @@ void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
         else if (strcmp(token, "ITER") == 0) data.iterNumSPD = 1;
         else if (strcmp(token, "ITERS") == 0) {
             token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
-            if(sscanf_s(token, "%u", &data.iterNumSPD) != 1)
-                throw hmgExcept("HMGFileRun::Read", "unrecognised ITERS number (%s) in %s, line %u: %s", token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
+            const char* end = token + std::strlen(token);
+            const auto parsed = std::from_chars(token, end, data.iterNumSPD);
+            if (parsed.ec != std::errc{} || parsed.ptr != end || data.iterNumSPD == 0)
+                throw hmgExcept("HMGFileRun::Read", "ITERS must be a positive integer (%s) in %s, line %u: %s",
+                    token, reader.getFileName(lineInfo).c_str(), lineInfo.firstLine, line);
         }
         else if (strcmp(token, "PRE") == 0) data.isPre = true;
         else if (strcmp(token, "ERR") == 0) {

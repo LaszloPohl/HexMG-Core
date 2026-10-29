@@ -19,7 +19,10 @@ namespace nsHMG {
 //***********************************************************************
 static inline rvt defectError(const ComponentBase::DefectCollector& d) {
 //***********************************************************************
-    return (d.nodeNum == 0 ? rvt0 : d.sumDefect / d.nodeNum) + d.maxDefect;
+    const rvt e = (d.nodeNum == 0 ? rvt0 : d.sumDefect / d.nodeNum) + d.maxDefect;
+    if (!(std::isfinite(e) && e >= rvt0))
+        throw hmgExcept("defectError", "Non-finite or invalid iteration defect");
+    return e;
 }
 
 
@@ -51,9 +54,10 @@ uns curretIterN = 0;
 
 
 //***********************************************************************
-void Simulation::runDC() {
+void Simulation::runDC(uns requestedIterations) {
 //***********************************************************************
-    requireValidErr(err);
+    if(requestedIterations == 0) 
+        requireValidErr(err);
 
     // TODO: SimControl::minIter
 
@@ -70,6 +74,8 @@ void Simulation::runDC() {
     CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
   //printf("ForwsubsBacksubs\n");
   //gc.fullCircuitInstances[0].component->printNodeValue();
+    ComponentBase::DefectCollector firstVoltageDefect =
+        gc.fullCircuitInstances[fullCircuitID].component->collectVoltageDefectDC();
     bench_now("ForwsubsBacksubsDC");
     CircuitStorage::AcceptIterationDC(fullCircuitID);
   //printf("AcceptIteration\n");
@@ -112,8 +118,12 @@ void Simulation::runDC() {
 #endif
     bench_now("first iterations");
 */
-    rvt max_error = 1000.0;
-    for (uns i = 0; (i == 0 || max_error > err) && i < 100; i++) {
+    rvt max_error = defectError(firstVoltageDefect) +
+        defectError(gc.fullCircuitInstances[fullCircuitID].component->collectCurrentDefectDC());
+    if (!std::isfinite(max_error))
+        throw hmgExcept("Simulation::runDC", "Non-finite first iteration");
+
+    for (uns i = 0; requestedIterations != 0 ? i < requestedIterations - 1 : (i == 0 || max_error > err) && i < 100; i++) {
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
       //printf("ForwsubsBacksubs\n");
       //gc.fullCircuitInstances[0].component->printNodeValue();
@@ -131,6 +141,8 @@ void Simulation::runDC() {
         rvt cErr = defectError(c);
         rvt vErr = defectError(v);
         max_error = cErr + vErr;
+        if (!std::isfinite(max_error))
+            throw hmgExcept("Simulation::runDC", "Non-finite iteration");
         std::cout << "Iter " << (i + 1) << "    error = " << max_error << "    I error = " << cErr << "    V error = " << vErr << std::endl;
 #ifdef HMG_DEBUGPRINT
         std::cout << std::endl;
@@ -150,31 +162,43 @@ void Simulation::runDC() {
     gc.fullCircuitInstances[fullCircuitID].component->printNodeValueDC(0);
 #endif
 */
-    requireConverged(max_error, err);
+
+    if (requestedIterations == 0) 
+        requireConverged(max_error, err);
+    
     CircuitStorage::AcceptStepDC(fullCircuitID);
     wasDC = true;
 }
 
 
 //***********************************************************************
-void Simulation::runTimeStep() {
+void Simulation::runTimeStep(uns requestedIterations) {
 //***********************************************************************
-    requireValidErr(err);
+    if (requestedIterations == 0)
+        requireValidErr(err);
+    curretIterN = 0;
     rvt max_error = 1000.0 * err;
     CircuitStorage& gc = CircuitStorage::getInstance();
-    for (uns i = 0; (i == 0 || max_error > err) && i < 100; i++) {
+    for (uns i = 0; requestedIterations != 0 ? i < requestedIterations : (i == 0 || max_error > err) && i < 100; i++) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
         ComponentBase::DefectCollector c = gc.fullCircuitInstances[0].component->collectCurrentDefectDC();
         CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         ComponentBase::DefectCollector v = gc.fullCircuitInstances[0].component->collectVoltageDefectDC();
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+        curretIterN++;
         max_error = defectError(c) + defectError(v);
+        if (!std::isfinite(max_error))
+            throw hmgExcept("Simulation::runTimeStep", "Non-finite iteration");
         std::cout << "    error = " << max_error << std::endl;
     }
-    requireConverged(max_error, err);
+    
+    if (requestedIterations == 0) 
+        requireConverged(max_error, err);
+    
     CircuitStorage::CalculateControllersDC(fullCircuitID);
     CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    (void)defectError(CircuitStorage::getInstance().fullCircuitInstances[fullCircuitID].component->collectCurrentDefectDC());
     CircuitStorage::AcceptStepDC(fullCircuitID);
 #ifdef HMG_DEBUGPRINT
     std::cout << std::endl;
@@ -251,7 +275,11 @@ void Simulation::run(const RunData& runData) {
         timeFreqValue = rvt0;
         dtValue = rvt0;
         SimControl::stepError.setValueDC(rvt0);
+        const rvt requestedErr = err;
+        if (analysisType == atTimeStep && runData.iterNumSPD != 0)
+            err = RunData{}.err;
         runDC();
+        err = requestedErr;
     }
     switch (analysisType) {
         case atDC: {
@@ -263,7 +291,7 @@ void Simulation::run(const RunData& runData) {
             timeFreqValue = rvt0;
             dtValue = rvt0;
             SimControl::stepError.setValueDC(rvt0);
-            runDC();
+            runDC(runData.iterNumSPD);
         }
         break;
         case atTimeStep: {
@@ -276,7 +304,7 @@ void Simulation::run(const RunData& runData) {
             dtValue = SimControl::dt.getValueDC();
             SimControl::stepError.setValueDC(rvt0);
             std::cout << "Time = " << timeFreqValue << " s\n";
-            runTimeStep();
+            runTimeStep(runData.iterNumSPD);
         }
         break;
         case atAC: {
