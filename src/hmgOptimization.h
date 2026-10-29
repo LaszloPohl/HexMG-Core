@@ -20,6 +20,13 @@ inline bool precisionSeen = false;
 inline bool threadsSeen = false;
 inline unsigned maxIterations = 0; // Zero preserves legacy full-solve bounds.
 inline bool maxIterationsSeen = false;
+struct TransientInitialTemperature {
+    std::string circuit;
+    double temperature = 0;
+    unsigned circuitId = 0;
+    bool started = false;
+};
+inline std::vector<TransientInitialTemperature> transientInitialTemperatures;
 struct ConvergenceProfile { double reference=0, stateAbsolute=1e-6, balanceAbsolute=1e-12; };
 inline bool relativeConvergence = false;
 inline ConvergenceProfile convergenceDefault;
@@ -56,6 +63,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextProfile = convergenceDefault;
     auto nextNodes = convergenceNodes;
     auto nextGuards = functionGuards;
+    auto nextTemperatures = transientInitialTemperatures;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
@@ -96,6 +104,13 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                 if(!nodeKeys.emplace(t[1],t[2]).second) fail();
                 nextNodes.push_back({t[1],t[2],profile,0,{}});
             }
+        } else if(t.size()==3 && t[0]=="TRANSIENT_INITIAL_TEMPERATURE") {
+            double temperature = 0;
+            const auto parsed=std::from_chars(t[2].data(),t[2].data()+t[2].size(),temperature);
+            if(parsed.ec!=std::errc{} || parsed.ptr!=t[2].data()+t[2].size() ||
+               !std::isfinite(temperature) || temperature < -273.15) fail();
+            for(const auto& previous:nextTemperatures) if(previous.circuit==t[1]) fail();
+            nextTemperatures.push_back({t[1],temperature,0,false});
         } else if(t.size()==6 && t[0]=="FUNCTION_GUARD") {
             function_guard::Rule rule;rule.name=t[1];
             const auto index=[&](size_t at,char prefix) {
@@ -121,6 +136,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     }
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
     functionGuards=std::move(nextGuards);
+    transientInitialTemperatures=std::move(nextTemperatures);
     function_guard::enabled=!functionGuards.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;

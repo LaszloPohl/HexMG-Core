@@ -846,6 +846,12 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
         if(rule.parameter>=function->nParams||rule.variable>=function->declaredVars)
             throw hmgExcept("FUNCTION_GUARD","Invalid parameter/local index for %s",rule.name.c_str());
     }
+    for(auto& option:optimization::transientInitialTemperatures) {
+        const auto& names=HMGFileListItem::globalNames.fullCircuitNames;
+        const auto circuit=names.find(option.circuit);
+        if(circuit==names.end()) throw hmgExcept("TRANSIENT_INITIAL_TEMPERATURE","Unknown circuit %s",option.circuit.c_str());
+        option.circuitId=circuit->second;
+    }
     if (!optimization::convergenceNodes.empty() && !optimization::relativeConvergence)
         throw hmgExcept("convergence", "CONVERGENCE_NODE requires CONVERGENCE RELATIVE");
     for(auto& option : optimization::convergenceNodes) {

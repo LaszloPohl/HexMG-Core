@@ -168,6 +168,16 @@ public:
     virtual void calculateValueDC() noexcept = 0; // no AC version
     virtual uns calculateControllersDC([[maybe_unused]] uns level, [[maybe_unused]] controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
     virtual void collectConvergenceNodes(std::vector<NodeVariable*>&) {}
+    // Pure thermal circuits only: terminals are temperatures; auxiliary B variables are not.
+    virtual void initializeThermalNodes(rvt temperature) {
+        for(uns i=0;i<pModel->getN_ExternalNodes();++i) {
+            auto* node=getNode(i);
+            if(node && !node->isGnd) {
+                node->setValueDC(temperature);
+                node->setStepStartDC(temperature);
+            }
+        }
+    }
     virtual DefectCollector collectCurrentDefectDC() const noexcept = 0; // no AC version
     virtual DefectCollector collectVoltageDefectDC() const noexcept = 0; // no AC version
     virtual void printNodeValue() const noexcept = 0;
@@ -4287,6 +4297,15 @@ public:
         // setting own value should be here
     }
     //***********************************************************************
+    void initializeThermalNodes(rvt temperature) override {
+        ComponentBase::initializeThermalNodes(temperature);
+        const auto& model=static_cast<const ModelSubCircuit&>(*pModel);
+        for(uns i=0;i<model.getN_N_Nodes();++i) {
+            auto& node=internalNodesAndVars[i];
+            if(!node.isGnd) { node.setValueDC(temperature); node.setStepStartDC(temperature); }
+        }
+        for(auto& component:components) if(component->isEnabled) component->initializeThermalNodes(temperature);
+    }
     void collectConvergenceNodes(std::vector<NodeVariable*>& nodes) override {
         const auto& model=static_cast<const ModelSubCircuit&>(*pModel);
         for(uns i=0;i<model.getN_N_Nodes();++i)

@@ -218,6 +218,8 @@ void Simulation::run(const RunData& runData) {
     // ******************************************************************
 
     if (runData.isMultigrid) {
+        if(!optimization::transientInitialTemperatures.empty())
+            throw hmgExcept("TRANSIENT_INITIAL_TEMPERATURE","Thermal initialization is not implemented for multigrid runs");
         if(!optimization::functionGuards.empty())throw hmgExcept("FUNCTION_GUARD","Guarded functions are not implemented for multigrid runs");
         if(optimization::relativeConvergence) throw hmgExcept("convergence","Relative convergence is not implemented for multigrid runs");
 
@@ -245,7 +247,24 @@ void Simulation::run(const RunData& runData) {
     // END MULTIGRID
     // ******************************************************************
 
-    if ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial)) {
+    bool thermalInitialized = false;
+    if(analysisType==atTimeStep) {
+        for(auto& option:optimization::transientInitialTemperatures) {
+            if(option.circuitId!=fullCircuitID || (option.started && !runData.isInitial)) continue;
+            SimControl::setInitialDC();
+            timeFreqValue=rvt0; dtValue=rvt0;
+            SimControl::stepError.setValueDC(rvt0);
+            auto* component=CircuitStorage::getInstance().fullCircuitInstances[fullCircuitID].component.get();
+            component->resetNodes(true);
+            component->initializeThermalNodes(option.temperature);
+            CircuitStorage::CalculateControllersDC(fullCircuitID);
+            CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+            CircuitStorage::AcceptStepDC(fullCircuitID);
+            option.started=true; wasDC=true; thermalInitialized=true;
+            std::cout << "HEXMG_OPT: transient initial temperature " << option.temperature << " C; no DC solve\n";
+        }
+    }
+    if (!thermalInitialized && ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial))) {
         SimControl::setInitialDC();
         // TODO: runData.isPre
         timeFreqValue = rvt0;
