@@ -43,7 +43,7 @@ void SunredTreeNode::loadLeafDataFromSubcircuit(ComponentBase* src, ComponentSub
 
     cuns siz = (uns)CNodeIndex.size();
     uns nCommon = 0;
-    for (uns i = 0; i < siz - 1; i++)
+    for (uns i = 0; i + 1 < siz; i++)
         if (CNodeIndex[i].nodeIndex == CNodeIndex[i + 1].nodeIndex) { // ANodeIndex is sorted
             nCommon++;
         }
@@ -79,7 +79,7 @@ void SunredTreeNode::loadLeafDataFromSubcircuit(ComponentBase* src, ComponentSub
             : (uns)(pSubckt->internalNodesToComponents[nodeIndex].size() - 1);
         A.sumMergers = (ush)sumMergers;
         if (A.sumMergers != sumMergers)
-            throw hmgExcept("SunredTreeNode::loadLeafDataFromSubcircuit", "Too many components connect to the same node (%u)", sumMergers);
+            throw hmgExcept("SunredTreeNode::loadLeafDataFromSubcircuit", "Too many components connect to the same node (%u), node=%u, terminals=%u, connections=%u, parentN=%u", sumMergers, nodeIndex, ncSiz, (uns)srcComponent->def->nodesConnectedTo.size(), (uns)pSubckt->internalNodesToComponents.size());
         A.mergersSoFar = 0;
     }
  }
@@ -1242,7 +1242,8 @@ void hmgSunred::buildTree(const ReductionTreeInstructions& instr, ComponentSubCi
     auto& level0 = levels[0];
     auto& comp = pSrc->components;
     for (size_t i = 0; i < level0.size(); i++) {
-        if (comp[i]->isEnabled) // only the enabled componets are loaded !
+        // FCB belongs to iteration evaluation, not the reduction matrix.
+        if (comp[i]->isEnabled && comp[i]->pModel->modelType != ccmt_Function_Controlled_Node)
             level0[i].loadLeafDataFromSubcircuit(comp[i].get(), pSrc);
     }
 

@@ -4005,7 +4005,8 @@ public:
         internalNodesToComponents.resize(static_cast<const ModelSubCircuit*>(pModel)->getN_N_Nodes()); // ?? What about ONodes?
         for (uns i = 0; i < components.size(); i++) {
             const auto& comp = *components[i];
-            if (comp.isEnabled) {
+            // FCB computes a forced value, not a network equation.
+            if (comp.isEnabled && comp.pModel->modelType != ccmt_Function_Controlled_Node) {
                 for (const auto& node : comp.def->nodesConnectedTo) {
                     if (node.type == CDNodeType::cdntInternal) {
                         if (node.index < internalNodesToComponents.size()) {
