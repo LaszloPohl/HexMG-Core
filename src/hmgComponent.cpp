@@ -1580,6 +1580,8 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
     fvModel.nLocal = nVars;
     for(const auto& rule:optimization::functionGuards)
         if(rule.functionId==functionIndex)fvModel.guard=rule;
+    for(const auto& rule:optimization::functionRanges)
+        if(rule.functionId==functionIndex)fvModel.ranges.push_back(rule);
     fvModel.lines.reserve(nCallInstructions);
 
     ParameterIdentifier parId;

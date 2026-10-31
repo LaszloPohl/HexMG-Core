@@ -5436,12 +5436,14 @@ public:
     //***********************************************************************
     static void RequireValidFunctionState(uns fullCircuitID) {
         const auto& error=function_guard::failure;
-        if(!error.reason)return;
+        const auto& range=function_guard::rangeFailure;
+        if(!error.reason&&!range.rule)return;
+        const auto* failedOwner=range.rule?range.owner:error.owner;
         const auto find=[&](const auto& self,const ComponentBase* part,const std::string& path)->std::string {
-            if(part==error.owner)return path;
+            if(part==failedOwner)return path;
             if(const auto* sub=dynamic_cast<const ComponentSubCircuit*>(part)) {
                 for(size_t i=0;i<sub->controllers.size();++i)
-                    if(sub->controllers[i].get()==error.owner)return path+".controller["+std::to_string(i)+"]";
+                    if(sub->controllers[i].get()==failedOwner)return path+".controller["+std::to_string(i)+"]";
                 for(size_t i=0;i<sub->components.size();++i) {
                     auto result=self(self,sub->components[i].get(),path+".component["+std::to_string(i)+"]");
                     if(!result.empty())return result;
@@ -5451,6 +5453,10 @@ public:
         };
         const auto path=find(find,getInstance().fullCircuitInstances[fullCircuitID].component.get(),
             "circuit["+std::to_string(fullCircuitID)+"]");
+        if(range.rule)throw hmgExcept("FUNCTION_RANGE","%s %s at %s: nonfinite or out-of-range value %.17g; range=[%.17g, %.17g]",
+            range.rule->name.c_str(),range.rule->selector.c_str(),path.c_str(),range.value,
+            range.rule->minimum?*range.rule->minimum:-std::numeric_limits<double>::infinity(),
+            range.rule->maximum?*range.rule->maximum:std::numeric_limits<double>::infinity());
         const auto* rule=error.rule;
         throw hmgExcept("FUNCTION_GUARD","%s at %s: %s; temperature=%.17g, conductivity/derivative=%.17g; range=[%.17g, %.17g]",
             rule?rule->name.c_str():"derivative",path.c_str(),error.reason,error.temperature,error.conductivity,

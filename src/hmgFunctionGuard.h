@@ -12,6 +12,24 @@ struct Rule {
     unsigned parameter=0, variable=0, functionId=0;
     std::optional<double> minimum, maximum;
 };
+enum class RangeTarget { Parameter, Variable, Result };
+struct RangeRule {
+    std::string name, selector;
+    RangeTarget target=RangeTarget::Result;
+    unsigned index=0, functionId=0;
+    std::optional<double> minimum, maximum;
+};
+struct RangeFailure {
+    const RangeRule* rule=nullptr;
+    const ComponentAndControllerBase* owner=nullptr;
+    double value=0;
+};
+inline thread_local RangeFailure rangeFailure;
+inline bool checkRange(const RangeRule& rule,const ComponentAndControllerBase* owner,double value) noexcept {
+    const bool valid=std::isfinite(value)&&(!rule.minimum||value>=*rule.minimum)&&(!rule.maximum||value<=*rule.maximum);
+    if(!valid&&!rangeFailure.rule)rangeFailure={&rule,owner,value};
+    return valid;
+}
 struct Failure {
     const Rule* rule=nullptr;
     const ComponentAndControllerBase* owner=nullptr;

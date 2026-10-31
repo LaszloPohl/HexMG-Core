@@ -846,6 +846,16 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
         if(rule.parameter>=function->nParams||rule.variable>=function->declaredVars)
             throw hmgExcept("FUNCTION_GUARD","Invalid parameter/local index for %s",rule.name.c_str());
     }
+    for(auto& rule:optimization::functionRanges) {
+        const auto& names=HMGFileListItem::globalNames;
+        const auto found=names.functionNames.find(rule.name);
+        if(found==names.functionNames.end())throw hmgExcept("FUNCTION_RANGE","Unknown function %s",rule.name.c_str());
+        rule.functionId=found->second;
+        const auto* function=names.functionData[rule.functionId];
+        if((rule.target==function_guard::RangeTarget::Parameter&&rule.index>=function->nParams)||
+           (rule.target==function_guard::RangeTarget::Variable&&rule.index>=function->declaredVars))
+            throw hmgExcept("FUNCTION_RANGE","Invalid parameter/local index for %s",rule.name.c_str());
+    }
     for(auto& option:optimization::transientInitialTemperatures) {
         const auto& names=HMGFileListItem::globalNames.fullCircuitNames;
         const auto circuit=names.find(option.circuit);

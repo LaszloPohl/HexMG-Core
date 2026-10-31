@@ -2738,6 +2738,7 @@ public:
     uns nParams = 0;
     uns nLocal = 0;
     std::optional<function_guard::Rule> guard;
+    std::vector<function_guard::RangeRule> ranges;
     std::vector<LineDescription> lines;
     //***********************************************************************
 };
@@ -2819,6 +2820,36 @@ public:
     //***********************************************************************
     int evaluate([[maybe_unused]] cuns* indexField, [[maybe_unused]] rvt* workField, [[maybe_unused]] ComponentAndControllerBase* owner, [[maybe_unused]] const LineDescription& ownerLine, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept override {
     //***********************************************************************
+        // Parameters are checked before execution; computed locals/RET on all
+        // exits. Synthetic derivative samples are not accepted physical states.
+        if(!function_guard::derivativeDepth) {
+            bool valid=true;
+            for(const auto& rule:model.ranges)
+                if(rule.target==function_guard::RangeTarget::Parameter)
+                    valid=function_guard::checkRange(rule,owner,workField[indexField[2+rule.index]])&&valid;
+            if(!valid){workField[indexField[0]]=0;return 0;}
+            for(const auto& rule:model.ranges) {
+                if(rule.target==function_guard::RangeTarget::Parameter)continue;
+                bool inputAlias=false;
+                if(rule.target==function_guard::RangeTarget::Result)
+                    for(unsigned p=0;p<model.nParams;++p)inputAlias|=indexField[0]==indexField[2+p];
+                // An in-place call already has a defined RET input; clearing
+                // it would destroy the parameter before evaluating the law.
+                if(!inputAlias)workField[rule.target==function_guard::RangeTarget::Result?indexField[0]:indexField[1]+rule.index]
+                    =std::numeric_limits<double>::quiet_NaN();
+            }
+        }
+        struct RangeScope {
+            const std::vector<function_guard::RangeRule>& rules;
+            const ComponentAndControllerBase* owner;
+            cuns* indices; rvt* values;
+            ~RangeScope() {
+                if(function_guard::derivativeDepth)return;
+                for(const auto& rule:rules)
+                    if(rule.target!=function_guard::RangeTarget::Parameter)
+                        function_guard::checkRange(rule,owner,values[rule.target==function_guard::RangeTarget::Result?indices[0]:indices[1]+rule.index]);
+            }
+        } rangeScope{model.ranges,owner,indexField,workField};
         // Capture input before the function can modify parameter storage.
         // A NaN sentinel prevents stale/unassigned locals passing the guard.
         struct GuardScope {

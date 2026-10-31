@@ -38,6 +38,7 @@ struct NodeConvergenceOption {
 };
 inline std::vector<NodeConvergenceOption> convergenceNodes;
 inline std::vector<function_guard::Rule> functionGuards;
+inline std::vector<function_guard::RangeRule> functionRanges;
 inline bool unsupportedWarned = false;
 inline std::atomic<unsigned long long> doubleSteps{0}, extendedFallbacks{0};
 inline std::vector<std::string> tokens(std::string line) {
@@ -63,6 +64,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextProfile = convergenceDefault;
     auto nextNodes = convergenceNodes;
     auto nextGuards = functionGuards;
+    auto nextRanges = functionRanges;
     auto nextTemperatures = transientInitialTemperatures;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
@@ -111,6 +113,25 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                !std::isfinite(temperature) || temperature < -273.15) fail();
             for(const auto& previous:nextTemperatures) if(previous.circuit==t[1]) fail();
             nextTemperatures.push_back({t[1],temperature,0,false});
+        } else if(t.size()==5 && t[0]=="FUNCTION_RANGE") {
+            function_guard::RangeRule rule;rule.name=t[1];rule.selector=t[2];
+            if(t[2]!="RET") {
+                if(t[2].size()<2||(t[2][0]!='P'&&t[2][0]!='V'))fail();
+                rule.target=t[2][0]=='P'?function_guard::RangeTarget::Parameter:function_guard::RangeTarget::Variable;
+                const auto parsed=std::from_chars(t[2].data()+1,t[2].data()+t[2].size(),rule.index);
+                if(parsed.ec!=std::errc{}||parsed.ptr!=t[2].data()+t[2].size())fail();
+            }
+            const auto bound=[&](size_t at)->std::optional<double> {
+                if(t[at]=="*")return {};
+                double value=0;const auto parsed=std::from_chars(t[at].data(),t[at].data()+t[at].size(),value);
+                if(parsed.ec!=std::errc{}||parsed.ptr!=t[at].data()+t[at].size()||!std::isfinite(value))fail();
+                return value;
+            };
+            rule.minimum=bound(3);rule.maximum=bound(4);
+            if(rule.minimum&&rule.maximum&&*rule.minimum>*rule.maximum)fail();
+            for(const auto& previous:nextRanges)
+                if(previous.name==rule.name&&previous.target==rule.target&&previous.index==rule.index)fail();
+            nextRanges.push_back(std::move(rule));
         } else if(t.size()==6 && t[0]=="FUNCTION_GUARD") {
             function_guard::Rule rule;rule.name=t[1];
             const auto index=[&](size_t at,char prefix) {
@@ -136,8 +157,9 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     }
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
     functionGuards=std::move(nextGuards);
+    functionRanges=std::move(nextRanges);
     transientInitialTemperatures=std::move(nextTemperatures);
-    function_guard::enabled=!functionGuards.empty();
+    function_guard::enabled=!functionGuards.empty()||!functionRanges.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;
 }
