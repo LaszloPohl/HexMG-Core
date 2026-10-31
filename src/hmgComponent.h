@@ -1374,7 +1374,8 @@ public:
             crvt A = param[2].get() * G;
             crvt Phi = param[3].get();
             IAC = { A * cos(Phi), A * sin(Phi) };
-            IAC += N1->getValueAC() - N0->getValueAC();
+            // The branch law is G * (E + V1 - V0), also for AC residuals.
+            IAC += G * (N1->getValueAC() - N0->getValueAC());
             N0->incDAC(IAC);
             N1->incDAC(-IAC);
         }
@@ -1389,7 +1390,7 @@ public:
             : param[1].get());
     }
     //***********************************************************************
-    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() * param[4].get() : componentCurrent.getValueDC() * param[4].get(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? param[4].get() : -param[4].get(); }
     //***********************************************************************

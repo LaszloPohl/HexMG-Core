@@ -3,6 +3,10 @@
 2026-10-27. Ág: `codex/optimized-solver`.
 Kiindulópont: `631f316f1bf095eabf1413bbb332c75924c30086`, hivatalos `main`.
 
+2026-10-31: a V forrás AC-áramtörvénye, a B paraméterek AC-kezelése és
+a V forrás DC-áramlekérdezése javítva. 27/27 célzott futás, 1768 numerikus
+ellenőrzés. [Okfeltárás és sorszámos kézi alapoldali javítás](AC_SOURCE_FIX_HU.md).
+
 A felhasználó az optimalizált változat fejlesztését, commitját és pushát
 engedélyezte erre a külön ágra. A hivatalos `main` továbbra az ő saját
 változata; oda az asszisztens sem commitot, sem merge-et, sem push-t nem végez.
