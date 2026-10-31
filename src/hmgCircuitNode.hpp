@@ -178,7 +178,7 @@ struct NodeVariable {
     rvt getVDC()const noexcept { return extension->v.real(); }
     rvt getYiiDC()const noexcept { return extension->yii.loadRvt(isConcurrent); }
     //************************** AC functions *******************************
-    void deleteDAC() { if (!isGnd) extension->d.store(cplx0, isConcurrent); }
+    void deleteDAC() { if (extension && !isGnd) extension->d.store(cplx0, isConcurrent); }
     void deleteYiiAC() { if (!isGnd) extension->yii.store(cplx0, isConcurrent); }
     void deleteFAC() { extension->f = cplx0; }
     void loadFtoDAC() { if (!isGnd) extension->d.store(extension->f, isConcurrent); }
@@ -194,7 +194,7 @@ struct NodeVariable {
     void setValue0AC(ccplx& val)noexcept { extension->valueAC = val; }
     void incValue0AC(ccplx& val)noexcept { extension->valueAC += val; }
     cplx getValue0AC()const noexcept { return extension->valueAC; }
-    void setValueAcceptedAC()noexcept { extension->valueAC += extension->v; extension->v = cplx0; }
+    void setValueAcceptedAC()noexcept { if (!extension) return; extension->valueAC += extension->v; extension->v = cplx0; }
     void setDAC(const cplx& d_)noexcept { if (!isGnd) extension->d.store(d_, isConcurrent); }
     void setFAC(const cplx& f_)noexcept { extension->f = f_; }
     void setDNonConcurrentAC(const cplx& d_)noexcept { extension->d.storeToNonConcurrent(d_); }
