@@ -22,7 +22,11 @@ void SunredTreeNode::loadLeafDataFromSubcircuit(ComponentBase* src, ComponentSub
     srcComponent = src;
     srcCell2 = srcCell1 = nullptr;
     CNodeIndex.clear();
-    cuns ncSiz = (uns)srcComponent->def->nodesConnectedTo.size();
+    // Only X/Y terminals belong to the reduced admittance matrix. A ports
+    // carry controller values, which may refer to a parent's B variable.
+    // O ports are the child's internally reduced nodes, not matrix terminals.
+    cuns ncSiz = srcComponent->getModel().getN_X_Nodes()
+        + srcComponent->getModel().getN_Y_Nodes();
     for (uns i = 0; i < ncSiz; i++) {
         const auto& node = srcComponent->def->nodesConnectedTo[i];
         if (node.type == CDNodeType::cdntInternal)
