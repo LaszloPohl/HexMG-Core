@@ -2787,7 +2787,9 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
                     case bift_NOT:      ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo); break;
+                    case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo);
+                                        ReadParams(func, 0, lineToken, reader, line, lineInfo, true);
+                                        break;
                     case bift_JGT:
                     case bift_JST:
                     case bift_JGE:
