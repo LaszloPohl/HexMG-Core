@@ -53,20 +53,20 @@ class hmgSaver {
                     }
                     break;
                 case atTimeStep: {
-                        fprintf_s(fp, "Time Step\tt = %g sec\tdt = %g sec\n%g\t%g\t", currentSave->timeFreqValue, currentSave->dtValue, currentSave->timeFreqValue, currentSave->dtValue);
+                        fprintf_s(fp, "Time Step\tt = %.17g sec\tdt = %.17g sec\n%.17g\t%.17g\t", currentSave->timeFreqValue, currentSave->dtValue, currentSave->timeFreqValue, currentSave->dtValue);
                         isDC = true;
                     }
                     break;
                 case atAC: {
-                        fprintf_s(fp, "AC\tf = %g Hz\n%g\t", currentSave->timeFreqValue, currentSave->timeFreqValue);
+                        fprintf_s(fp, "AC\tf = %.17g Hz\n%.17g\t", currentSave->timeFreqValue, currentSave->timeFreqValue);
                         isAC = true;
                     }
                     break;
                 case atTimeConst: {
                         if(currentSave->isTau)
-                            fprintf_s(fp, "Time Constant\tTau = %g sec (f = %g Hz)\n%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
+                            fprintf_s(fp, "Time Constant\tTau = %.17g sec (f = %.17g Hz)\n%.17g\t%.17g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
                         else
-                            fprintf_s(fp, "Time Constant\tf = %g Hz sec (Tau = %g)\n%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
+                            fprintf_s(fp, "Time Constant\tf = %.17g Hz sec (Tau = %.17g)\n%.17g\t%.17g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue), currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
                         isTC = true;
                     }
                     break;
@@ -75,7 +75,7 @@ class hmgSaver {
             }
             if (isDC)
                 for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++) {
-                    fprintf_s(fp, "%g", currentSave->saveValuesDC[i]);
+                    fprintf_s(fp, "%.17g", currentSave->saveValuesDC[i]);
                     if (i == currentSave->saveValuesDC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
@@ -83,7 +83,7 @@ class hmgSaver {
                 }
             if(isAC)
                 for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
-                    fprintf_s(fp, "%g%+gi", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
+                    fprintf_s(fp, "%.17g%+.17gi", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
                     if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
@@ -91,7 +91,7 @@ class hmgSaver {
                 }
             if (isTC)
                 for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
-                    fprintf_s(fp, "%g", (currentSave->saveValuesAC[i].imag() * log(10.0) / hmgPi));
+                    fprintf_s(fp, "%.17g", (currentSave->saveValuesAC[i].imag() * log(10.0) / hmgPi));
                     if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
@@ -107,17 +107,17 @@ class hmgSaver {
                         isDC = true;
                     break;
                 case atTimeStep: {
-                        fprintf_s(fp, "%g\t%g\t", currentSave->timeFreqValue, currentSave->dtValue);
+                        fprintf_s(fp, "%.17g\t%.17g\t", currentSave->timeFreqValue, currentSave->dtValue);
                         isDC = true;
                     }
                     break;
                 case atAC: {
-                        fprintf_s(fp, "%g\t", currentSave->timeFreqValue);
+                        fprintf_s(fp, "%.17g\t", currentSave->timeFreqValue);
                         isAC = true;
                     }
                     break;
                 case atTimeConst: {
-                        fprintf_s(fp, "%g\t%g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
+                        fprintf_s(fp, "%.17g\t%.17g\t", currentSave->timeFreqValue, rvt1 / (2 * hmgPi * currentSave->timeFreqValue));
                         isTC = true;
                     }
                     break;
@@ -126,7 +126,7 @@ class hmgSaver {
             }
             if (isDC)
                 for (size_t i = 0; i < currentSave->saveValuesDC.size(); i++) {
-                    fprintf_s(fp, "%g", currentSave->saveValuesDC[i]);
+                    fprintf_s(fp, "%.17g", currentSave->saveValuesDC[i]);
                     if (i == currentSave->saveValuesDC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
@@ -134,7 +134,7 @@ class hmgSaver {
                 }
             if (isAC)
                 for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
-                    fprintf_s(fp, "%g\t%g", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
+                    fprintf_s(fp, "%.17g\t%.17g", currentSave->saveValuesAC[i].real(), currentSave->saveValuesAC[i].imag());
                     if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
@@ -142,7 +142,7 @@ class hmgSaver {
                 }
             if (isTC)
                 for (size_t i = 0; i < currentSave->saveValuesAC.size(); i++) {
-                    fprintf_s(fp, "%g", (currentSave->saveValuesAC[i].imag() * log(10.0) / hmgPi));
+                    fprintf_s(fp, "%.17g", (currentSave->saveValuesAC[i].imag() * log(10.0) / hmgPi));
                     if (i == currentSave->saveValuesAC.size() - 1 || ((i + 1) % currentSave->maxResultsPerRow) == 0)
                         fprintf_s(fp, "\n");
                     else
