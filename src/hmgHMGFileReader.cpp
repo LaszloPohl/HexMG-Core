@@ -1478,6 +1478,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
 //***********************************************************************
     bool isModelNotEnded = true;
     LineTokenizer lineToken;
+    LineInfo loadLineInfo{}, storeLineInfo{};
 
     do {
         if (!reader.getLine(line, MAX_LINE_LENGHT, lineInfo))
@@ -1527,6 +1528,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
             }
         }
         else if (strcmp(token, "LOAD") == 0) {
+            loadLineInfo = lineInfo;
             while (!lineToken.isSepEOL) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 functionParamsLoad.emplace_back(SimpleInterfaceNodeID());
@@ -1538,6 +1540,7 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
             }
         }
         else if (strcmp(token, "STORE") == 0) {
+            storeLineInfo = lineInfo;
             while (!lineToken.isSepEOL) {
                 token = lineToken.getNextToken(reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
                 functionParamsStore.emplace_back(SimpleInterfaceNodeID());
@@ -1558,6 +1561,19 @@ void HMGFileModelDescription::ReadOrReplaceBodyController(ReadALine& reader, cha
             isModelNotEnded = false;
         }
     } while (isModelNotEnded);
+
+    if (functionType == biftInvalid)
+        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "CONTROLLER %s has no FUNCTION in %s, line %u", fullName.c_str(), reader.getFileName(lineInfo).c_str(), lineInfo.firstLine);
+
+    // LOAD/STORE lists address RET followed by P0..P(n-1), never V locals.
+
+    size_t nParams = functionType == biftCustom ? globalNames.functionData[functionCustomIndex]->nParams : HgmFunctionStorage::builtInFunctions[functionType]->getN_Param();
+    if (functionParamsLoad.size() > nParams + 1)
+        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "CONTROLLER %s LOAD has %u entries; at most RET + %u parameters allowed in %s, line %u", 
+            fullName.c_str(), (uns)functionParamsLoad.size(), (uns)nParams, reader.getFileName(loadLineInfo).c_str(), loadLineInfo.firstLine);
+    if (functionParamsStore.size() > nParams + 1)
+        throw hmgExcept("HMGFileModelDescription::ReadOrReplaceBodyController", "CONTROLLER %s STORE has %u entries; at most RET + %u parameters allowed in %s, line %u", 
+            fullName.c_str(), (uns)functionParamsStore.size(), (uns)nParams, reader.getFileName(storeLineInfo).c_str(), storeLineInfo.firstLine);
 }
 
 
@@ -2736,7 +2752,9 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 
                     case bift_NOT:      ReadParams(func, 2, lineToken, reader, line, lineInfo, false); break;
 
-                    case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo); break;
+                    case bift_JMP:      ReadLabel(func, lineToken, reader, lineInfo);
+                                        ReadParams(func, 0, lineToken, reader, line, lineInfo, true);
+                                        break;
                     case bift_JGT:
                     case bift_JST:
                     case bift_JGE:
