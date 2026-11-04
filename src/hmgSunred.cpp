@@ -43,7 +43,7 @@ void SunredTreeNode::loadLeafDataFromSubcircuit(ComponentBase* src, ComponentSub
 
     cuns siz = (uns)CNodeIndex.size();
     uns nCommon = 0;
-    for (uns i = 0; i < siz - 1; i++)
+    for (uns i = 0; i + 1 < siz; i++)
         if (CNodeIndex[i].nodeIndex == CNodeIndex[i + 1].nodeIndex) { // ANodeIndex is sorted
             nCommon++;
         }
@@ -1242,7 +1242,7 @@ void hmgSunred::buildTree(const ReductionTreeInstructions& instr, ComponentSubCi
     auto& level0 = levels[0];
     auto& comp = pSrc->components;
     for (size_t i = 0; i < level0.size(); i++) {
-        if (comp[i]->isEnabled) // only the enabled componets are loaded !
+        if (comp[i]->isEnabled && comp[i]->pModel->modelType != ccmt_Function_Controlled_Node) // only the enabled componets are loaded !
             level0[i].loadLeafDataFromSubcircuit(comp[i].get(), pSrc);
     }
 
