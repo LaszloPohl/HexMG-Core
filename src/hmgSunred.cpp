@@ -159,11 +159,14 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
     //***********************************************************************
     if (srcComponent != nullptr) { // leaf
     //***********************************************************************
-        bool isChanged = false;
+        bool isChanged = !initializedDC;
         if (Asiz == Csiz) { // only single nodes
             for (uns y = 0; y < Csiz; y++)
                 for (uns x = isSymmDC ? y : 0; x < Csiz; x++) {
-                    isChanged = dc->YRED.refresh_unsafe(y, x, srcComponent->getYDC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex)) || isChanged;
+                    const auto value = srcComponent->getYDC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex);
+                    // A new matrix has no cached value to compare against.
+                    if (!initializedDC) dc->YRED.get_elem(y, x) = value;
+                    else isChanged = dc->YRED.refresh_unsafe(y, x, value) || isChanged;
                 }
             for (uns x = 0; x < Csiz; x++) {
                 dc->JRED[x] = srcComponent->getJreducedDC(CNodeIndex[x].componentTerminalIndex);
@@ -175,7 +178,10 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
             
             for (uns y = 0; y < Csiz; y++)
                 for (uns x = isSymmDC ? y : 0; x < Csiz; x++) {
-                    isChanged = dc->leaf->YA.refresh_unsafe(y, x, srcComponent->getYDC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex)) || isChanged;
+                    const auto value = srcComponent->getYDC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex);
+                    // A new matrix has no cached value to compare against.
+                    if (!initializedDC) dc->leaf->YA.get_elem(y, x) = value;
+                    else isChanged = dc->leaf->YA.refresh_unsafe(y, x, value) || isChanged;
                 }
             for (uns x = 0; x < Csiz; x++) {
                 dc->leaf->JA[x] = srcComponent->getJreducedDC(CNodeIndex[x].componentTerminalIndex);
@@ -208,7 +214,7 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
         // sorting of admittances
         //***********************************************************************
 
-        if (srcCell1->isChangedDC || srcCell2->isChangedDC) {
+        if (!initializedDC || srcCell1->isChangedDC || srcCell2->isChangedDC) {
 
             isChangedDC = true;
             dc->YRED.zero_unsafe();
@@ -635,6 +641,7 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
         }
 
     } // else: empty node, belongs to a disabled component, nothing to do
+    initializedDC = true;
 }
 
 
@@ -647,11 +654,14 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
     //***********************************************************************
     if (srcComponent != nullptr) { // leaf
     //***********************************************************************
-        bool isChanged = false;
+        bool isChanged = !initializedAC;
         if (Asiz == Csiz) { // only single nodes
             for (uns y = 0; y < Csiz; y++)
                 for (uns x = isSymmAC ? y : 0; x < Csiz; x++) {
-                    isChanged = ac->YRED.refresh_unsafe(y, x, srcComponent->getYAC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex)) || isChanged;
+                    const auto value = srcComponent->getYAC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex);
+                    // A new matrix has no cached value to compare against.
+                    if (!initializedAC) ac->YRED.get_elem(y, x) = value;
+                    else isChanged = ac->YRED.refresh_unsafe(y, x, value) || isChanged;
                 }
             for (uns x = 0; x < Csiz; x++) {
                 ac->JRED[x] = srcComponent->getJreducedAC(CNodeIndex[x].componentTerminalIndex);
@@ -663,7 +673,10 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
             
             for (uns y = 0; y < Csiz; y++)
                 for (uns x = isSymmAC ? y : 0; x < Csiz; x++) {
-                    isChanged = ac->leaf->YA.refresh_unsafe(y, x, srcComponent->getYAC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex)) || isChanged;
+                    const auto value = srcComponent->getYAC(CNodeIndex[y].componentTerminalIndex, CNodeIndex[x].componentTerminalIndex);
+                    // A new matrix has no cached value to compare against.
+                    if (!initializedAC) ac->leaf->YA.get_elem(y, x) = value;
+                    else isChanged = ac->leaf->YA.refresh_unsafe(y, x, value) || isChanged;
                 }
             for (uns x = 0; x < Csiz; x++) {
                 ac->leaf->JA[x] = srcComponent->getJreducedAC(CNodeIndex[x].componentTerminalIndex);
@@ -696,7 +709,7 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
         // sorting of admittances
         //***********************************************************************
 
-        if (srcCell1->isChangedAC || srcCell2->isChangedAC) {
+        if (!initializedAC || srcCell1->isChangedAC || srcCell2->isChangedAC) {
 
             isChangedAC = true;
             ac->YRED.zero_unsafe();
@@ -1123,6 +1136,7 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
         }
 
     } // else: empty node, belongs to a disabled component, nothing to do
+    initializedAC = true;
 }
 
 

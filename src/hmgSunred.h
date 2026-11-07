@@ -84,6 +84,7 @@ class SunredTreeNode {
     std::vector<IndexPair> CNodeIndex; // used in leafs only
     bool isSymmDC = false, isSymmAC = false;
     bool isChangedDC = false, isChangedAC = false;
+    bool initializedDC = false, initializedAC = false;
     std::unique_ptr<SunredReductorDC> dc;
     std::unique_ptr<SunredReductorAC> ac;
 public:
@@ -99,6 +100,7 @@ public:
             cuns Bsiz = (uns)BNodeIndex.size();
             cuns Csiz = (uns)CNodeIndex.size();
 
+            initializedDC = false;
             dc = std::make_unique<SunredReductorDC>();
             dc->YRED.resize_if_needed(Asiz, Asiz, isSymmDC);
             dc->JRED.resize_if_needed(Asiz);
@@ -132,6 +134,7 @@ public:
             cuns Bsiz = (uns)BNodeIndex.size();
             cuns Csiz = (uns)CNodeIndex.size();
 
+            initializedAC = false;
             ac = std::make_unique<SunredReductorAC>();
             ac->YRED.resize_if_needed(Asiz, Asiz, isSymmAC);
             ac->JRED.resize_if_needed(Asiz);
@@ -157,8 +160,8 @@ public:
         } // else: empty node, belsongs to a disabled component, nothing to do
     }
     //***********************************************************************
-    void clearDC() { dc.reset(); }
-    void clearAC() { ac.reset(); }
+    void clearDC() { dc.reset(); initializedDC = false; }
+    void clearAC() { ac.reset(); initializedAC = false; }
     void forwsubsDC(ComponentSubCircuit* pSrc);
     void forwsubsAC(ComponentSubCircuit* pSrc);
     void backsubsDC(ComponentSubCircuit* pSrc);
