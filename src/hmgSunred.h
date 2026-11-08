@@ -83,7 +83,7 @@ class SunredTreeNode {
     std::vector<uns> BNodeIndex; // node in the subcircuit; only internal nodes can be in B block !; BNodeIndex.size() = Browcol
     std::vector<IndexPair> CNodeIndex; // used in leafs only
     bool isSymmDC = false, isSymmAC = false;
-    bool isChangedDC = false, isChangedAC = false;
+    bool isChangedDC = false, isChangedAC = false, isInitializedDC = false, isInitializedAC = false;
     std::unique_ptr<SunredReductorDC> dc;
     std::unique_ptr<SunredReductorAC> ac;
 public:
@@ -99,6 +99,7 @@ public:
             cuns Bsiz = (uns)BNodeIndex.size();
             cuns Csiz = (uns)CNodeIndex.size();
 
+            isInitializedDC = false;
             dc = std::make_unique<SunredReductorDC>();
             dc->YRED.resize_if_needed(Asiz, Asiz, isSymmDC);
             dc->JRED.resize_if_needed(Asiz);
@@ -132,6 +133,7 @@ public:
             cuns Bsiz = (uns)BNodeIndex.size();
             cuns Csiz = (uns)CNodeIndex.size();
 
+            isInitializedAC = false;
             ac = std::make_unique<SunredReductorAC>();
             ac->YRED.resize_if_needed(Asiz, Asiz, isSymmAC);
             ac->JRED.resize_if_needed(Asiz);
@@ -157,8 +159,8 @@ public:
         } // else: empty node, belsongs to a disabled component, nothing to do
     }
     //***********************************************************************
-    void clearDC() { dc.reset(); }
-    void clearAC() { ac.reset(); }
+    void clearDC() { dc.reset(); isInitializedDC = false; }
+    void clearAC() { ac.reset(); isInitializedAC = false; }
     void forwsubsDC(ComponentSubCircuit* pSrc);
     void forwsubsAC(ComponentSubCircuit* pSrc);
     void backsubsDC(ComponentSubCircuit* pSrc);
