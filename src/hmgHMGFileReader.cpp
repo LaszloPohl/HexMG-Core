@@ -14,6 +14,7 @@
 #include <stack>
 #include <set>
 #include <charconv>
+#include "hmgBinaryInput.h"
 //***********************************************************************
 
 
@@ -283,6 +284,8 @@ bool ReadALine::open(const std::string& filePath, const std::string& fileName) {
     actLine = 0;
     if (is_EOF)
         return false;
+    binaryData.clear(); binaryPosition=0;
+    try { binaryInput=readBinaryHmg(fp,binaryData); } catch(const std::exception& e) { fclose(fp);fp=nullptr;is_open=false;is_EOF=true;throw hmgExcept("ReadALine::open", "%s in %s",e.what(),fileName.c_str()); }
     readNextBlock();
     return true;
 }

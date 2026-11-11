@@ -1,5 +1,9 @@
 # HexMG-Core optimized branch
 
+2026-11-11: optional byte-exact compressed HMG input (`HXHB0001`, `.hmgb`)
+implemented on this branch. Text HMG remains supported; baseline unchanged.
+See `doc/BINARY_INPUT_HU.md` for format, bounds and targeted checks.
+
 User authorization, 2026-10-27:
 
 - `main` (and any `master` branch) is owned exclusively by the user.

@@ -396,6 +396,9 @@ class ReadALine {
     unsigned actLine;
     ReadALine* pInclude;
     FILE* fp;
+    bool binaryInput=false;
+    std::vector<char> binaryData;
+    size_t binaryPosition=0;
     unsigned fileNameIndex;
     struct FileNameAndPath {
         std::string path, name;
@@ -415,7 +418,11 @@ class ReadALine {
     //***********************************************************************
         if (buffer1->index == buffer1->elementNum) {
             std::swap(buffer1, buffer2);
-            buffer2->elementNum = unsigned(fread(buffer2->buffer, sizeof(char), BufferBlock::bufferSize, fp));
+            if(binaryInput) {
+                const auto remaining=binaryData.size()-binaryPosition;
+                buffer2->elementNum=unsigned(remaining<BufferBlock::bufferSize?remaining:BufferBlock::bufferSize);
+                for(unsigned i=0;i<buffer2->elementNum;++i)buffer2->buffer[i]=binaryData[binaryPosition++];
+            } else buffer2->elementNum = unsigned(fread(buffer2->buffer, sizeof(char), BufferBlock::bufferSize, fp));
             buffer1->index = 0;
             if (buffer1->elementNum == 0 && buffer2->elementNum == 0){                
                 fClose();
