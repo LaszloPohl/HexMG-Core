@@ -64,6 +64,7 @@ public:
     inline static NodeVariable iter;            // which iteration we are at in the current step
     inline static NodeVariable stepError;       // relative error of the current iteration compared to the previous
     inline static std::atomic<uns> nNonlinComponents = 0; // actual number of nonlinear components in the network; if 0 => no more than 1 DC / timestep iteration needed
+    inline static bool lagDissipationJacobian = false; // First relative-solve update only; physical currents remain exact.
     inline static std::atomic<uns> nComponents = 0; // actual number of components in the network
     //***********************************************************************
     static void setInitialDC() noexcept { timeStepStart.setValueDC(rvt0); timeStepStop.setValueDC(rvt0); dt.setValueDC(rvt0); }
@@ -706,6 +707,7 @@ public:
     //***********************************************************************
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
+        if (SimControl::lagDissipationJacobian && y >= 2) return rvt0;
         if (x > 1)
             return rvt0;
         rvt Gs = x == 0 ? componentValue.getValueDC() : -componentValue.getValueDC();
@@ -1003,6 +1005,7 @@ public:
     //***********************************************************************
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
+        if (SimControl::lagDissipationJacobian && y >= 3) return rvt0;
         if (x > 2)
             return rvt0;
         if (x == 2)
@@ -2950,11 +2953,12 @@ public:
     //***********************************************************************
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
+        if (SimControl::lagDissipationJacobian && y >= 2) return rvt0;
         if (y >= 4)
             return rvt0;
 
         crvt A = pars[0].get();
-        crvt B = rvt0 - A;
+        crvt B = rvt1 - A;
         crvt G = pars[1].get();
         crvt V = (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC()); // sign?
         crvt ig = componentValue.getValueDC();
@@ -2984,13 +2988,13 @@ public:
             }
             break;
             case 2: switch (x) {
-                case 0:  return  A * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -A * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return A * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return A * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  A * dFv_per_dUi * V;
             }
             case 3: switch (x) {
-                case 0:  return  B * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -B * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return B * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return B * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  B * dFv_per_dUi * V;
             }
         }
@@ -3478,11 +3482,12 @@ public:
     //***********************************************************************
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 4)
+        if (SimControl::lagDissipationJacobian && y >= 3) return rvt0;
+        if (y >= 5)
             return rvt0;
 
         crvt A = pars[0].get();
-        crvt B = rvt0 - A;
+        crvt B = rvt1 - A;
         crvt G = pars[1].get();
         crvt V = (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC()); // sign?
         crvt ig = componentValue.getValueDC();
@@ -3518,15 +3523,17 @@ public:
                 default: return    dFv_per_dUi;
             }
             break;
+            // P=(G*V-F)*V. The Jacobian is minus the derivative of
+            // the physical heat injected into X3/X4, including dV/dX1=-1.
             case 3: switch (x) {
-                case 0:  return  A * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -A * ((2 * G - dFv_per_dUi) * V - ig);
-                default: return  A * dFv_per_dUi * V;
+                case 0:  return A * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return A * ((dFv_per_dUi + 2 * G) * V - ig);
+                default: return A * dFv_per_dUi * V;
             }
             case 4: switch (x) {
-                case 0:  return  B * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -B * ((2 * G - dFv_per_dUi) * V - ig);
-                default: return  B * dFv_per_dUi * V;
+                case 0:  return B * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return B * ((dFv_per_dUi + 2 * G) * V - ig);
+                default: return B * dFv_per_dUi * V;
             }
         }
         return rvt0;

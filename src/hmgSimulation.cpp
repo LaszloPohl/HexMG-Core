@@ -100,7 +100,18 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
     refresh();
     (void)measure(false); // Reject an invalid starting physical state before reduction.
     do {
-        CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        // One block-Picard startup update avoids a negative linearized
+        // Joule source when a voltage drop first collapses from its initial
+        // guess. Only the Jacobian is lagged; actual power, residuals and
+        // all material/boundary guards are evaluated without modification.
+        struct DissipationStartup {
+            explicit DissipationStartup(bool use) { SimControl::lagDissipationJacobian=use; }
+            ~DissipationStartup() { SimControl::lagDissipationJacobian=false; }
+        };
+        {
+            DissipationStartup startup(curretIterN==0 && requestedIterations==0);
+            CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
+        }
         stateError=measure(true);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
         ++curretIterN;
@@ -256,12 +267,13 @@ void Simulation::run(const RunData& runData) {
             SimControl::stepError.setValueDC(rvt0);
             auto* component=CircuitStorage::getInstance().fullCircuitInstances[fullCircuitID].component.get();
             component->resetNodes(true);
-            component->initializeThermalNodes(option.temperature);
+            if(!option.defaultRails) component->initializeThermalNodes(option.temperature);
             CircuitStorage::CalculateControllersDC(fullCircuitID);
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
             CircuitStorage::AcceptStepDC(fullCircuitID);
             option.started=true; wasDC=true; thermalInitialized=true;
-            std::cout << "HEXMG_OPT: transient initial temperature " << option.temperature << " C; no DC solve\n";
+            if(option.defaultRails) std::cout << "HEXMG_OPT: transient initial state DEFAULT_RAILS; no DC solve\n";
+            else std::cout << "HEXMG_OPT: transient initial temperature " << option.temperature << " C; no DC solve\n";
         }
     }
     if (!thermalInitialized && ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial))) {

@@ -10,5 +10,6 @@ See [branch scope and compatibility](doc/OPTIMIZED_VARIANT_HU.md).
 
 - [Manual OPTIONAL skip code for the baseline](doc/OPTIONAL_SKIP_BASELINE_HU.md)
 - [Living optimization and repair backlog](doc/OPTIMIZATION_BACKLOG_HU.md)
+- [Mixed-field initial state and dissipation Jacobians](doc/MIXED_INITIAL_STATE_HU.md)
 
 This project is in basic form. More details will be added later.

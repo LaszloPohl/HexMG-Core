@@ -25,6 +25,7 @@ struct TransientInitialTemperature {
     double temperature = 0;
     unsigned circuitId = 0;
     bool started = false;
+    bool defaultRails = false;
 };
 inline std::vector<TransientInitialTemperature> transientInitialTemperatures;
 struct ConvergenceProfile { double reference=0, stateAbsolute=1e-6, balanceAbsolute=1e-12; };
@@ -113,6 +114,9 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                !std::isfinite(temperature) || temperature < -273.15) fail();
             for(const auto& previous:nextTemperatures) if(previous.circuit==t[1]) fail();
             nextTemperatures.push_back({t[1],temperature,0,false});
+        } else if(t.size()==3 && t[0]=="TRANSIENT_INITIAL_STATE" && t[2]=="DEFAULT_RAILS") {
+            for(const auto& previous:nextTemperatures) if(previous.circuit==t[1]) fail();
+            nextTemperatures.push_back({t[1],0,0,false,true});
         } else if(t.size()==5 && t[0]=="FUNCTION_RANGE") {
             function_guard::RangeRule rule;rule.name=t[1];rule.selector=t[2];
             if(t[2]!="RET") {
