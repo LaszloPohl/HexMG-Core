@@ -877,6 +877,20 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
         if(circuit==names.end()) throw hmgExcept(option.defaultRails?"TRANSIENT_INITIAL_STATE":"TRANSIENT_INITIAL_TEMPERATURE","Unknown circuit %s",option.circuit.c_str());
         option.circuitId=circuit->second;
     }
+    for(auto& option:optimization::newtonForwardLimits) {
+        auto& names=HMGFileListItem::globalNames;
+        const auto circuit=names.fullCircuitNames.find(option.circuit);
+        if(circuit==names.fullCircuitNames.end()) throw hmgExcept("NEWTON_FORWARD_LIMIT","Unknown circuit %s",option.circuit.c_str());
+        option.circuitId=circuit->second;
+        const auto bind=[&](const std::string& text,DeepInterfaceNodeID& id) {
+            std::vector<char> node(text.begin(),text.end());node.push_back(0);
+            if(!names.textToDeepInterfaceNodeID(node.data(),option.circuitId,id) || id.isController || id.nodeID.isStepStart ||
+               (id.nodeID.type!=nvtX && id.nodeID.type!=nvtY && id.nodeID.type!=nvtA && id.nodeID.type!=nvtO &&
+                id.nodeID.type!=nvtN && id.nodeID.type!=nvtRail && id.nodeID.type!=nvtGND))
+                throw hmgExcept("NEWTON_FORWARD_LIMIT","Expected a circuit potential node: %s",text.c_str());
+        };
+        bind(option.anode,option.anodeId);bind(option.cathode,option.cathodeId);
+    }
     if (!optimization::convergenceNodes.empty() && !optimization::relativeConvergence)
         throw hmgExcept("convergence", "CONVERGENCE_NODE requires CONVERGENCE RELATIVE");
     for(auto& option : optimization::convergenceNodes) {

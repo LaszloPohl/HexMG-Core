@@ -38,6 +38,14 @@ struct NodeConvergenceOption {
     DeepInterfaceNodeID id;
 };
 inline std::vector<NodeConvergenceOption> convergenceNodes;
+struct NewtonForwardLimit {
+    std::string circuit, anode, cathode;
+    double maximumStep=0;
+    unsigned circuitId=0;
+    DeepInterfaceNodeID anodeId, cathodeId;
+};
+inline std::vector<NewtonForwardLimit> newtonForwardLimits;
+inline unsigned long long limitedNewtonSteps=0;
 inline std::vector<function_guard::Rule> functionGuards;
 inline std::vector<function_guard::RangeRule> functionRanges;
 struct FunctionDerivative {
@@ -70,6 +78,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     bool nextRelative = relativeConvergence;
     auto nextProfile = convergenceDefault;
     auto nextNodes = convergenceNodes;
+    auto nextLimits = newtonForwardLimits;
     auto nextGuards = functionGuards;
     auto nextRanges = functionRanges;
     auto nextDerivatives = functionDerivatives;
@@ -114,6 +123,14 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                 if(!nodeKeys.emplace(t[1],t[2]).second) fail();
                 nextNodes.push_back({t[1],t[2],profile,0,{}});
             }
+        } else if(t.size()==5 && t[0]=="NEWTON_FORWARD_LIMIT") {
+            NewtonForwardLimit limit;limit.circuit=t[1];limit.anode=t[2];limit.cathode=t[3];
+            const auto parsed=std::from_chars(t[4].data(),t[4].data()+t[4].size(),limit.maximumStep);
+            if(parsed.ec!=std::errc{} || parsed.ptr!=t[4].data()+t[4].size() ||
+               !std::isfinite(limit.maximumStep) || limit.maximumStep<=0 || limit.anode==limit.cathode) fail();
+            for(const auto& previous:nextLimits)
+                if(previous.circuit==limit.circuit && previous.anode==limit.anode && previous.cathode==limit.cathode) fail();
+            nextLimits.push_back(std::move(limit));
         } else if(t.size()==3 && t[0]=="TRANSIENT_INITIAL_TEMPERATURE") {
             double temperature = 0;
             const auto parsed=std::from_chars(t[2].data(),t[2].data()+t[2].size(),temperature);
@@ -175,6 +192,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
         } else fail();
     }
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
+    newtonForwardLimits=std::move(nextLimits);
     functionGuards=std::move(nextGuards);
     functionRanges=std::move(nextRanges);
     functionDerivatives=std::move(nextDerivatives);
@@ -187,6 +205,7 @@ inline void report() {
     std::cout << "HEXMG_OPT: LEVEL0 " << (precision == Precision::Extended ? "EXTENDED" : precision == Precision::Double ? "DOUBLE" : "AUTO")
         << "; reference-checked double steps=" << doubleSteps.load()
         << "; extended fallbacks=" << extendedFallbacks.load()
+        << "; limited Newton updates=" << limitedNewtonSteps
         << "; higher levels unchanged; AC unchanged\n";
 }
 }

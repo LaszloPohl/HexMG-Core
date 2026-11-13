@@ -5451,6 +5451,48 @@ public:
         gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(true);
     }
     //***********************************************************************
+    static const NodeVariable& limitNode(uns fullCircuitID,const DeepInterfaceNodeID& id) {
+        auto& storage=getInstance();
+        const ComponentBase* component=storage.fullCircuitInstances[fullCircuitID].component.get();
+        for(auto index:id.componentID) {
+            const auto* sub=dynamic_cast<const ComponentSubCircuit*>(component);
+            if(!sub || index>=sub->getNContainedComponents())
+                throw hmgExcept("NEWTON_FORWARD_LIMIT","Invalid component path");
+            component=sub->getContainedComponent(index);
+        }
+        const auto* sub=dynamic_cast<const ComponentSubCircuit*>(component);
+        DeepCDNodeID node{SimpleInterfaceNodeID2CDNode(id.nodeID,component->pModel->externalNs,
+            sub?static_cast<const ModelSubCircuit*>(sub->pModel)->getInternalNodeSizes():InternalNodeSizePack{}),id.componentID,false};
+        return storage.getNode(fullCircuitID,node);
+    }
+    static void LimitNewtonCorrection(uns fullCircuitID) {
+        double factor=1;
+        for(const auto& limit:optimization::newtonForwardLimits) {
+            if(limit.circuitId!=fullCircuitID) continue;
+            const auto& anode=limitNode(fullCircuitID,limit.anodeId);
+            const auto& cathode=limitNode(fullCircuitID,limit.cathodeId);
+            const auto correction=[](const NodeVariable& node) {
+                return node.extension && !node.isGnd ? node.getVDC()*NodeVariable::alpha : 0.;
+            };
+            const double forward=correction(anode)-correction(cathode);
+            if(!std::isfinite(forward)) throw hmgExcept("NEWTON_FORWARD_LIMIT","Non-finite correction at %s - %s",limit.anode.c_str(),limit.cathode.c_str());
+            if(forward>limit.maximumStep) factor=std::min(factor,limit.maximumStep/forward);
+        }
+        if(factor>=1) return;
+        if(!(factor>0)) throw hmgExcept("NEWTON_FORWARD_LIMIT","Unrepresentable Newton damping factor");
+        // Scale every solved unknown, including eliminated/internal currents,
+        // with one factor. Aliased ports must be scaled exactly once.
+        std::vector<NodeVariable*> nodes;
+        getInstance().fullCircuitInstances[fullCircuitID].component->collectConvergenceNodes(nodes);
+        std::sort(nodes.begin(),nodes.end(),std::less<NodeVariable*>{});
+        nodes.erase(std::unique(nodes.begin(),nodes.end()),nodes.end());
+        for(auto* node:nodes) {
+            const auto correction=node->getVDC();
+            if(!std::isfinite(correction)) throw hmgExcept("NEWTON_FORWARD_LIMIT","Non-finite network correction");
+            node->setVDC(correction*factor);
+        }
+        ++optimization::limitedNewtonSteps;
+    }
     static void ForwsubsBacksubsDC(uns fullCircuitID) {
     //***********************************************************************
         CircuitStorage& gc = getInstance();
@@ -5458,6 +5500,7 @@ public:
         gc.fullCircuitInstances[fullCircuitID].component->forwsubs(true);
         RequireValidFunctionState(fullCircuitID);
         gc.fullCircuitInstances[fullCircuitID].component->backsubs(true);
+        if(!optimization::newtonForwardLimits.empty()) LimitNewtonCorrection(fullCircuitID);
     }
     //***********************************************************************
     static void AcceptIterationDC(uns fullCircuitID) {
