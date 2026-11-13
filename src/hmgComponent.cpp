@@ -649,6 +649,8 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                 break;
             case sitProbeNode:                      isImpossibleInstruction = true; break;
             case sitRun: {
+                    for(const auto& rule:optimization::functionDerivatives)
+                        if(!rule.bound)throw hmgExcept("FUNCTION_DERIVATIVE","Function not yet defined: %s / %s",rule.name.c_str(),rule.derivative.c_str());
                     IsRunInstruction* pAct = static_cast<IsRunInstruction*>(act);
                     sim.run(pAct->data);
                 }
@@ -1666,6 +1668,13 @@ void CircuitStorage::processFunctionInstructions(IsInstruction*& first, uns func
         if (functionIndex > functions.size())
             functions.resize(functionIndex + 1);
         functions[functionIndex] = std::make_unique<HmgF_CustomFunction>(fvModel);
+    }
+    // Resolve after either definition, allowing a derivative defined later.
+    for(auto& rule:optimization::functionDerivatives) {
+        if(rule.bound||rule.functionId>=functions.size()||rule.derivativeId>=functions.size()||
+           !functions[rule.functionId]||!functions[rule.derivativeId])continue;
+        functions[rule.functionId]->setAnalyticDerivative(rule.parameter,*functions[rule.derivativeId]);
+        rule.bound=true;
     }
 }
 

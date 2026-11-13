@@ -840,6 +840,18 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
     // reading the simulation
 
     globalCircuit.Read(reader, line, lineInfo);
+    for(auto& rule:optimization::functionDerivatives) {
+        const auto& names=HMGFileListItem::globalNames;
+        const auto source=names.functionNames.find(rule.name),target=names.functionNames.find(rule.derivative);
+        if(source==names.functionNames.end()||target==names.functionNames.end())
+            throw hmgExcept("FUNCTION_DERIVATIVE","Unknown function in %s P%u %s",rule.name.c_str(),rule.parameter,rule.derivative.c_str());
+        rule.functionId=source->second;rule.derivativeId=target->second;
+        const auto* function=names.functionData[rule.functionId];
+        const auto* derivative=names.functionData[rule.derivativeId];
+        if(rule.parameter>=function->nParams||function->nParams!=derivative->nParams||
+           function->nComponentParams!=derivative->nComponentParams)
+            throw hmgExcept("FUNCTION_DERIVATIVE","Parameter index or function signature mismatch: %s P%u %s",rule.name.c_str(),rule.parameter,rule.derivative.c_str());
+    }
     for(auto& rule:optimization::functionGuards) {
         const auto& names=HMGFileListItem::globalNames;
         const auto found=names.functionNames.find(rule.name);
@@ -2987,7 +2999,8 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 cuns nPar = f->nParams;
 
                 ReadComponentParams(func, nCompPar, lineToken, reader, line, lineInfo);
-                ReadParams(func, nPar, lineToken, reader, line, lineInfo, false);
+                // Custom calls include an explicit result before their input parameters.
+                ReadParams(func, nPar + 1, lineToken, reader, line, lineInfo, false);
             }
         }
     } while (isFunctionNotEnded);

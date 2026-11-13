@@ -99,6 +99,14 @@ protected:
     uns nIndexField = 0;    // in most built in function nIndexField = nParam + 2 (ret and workfield index)
     uns nWorkingField = 0;  // only custom functions need workfield, built in functions can use C++ variables
     uns nSpecialParam = 0;  // value, jump label (only information, not used for any purpose)
+    struct AnalyticDerivative {
+        const HmgFunction* function=nullptr;
+        std::vector<uns> index;
+        // Numerical execution is serial. Evaluation never calls devive:
+        // this private, preallocated scratch cannot alter the physical state.
+        mutable std::vector<rvt> work;
+    };
+    std::vector<AnalyticDerivative> analyticDerivatives;
 public:
     //***********************************************************************
     HmgFunction(uns nComponentParam_, uns nParam_, uns nIndexField_, uns nWorkingField_, uns nSpecialParam_) 
@@ -111,6 +119,20 @@ public:
     //***********************************************************************
     rvt devive(cuns* index, crvt* cworkField, [[maybe_unused]] ComponentAndControllerBase* owner, cuns variableIndex, [[maybe_unused]] const LineDescription& line, [[maybe_unused]] ComponentAndControllerBase** pComponentParams)const noexcept {
     //***********************************************************************
+        if(variableIndex>=2&&variableIndex-2<analyticDerivatives.size()) {
+            const auto& derivative=analyticDerivatives[variableIndex-2];
+            if(derivative.function) {
+                std::fill(derivative.work.begin(),derivative.work.end(),rvt0);
+                derivative.work[0]=std::numeric_limits<rvt>::quiet_NaN();
+                for(uns p=0;p<nParam;++p)derivative.work[1+p]=cworkField[index[2+p]];
+                function_guard::DerivativeScope derivativeScope;
+                derivative.function->evaluate(derivative.index.data(),derivative.work.data(),owner,line,pComponentParams);
+                const rvt result=derivative.work[0];
+                if(!std::isfinite(result))
+                    function_guard::record(nullptr,owner,cworkField[index[variableIndex]],result,"nonfinite FUNCTION_DERIVATIVE result");
+                return result;
+            }
+        }
         rvt* workField = const_cast<rvt*>(cworkField); // changes and restores so no change
         crvt value = workField[index[0]];
         crvt var = workField[index[variableIndex]];
@@ -133,6 +155,18 @@ public:
         if(function_guard::enabled&&!std::isfinite(ret1))
             function_guard::record(nullptr,owner,var,ret1,"nonfinite numerical derivative");
         return ret1;
+    }
+    void setAnalyticDerivative(uns parameter,const HmgFunction& function) {
+        if(parameter>=nParam||nParam!=function.nParam||nComponentParam!=function.nComponentParam)
+            throw hmgExcept("FUNCTION_DERIVATIVE","Invalid derivative signature");
+        if(analyticDerivatives.empty())analyticDerivatives.resize(nParam);
+        auto& derivative=analyticDerivatives[parameter];
+        derivative.function=&function;
+        derivative.index.resize(function.nIndexField);
+        derivative.work.resize(1+nParam+function.nWorkingField);
+        derivative.index[0]=0;derivative.index[1]=1+nParam;
+        for(uns p=0;p<nParam;++p)derivative.index[2+p]=1+p;
+        function.fillIndexField(derivative.index.data());
     }
     uns getN_ComponentParam()const noexcept { return nComponentParam; }
     uns getN_Param()const noexcept { return nParam; }

@@ -40,6 +40,12 @@ struct NodeConvergenceOption {
 inline std::vector<NodeConvergenceOption> convergenceNodes;
 inline std::vector<function_guard::Rule> functionGuards;
 inline std::vector<function_guard::RangeRule> functionRanges;
+struct FunctionDerivative {
+    std::string name, derivative;
+    unsigned parameter=0, functionId=0, derivativeId=0;
+    bool bound=false;
+};
+inline std::vector<FunctionDerivative> functionDerivatives;
 inline bool unsupportedWarned = false;
 inline std::atomic<unsigned long long> doubleSteps{0}, extendedFallbacks{0};
 inline std::vector<std::string> tokens(std::string line) {
@@ -66,6 +72,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextNodes = convergenceNodes;
     auto nextGuards = functionGuards;
     auto nextRanges = functionRanges;
+    auto nextDerivatives = functionDerivatives;
     auto nextTemperatures = transientInitialTemperatures;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
@@ -117,6 +124,14 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
         } else if(t.size()==3 && t[0]=="TRANSIENT_INITIAL_STATE" && t[2]=="DEFAULT_RAILS") {
             for(const auto& previous:nextTemperatures) if(previous.circuit==t[1]) fail();
             nextTemperatures.push_back({t[1],0,0,false,true});
+        } else if(t.size()==4 && t[0]=="FUNCTION_DERIVATIVE") {
+            FunctionDerivative rule;rule.name=t[1];rule.derivative=t[3];
+            if(t[2].size()<2||t[2][0]!='P')fail();
+            const auto parsed=std::from_chars(t[2].data()+1,t[2].data()+t[2].size(),rule.parameter);
+            if(parsed.ec!=std::errc{}||parsed.ptr!=t[2].data()+t[2].size())fail();
+            for(const auto& previous:nextDerivatives)
+                if(previous.name==rule.name&&previous.parameter==rule.parameter)fail();
+            nextDerivatives.push_back(std::move(rule));
         } else if(t.size()==5 && t[0]=="FUNCTION_RANGE") {
             function_guard::RangeRule rule;rule.name=t[1];rule.selector=t[2];
             if(t[2]!="RET") {
@@ -162,8 +177,9 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
     functionGuards=std::move(nextGuards);
     functionRanges=std::move(nextRanges);
+    functionDerivatives=std::move(nextDerivatives);
     transientInitialTemperatures=std::move(nextTemperatures);
-    function_guard::enabled=!functionGuards.empty()||!functionRanges.empty();
+    function_guard::enabled=!functionGuards.empty()||!functionRanges.empty()||!functionDerivatives.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;
 }
