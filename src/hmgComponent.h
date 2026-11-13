@@ -663,7 +663,7 @@ public:
     //***********************************************************************
     using Component_RDissBase::Component_RDissBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
@@ -685,15 +685,9 @@ public:
             cplx V = N[0]->getValueAC() - N[1]->getValueAC();
             IAC = componentValue.getValueDC() * V; // componentValue.getValueDC() !
 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
-
-            rvt VDC = N[0]->getValueDC() - N[1]->getValueDC();
-            PAC = IAC * (2 * VDC + V);
+            // First-order change of G*V^2 about the DC operating point.
+            const rvt voltageDC = N[0]->getValueDC() - N[1]->getValueDC();
+            PAC = 2 * voltageDC * IAC;
             cplx P1 = PAC * share.get();
             cplx P2 = PAC - P1;
             N[0]->incDAC(-IAC);
@@ -705,9 +699,12 @@ public:
     //************************** DC functions *******************************
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
+    rvt getYDC(uns y, uns x) const noexcept override {
         if (SimControl::lagDissipationJacobian && y >= 2) return rvt0;
+        return physicalJacobian(y, x);
+    }
+    rvt physicalJacobian(uns y, uns x) const noexcept {
+    //***********************************************************************
         if (x > 1)
             return rvt0;
         rvt Gs = x == 0 ? componentValue.getValueDC() : -componentValue.getValueDC();
@@ -743,19 +740,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (x > 1 || y > 1)
-            return cplx0;
-        return y == x ? componentValue.getValueDC() : -componentValue.getValueDC();  // componentValue.getValueDC() !
+        // Small-signal derivative at the accepted DC operating point.
+        return physicalJacobian(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (N[0] == N[1])
-            return;
-        ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
-        N[0]->incYiiAC(G);
-        N[1]->incYiiAC(G);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 4; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < 4; ++x)
+                if (N[x] == N[y]) diagonal += getYAC(y, x);
+            N[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -955,7 +952,7 @@ public:
     //***********************************************************************
     using Component_GMDBase::Component_GMDBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
@@ -979,15 +976,9 @@ public:
             cplx V = N[0]->getValueAC() - N[1]->getValueAC();
             IAC = componentValue.getValueDC() * V; // componentValue.getValueDC() !
 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
-
-            rvt VDC = N[0]->getValueDC() - N[1]->getValueDC();
-            PAC = IAC * (2 * VDC + V);
+            // First-order change of G*V^2 about the DC operating point.
+            const rvt voltageDC = N[0]->getValueDC() - N[1]->getValueDC();
+            PAC = 2 * voltageDC * IAC;
             cplx P1 = PAC * share.get();
             cplx P2 = PAC - P1;
             N[0]->incDAC(-IAC);
@@ -1003,9 +994,12 @@ public:
     //************************** DC functions *******************************
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
+    rvt getYDC(uns y, uns x) const noexcept override {
         if (SimControl::lagDissipationJacobian && y >= 3) return rvt0;
+        return physicalJacobian(y, x);
+    }
+    rvt physicalJacobian(uns y, uns x) const noexcept {
+    //***********************************************************************
         if (x > 2)
             return rvt0;
         if (x == 2)
@@ -1046,28 +1040,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); // componentValue.getValueDC() !
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -componentValue.getValueDC();
-            case 1: return componentValue.getValueDC();
-            case 2: return 1.0;
-        }
-        return 0;
+        // Small-signal derivative at the accepted DC operating point.
+        return physicalJacobian(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (N[0] == N[1])
-            return;
-        ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
-        N[0]->incYiiAC(G);
-        N[1]->incYiiAC(G);
-        N[2]->incYiiDC(-1.0);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 5; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < 5; ++x)
+                if (N[x] == N[y]) diagonal += getYAC(y, x);
+            N[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -2667,9 +2652,9 @@ public:
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
-            crvt G = pars[0].get();
-            ccplx IG = G * (externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC());
-            IAC = componentValue.getValueDC() - IG; // getValueDC !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
         }
@@ -2784,20 +2769,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (y >= 2)
-            return cplx0;
-        crvt G = x == 0 ? pars[0].get() + dg : x == 1 ? -pars[0].get() - dg : rvt0; // ! dg differential conductance
-        return y == 0 ? G : -G;
+        // Small-signal derivative at the accepted DC operating point.
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[0].get();
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 2; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
@@ -2884,26 +2868,18 @@ public:
             externalNodes[3]->addPhysicalCurrentDC(P2);
         }
         else {
-            crvt G = pars[1].get();
-            ccplx V = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
-            ccplx IG = G * V;
-            IAC = componentValue.getValueDC() - IG; // getValueDC ! // R or G components: IAC sign is opposite !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= physicalJacobian(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
- 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
-
-            rvt VDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
-            PAC = -IAC * (2 * VDC + V);
-            cplx P1 = PAC * pars[0].get(); // dissipated power share
-            cplx P2 = PAC - P1;
-            externalNodes[2]->incDAC(P1);
-            externalNodes[3]->incDAC(P2);
+            // d(V*I) = Vdc*dI + Idc*dV; no DC source or amplitude-squared term.
+            const rvt voltageDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
+            const cplx voltageAC = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
+            PAC = -voltageDC * IAC + componentCurrent.getValueDC() * voltageAC;
+            const cplx first = PAC * pars[0].get();
+            externalNodes[2]->incDAC(first);
+            externalNodes[3]->incDAC(PAC - first);
         }
     }
     //***********************************************************************
@@ -2951,9 +2927,12 @@ public:
     //***********************************************************************
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
+    rvt getYDC(uns y, uns x) const noexcept override {
         if (SimControl::lagDissipationJacobian && y >= 2) return rvt0;
+        return physicalJacobian(y, x);
+    }
+    rvt physicalJacobian(uns y, uns x) const noexcept {
+    //***********************************************************************
         if (y >= 4)
             return rvt0;
 
@@ -3050,20 +3029,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (y >= 2)
-            return cplx0;
-        crvt G = x == 0 ? pars[1].get() + dg : x == 1 ? -pars[1].get() - dg : rvt0; // ! dg differential conductance // pars[1] !
-        return y == 0 ? G : -G;
+        // Small-signal derivative at the accepted DC operating point.
+        return physicalJacobian(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[1].get(); // pars[1] !
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 4; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -3154,12 +3132,12 @@ public:
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
-            crvt G = pars[0].get();
-            ccplx IG = G * (externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC());
-            IAC = componentValue.getValueDC() - IG; // getValueDC !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
-            IMC = -IAC - externalNodes[2]->getValueAC() * 1.0; // RM = 1 Ohm
+            IMC = -IAC - externalNodes[2]->getValueAC();
             externalNodes[2]->incDAC(IMC);
         }
     }
@@ -3290,28 +3268,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? pars[0].get() + dg : -pars[0].get() - dg; // ! dg differential conductance
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -pars[0].get() - dg;
-            case 1: return pars[0].get() + dg;
-            case 2: return 1.0;
-        }
-        return cplx0;
+        // Small-signal derivative at the accepted DC operating point.
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[0].get();
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
-        externalNodes[2]->incYiiAC(1.0);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 3; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -3410,29 +3379,20 @@ public:
             externalNodes[4]->addPhysicalCurrentDC(P2);
         }
         else {
-            crvt G = pars[1].get();
-            ccplx V = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
-            ccplx IG = G * V;
-            IAC = componentValue.getValueDC() - IG; // getValueDC ! // R or G components: IAC sign is opposite !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= physicalJacobian(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
- 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
-
-            IMC = -IAC - externalNodes[2]->getValueAC() * 1.0; // RM = 1 Ohm
+            IMC = -IAC - externalNodes[2]->getValueAC();
             externalNodes[2]->incDAC(IMC);
-
-            rvt VDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
-            PAC = -IAC * (2 * VDC + V);
-            cplx P1 = PAC * pars[0].get(); // dissipated power share
-            cplx P2 = PAC - P1;
-            externalNodes[3]->incDAC(P1);
-            externalNodes[4]->incDAC(P2);
+            // d(V*I) = Vdc*dI + Idc*dV; no DC source or amplitude-squared term.
+            const rvt voltageDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
+            const cplx voltageAC = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
+            PAC = -voltageDC * IAC + componentCurrent.getValueDC() * voltageAC;
+            const cplx first = PAC * pars[0].get();
+            externalNodes[3]->incDAC(first);
+            externalNodes[4]->incDAC(PAC - first);
         }
     }
     //***********************************************************************
@@ -3480,9 +3440,12 @@ public:
     //***********************************************************************
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     //***********************************************************************
-    rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
+    rvt getYDC(uns y, uns x) const noexcept override {
         if (SimControl::lagDissipationJacobian && y >= 3) return rvt0;
+        return physicalJacobian(y, x);
+    }
+    rvt physicalJacobian(uns y, uns x) const noexcept {
+    //***********************************************************************
         if (y >= 5)
             return rvt0;
 
@@ -3595,28 +3558,19 @@ public:
     cplx getJreducedAC([[maybe_unused]] uns y) const noexcept override { return cplx0; }
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
-    //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? pars[1].get() + dg : -pars[1].get() - dg; // ! dg differential conductance // pars[1] !
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -pars[1].get() - dg;
-            case 1: return pars[1].get() + dg;
-            case 2: return 1.0;
-        }
-        return cplx0;
+        // Small-signal derivative at the accepted DC operating point.
+        return physicalJacobian(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
-    //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[1].get(); // pars[1] !
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(1.0);
+        // Sum every row/column referring to the same physical node. Control
+        // ports contribute columns only, including aliased controls.
+        for (uns y = 0; y < 5; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
