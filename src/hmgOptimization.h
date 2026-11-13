@@ -28,6 +28,8 @@ struct TransientInitialTemperature {
     bool defaultRails = false;
 };
 inline std::vector<TransientInitialTemperature> transientInitialTemperatures;
+struct SmallSignalOperatingPoint { std::string circuit; unsigned circuitId=0; };
+inline std::vector<SmallSignalOperatingPoint> smallSignalOperatingPoints;
 struct ConvergenceProfile { double reference=0, stateAbsolute=1e-6, balanceAbsolute=1e-12; };
 inline bool relativeConvergence = false;
 inline ConvergenceProfile convergenceDefault;
@@ -83,6 +85,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextRanges = functionRanges;
     auto nextDerivatives = functionDerivatives;
     auto nextTemperatures = transientInitialTemperatures;
+    auto nextOperatingPoints = smallSignalOperatingPoints;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
@@ -131,6 +134,9 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
             for(const auto& previous:nextLimits)
                 if(previous.circuit==limit.circuit && previous.anode==limit.anode && previous.cathode==limit.cathode) fail();
             nextLimits.push_back(std::move(limit));
+        } else if(t.size()==2 && t[0]=="SMALL_SIGNAL_OPERATING_POINT") {
+            for(const auto& previous:nextOperatingPoints) if(previous.circuit==t[1]) fail();
+            nextOperatingPoints.push_back({t[1],0});
         } else if(t.size()==3 && t[0]=="TRANSIENT_INITIAL_TEMPERATURE") {
             double temperature = 0;
             const auto parsed=std::from_chars(t[2].data(),t[2].data()+t[2].size(),temperature);
@@ -197,6 +203,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     functionRanges=std::move(nextRanges);
     functionDerivatives=std::move(nextDerivatives);
     transientInitialTemperatures=std::move(nextTemperatures);
+    smallSignalOperatingPoints=std::move(nextOperatingPoints);
     function_guard::enabled=!functionGuards.empty()||!functionRanges.empty()||!functionDerivatives.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;

@@ -123,7 +123,7 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         throw hmgExcept("convergence","Circuit %u did not converge in %u updates: normalized state=%g, balance=%g (both must be <=1)",
             fullCircuitID,curretIterN,stateError,balanceError);
     CircuitStorage::AcceptStepDC(fullCircuitID);
-    if(!timeStep) wasDC=true;
+    circuitsWithDCState.insert(fullCircuitID);
 }
 
 void Simulation::runDC(uns requestedIterations) {
@@ -161,7 +161,7 @@ void Simulation::runDC(uns requestedIterations) {
     }
     if (requestedIterations == 0) requireConverged(max_error, err);
     CircuitStorage::AcceptStepDC(fullCircuitID);
-    wasDC = true;
+    circuitsWithDCState.insert(fullCircuitID);
 }
 
 void Simulation::runTimeStep(uns requestedIterations) {
@@ -193,19 +193,40 @@ void Simulation::runTimeStep(uns requestedIterations) {
 }
 
 void Simulation::runAC() {
-    if(!optimization::functionGuards.empty()||!optimization::functionRanges.empty())throw hmgExcept("FUNCTION_GUARD","Guarded functions currently support DC/time steps only");
+
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    if (!isBuiltForAC) {
-        for (auto& fullCkt : gc.fullCircuitInstances)
-            fullCkt.component->buildForAC();
-        isBuiltForAC = true;
+    auto* component=gc.fullCircuitInstances[fullCircuitID].component.get();
+    // Refresh functions at the supplied/current real state, without a Newton
+    // solve, node reset or timestep acceptance. Capacitor DC current/history
+    // must survive AC inserted between two time steps.
+    CircuitStorage::CalculateControllersDC(fullCircuitID);
+    struct PreparingSmallSignal {
+        PreparingSmallSignal() { SimControl::preparingSmallSignal=true; }
+        ~PreparingSmallSignal() { SimControl::preparingSmallSignal=false; }
+    };
+    {
+        PreparingSmallSignal scope;
+        CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+    }
+    std::vector<NodeVariable*> state;
+    component->collectConvergenceNodes(state);
+    for(const auto* node:state) if(!std::isfinite(node->getValueDC()))
+        throw hmgExcept("SMALL_SIGNAL_OPERATING_POINT","Non-finite state in circuit %u",fullCircuitID);
+    (void)defectError(component->collectCurrentDefectDC());
+    if (!circuitsBuiltForAC.contains(fullCircuitID)) {
+        component->buildForAC();
+        circuitsBuiltForAC.insert(fullCircuitID);
     }
     gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
     gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
+    CircuitStorage::RequireValidFunctionState(fullCircuitID);
     gc.fullCircuitInstances[fullCircuitID].component->forwsubs(false);
+    CircuitStorage::RequireValidFunctionState(fullCircuitID);
     gc.fullCircuitInstances[fullCircuitID].component->backsubs(false);
+    CircuitStorage::RequireValidFunctionState(fullCircuitID);
     gc.fullCircuitInstances[fullCircuitID].component->acceptIterationAndStepAC();
+    circuitsWithDCState.insert(fullCircuitID);
     gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
     gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
 #ifdef HMG_DEBUGPRINT
@@ -229,6 +250,8 @@ void Simulation::run(const RunData& runData) {
     // ******************************************************************
 
     if (runData.isMultigrid) {
+        if(!optimization::smallSignalOperatingPoints.empty())
+            throw hmgExcept("SMALL_SIGNAL_OPERATING_POINT","Operating-point initialization is not implemented for multigrid runs");
         if(!optimization::transientInitialTemperatures.empty())
             throw hmgExcept("TRANSIENT_INITIAL_TEMPERATURE","Thermal initialization is not implemented for multigrid runs");
         if(!optimization::functionGuards.empty()||!optimization::functionRanges.empty())throw hmgExcept("FUNCTION_GUARD","Guarded functions are not implemented for multigrid runs");
@@ -271,12 +294,17 @@ void Simulation::run(const RunData& runData) {
             CircuitStorage::CalculateControllersDC(fullCircuitID);
             CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
             CircuitStorage::AcceptStepDC(fullCircuitID);
-            option.started=true; wasDC=true; thermalInitialized=true;
+            option.started=true; circuitsWithDCState.insert(fullCircuitID); thermalInitialized=true;
             if(option.defaultRails) std::cout << "HEXMG_OPT: transient initial state DEFAULT_RAILS; no DC solve\n";
             else std::cout << "HEXMG_OPT: transient initial temperature " << option.temperature << " C; no DC solve\n";
         }
     }
-    if (!thermalInitialized && ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial))) {
+    const bool suppliedOperatingPoint=(analysisType==atAC || analysisType==atTimeConst) &&
+        std::any_of(optimization::smallSignalOperatingPoints.begin(),optimization::smallSignalOperatingPoints.end(),
+            [&](const auto& option) { return option.circuitId==fullCircuitID; });
+    if(suppliedOperatingPoint && !circuitsWithDCState.contains(fullCircuitID))
+        std::cout << "HEXMG_OPT: small signal from supplied/current state; no DC solve\n";
+    if (!thermalInitialized && !suppliedOperatingPoint && ((!circuitsWithDCState.contains(fullCircuitID) && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial))) {
         SimControl::setInitialDC();
         // TODO: runData.isPre
         timeFreqValue = rvt0;

@@ -64,6 +64,7 @@ public:
     inline static NodeVariable iter;            // which iteration we are at in the current step
     inline static NodeVariable stepError;       // relative error of the current iteration compared to the previous
     inline static std::atomic<uns> nNonlinComponents = 0; // actual number of nonlinear components in the network; if 0 => no more than 1 DC / timestep iteration needed
+    inline static bool preparingSmallSignal = false; // Do not overwrite capacitor DC current/history.
     inline static bool lagDissipationJacobian = false; // First relative-solve update only; physical currents remain exact.
     inline static std::atomic<uns> nComponents = 0; // actual number of components in the network
     //***********************************************************************
@@ -1130,6 +1131,7 @@ public:
     void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
         if (isDC) {
+            if(SimControl::preparingSmallSignal) return;
             crvt V_start = N0->getStepStartDC() - N1->getStepStartDC();
             crvt V = N0->getValueDC() - N1->getValueDC();
             crvt dV = V - V_start;

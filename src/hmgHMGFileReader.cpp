@@ -871,6 +871,12 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
            (rule.target==function_guard::RangeTarget::Variable&&rule.index>=function->declaredVars))
             throw hmgExcept("FUNCTION_RANGE","Invalid parameter/local index for %s",rule.name.c_str());
     }
+    for(auto& option:optimization::smallSignalOperatingPoints) {
+        const auto& names=HMGFileListItem::globalNames.fullCircuitNames;
+        const auto circuit=names.find(option.circuit);
+        if(circuit==names.end()) throw hmgExcept("SMALL_SIGNAL_OPERATING_POINT","Unknown circuit %s",option.circuit.c_str());
+        option.circuitId=circuit->second;
+    }
     for(auto& option:optimization::transientInitialTemperatures) {
         const auto& names=HMGFileListItem::globalNames.fullCircuitNames;
         const auto circuit=names.find(option.circuit);
