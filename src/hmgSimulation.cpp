@@ -82,10 +82,20 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         CircuitStorage::CalculateControllersDC(fullCircuitID);
         CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
     };
+    const NodeVariable* stateWorst=nullptr;
+    double stateOld=0, stateNew=0, stateAbsolute=0, stateReference=0;
     const auto measure=[&](bool change) {
         convergence::Collector result;
         for(auto* node:nodes) {
-            try { result.add(change?node->relativeChangeError(relative):node->relativeBalanceError(relative)); }
+            try {
+                const double error=change?node->relativeChangeError(relative):node->relativeBalanceError(relative);
+                if(change && error>result.maximum()) {
+                    stateWorst=node;stateOld=node->getAcceptedValueDC();stateNew=node->getValueDC();
+                    const auto profile=node->effectiveConvergenceProfile();
+                    stateAbsolute=profile.stateAbsolute;stateReference=profile.reference;
+                }
+                result.add(error);
+            }
             catch(const std::exception& e) {
                 throw hmgExcept("convergence","Circuit %u node %u/%u/%u/%u %s: %s",fullCircuitID,
                     node->nid[3],node->nid[2],node->nid[1],node->nid[0],change?"state":"balance",e.what());
@@ -120,6 +130,10 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         std::cout << "Relative iter " << curretIterN << " state=" << stateError << " balance=" << balanceError << std::endl;
     } while(curretIterN<limit && (requestedIterations || stateError>1 || balanceError>1));
     if(!requestedIterations && !(stateError<=1 && balanceError<=1)) {
+        if(stateWorst && stateError>1)
+            std::cout<<"Convergence state node="<<stateWorst->nid[3]<<'/'<<stateWorst->nid[2]<<'/'<<stateWorst->nid[1]<<'/'<<stateWorst->nid[0]
+                <<" old="<<stateOld<<" new="<<stateNew<<" absolute="<<stateAbsolute<<" reference="<<stateReference
+                <<" role="<<static_cast<int>(stateWorst->convergenceRole)<<"\n";
         const NodeVariable* worst=nullptr;double worstError=0;
         for(const auto* node:nodes){const double value=node->relativeBalanceError(relative);if(value>worstError){worst=node;worstError=value;}}
         if(worst){const auto profile=worst->effectiveConvergenceProfile();

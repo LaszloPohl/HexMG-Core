@@ -3,7 +3,15 @@
 2026-11-14: [adaptív feszültségalapú időlépés](ADAPTIVE_TIME_HU.md), teljes
 állapot-visszaállítással, választható nem konvergált folytatással és köztes
 mérésmentéssel. A felhasználó által jóváhagyott opcionális sorok; alapváltozat
-változatlan. 67/19 natív és 143/4 GUI-adatút-ellenőrzés.
+változatlan. 87/21 natív és 143/4 GUI-adatút-ellenőrzés.
+
+2026-11-14: a mátrixműveletek nem nulla, 1e-20-nál kisebb pivotjai is
+valódi reciprokot kapnak. Az abszolút küszöb helyett csak a pontos nulla
+régi fallbackje marad; szinguláris hálózatok általános megoldása nem készült.
+7140 mátrixelem-ellenőrzés és négy analitikus kisvezetésű hálózat PASS.
+A Soma VO₂ első 1e-8 s lépése 60 sikertelen iteráció helyett 8-cal konvergál;
+a teljes VO₂-futás konvergenciáját ez nem igazolja. Alapforrás változatlan,
+a GUI-tároló docs/solver/CORE_SMALL_PIVOT_FIX_HU.md sorszámos útmutatót ad.
 
 2026-10-27. Ág: `codex/optimized-solver`.
 Kiindulópont: `631f316f1bf095eabf1413bbb332c75924c30086`, hivatalos `main`.

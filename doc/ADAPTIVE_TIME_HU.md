@@ -43,7 +43,7 @@ A topológia nem változik; a mátrix és az áramok a visszaállítás után
 néhány gépi kerekítési egység maradványa nem hoz létre hamis plusz lépést.
 
 Célzott referencia a GUI-tároló `tools/solver/adaptive_voltage_reference.py`
-eszközével: 67 ellenőrzés / 19 natív futás. Független RC és hiszterézis,
+eszközével: 87 ellenőrzés / 21 natív futás. Független RC és hiszterézis,
 elfogadott időpontok adaptivitás nélküli újrajátszása, felezéses konvergencia,
 szigorú/ACCEPT_LAST ág, anyagvédelem, mérésmentés és hibás bemenetek.
 A GUI projekt–solver–HXRP próbája további 143 ellenőrzés / 4 futás.
@@ -53,3 +53,7 @@ A forró csatorna, szimmetriatörés és eltérő csatornahely önmagában nem h
 Az egyenletek teljesülése, a mérlegek, a tér- és időfelbontás érzékenysége
 és a megoldási ágak külön értékelendők. Az opt-in nem konvergált eredmény
 megjelölése akkor is megmarad, ha a kialakult csatornakép fizikailag hihető.
+
+A sikertelen relatív konvergencia naplója a legnagyobb állapotváltozás
+csomópontját, régi/új értékét és referenciaértékét is kiírja. A mérleghiba
+külön szerepel; egyik küszöbe sem változott.

@@ -35,6 +35,13 @@ template<typename datatype> class matrix {
     vektor< vektor<datatype> > rows;
     unsigned row, col;
     bool is_symm;
+    // A small nonzero pivot is not singular. A fixed absolute floor made
+    // weakly conducting networks depend on their unit/geometry scale and
+    // even discarded the sign of a negative pivot. Keep the historical
+    // exact-zero fallback only; this is not a new singular-system solver.
+    static datatype pivot_reciprocal(const datatype& pivot) noexcept {
+        return pivot == datatype(0.0) ? datatype(1e20f) : datatype(1.0) / pivot;
+    }
     //***********************************************************************
 
     //***********************************************************************
@@ -1451,11 +1458,11 @@ public:
         }
         if (row == 2) {
             datatype * const p = &t[0];
-            datatype p0 = abs(p[0]) < 1e-20f ? 1e20f : datatype(1.0f) / p[0];
+            datatype p0 = pivot_reciprocal(p[0]);
             datatype p2 = -p[2] * p0;
             datatype p1 = p[1] * p0;
             datatype p3 = p[3] + p2 * p[1];
-            datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+            datatype divisor2 = pivot_reciprocal(p3);
             datatype C2 = -p1 * divisor2;
             p[0] = -(p0 + C2 * p2);
             p[1] = -C2;
@@ -1466,7 +1473,7 @@ public:
 
         for (unsigned i = 0; i < row; i++){
             vektor<datatype> & row_i = rows[i];
-            datatype divisor = abs(row_i[i]) < 1e-20f ? 1e20f : datatype(1.0f) / row_i[i];
+            datatype divisor = pivot_reciprocal(row_i[i]);
             unsigned j;
             for (j = 0; j < i; j++) {
                 vektor<datatype> & row_j = rows[j];
@@ -1521,12 +1528,12 @@ public:
             vektor<datatype> & row_i1 = rows[i + 1];
             
             // (i,i)-nél lévõ elem inverze
-            const datatype p0 = abs(row_i0[i]) < 1e-20f ? 1e20f : datatype(1.0f) / row_i0[i];
+            const datatype p0 = pivot_reciprocal(row_i0[i]);
             const datatype p1o = row_i0[i + 1];
             const datatype p1 = p1o * p0;
             const datatype p2 = -row_i1[i] * p0;
             const datatype p3 = row_i1.unsafe(i+1) + p2 * p1o;
-            const datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+            const datatype divisor2 = pivot_reciprocal(p3);
             const datatype C2 = -p1 * divisor2;
             const datatype a0 = p0 + C2 * p2; // a0...a3 are the inverse
             const datatype a1 = C2;
@@ -1644,7 +1651,7 @@ public:
         }
         for (unsigned i = hrow; i < nrow; i++) {
             vektor<datatype> & row_i = rows[i];
-            datatype divisor = abs(row_i[i]) < 1e-20f ? 1e20f : datatype(1.0f) / row_i[i];
+            datatype divisor = pivot_reciprocal(row_i[i]);
             unsigned j;
             for (j = 0; j < i; j++) {
                 vektor<datatype> & row_j = rows[j];
@@ -1672,11 +1679,11 @@ public:
     static inline void math_ninv_2x2_fv(datatype * in0, datatype * in1) noexcept {
     // invert one 2x2 matrix, input the address of the first element of the two lines
     //****************************************************************
-        datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        datatype p0 = pivot_reciprocal(in0[0]);
         datatype p2 = -in1[0] * p0;
         datatype p1 = in0[1] * p0;
         datatype p3 = in1[1] + p2 * in0[1];
-        datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        datatype divisor2 = pivot_reciprocal(p3);
         datatype C2 = -p1 * divisor2;
         in0[0] = -(p0 + C2 * p2);
         in0[1] = -C2;
@@ -1688,11 +1695,11 @@ public:
     static inline void math_inv_2x2_fv(datatype * in0, datatype * in1) noexcept {
     // invert one 2x2 matrix, input the address of the first element of the two lines
     //****************************************************************
-        datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        datatype p0 = pivot_reciprocal(in0[0]);
         datatype p2 = -in1[0] * p0;
         datatype p1 = in0[1] * p0;
         datatype p3 = in1[1] + p2 * in0[1];
-        datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        datatype divisor2 = pivot_reciprocal(p3);
         datatype C2 = -p1 * divisor2;
         in0[0] = p0 + C2 * p2;
         in0[1] = C2;
@@ -1705,7 +1712,7 @@ public:
     // invert one 4x4 matrix, input the address of the first element of the four lines
     //****************************************************************
         // 0th row
-        datatype a00 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        datatype a00 = pivot_reciprocal(in0[0]);
         datatype a01 = a00 * in0[1];
         datatype a02 = a00 * in0[2];
         datatype a03 = a00 * in0[3];
@@ -1722,7 +1729,7 @@ public:
         datatype a32 = in3[2] - in3[0] * a02;
         datatype a33 = in3[3] - in3[0] * a03;
         // 1st row
-        a11 = abs(a11) < 1e-20f ? 1e20f : datatype(1.0f) / a11;
+        a11 = pivot_reciprocal(a11);
         a10 *= a11;
         a12 *= a11;
         a13 *= a11;
@@ -1739,7 +1746,7 @@ public:
         a33 -= a31 * a13;
         a31 *= -a11;
         // 2nd row
-        a22 = abs(a22) < 1e-20f ? 1e20f : datatype(1.0f) / a22;
+        a22 = pivot_reciprocal(a22);
         a20 *= a22;
         a21 *= a22;
         a23 *= a22;
@@ -1756,7 +1763,7 @@ public:
         a33 -= a32 * a23;
         a32 *= -a22;
         // 3rd row
-        a33 = abs(a33) < 1e-20f ? 1e20f : datatype(1.0f) / a33;
+        a33 = pivot_reciprocal(a33);
         a30 *= a33;
         a31 *= a33;
         a32 *= a33;
@@ -1783,7 +1790,7 @@ public:
     // invert one 4x4 matrix, input the address of the first element of the four lines
     //****************************************************************
         // 0th row
-        datatype a00 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        datatype a00 = pivot_reciprocal(in0[0]);
         datatype a01 = a00 * in0[1];
         datatype a02 = a00 * in0[2];
         datatype a03 = a00 * in0[3];
@@ -1800,7 +1807,7 @@ public:
         datatype a32 = in3[2] - in3[0] * a02;
         datatype a33 = in3[3] - in3[0] * a03;
         // 1st row
-        a11 = abs(a11) < 1e-20f ? 1e20f : datatype(1.0f) / a11;
+        a11 = pivot_reciprocal(a11);
         a10 *= a11;
         a12 *= a11;
         a13 *= a11;
@@ -1817,7 +1824,7 @@ public:
         a33 -= a31 * a13;
         a31 *= -a11;
         // 2nd row
-        a22 = abs(a22) < 1e-20f ? 1e20f : datatype(1.0f) / a22;
+        a22 = pivot_reciprocal(a22);
         a20 *= a22;
         a21 *= a22;
         a23 *= a22;
@@ -1834,7 +1841,7 @@ public:
         a33 -= a32 * a23;
         a32 *= -a22;
         // 3rd row
-        a33 = abs(a33) < 1e-20f ? 1e20f : datatype(1.0f) / a33;
+        a33 = pivot_reciprocal(a33);
         a30 *= a33;
         a31 *= a33;
         a32 *= a33;
@@ -2119,7 +2126,7 @@ public:
         }
         for (unsigned i = hrow; i < nrow; i++) {
             vektor<datatype> & row_i = rows[i];
-            datatype divisor = abs(row_i[i]) < 1e-20f ? 1e20f : datatype(1.0f) / row_i[i];
+            datatype divisor = pivot_reciprocal(row_i[i]);
             unsigned j;
             for (j = 0; j < i; j++) {
                 vektor<datatype> & row_j = rows[j];
@@ -2282,11 +2289,11 @@ public:
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
-        const datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        const datatype p0 = pivot_reciprocal(in0[0]);
         const datatype p2 = -in1[0] * p0;
         const datatype p1 = in0[1] * p0;
         const datatype p3 = in1[1] + p2 * in0[1];
-        const datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        const datatype divisor2 = pivot_reciprocal(p3);
         const datatype C2 = -p1 * divisor2;
         const datatype nzb00 = in0[0] = -(p0 + C2 * p2);
         const datatype nzb01 = in0[1] = -C2;
@@ -2312,11 +2319,11 @@ public:
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
-        const datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        const datatype p0 = pivot_reciprocal(in0[0]);
         const datatype p2 = -in1[0] * p0;
         const datatype p1 = in0[1] * p0;
         const datatype p3 = in1[1] + p2 * in0[1];
-        const datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        const datatype divisor2 = pivot_reciprocal(p3);
         const datatype C2 = -p1 * divisor2;
         const datatype nzb00 = in0[0] = -(p0 + C2 * p2);
         const datatype nzb01 = in0[1] = -C2;
@@ -2340,10 +2347,10 @@ public:
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
-        const datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        const datatype p0 = pivot_reciprocal(in0[0]);
         const datatype p2 = -in0[1] * p0;
         const datatype p3 = in1[1] + p2 * in0[1];
-        const datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        const datatype divisor2 = pivot_reciprocal(p3);
         const datatype C2 = -p2 * divisor2;
         const datatype nzb00 = in0[0] = C2 * p2 - p0;
         const datatype nzb01 = in0[1] = in1[0] = C2;
@@ -2368,10 +2375,10 @@ public:
         is_true_error(yb.is_symm, "matrix::math_2_ninv_mul", "symmetrical matrix not allowed");
         datatype * in0 = &yb.rows[0][0];
         datatype * in1 = &yb.rows[1][0];
-        const datatype p0 = abs(in0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / in0[0];
+        const datatype p0 = pivot_reciprocal(in0[0]);
         const datatype p2 = -in0[1] * p0;
         const datatype p3 = in1[1] + p2 * in0[1];
-        const datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+        const datatype divisor2 = pivot_reciprocal(p3);
         const datatype C2 = -p2 * divisor2;
         const datatype nzb00 = in0[0] = C2 * p2 - p0;
         const datatype nzb01 = in0[1] = in1[0] = C2;
@@ -2517,10 +2524,10 @@ public:
         if (row == 2) {
             datatype * const ps0 = &rows[0][0];
             datatype * const ps1 = &rows[1][0];
-            datatype p0 = abs(ps0[0]) < 1e-20f ? 1e20f : datatype(1.0f) / ps0[0];
+            datatype p0 = pivot_reciprocal(ps0[0]);
             datatype p2 = -ps0[1] * p0;
             datatype p3 = ps1[1] + p2 * ps0[1];
-            datatype divisor2 = abs(p3) < 1e-20f ? 1e20f : datatype(1.0f) / p3;
+            datatype divisor2 = pivot_reciprocal(p3);
             datatype C2 = -p2 * divisor2;
             ps0[0] = C2 * p2 - p0;
             ps1[0] = ps0[1] = C2;
@@ -2534,7 +2541,7 @@ public:
         for (i = 0; i < row; i++) {
             vektor<datatype> & row_i = rows[i];
             datatype & pivot = row_i[i];
-            datatype divisor = abs(pivot) < 1e-20f ? 1e20f : datatype(1.0f) / pivot;
+            datatype divisor = pivot_reciprocal(pivot);
             for (k = 0; k < i; ++k) { datatype & v = rows[k][i]; b0[k] = v;	    bs[k] = v *= divisor; }
                                                                  b0[k] = pivot;	bs[k] = pivot = -divisor;
             for (k++; k < row; k++) { datatype & v = row_i[k];   b0[k] = v;	    bs[k] = v *= divisor; }
