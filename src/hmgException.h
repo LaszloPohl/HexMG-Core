@@ -60,6 +60,8 @@ public:
 
 
 //***********************************************************************
+class ConvergenceFailure : public hmgExcept { public: using hmgExcept::hmgExcept; };
+
 #define todo_error
 //***********************************************************************
 

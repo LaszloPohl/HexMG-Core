@@ -883,6 +883,47 @@ void HmgFileReader::ReadFile(const std::string& fileNameWithPath) {
         if(circuit==names.end()) throw hmgExcept(option.defaultRails?"TRANSIENT_INITIAL_STATE":"TRANSIENT_INITIAL_TEMPERATURE","Unknown circuit %s",option.circuit.c_str());
         option.circuitId=circuit->second;
     }
+    for(const auto& circuit:optimization::adaptiveNonconvergence) {
+        const auto control=std::find_if(optimization::adaptiveVoltage.begin(),optimization::adaptiveVoltage.end(),
+            [&](const auto& item){return item.circuit==circuit;});
+        if(control==optimization::adaptiveVoltage.end())throw hmgExcept("ADAPTIVE_NONCONVERGENCE","Missing ADAPTIVE_VOLTAGE for %s",circuit.c_str());
+        control->acceptNonconverged=true;
+    }
+    for(auto& option:optimization::adaptiveVoltage) {
+        const auto& names=HMGFileListItem::globalNames.fullCircuitNames;
+        const auto circuit=names.find(option.circuit);
+        if(circuit==names.end())throw hmgExcept("ADAPTIVE_VOLTAGE","Unknown circuit %s",option.circuit.c_str());
+        option.circuitId=circuit->second;
+        if(std::none_of(optimization::adaptiveVoltageNodes.begin(),optimization::adaptiveVoltageNodes.end(),
+            [&](const auto& node){return node.circuit==option.circuit;}))
+            throw hmgExcept("ADAPTIVE_VOLTAGE","No monitored nodes for %s",option.circuit.c_str());
+    }
+    for(auto& save:optimization::adaptiveSaveProbes) {
+        auto& names=HMGFileListItem::globalNames;
+        const auto control=std::find_if(optimization::adaptiveVoltage.begin(),optimization::adaptiveVoltage.end(),
+            [&](const auto& item){return item.circuit==save.circuit;});
+        if(control==optimization::adaptiveVoltage.end())throw hmgExcept("ADAPTIVE_SAVE_PROBES","Missing ADAPTIVE_VOLTAGE for %s",save.circuit.c_str());
+        save.circuitId=control->circuitId;
+        for(const auto& name:save.names) {
+            const auto found=names.probeNames.find(name);
+            if(found==names.probeNames.end())throw hmgExcept("ADAPTIVE_SAVE_PROBES","Unknown probe %s",name.c_str());
+            const auto* probe=names.probeData[found->second];
+            if(probe->fullCircuitID!=save.circuitId || (probe->probeType!=ptV&&probe->probeType!=ptI))
+                throw hmgExcept("ADAPTIVE_SAVE_PROBES","Expected voltage/current probe in the same circuit: %s",name.c_str());
+            save.probeIds.push_back(found->second);
+        }
+    }
+    for(auto& option:optimization::adaptiveVoltageNodes) {
+        auto& names=HMGFileListItem::globalNames;
+        const auto control=std::find_if(optimization::adaptiveVoltage.begin(),optimization::adaptiveVoltage.end(),
+            [&](const auto& item){return item.circuit==option.circuit;});
+        if(control==optimization::adaptiveVoltage.end())throw hmgExcept("ADAPTIVE_VOLTAGE_NODE","Missing ADAPTIVE_VOLTAGE for %s",option.circuit.c_str());
+        option.circuitId=control->circuitId;
+        std::vector<char> node(option.node.begin(),option.node.end());node.push_back(0);
+        if(!names.textToDeepInterfaceNodeID(node.data(),option.circuitId,option.id)||option.id.isController||option.id.nodeID.isStepStart||
+           (option.id.nodeID.type!=nvtN&&option.id.nodeID.type!=nvtX&&option.id.nodeID.type!=nvtY&&option.id.nodeID.type!=nvtO))
+            throw hmgExcept("ADAPTIVE_VOLTAGE_NODE","Expected physical potential node: %s",option.node.c_str());
+    }
     for(auto& option:optimization::newtonForwardLimits) {
         auto& names=HMGFileListItem::globalNames;
         const auto circuit=names.fullCircuitNames.find(option.circuit);

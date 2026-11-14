@@ -1,5 +1,10 @@
 # Optimalizált HexMG-Core – fejlesztési ág
 
+2026-11-14: [adaptív feszültségalapú időlépés](ADAPTIVE_TIME_HU.md), teljes
+állapot-visszaállítással, választható nem konvergált folytatással és köztes
+mérésmentéssel. A felhasználó által jóváhagyott opcionális sorok; alapváltozat
+változatlan. 67/19 natív és 143/4 GUI-adatút-ellenőrzés.
+
 2026-10-27. Ág: `codex/optimized-solver`.
 Kiindulópont: `631f316f1bf095eabf1413bbb332c75924c30086`, hivatalos `main`.
 

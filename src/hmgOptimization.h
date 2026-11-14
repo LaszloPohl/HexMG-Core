@@ -48,6 +48,30 @@ struct NewtonForwardLimit {
 };
 inline std::vector<NewtonForwardLimit> newtonForwardLimits;
 inline unsigned long long limitedNewtonSteps=0;
+struct AdaptiveVoltage {
+    std::string circuit;
+    double relativeLimit=0, minimumStep=0;
+    unsigned maximumIntermediateSteps=0, circuitId=0;
+    bool acceptNonconverged=false;
+};
+struct AdaptiveVoltageNode {
+    std::string circuit,node;
+    unsigned circuitId=0;
+    DeepInterfaceNodeID id;
+};
+inline std::vector<AdaptiveVoltage> adaptiveVoltage;
+inline std::vector<AdaptiveVoltageNode> adaptiveVoltageNodes;
+inline std::vector<std::string> adaptiveNonconvergence;
+struct AdaptiveSaveProbes {
+    std::string circuit;
+    std::vector<std::string> names;
+    std::vector<unsigned> probeIds;
+    unsigned circuitId=0;
+    bool written=false;
+};
+inline std::vector<AdaptiveSaveProbes> adaptiveSaveProbes;
+inline unsigned long long adaptiveAcceptedSteps=0,adaptiveRejectedSteps=0,adaptiveForcedSteps=0;
+
 inline std::vector<function_guard::Rule> functionGuards;
 inline std::vector<function_guard::RangeRule> functionRanges;
 struct FunctionDerivative {
@@ -81,6 +105,10 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextProfile = convergenceDefault;
     auto nextNodes = convergenceNodes;
     auto nextLimits = newtonForwardLimits;
+    auto nextAdaptive=adaptiveVoltage;
+    auto nextAdaptiveNodes=adaptiveVoltageNodes;
+    auto nextNonconvergence=adaptiveNonconvergence;
+    auto nextSaves=adaptiveSaveProbes;
     auto nextGuards = functionGuards;
     auto nextRanges = functionRanges;
     auto nextDerivatives = functionDerivatives;
@@ -126,6 +154,30 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
                 if(!nodeKeys.emplace(t[1],t[2]).second) fail();
                 nextNodes.push_back({t[1],t[2],profile,0,{}});
             }
+        } else if(t.size()==5 && t[0]=="ADAPTIVE_VOLTAGE") {
+            AdaptiveVoltage option;option.circuit=t[1];
+            const auto number=[&](size_t at) {
+                double v=0;const auto r=std::from_chars(t[at].data(),t[at].data()+t[at].size(),v);
+                if(r.ec!=std::errc{}||r.ptr!=t[at].data()+t[at].size()||!std::isfinite(v)||v<=0)fail();
+                return v;
+            };
+            option.relativeLimit=number(2);option.minimumStep=number(3);
+            const auto parsed=std::from_chars(t[4].data(),t[4].data()+t[4].size(),option.maximumIntermediateSteps);
+            if(parsed.ec!=std::errc{}||parsed.ptr!=t[4].data()+t[4].size())fail();
+            for(const auto& previous:nextAdaptive)if(previous.circuit==option.circuit)fail();
+            nextAdaptive.push_back(std::move(option));
+        } else if(t.size()>=3 && t[0]=="ADAPTIVE_SAVE_PROBES") {
+            for(const auto& previous:nextSaves)if(previous.circuit==t[1])fail();
+            if(!std::all_of(t[1].begin(),t[1].end(),[](unsigned char c){return std::isalnum(c)||c=='_';}))fail();
+            AdaptiveSaveProbes save;save.circuit=t[1];save.names.assign(t.begin()+2,t.end());
+            std::set<std::string> unique(save.names.begin(),save.names.end());
+            if(unique.size()!=save.names.size())fail();nextSaves.push_back(std::move(save));
+        } else if(t.size()==3 && t[0]=="ADAPTIVE_NONCONVERGENCE" && t[2]=="ACCEPT_LAST") {
+            if(std::find(nextNonconvergence.begin(),nextNonconvergence.end(),t[1])!=nextNonconvergence.end())fail();
+            nextNonconvergence.push_back(t[1]);
+        } else if(t.size()==3 && t[0]=="ADAPTIVE_VOLTAGE_NODE") {
+            for(const auto& previous:nextAdaptiveNodes)if(previous.circuit==t[1]&&previous.node==t[2])fail();
+            nextAdaptiveNodes.push_back({t[1],t[2],0,{}});
         } else if(t.size()==5 && t[0]=="NEWTON_FORWARD_LIMIT") {
             NewtonForwardLimit limit;limit.circuit=t[1];limit.anode=t[2];limit.cathode=t[3];
             const auto parsed=std::from_chars(t[4].data(),t[4].data()+t[4].size(),limit.maximumStep);
@@ -199,6 +251,8 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     }
     relativeConvergence=nextRelative; convergenceDefault=nextProfile; convergenceNodes=std::move(nextNodes);
     newtonForwardLimits=std::move(nextLimits);
+    adaptiveVoltage=std::move(nextAdaptive);adaptiveVoltageNodes=std::move(nextAdaptiveNodes);
+    adaptiveNonconvergence=std::move(nextNonconvergence);adaptiveSaveProbes=std::move(nextSaves);
     functionGuards=std::move(nextGuards);
     functionRanges=std::move(nextRanges);
     functionDerivatives=std::move(nextDerivatives);
@@ -212,6 +266,7 @@ inline void report() {
     std::cout << "HEXMG_OPT: LEVEL0 " << (precision == Precision::Extended ? "EXTENDED" : precision == Precision::Double ? "DOUBLE" : "AUTO")
         << "; reference-checked double steps=" << doubleSteps.load()
         << "; extended fallbacks=" << extendedFallbacks.load()
+        << "; adaptive accepted/rejected/forced=" << adaptiveAcceptedSteps << "/" << adaptiveRejectedSteps << "/" << adaptiveForcedSteps
         << "; limited Newton updates=" << limitedNewtonSteps
         << "; higher levels unchanged; AC unchanged\n";
 }

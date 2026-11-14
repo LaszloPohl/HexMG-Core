@@ -45,7 +45,7 @@ static void requireValidErr(rvt e) {
 
 static void requireConverged(rvt e, rvt limit) {
     if (!(std::isfinite(e) && e <= limit))
-        throw hmgExcept("requireConverged", "Did not converge: error=%g, ERR=%g", e, limit);
+        throw ConvergenceFailure("requireConverged", "Did not converge: error=%g, ERR=%g", e, limit);
 }
 
 // A separate path leaves legacy decks and multigrid stopping rules unchanged.
@@ -119,8 +119,16 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         balanceError=measure(false);
         std::cout << "Relative iter " << curretIterN << " state=" << stateError << " balance=" << balanceError << std::endl;
     } while(curretIterN<limit && (requestedIterations || stateError>1 || balanceError>1));
+    if(!requestedIterations && !(stateError<=1 && balanceError<=1)) {
+        const NodeVariable* worst=nullptr;double worstError=0;
+        for(const auto* node:nodes){const double value=node->relativeBalanceError(relative);if(value>worstError){worst=node;worstError=value;}}
+        if(worst){const auto profile=worst->effectiveConvergenceProfile();
+            std::cout<<"Convergence balance node="<<worst->nid[3]<<'/'<<worst->nid[2]<<'/'<<worst->nid[1]<<'/'<<worst->nid[0]
+                <<" residual="<<worst->getDDC()<<" magnitude="<<worst->extension->physicalMagnitude.loadRvt(worst->isConcurrent)
+                <<" absolute="<<profile.balanceAbsolute<<" role="<<static_cast<int>(worst->convergenceRole)<<"\n";}
+    }
     if(!requestedIterations && !(stateError<=1 && balanceError<=1))
-        throw hmgExcept("convergence","Circuit %u did not converge in %u updates: normalized state=%g, balance=%g (both must be <=1)",
+        throw ConvergenceFailure("convergence","Circuit %u did not converge in %u updates: normalized state=%g, balance=%g (both must be <=1)",
             fullCircuitID,curretIterN,stateError,balanceError);
     CircuitStorage::AcceptStepDC(fullCircuitID);
     circuitsWithDCState.insert(fullCircuitID);
@@ -192,6 +200,101 @@ void Simulation::runTimeStep(uns requestedIterations) {
     CircuitStorage::AcceptStepDC(fullCircuitID);
 }
 
+void Simulation::runAdaptiveTimeStep(const RunData& runData, const optimization::AdaptiveVoltage& control) {
+    const auto previousPrecision=std::cout.precision(17);
+    struct RestorePrecision { std::streamsize value; ~RestorePrecision(){std::cout.precision(value);} } precision{previousPrecision};
+    if(runData.iterNumSPD)throw hmgExcept("ADAPTIVE_VOLTAGE","ITER/ITERS cannot certify convergence of an adaptive step");
+    requireValidErr(err);
+    auto& storage=CircuitStorage::getInstance();
+    auto* component=storage.fullCircuitInstances[fullCircuitID].component.get();
+    TimeState checkpoint;
+    component->collectTimeState(checkpoint);
+    checkpoint.add(&SimControl::timeStepStart);checkpoint.add(&SimControl::timeStepStop);
+    checkpoint.add(&SimControl::dt);checkpoint.add(&SimControl::iter);checkpoint.add(&SimControl::stepError);
+    checkpoint.add(timeFreqValue);checkpoint.add(dtValue);
+    checkpoint.prepare();
+    unsigned acceptedIteration=curretIterN;
+    const auto restore=[&] {checkpoint.restore();curretIterN=acceptedIteration;};
+    std::vector<const NodeVariable*> monitored;
+    for(const auto& node:optimization::adaptiveVoltageNodes)
+        if(node.circuitId==fullCircuitID) monitored.push_back(&CircuitStorage::limitNode(fullCircuitID,node.id));
+    const rvt target=runData.isDT?SimControl::timeStepStop.getValueDC()+runData.fTauDtT:runData.fTauDtT;
+    rvt acceptedTime=SimControl::timeStepStop.getValueDC();
+    if(!std::isfinite(target)||target<=acceptedTime)throw hmgExcept("ADAPTIVE_VOLTAGE","Target time must be finite and later than accepted time");
+    rvt step=target-acceptedTime;
+    unsigned intermediate=0;
+    while(acceptedTime<target) {
+        const bool countLimit=control.maximumIntermediateSteps && intermediate>=control.maximumIntermediateSteps;
+        if(countLimit)step=target-acceptedTime;
+        std::vector<rvt> previous;previous.reserve(monitored.size());
+        for(const auto* node:monitored)previous.push_back(node->getAcceptedValueDC());
+        while(true) {
+            step=std::min(step,target-acceptedTime);
+            const rvt candidate=acceptedTime+step;
+            const rvt rounding=8*std::numeric_limits<rvt>::epsilon()*std::max(std::abs(target),std::abs(candidate));
+            const rvt trialEnd=step>=target-acceptedTime || target-candidate<=rounding?target:candidate;
+            if(!(trialEnd>acceptedTime))throw hmgExcept("ADAPTIVE_VOLTAGE","Time step is below representable resolution at %g s",acceptedTime);
+            SimControl::stepTransientWithTStop(trialEnd);
+            timeFreqValue=trialEnd;dtValue=SimControl::dt.getValueDC();
+            SimControl::stepError.setValueDC(rvt0);
+            bool nonconverged=false;
+            try {
+                try { runTimeStep(); }
+                catch(const ConvergenceFailure& error) {
+                    if(step>control.minimumStep) {
+                        restore();++optimization::adaptiveRejectedSteps;
+                        std::cout<<"ADAPTIVE_VOLTAGE: rejected nonconverged t="<<trialEnd<<" dt="<<step<<" s\n";
+                        step=std::max(control.minimumStep,step/2);continue;
+                    }
+                    if(!control.acceptNonconverged)throw;
+                    // Only a finite, material-valid last iterate is admissible.
+                    // The residual is refreshed with OLD histories before accept.
+                    CircuitStorage::CalculateControllersDC(fullCircuitID);
+                    CircuitStorage::CalculateValuesAndCurrentsDC(fullCircuitID);
+                    checkpoint.requireFinite();
+                    const rvt defect=defectError(component->collectCurrentDefectDC());
+                    CircuitStorage::AcceptStepDC(fullCircuitID);nonconverged=true;
+                    std::cout<<"HEXMG_WARNING NONCONVERGED_STEP circuit="<<control.circuit<<" t="<<trialEnd
+                        <<" dt="<<dtValue<<" defect="<<defect<<" "<<error.what();
+                }
+                checkpoint.requireFinite();
+                rvt maximumChange=0;
+                for(size_t i=0;i<monitored.size();++i) {
+                    const rvt value=monitored[i]->getAcceptedValueDC();
+                    const rvt change=std::abs(value-previous[i])/(std::abs(previous[i])+rvt(1e-6));
+                    if(!std::isfinite(change))throw hmgExcept("ADAPTIVE_VOLTAGE","Non-finite monitored voltage");
+                    maximumChange=std::max(maximumChange,change);
+                }
+                const bool tooLarge=maximumChange>control.relativeLimit;
+                if(tooLarge && step>control.minimumStep && !countLimit) {
+                    restore();++optimization::adaptiveRejectedSteps;
+                    std::cout<<"ADAPTIVE_VOLTAGE: rejected change="<<maximumChange<<" dt="<<step<<" s\n";
+                    step=control.minimumStep;continue;
+                }
+                acceptedTime=SimControl::timeStepStop.getValueDC();
+                if(tooLarge) {
+                    ++optimization::adaptiveForcedSteps;
+                    std::cout<<"ADAPTIVE_VOLTAGE: change limit exceeded at "<<(countLimit?"intermediate-step limit":"minimum step")<<"; ";
+                }
+                std::cout<<"ADAPTIVE_VOLTAGE: accepted t="<<acceptedTime<<" dt="<<dtValue<<" change="<<maximumChange
+                    <<" converged="<<(!nonconverged)<<"\n";
+                ++optimization::adaptiveAcceptedSteps;
+                if(acceptedTime<target) {
+                    ++intermediate;
+                    for(auto& save:optimization::adaptiveSaveProbes)if(save.circuitId==fullCircuitID) {
+                        const std::string file="adaptive_"+save.circuit+".res";
+                        storage.save(false,false,true,save.written,unsMax,file.c_str(),save.probeIds);
+                        save.written=true;
+                    }
+                }
+                checkpoint.capture();acceptedIteration=curretIterN;
+                step=std::min(target-acceptedTime,step*8);
+                break;
+            } catch(...) {restore();throw;}
+        }
+    }
+}
+
 void Simulation::runAC() {
 
 //***********************************************************************
@@ -258,6 +361,7 @@ void Simulation::run(const RunData& runData) {
     // ******************************************************************
 
     if (runData.isMultigrid) {
+        if(!optimization::adaptiveVoltage.empty())throw hmgExcept("ADAPTIVE_VOLTAGE","Multigrid adaptive execution is not implemented");
         if(!optimization::smallSignalOperatingPoints.empty())
             throw hmgExcept("SMALL_SIGNAL_OPERATING_POINT","Operating-point initialization is not implemented for multigrid runs");
         if(!optimization::transientInitialTemperatures.empty())
@@ -339,6 +443,10 @@ void Simulation::run(const RunData& runData) {
         }
         break;
         case atTimeStep: {
+            const auto adaptive=std::find_if(optimization::adaptiveVoltage.begin(),optimization::adaptiveVoltage.end(),
+                [&](const auto& control){return control.circuitId==fullCircuitID;});
+            if(adaptive!=optimization::adaptiveVoltage.end()) {runAdaptiveTimeStep(runData,*adaptive);break;}
+
             if (runData.isDT)
                 SimControl::stepTransientWithDT(runData.fTauDtT);
             else

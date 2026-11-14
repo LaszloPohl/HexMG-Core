@@ -14,6 +14,7 @@
 //***********************************************************************
 #include "hmgException.h"
 #include "hmgCommon.h"
+#include "hmgOptimization.h"
 #include <set>
 //***********************************************************************
 
@@ -39,6 +40,7 @@ class Simulation {
     void runRelativeDC(bool timeStep, uns requestedIterations);
     void runDC(uns requestedIterations = 0);
     void runTimeStep(uns requestedIterations = 0);
+    void runAdaptiveTimeStep(const RunData&, const optimization::AdaptiveVoltage&);
     void runAC();
 public:
     //***********************************************************************

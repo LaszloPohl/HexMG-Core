@@ -20,6 +20,7 @@
 #include "hmgMultigrid.hpp"
 #include "hmgSimulation.h"
 #include "hmgSaver.h"
+#include "hmgTimeState.h"
 //***********************************************************************
 
 
@@ -170,6 +171,9 @@ public:
     virtual void calculateValueDC() noexcept = 0; // no AC version
     virtual uns calculateControllersDC([[maybe_unused]] uns level, [[maybe_unused]] controllerOperationStage stage) { return 0; } // no AC version, return: next level => if <= current, no next level
     virtual void collectConvergenceNodes(std::vector<NodeVariable*>&) {}
+    virtual void collectTimeState(TimeState& state) {
+        for(uns i=0;i<pModel->getN_ExternalNodes();++i) state.add(getNode(i));
+    }
     // Pure thermal circuits only: terminals are temperatures; auxiliary B variables are not.
     virtual void initializeThermalNodes(rvt temperature) {
         for(uns i=0;i<pModel->getN_ExternalNodes();++i) {
@@ -213,6 +217,9 @@ protected:
     NodeVariable componentCurrent;
 public:
     using ComponentBase::ComponentBase;
+    void collectTimeState(TimeState& state) override {
+        ComponentBase::collectTimeState(state);state.add(&componentValue);state.add(&componentCurrent);
+    }
     const NodeVariable& getComponentValue() const noexcept override { return componentValue; }
     const NodeVariable& getComponentCurrent() const noexcept override { return componentCurrent; }
     void buildForAC() override {}
@@ -510,6 +517,9 @@ class ComponentConstGMeas : public ComponentConstGMeasBase {
     rvt IMD = rvt0;
     cplx IAC = cplx0, IMC = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(IMD);
+    }
     //***********************************************************************
     using ComponentConstGMeasBase::ComponentConstGMeasBase;
     //************************** AC / DC functions *******************************
@@ -661,6 +671,9 @@ class ComponentConstRDiss : public Component_RDissBase {
 protected:
     Param share; // share of the dissipation between N2 and N3
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(PDC);
+    }
     //***********************************************************************
     using Component_RDissBase::Component_RDissBase;
     //************************** AC / DC functions *******************************
@@ -950,6 +963,9 @@ class ComponentConstGMD : public Component_GMDBase {
 protected:
     Param share; // share of the dissipation between N3 and N4
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(PDC);state.add(IMD);
+    }
     //***********************************************************************
     using Component_GMDBase::Component_GMDBase;
     //************************** AC / DC functions *******************************
@@ -1150,6 +1166,9 @@ public:
     rvt getJreducedDC([[maybe_unused]] uns y) const noexcept override { return rvt0; }
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override { return y == x ? Gc : -Gc; }
     void acceptStepDC() noexcept override { I_stepStart = componentCurrent.getValueDC(); }
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(I_stepStart);state.add(Gc);
+    }
     //***********************************************************************
     void calculateYiiDC() noexcept override {
     //***********************************************************************
@@ -1669,6 +1688,9 @@ protected:
     rvt IDC1 = rvt0, IDC2 = rvt0;
     cplx IAC1 = cplx0, IAC2 = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(IDC1);state.add(IDC2);
+    }
     //***********************************************************************
     using RealComponent::RealComponent;
     //***********************************************************************
@@ -1803,6 +1825,9 @@ protected:
     rvt NZBJB_DC = rvt0;
     cplx NZBJB_AC = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(NZBJB_DC);
+    }
     //***********************************************************************
     // par1: DC value before t=0, par2: DC value after t=0, par3: AC value, par4: AC phase [rad],
     // par5: G value of the voltage source, this means a G = 1/G resistor on the B side of the girator
@@ -2054,6 +2079,9 @@ protected:
     rvt RJB = rvt0;
     cplx CJB = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(RJB);
+    }
     //***********************************************************************
     // par1: DC value before t=0, par2: DC value after t=0, par3: AC value, par4: AC phase [rad],
     // par5: G value of the voltage source, this means a G = 1/G resistor on the B side of the girator
@@ -2218,6 +2246,9 @@ protected:
     rvt NZBJB_DC = rvt0;
     cplx NZBJB_AC = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(NZBJB_DC);
+    }
     //***********************************************************************
     // par: G value of the voltmeter, this means a G = 1/G resistor on the B side of the girator
     //***********************************************************************
@@ -2443,6 +2474,9 @@ protected:
     rvt RJB = rvt0;
     cplx CJB = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(RJB);
+    }
     //***********************************************************************
     // par1: DC value before t=0, par2: DC value after t=0, par3: AC value, par4: AC phase [rad],
     // par5: G value of the voltage source, this means a G = 1/G resistor on the B side of the girator
@@ -2603,6 +2637,9 @@ class Component_Function_Controlled_I_with_const_G final : public RealComponent 
     cplx IAC = cplx0;
     mutable rvt dg = rvt0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(workField);state.add(dg);
+    }
     //***********************************************************************
     Component_Function_Controlled_I_with_const_G(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -2813,6 +2850,9 @@ class Component_Function_Controlled_I_with_const_GD final : public RealComponent
     cplx PAC = cplx0;
     mutable rvt dg = rvt0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(workField);state.add(dg);state.add(PDC);
+    }
     //***********************************************************************
     Component_Function_Controlled_I_with_const_GD(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -3081,6 +3121,9 @@ class Component_Function_Controlled_I_with_const_GM final : public RealComponent
     cplx IAC = cplx0, IMC = cplx0;
     mutable rvt dg = rvt0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(workField);state.add(dg);state.add(IMD);
+    }
     //***********************************************************************
     Component_Function_Controlled_I_with_const_GM(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -3321,6 +3364,9 @@ class Component_Function_Controlled_I_with_const_GMD final : public RealComponen
     cplx IMC = cplx0;
     mutable rvt dg = rvt0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(workField);state.add(dg);state.add(PDC);state.add(IMD);
+    }
     //***********************************************************************
     Component_Function_Controlled_I_with_const_GMD(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -3609,6 +3655,9 @@ class Component_Function_Controlled_Node final : public RealComponent {
     std::vector<rvt> workField;
     cplx IAC = cplx0;
 public:
+    void collectTimeState(TimeState& state) override {
+        RealComponent::collectTimeState(state);state.add(workField);
+    }
     //***********************************************************************
     Component_Function_Controlled_Node(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :RealComponent{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -3734,6 +3783,12 @@ class Controller final : public ComponentAndControllerBase {
     std::vector<ComponentAndControllerBase*> functionComponentParams;
     std::vector<rvt> workField;
 public:
+    void collectTimeState(TimeState& state) {
+        for(auto* node:externalNodes) state.add(node);
+        for(auto& node:mVars) state.add(&node);
+        state.add(workField);
+    }
+
     //***********************************************************************
     Controller(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :ComponentAndControllerBase{ def_, defaultNodeValueIndex_ } {
     // workField size: 
@@ -3927,6 +3982,14 @@ class ComponentSubCircuit final : public ComponentBase {
     void backsubsAC();
     //***********************************************************************
 public:
+    void collectTimeState(TimeState& state) override {
+        for(auto* node:externalNodes) state.add(node);
+        for(auto& node:internalNodesAndVars) state.add(&node);
+        state.add(externalCurrents);
+        for(auto& component:components) component->collectTimeState(state);
+        for(auto& controller:controllers) controller->collectTimeState(state);
+    }
+
     //***********************************************************************
     ComponentSubCircuit(const ComponentDefinition* def_, uns defaultNodeValueIndex_) :ComponentBase{ def_, defaultNodeValueIndex_ } {
     //***********************************************************************
