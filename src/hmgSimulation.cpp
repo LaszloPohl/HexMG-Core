@@ -197,6 +197,14 @@ void Simulation::runAC() {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
     auto* component=gc.fullCircuitInstances[fullCircuitID].component.get();
+    // Zero denotes the artificial first DC/Newton update in legacy junction
+    // functions. A supplied operating point is already a physical state.
+    // Keep the caller's counter intact, including when validation throws.
+    struct PhysicalIteration {
+        uns previous=curretIterN;
+        PhysicalIteration() { if(curretIterN==0)curretIterN=1; }
+        ~PhysicalIteration() { curretIterN=previous; }
+    } physicalIteration;
     // Refresh functions at the supplied/current real state, without a Newton
     // solve, node reset or timestep acceptance. Capacitor DC current/history
     // must survive AC inserted between two time steps.

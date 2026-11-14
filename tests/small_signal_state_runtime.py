@@ -63,6 +63,13 @@ for tree in (False,True):
         run('loaded'+str(selected)+suffix,deck('.SET C.N0 2\n.RUN C AC F=1 ERR=1e-11\n'+save,options,tree),{'result.txt':ac(2 if selected else (math.sqrt(37)-1)/2)})
         run('live-dc'+str(selected)+suffix,deck('.RUN C DC INITIAL ERR=1e-11\n.RUN C AC F=1 ERR=1e-11\n'+save,options,tree),{'result.txt':ac((math.sqrt(37)-1)/2)})
     run('changed-supplied'+suffix,deck('.SET C.N0 2\n.RUN C AC F=1 ERR=1e-11\n'+save+'\n.SET C.N0 1\n.RUN C AC F=2\n.SAVE RAW APPEND FILE="result.txt" V',option+'\n'+guard,tree),{'result.txt':ac(2)+ac(1,2)})
+    # Legacy converter junctions use an artificial first-iteration secant.
+    # Loading a physical state does not run DC and leaves the counter at zero;
+    # AC must nevertheless evaluate and differentiate the physical branch.
+    startup=deck('.SET C.N0 2\n.RUN C AC F=1\n'+save,option,tree)
+    startup=startup.replace('_MUL RET P0 P0','_C_CURR_ITER V0\n_COPY RET 0\n_JNEQ PHYSICAL: V0 RET\n_MULC RET P0 -100\n_RETURN\nPHYSICAL: _MUL RET P0 P0')
+    startup=startup.replace('.FUNCTION DF P=1 V=0','.FUNCTION DF P=1 V=1').replace('_MULC RET P0 -2','_C_CURR_ITER V0\n_COPY RET 0\n_JNEQ PHYSICALD: V0 RET\n_COPY RET -100\n_RETURN\nPHYSICALD: _MULC RET P0 -2')
+    run('loaded-startup-secant'+suffix,startup,{'result.txt':ac(2)})
     # Backward Euler: V^2 + (C/dt)V = I + (C/dt)Vold.
     v1=(math.sqrt(45)-3)/2;v2=(math.sqrt(45+8*v1)-3)/2
     commands='.RUN C TIMESTEP INITIAL DT=.1 ERR=1e-11\n.SAVE RAW FILE="time.txt" V CI\n.RUN C AC F=1 ERR=1e-11\n'+save+'\n.RUN C TIMESTEP DT=.1 ERR=1e-11\n.SAVE RAW APPEND FILE="time.txt" V CI'
