@@ -2790,10 +2790,15 @@ class HmgF_CustomFunction final : public HmgFunction {
         nIndexField = 2 + nParam;
         nWorkingField = model.nLocal;
         nSpecialParam = 0;
+        uns maximumChildWork = 0;
         for (const auto& line : model.lines) {
             nIndexField += line.pFunction->getN_IndexField();
-            nWorkingField += line.pFunction->getN_WorkingField(); // instead of sum, shouldn't it be max?
+            // fillIndexField places every sequential child immediately after
+            // this function's locals. Siblings reuse that same scratch; only
+            // nested depth, not the number of calls, increases live storage.
+            maximumChildWork = std::max(maximumChildWork, line.pFunction->getN_WorkingField());
         }
+        nWorkingField += maximumChildWork;
     }
 public:
     //***********************************************************************

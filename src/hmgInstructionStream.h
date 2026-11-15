@@ -18,6 +18,8 @@
 #include "hmgException.h"
 #include "hmgCommon.h"
 #include "hmgFunction.hpp"
+#include "hmgOpticalRayFile.h"
+#include <memory>
 //***********************************************************************
 
 
@@ -457,6 +459,13 @@ struct IsComponentIndexInstruction: public IsInstruction {
 
 
 //***********************************************************************
+struct IsBatchControllerInstruction: public IsInstruction {
+    std::string name;uns circuit=0,level=0;
+    std::shared_ptr<const hexmg::optics::File> optical;
+    std::vector<DeepInterfaceNodeID> nodes;
+    IsBatchControllerInstruction():IsInstruction{sitBatchController}{}
+};
+
 struct IsCreateInstruction: public IsInstruction {
 //***********************************************************************
     uns fullCircuitIndex = 0;

@@ -15,6 +15,8 @@
 #include <set>
 #include <charconv>
 #include "hmgBinaryInput.h"
+#include <filesystem>
+#include <fstream>
 //***********************************************************************
 
 
@@ -627,7 +629,7 @@ bool GlobalHMGFileNames::textToDeepInterfaceNodeID(char* token, uns fullCircuitI
         if (currentComponent == nullptr)
             return false;
         if (!currentComponent->instanceListIndex.contains(token))
-            throw hmgExcept("GlobalHMGFileNames::textToDeepInterfaceNodeID", "unknown instance name (%s)", token);
+            throw hmgExcept("GlobalHMGFileNames::textToDeepInterfaceNodeID", "unknown instance name (%.400s)", token);
         uns ci = currentComponent->instanceListIndex[token];
         HMGFileComponentInstanceLine* pxline = currentComponent->instanceList[ci];
         dest.isController = pxline->isController;
@@ -1985,6 +1987,42 @@ void HMGFileProbe::Read(ReadALine& reader, char* line, LineInfo& lineInfo, bool 
 
 
 //***********************************************************************
+void HMGFileBatchController::Read(ReadALine& reader,char* line,LineInfo& lineInfo) try {
+    LineTokenizer tokenizer;tokenizer.init(line);
+    char* currentToken=nullptr;const auto next=[&]{currentToken=tokenizer.getNextToken(reader.getFileName(lineInfo).c_str(),lineInfo.firstLine);return currentToken;};
+    next();data.name=next();const std::string circuit=next();
+    if(data.name.empty()||!globalNames.fullCircuitNames.contains(circuit))throw hmgExcept("BATCHCONTROLLER","Unknown circuit or missing name");
+    data.circuit=globalNames.fullCircuitNames.at(circuit);bool type=false,level=false,file=false;std::string filename;
+    while(!tokenizer.isSepEOL){const std::string key=next();
+        if(key=="TYPE"&&!type){type=true;if(std::string(next())!="OPTICAL_RAYS")throw hmgExcept("BATCHCONTROLLER","Unknown TYPE");}
+        else if(key=="CTRL_LEVEL"&&!level){level=true;const std::string value=next();const auto parsed=std::from_chars(value.data(),value.data()+value.size(),data.level);
+            if(parsed.ec!=std::errc{}||parsed.ptr!=value.data()+value.size())throw hmgExcept("BATCHCONTROLLER","Invalid CTRL_LEVEL");}
+        else if(key=="FILE"&&!file){file=true;if(!tokenizer.getQuotedText())throw hmgExcept("BATCHCONTROLLER","Quoted FILE required");filename=currentToken;}
+        else throw hmgExcept("BATCHCONTROLLER","Unknown or duplicate parameter: %.200s",key.c_str());
+    }
+    if(!type||!level||!file||filename.empty())throw hmgExcept("BATCHCONTROLLER","TYPE, CTRL_LEVEL and FILE are required");
+    const auto utf8Path=[](const std::string& s){return std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(s.data()),s.size()));};
+    auto path=utf8Path(filename);if(path.is_relative())path=utf8Path(reader.getFilePath(lineInfo)).parent_path()/path;
+    std::ifstream input(path,std::ios::binary|std::ios::ate);if(!input)throw hmgExcept("BATCHCONTROLLER","Cannot open FILE: %.400s",filename.c_str());
+    const auto length=input.tellg();if(length<0||static_cast<std::uintmax_t>(length)>SIZE_MAX)throw hmgExcept("BATCHCONTROLLER","Invalid file size");
+    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(length));input.seekg(0);
+    if(!input.read(reinterpret_cast<char*>(bytes.data()),static_cast<std::streamsize>(bytes.size())))throw hmgExcept("BATCHCONTROLLER","Cannot read complete FILE");
+    auto parsed=std::make_shared<hexmg::optics::File>(hexmg::optics::decode(bytes));data.nodes.resize(parsed->bindings.size());
+    for(std::size_t i=0;i<parsed->bindings.size();++i){const auto& b=parsed->bindings[i];if(b.address.empty())continue;
+        auto address=b.address;if(!globalNames.textToDeepInterfaceNodeID(address.data(),data.circuit,data.nodes[i])||data.nodes[i].isController||data.nodes[i].nodeID.isStepStart)
+            throw hmgExcept("BATCHCONTROLLER","Invalid binding: %.400s",b.address.c_str());}
+    std::set<std::string> destinations;
+    const auto output=[&](std::uint32_t id){if(id==hexmg::optics::noBinding)return;const auto& node=data.nodes[id];
+        if(node.nodeID.type!=nvtB)throw hmgExcept("BATCHCONTROLLER","Output must be a B variable: %.400s",parsed->bindings[id].address.c_str());
+        std::string key;for(auto index:node.componentID)key+=std::to_string(index)+'.';key+='B'+std::to_string(node.nodeID.index);
+        if(!destinations.insert(key).second)throw hmgExcept("BATCHCONTROLLER","Duplicate output variable");};
+    for(const auto& cell:parsed->cells)for(auto id:cell.outputs)output(id);for(auto id:parsed->exits)output(id);
+    data.optical=std::move(parsed);
+} catch(const hmgExcept&) { throw; }
+  catch(const std::exception& error) {
+    throw hmgExcept("BATCHCONTROLLER","%.500s in %.200s, line %u",error.what(),reader.getFileName(lineInfo).c_str(),lineInfo.firstLine);
+}
+
 void HMGFileRun::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
 //***********************************************************************
     LineTokenizer lineToken;
@@ -3148,6 +3186,9 @@ void HMGFileGlobalDescription::Read(ReadALine& reader, char* line, LineInfo& lin
                 HMGFileFunction* pFunction = new HMGFileFunction;
                 itemList.push_back(pFunction);
                 pFunction->Read(reader, line, lineInfo);
+            }
+            else if (strcmp(token, ".BATCHCONTROLLER") == 0) {
+                auto* batch=new HMGFileBatchController;itemList.push_back(batch);batch->Read(reader,line,lineInfo);
             }
             else if (strcmp(token, ".CREATE") == 0) {
                 HMGFileCreate* pCreate = new HMGFileCreate;

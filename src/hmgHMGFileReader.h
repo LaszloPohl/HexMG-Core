@@ -498,6 +498,7 @@ public:
     bool getLine(char* result, unsigned resultSize, LineInfo& lineInfo, bool isContinue = false);
     const std::string& getFileName()const { return names[fileNameIndex].name; }
     const std::string& getFileName(const LineInfo& lineInfo)const { return names[lineInfo.sourceIndex].name; }
+    std::string getFilePath(const LineInfo& info)const { return names[info.sourceIndex].path+names[info.sourceIndex].name; }
 };
 
 
@@ -1009,6 +1010,16 @@ struct HMGFileProbe: HMGFileListItem {
 
 
 //***********************************************************************
+struct HMGFileBatchController: HMGFileListItem {
+    IsBatchControllerInstruction data;
+    void Read(ReadALine&,char*,LineInfo&);
+    void toInstructionStream(InstructionStream& stream)override {
+        auto* instruction=new IsBatchControllerInstruction;
+        instruction->name=data.name;instruction->circuit=data.circuit;instruction->level=data.level;
+        instruction->optical=data.optical;instruction->nodes=data.nodes;stream.add(instruction);
+    }
+};
+
 struct HMGFileRun: HMGFileListItem {
 //***********************************************************************
     //***********************************************************************

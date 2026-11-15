@@ -390,6 +390,13 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
         first = first->next;
         switch (act->instruction) {
             case sitNothing:                        break;
+            case sitBatchController: {
+                    auto* p=static_cast<IsBatchControllerInstruction*>(act);
+                    if(p->circuit>=fullCircuitInstances.size()||!fullCircuitInstances[p->circuit].component)throw hmgExcept("BATCHCONTROLLER","Circuit must be created first");
+                    auto& batches=fullCircuitInstances[p->circuit].batches;
+                    for(const auto& b:batches)if(b->name==p->name)throw hmgExcept("BATCHCONTROLLER","Duplicate controller name: %.400s",p->name.c_str());
+                    auto batch=std::make_unique<OpticalBatchController>(p->optical,p->nodes);batch->name=p->name;batch->level=p->level;batches.push_back(std::move(batch));
+                }break;
             case sitCreate: {
                     IsCreateInstruction* pAct = static_cast<IsCreateInstruction*>(act);
                     createFullCircuit(pAct->modelID, pAct->GND, pAct->fullCircuitIndex);
@@ -652,6 +659,10 @@ bool CircuitStorage::processInstructions(IsInstruction*& first) {
                     for(const auto& rule:optimization::functionDerivatives)
                         if(!rule.bound)throw hmgExcept("FUNCTION_DERIVATIVE","Function not yet defined: %s / %s",rule.name.c_str(),rule.derivative.c_str());
                     IsRunInstruction* pAct = static_cast<IsRunInstruction*>(act);
+                    const auto& run=pAct->data;
+                    if(run.isMultigrid){for(const auto& circuit:fullCircuitInstances)if(!circuit.batches.empty())throw hmgExcept("BATCHCONTROLLER","Multigrid batch-controller scheduling is not implemented");}
+                    else if((run.analysisType==atAC||run.analysisType==atTimeConst)&&!fullCircuitInstances.at(run.fullCircuitID).batches.empty())
+                        throw hmgExcept("BATCHCONTROLLER","This type has no AC linearization; use the optical circuit export");
                     sim.run(pAct->data);
                 }
                 break;

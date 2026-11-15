@@ -238,7 +238,7 @@ inline rvt absSquare(cplx value) { return value.real() * value.real() + value.im
 //***********************************************************************
 enum StreamInstructionType {
 //***********************************************************************
-    sitNothing = 0, sitCreate, sitSave,
+    sitNothing = 0, sitCreate, sitSave, sitBatchController,
 
     sitDefModelSubcircuit, sitDefModelController,
 

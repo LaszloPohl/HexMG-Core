@@ -21,6 +21,7 @@
 #include "hmgSimulation.h"
 #include "hmgSaver.h"
 #include "hmgTimeState.h"
+#include "hmgBatchController.h"
 //***********************************************************************
 
 
@@ -5078,7 +5079,7 @@ public:
     std::vector<std::unique_ptr<ComponentAndControllerModelBase>> functionControlledBuiltInModels; // core gives the ID number and not the client application / file reader as in case of the custom models
     std::vector<std::unique_ptr<HmgFunction>> internalCustomFunctions;
     //***********************************************************************
-    struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; };
+    struct FullCircuit { std::unique_ptr<ComponentDefinition> def; std::unique_ptr<ComponentSubCircuit> component; std::vector<std::unique_ptr<BatchController>> batches; };
     std::vector<FullCircuit> fullCircuitInstances;
     //***********************************************************************
 
@@ -5499,8 +5500,15 @@ public:
         do {
             currentLevel = nextLevel;
             nextLevel = gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosLoad);
+            auto& batches=gc.fullCircuitInstances[fullCircuitID].batches;
+            for(auto& batch:batches){
+                if(batch->level==currentLevel)batch->load([&](const auto& id){return limitNode(fullCircuitID,id).getValueDC();});
+                else if(batch->level>currentLevel&&(nextLevel<=currentLevel||batch->level<nextLevel))nextLevel=batch->level;
+            }
             gc.fullCircuitInstances[fullCircuitID].component->calculateControllersDC(currentLevel, cosEvaluateAndStore);
             RequireValidFunctionState(fullCircuitID);
+            for(auto& batch:batches)if(batch->level==currentLevel)
+                batch->evaluateAndStore([&](const auto& id,double value){const_cast<NodeVariable&>(limitNode(fullCircuitID,id)).setValueDC(value);});
         } while (nextLevel > currentLevel);
     }
 
