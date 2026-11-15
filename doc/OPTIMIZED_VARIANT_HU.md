@@ -1,5 +1,19 @@
 # Optimalizált HexMG-Core – fejlesztési ág
 
+2026-11-15: a `NEWTON_FORWARD_LIMIT` és `ADAPTIVE_VOLTAGE_NODE` ismétlődésének
+ellenőrzése indexelt keresést használ a korábbi teljes listabejárás helyett.
+400000 bejegyzés feldolgozása 0,440 s; azonos és különböző áramkör,
+fordított csomópontpár, blokkok közötti ismétlődés és hibás blokk utáni
+változatlan állapot 11 célzott ellenőrzése PASS. A 25 meglévő Newton-lépés-
+korlátozási futás is PASS. A nagy diagnosztikai OLED-bemenet korábban már
+az opciók beolvasásánál elérte a 120 s időkorlátot; ez nem solverkonvergencia.
+A fizikai modell és a lépéskorlátozás szabálya változatlan.
+
+Az optikai fájlíró egyszer foglal a pontos bináris méretre. Egymillió,
+nyolc szakaszos sugár: 192000436 bájt, változatlan ellenőrző összeg;
+kódolás 0,383 → 0,324 s, ismételt növekedési másolás nélkül.
+
+
 2026-11-14: [adaptív feszültségalapú időlépés](ADAPTIVE_TIME_HU.md), teljes
 állapot-visszaállítással, választható nem konvergált folytatással és köztes
 mérésmentéssel. A felhasználó által jóváhagyott opcionális sorok; alapváltozat

@@ -46,7 +46,16 @@ struct Reader {
 }
 inline std::vector<std::uint8_t> encode(const File& f){
     f.validate();const bool images=std::ranges::any_of(f.program.steps,[](const auto& s){return s.op==Op::Observe;})||std::ranges::any_of(f.cells,[](const auto& c){return c.outputs[3]!=noBinding||c.outputs[4]!=noBinding;});
-    file_detail::Writer w;for(char c:std::string(images?"HXRAY002":"HXRAY001"))w.data.push_back(static_cast<std::uint8_t>(c));
+    // Allocate the exact wire size once. Repeated vector growth otherwise
+    // temporarily retains both old and new buffers for large ray programs.
+    std::size_t bytes=148;
+    const auto add=[&](std::size_t count,std::size_t width){
+        if(count>(SIZE_MAX-bytes)/width)throw std::length_error("Optical file size overflow");bytes+=count*width;};
+    for(const auto& b:f.bindings){add(1,12);add(b.address.size(),1);}
+    add(f.cells.size(),images?36:28);add(f.blue.size(),4);add(f.yellow.size(),4);
+    add(f.program.rays.size(),32);add(f.program.steps.size(),16);
+    file_detail::Writer w;w.data.reserve(bytes);
+    for(char c:std::string(images?"HXRAY002":"HXRAY001"))w.data.push_back(static_cast<std::uint8_t>(c));
     w.u64(f.program.cells);w.real(f.program.blueDistance);w.real(f.program.yellowDistance);w.u32(f.program.independentYellow?1:0);
     w.u64(f.bindings.size());for(const auto& b:f.bindings){w.u32(static_cast<std::uint32_t>(b.address.size()));for(char c:b.address)w.data.push_back(static_cast<std::uint8_t>(c));w.real(b.constant);}
     w.u64(f.cells.size());for(const auto& c:f.cells){for(auto id:c.coefficients)w.u32(id);for(unsigned k=0;k<(images?5u:3u);++k)w.u32(c.outputs[k]);}

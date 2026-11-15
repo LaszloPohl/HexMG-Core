@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <array>
 #include <charconv>
 #include <cmath>
 #include <set>
@@ -116,6 +117,10 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     auto nextOperatingPoints = smallSignalOperatingPoints;
     std::set<std::pair<std::string,std::string>> nodeKeys;
     for(const auto& node:nextNodes) nodeKeys.emplace(node.circuit,node.node);
+    std::set<std::array<std::string,3>> limitKeys;
+    for(const auto& limit:nextLimits)limitKeys.insert({limit.circuit,limit.anode,limit.cathode});
+    std::set<std::pair<std::string,std::string>> adaptiveNodeKeys;
+    for(const auto& node:nextAdaptiveNodes)adaptiveNodeKeys.emplace(node.circuit,node.node);
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
     for (unsigned i = 0; i < lines.size(); ++i) {
         const auto t = tokens(lines[i]); if (t.empty()) continue;
@@ -176,15 +181,14 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
             if(std::find(nextNonconvergence.begin(),nextNonconvergence.end(),t[1])!=nextNonconvergence.end())fail();
             nextNonconvergence.push_back(t[1]);
         } else if(t.size()==3 && t[0]=="ADAPTIVE_VOLTAGE_NODE") {
-            for(const auto& previous:nextAdaptiveNodes)if(previous.circuit==t[1]&&previous.node==t[2])fail();
+            if(!adaptiveNodeKeys.emplace(t[1],t[2]).second)fail();
             nextAdaptiveNodes.push_back({t[1],t[2],0,{}});
         } else if(t.size()==5 && t[0]=="NEWTON_FORWARD_LIMIT") {
             NewtonForwardLimit limit;limit.circuit=t[1];limit.anode=t[2];limit.cathode=t[3];
             const auto parsed=std::from_chars(t[4].data(),t[4].data()+t[4].size(),limit.maximumStep);
             if(parsed.ec!=std::errc{} || parsed.ptr!=t[4].data()+t[4].size() ||
                !std::isfinite(limit.maximumStep) || limit.maximumStep<=0 || limit.anode==limit.cathode) fail();
-            for(const auto& previous:nextLimits)
-                if(previous.circuit==limit.circuit && previous.anode==limit.anode && previous.cathode==limit.cathode) fail();
+            if(!limitKeys.insert({limit.circuit,limit.anode,limit.cathode}).second)fail();
             nextLimits.push_back(std::move(limit));
         } else if(t.size()==2 && t[0]=="SMALL_SIGNAL_OPERATING_POINT") {
             for(const auto& previous:nextOperatingPoints) if(previous.circuit==t[1]) fail();
