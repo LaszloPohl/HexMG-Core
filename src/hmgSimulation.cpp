@@ -103,6 +103,24 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         }
         return result.maximum();
     };
+    // Backtrack only adaptive steps; legacy and exact-count runs are unchanged.
+    // Scales are frozen at the previous iterate, so growth of the physical
+    // current cannot disguise a growing residual during the search.
+    const bool backtrack=timeStep && !requestedIterations && std::any_of(
+        optimization::adaptiveVoltage.begin(),optimization::adaptiveVoltage.end(),
+        [&](const auto& control){return control.circuitId==fullCircuitID;});
+    TimeState iterationCheckpoint;
+    if(backtrack){storage.fullCircuitInstances[fullCircuitID].component->collectTimeState(iterationCheckpoint);iterationCheckpoint.prepare();}
+    std::vector<std::pair<double,double>> residualScales;
+    if(backtrack)residualScales.resize(nodes.size());
+    const auto merit=[&] {
+        double sum=0;
+        for(size_t i=0;i<nodes.size();++i){
+            const double value=convergence::normalized(nodes[i]->getDDC(),residualScales[i].first,residualScales[i].second,relative);
+            sum+=value*value;
+        }
+        return sum;
+    };
     curretIterN=0;
     double stateError=0, balanceError=0;
     const unsigned limit=requestedIterations?requestedIterations:
@@ -118,15 +136,39 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
             explicit DissipationStartup(bool use) { SimControl::lagDissipationJacobian=use; }
             ~DissipationStartup() { SimControl::lagDissipationJacobian=false; }
         };
+        const bool search=backtrack && curretIterN>0;
+        double oldMerit=0;
+        if(search){
+            for(size_t i=0;i<nodes.size();++i)residualScales[i]={nodes[i]->extension->physicalMagnitude.loadRvt(nodes[i]->isConcurrent),nodes[i]->effectiveConvergenceProfile().balanceAbsolute};
+            oldMerit=merit();
+        }
         {
             DissipationStartup startup(curretIterN==0 && requestedIterations==0);
             CircuitStorage::ForwsubsBacksubsDC(fullCircuitID);
         }
+        if(search)iterationCheckpoint.capture();
         stateError=measure(true);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
-        ++curretIterN;
         refresh(); // Includes capacitor currents before accepting the step history.
         balanceError=measure(false);
+        if(search && balanceError>1 && merit()>oldMerit){
+            double bestMerit=merit(),bestFactor=1;
+            for(unsigned trial=1;trial<=8;++trial){
+                const double factor=std::ldexp(1.,-static_cast<int>(trial));
+                iterationCheckpoint.restore();
+                for(auto* node:nodes)node->setVDC(node->getVDC()*factor);
+                stateError=measure(true);CircuitStorage::AcceptIterationDC(fullCircuitID);refresh();
+                const double value=merit();
+                if(value<bestMerit){bestMerit=value;bestFactor=factor;}
+                if(value<=oldMerit*(1-1e-4*factor))break;
+            }
+            iterationCheckpoint.restore();
+            for(auto* node:nodes)node->setVDC(node->getVDC()*bestFactor);
+            stateError=measure(true);CircuitStorage::AcceptIterationDC(fullCircuitID);refresh();
+            balanceError=measure(false);
+            std::cout<<"NEWTON_BACKTRACK factor="<<bestFactor<<" merit="<<oldMerit<<" -> "<<bestMerit<<"\n";
+        }
+        ++curretIterN;
         std::cout << "Relative iter " << curretIterN << " state=" << stateError << " balance=" << balanceError << std::endl;
     } while(curretIterN<limit && (requestedIterations || stateError>1 || balanceError>1));
     if(!requestedIterations && !(stateError<=1 && balanceError<=1)) {
