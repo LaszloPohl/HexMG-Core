@@ -37,13 +37,16 @@ struct Program {
             "Invalid optical distance multiplier");
         require(independentYellow||yellowSources==0,"Unexpected independent yellow sources");
         std::size_t maximumBranches=1,expectedBegin=0;
+        // Reuse the connectivity scratch space for the complete program.
+        // A million unbranched rays must not cause a million heap allocations.
+        std::vector<bool> connected;
         for(const auto& ray:rays){
             require(ray.begin==expectedBegin&&ray.begin<=steps.size()&&ray.count<=steps.size()-ray.begin,
                 "Invalid optical instruction range");
             require(ray.count>0&&ray.branches>0&&ray.branches<=ray.count,"Invalid optical branch count");
             require(ray.band<2&&ray.source<(ray.band?yellowSources:blueSources),"Invalid optical source index");
             require(std::isfinite(ray.fraction)&&ray.fraction>0&&ray.fraction<=1,"Invalid optical fraction");
-            std::vector<bool> connected(ray.branches);connected[0]=true;
+            connected.assign(ray.branches,false);connected[0]=true;
             std::size_t nextBranch=0,currentBranch=0;bool ended=true;
             for(std::size_t i=static_cast<std::size_t>(ray.begin);i<ray.begin+ray.count;++i){
                 const auto& step=steps[i];require(std::isfinite(step.value),"Nonfinite optical instruction");
