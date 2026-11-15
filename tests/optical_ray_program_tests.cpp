@@ -54,5 +54,13 @@ int main(){try{
     auto corrupt=bytes;corrupt[20]^=1;rejects([&]{decode(corrupt);});
     for(std::size_t size=0;size<bytes.size();size+=13)rejects([&]{decode(std::span(bytes).first(size));});
     auto duplicate=file;duplicate.cells[1].outputs[0]=5;rejects([&]{encode(duplicate);});
+    auto imageFile=file;imageFile.program.rays.clear();imageFile.program.steps={{Op::Branch,0,0},{Op::Observe,0,1},{Op::Segment,0,.5},{Op::Observe,1,.5},{Op::Escape,5,0}};imageFile.program.rays.push_back({0,5,0,1,0,1});
+    imageFile.bindings.push_back({"CELL.B1",0});imageFile.cells[0].outputs[3]=6;
+    const auto imageBytes=encode(imageFile);if(std::string(reinterpret_cast<const char*>(imageBytes.data()),8)!="HXRAY002")throw std::runtime_error("Optical image version");++checks;
+    const auto images=decode(imageBytes);if(encode(images)!=imageBytes)throw std::runtime_error("Optical image roundtrip");++checks;
+    Executor<double> imageExecutor(images.program,1,1);const auto& image=imageExecutor.evaluate(c,blue,yellow);
+    near(image.blueImage[0],2);near(image.yellowImage[0],0);near(image.blueImage[1],std::exp(-1.));near(image.yellowImage[1],0);
+    const auto& dark=imageExecutor.evaluate(c,std::array<double,1>{0},yellow);near(dark.blueImage[0],0);near(dark.blueImage[1],0);
+    imageFile.program.steps[1].value=.25;rejects([&]{encode(imageFile);});
     std::cout<<"PASS "<<checks<<" optical program/file checks\n";return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

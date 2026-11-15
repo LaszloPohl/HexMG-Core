@@ -12,7 +12,7 @@
 // or GUI dependency. Geometry is prepared once; an Executor reuses its output
 // and branch buffers for every nonlinear iteration.
 namespace hexmg::optics {
-enum class Op : std::uint32_t { Branch, Segment, Split, Wall, Escape, Cutoff };
+enum class Op : std::uint32_t { Branch, Segment, Split, Wall, Escape, Cutoff, Observe };
 struct Step { Op op{}; std::uint32_t index=0; double value=0; };
 struct Ray {
     std::uint64_t begin=0;
@@ -55,6 +55,7 @@ struct Program {
                 require(nextBranch>0&&!ended,"Optical instruction after termination");
                 switch(step.op){
                 case Op::Segment:require(step.index<cells&&step.value>0,"Invalid optical segment");break;
+                case Op::Observe:require(step.index<cells&&(step.value==.5||step.value==1),"Invalid optical observation");break;
                 case Op::Split:
                     require(step.index>currentBranch&&step.index<ray.branches&&!connected[step.index]&&step.value>0&&step.value<1,
                         "Invalid optical split");connected[step.index]=true;break;
@@ -74,6 +75,7 @@ struct Program {
 
 template<class Number> struct Output {
     std::vector<Number> heat,wall,yellow;
+    std::vector<Number> blueImage,yellowImage;
     std::array<std::array<Number,2>,6> escape{};
     std::array<Number,2> cutoff{};
 };
@@ -89,6 +91,7 @@ public:
         :program_(program),blueCount_(blueCount),yellowCount_(yellowCount),
         branches_(program.validate(blueCount,yellowCount)) {
         output_.heat.resize(program.cells);output_.wall.resize(program.cells);output_.yellow.resize(program.cells);
+        if(std::ranges::any_of(program.steps,[](const auto& step){return step.op==Op::Observe;})){output_.blueImage.resize(program.cells);output_.yellowImage.resize(program.cells);}
     }
     const Output<Number>& evaluate(std::span<const std::array<Number,4>> coefficients,
         std::span<const Number> blue,std::span<const Number> yellow) {
@@ -98,7 +101,7 @@ public:
             if(!std::isfinite(cell[k])||cell[k]<0||(k>=2&&cell[k]>1))throw std::invalid_argument("Invalid optical material coefficient");
         for(const auto values:{blue,yellow})for(const auto value:values)
             if(!std::isfinite(value))throw std::invalid_argument("Nonfinite optical source power");
-        for(auto* values:{&output_.heat,&output_.wall,&output_.yellow})std::fill(values->begin(),values->end(),Number(0));
+        for(auto* values:{&output_.heat,&output_.wall,&output_.yellow,&output_.blueImage,&output_.yellowImage})std::fill(values->begin(),values->end(),Number(0));
         output_.escape={};output_.cutoff={};
         for(const auto& ray:program_.rays){
             branches_[0]={};branches_[0][ray.band]=(ray.band?yellow:blue)[ray.source]*Number(ray.fraction);
@@ -106,6 +109,7 @@ public:
             for(std::size_t i=static_cast<std::size_t>(ray.begin);i<ray.begin+ray.count;++i){const auto& step=program_.steps[i];
                 switch(step.op){
                 case Op::Branch:state=&branches_[step.index];break;
+                case Op::Observe:output_.blueImage[step.index]+=(*state)[0]*Number(step.value);output_.yellowImage[step.index]+=(*state)[1]*Number(step.value);break;
                 case Op::Segment:{
                     const auto& c=coefficients[step.index];
                     const Number absorbedBlue=(*state)[0]*-std::expm1(-c[0]*Number(step.value)*Number(program_.blueDistance));
@@ -126,7 +130,7 @@ public:
             }
         }
         const auto finite=[](Number value){if(!std::isfinite(value))throw std::overflow_error("Nonfinite optical output");};
-        for(const auto* values:{&output_.heat,&output_.wall,&output_.yellow})for(const auto value:*values)finite(value);
+        for(const auto* values:{&output_.heat,&output_.wall,&output_.yellow,&output_.blueImage,&output_.yellowImage})for(const auto value:*values)finite(value);
         for(const auto& side:output_.escape)for(const auto value:side)finite(value);
         for(const auto value:output_.cutoff)finite(value);
         return output_;

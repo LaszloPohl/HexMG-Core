@@ -100,6 +100,27 @@ fájltartalomba, majd ellenőrzi a tartományokat, ágak sorrendjét és lezár�
 az indexeket és a véges értékeket. A címhossz legfeljebb 4096 bájt. Az
 ellenőrző összeg sérülésészlelésre szolgál, nem hitelesítésre.
 
+## HXRAY002: optikai képmérés
+
+A 002-es változat ugyanazt a szerkezetet használja, de a cellabekötés a négy
+bemenet után öt kimenetet tartalmaz (36 bájt). Az első három változatlan;
+a negyedik a cellán áthaladó kék, az ötödik a sárga teljesítmény [W].
+A 6-os `Observe` művelet indexe a cella, értéke 0–1 közötti megfigyelési
+súly. Az aktuális sugárteljesítményből ennyit ad a képméréshez; a sugarat
+nem gyengíti, a hőt és az energiamérleget nem módosítja.
+
+A GUI a kiválasztott iránynak megfelelő súllyal, az adott cellaszakasz
+elnyelése után helyezi el a megfigyelést. A tömbök csak megfigyelést tartalmazó
+programnál foglalódnak le, minden kiértékelés előtt nullázódnak. Az olvasó
+az 001-es fájlokat is kezeli. Képmérés nélkül az író továbbra is byteazonos
+001-es fájlt készít; az új fájl régi olvasóval szabályosan elutasított.
+
+A számítómodul/fájlpróba 118 ellenőrzése tartalmazza a 002-es körutat,
+a kézzel számolt két színsávú megfigyelést, az újraszámolás nullázását és
+hibás súly elutasítását. A GUI termelési exportjában DC, időtartomány és
+mentett munkaponti AC összesen 817 ellenőrzés / 18 futás sikeres;
+az utóbbi továbbra is a külön linearizált hálózatot használja.
+
 ## Ellenőrzés és teljesítmény
 
 - Közös kontrollerszint, beolvasás/írás sorrend, dekódolt adat élettartama:

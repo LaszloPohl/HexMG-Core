@@ -35,6 +35,8 @@ public:
         const auto& o=executor_.evaluate(coefficients_,blue_,yellow_);
         const auto store=[&](std::uint32_t id,double value){if(id!=hexmg::optics::noBinding)write(nodes[id],value);};
         for(std::size_t i=0;i<coefficients_.size();++i){store(file_->cells[i].outputs[0],o.heat[i]);store(file_->cells[i].outputs[1],o.wall[i]);store(file_->cells[i].outputs[2],o.yellow[i]);}
+        for(std::size_t i=0;i<coefficients_.size();++i)for(unsigned k=0;k<2;++k)if(file_->cells[i].outputs[3+k]!=hexmg::optics::noBinding){
+            const auto& values=k?o.yellowImage:o.blueImage;store(file_->cells[i].outputs[3+k],values.empty()?0:values[i]);}
         for(unsigned side=0;side<6;++side)for(unsigned band=0;band<2;++band)store(file_->exits[2*side+band],o.escape[side][band]);
         for(unsigned band=0;band<2;++band)store(file_->exits[12+band],o.cutoff[band]);
     } catch(const hmgExcept&) { throw; }
