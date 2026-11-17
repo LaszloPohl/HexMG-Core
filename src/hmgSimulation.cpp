@@ -149,6 +149,10 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
         if(search)iterationCheckpoint.capture();
         stateError=measure(true);
         CircuitStorage::AcceptIterationDC(fullCircuitID);
+        // Refresh the accepted candidate under the physical law, not the
+        // iteration-zero initialization law. The next Jacobian needs this
+        // same cached function value as the base of its numerical derivative.
+        ++curretIterN;
         refresh(); // Includes capacitor currents before accepting the step history.
         balanceError=measure(false);
         if(search && balanceError>1 && merit()>oldMerit){
@@ -168,7 +172,6 @@ void Simulation::runRelativeDC(bool timeStep, uns requestedIterations) {
             balanceError=measure(false);
             std::cout<<"NEWTON_BACKTRACK factor="<<bestFactor<<" merit="<<oldMerit<<" -> "<<bestMerit<<"\n";
         }
-        ++curretIterN;
         std::cout << "Relative iter " << curretIterN << " state=" << stateError << " balance=" << balanceError << std::endl;
     } while(curretIterN<limit && (requestedIterations || stateError>1 || balanceError>1));
     if(!requestedIterations && !(stateError<=1 && balanceError<=1)) {

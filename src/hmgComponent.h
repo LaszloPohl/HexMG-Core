@@ -2799,7 +2799,7 @@ public:
         externalNodes[1]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y >= 2 ? rvt0 : (y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC()); }
     //***********************************************************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
@@ -2824,7 +2824,7 @@ public:
         }
     }
     //***********************************************************************
-    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y >= 2 ? cplx0 : (y == 0 ? IAC : -IAC); }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}

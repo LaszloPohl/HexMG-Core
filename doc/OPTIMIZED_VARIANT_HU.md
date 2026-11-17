@@ -1,5 +1,20 @@
 # Optimalizált HexMG-Core – fejlesztési ág
 
+2026-11-17: a relatív iterációs ciklus az első elfogadott korrekció után már
+a fizikai függvényértékekkel ellenőrzi a mérleget, nem a nulla sorszámú
+induló közelítéssel. Egy kis hálózat korábban tévesen 0 V-ot fogadott el
+a helyes 0,618033989 V helyett. Nyolc új célpróba, 51 relatív konvergencia-
+és 87/21 adaptív időlépés-ellenőrzés PASS. Az ITER/ITERS pontos lépésszáma
+megmarad. Ez az optimalizált relatív ciklus javítása; az alap saját
+konvergenciájának sorrendje már helyes.
+
+Az FCI áramlekérdezése a 2-től kezdődő vezérlőkapcsokra DC/időben és AC-ban
+nullát ad. Korábban az X1 áramát jelentette, ezért az aláramkör külső
+vezérlőkapcsán nem létező áram látszott. Hat előjeles DC/idő/AC célpróba
+PASS. Az alap kézi javítása a GUI-tároló
+`docs/solver/CORE_FCI_CONTROL_CURRENT_FIX_HU.md` fájljában, két sorszámos
+cserével. A nagy OLED teljes konvergenciája ettől még nincs igazolva.
+
 2026-11-15: a `NEWTON_FORWARD_LIMIT` és `ADAPTIVE_VOLTAGE_NODE` ismétlődésének
 ellenőrzése indexelt keresést használ a korábbi teljes listabejárás helyett.
 400000 bejegyzés feldolgozása 0,440 s; azonos és különböző áramkör,
