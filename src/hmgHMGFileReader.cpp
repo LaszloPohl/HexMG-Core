@@ -2005,9 +2005,8 @@ void HMGFileBatchController::Read(ReadALine& reader,char* line,LineInfo& lineInf
     auto path=utf8Path(filename);if(path.is_relative())path=utf8Path(reader.getFilePath(lineInfo)).parent_path()/path;
     std::ifstream input(path,std::ios::binary|std::ios::ate);if(!input)throw hmgExcept("BATCHCONTROLLER","Cannot open FILE: %.400s",filename.c_str());
     const auto length=input.tellg();if(length<0||static_cast<std::uintmax_t>(length)>SIZE_MAX)throw hmgExcept("BATCHCONTROLLER","Invalid file size");
-    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(length));input.seekg(0);
-    if(!input.read(reinterpret_cast<char*>(bytes.data()),static_cast<std::streamsize>(bytes.size())))throw hmgExcept("BATCHCONTROLLER","Cannot read complete FILE");
-    auto parsed=std::make_shared<hexmg::optics::File>(hexmg::optics::decode(bytes));data.nodes.resize(parsed->bindings.size());
+    input.seekg(0);
+    auto parsed=std::make_shared<hexmg::optics::File>(hexmg::optics::decode(input,static_cast<std::size_t>(length)));data.nodes.resize(parsed->bindings.size());
     for(std::size_t i=0;i<parsed->bindings.size();++i){const auto& b=parsed->bindings[i];if(b.address.empty())continue;
         auto address=b.address;if(!globalNames.textToDeepInterfaceNodeID(address.data(),data.circuit,data.nodes[i])||data.nodes[i].isController||data.nodes[i].nodeID.isStepStart)
             throw hmgExcept("BATCHCONTROLLER","Invalid binding: %.400s",b.address.c_str());}

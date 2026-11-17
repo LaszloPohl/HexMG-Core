@@ -105,3 +105,17 @@ a `--deck` kapcsolóval más önálló, relatív HXIM-kimenetű bemenet adható 
 
 Jóváhagyott FUNCTION_GUARD DC/időlépés-védelem elkészült.
 [Pontos szerződés, korlátok és tesztek](FUNCTION_GUARD_HU.md).
+
+
+## 2026-11-17 — nagy optikai kontrolleradat beolvasása
+
+A HXRAY001/002 fájl dekódolása közvetlenül a fájlból, legfeljebb 1 MiB-os
+beolvasási pufferrel történik. A teljes kódolt fájl és a dekódolt program
+nem marad egyszerre a memóriában. A formátum, az ellenőrzőösszeg és a
+kapcsolódási/értéktartomány-ellenőrzések változatlanok. A GUI kódolója a
+már elkészült programot másolás nélkül is átadhatja a kódolónak.
+
+Célzott ellenőrzés: 206 program/fájl kapu (két formátum, csonkolás, sérülés,
+1 MiB-on átnyúló rekordok és hosszú címek), valamint 20 tényleges
+BATCHCONTROLLER betöltési/ütemezési kapu PASS. Ez adatkezelési módosítás;
+az optikai egyenleteket és a Core iterációs sorrendjét nem változtatja.

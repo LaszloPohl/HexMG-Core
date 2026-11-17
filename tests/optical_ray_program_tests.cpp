@@ -2,6 +2,7 @@
 #include <iostream>
 #include <numeric>
 #include <functional>
+#include <sstream>
 using namespace hexmg::optics;
 static unsigned checks=0;
 static void near(double a,double b){++checks;if(!std::isfinite(a)||std::abs(a-b)>2e-13*std::max(1.,std::abs(b)))throw std::runtime_error("Optical analytic reference mismatch");}
@@ -53,6 +54,29 @@ int main(){try{
     if(encode(roundtrip)!=bytes)throw std::runtime_error("Optical file roundtrip differs");++checks;
     auto corrupt=bytes;corrupt[20]^=1;rejects([&]{decode(corrupt);});
     for(std::size_t size=0;size<bytes.size();size+=13)rejects([&]{decode(std::span(bytes).first(size));});
+    const auto streamed=[&](const auto& wire,std::size_t claimed){
+        std::istringstream input(std::string(reinterpret_cast<const char*>(wire.data()),wire.size()),std::ios::binary);
+        return decode(input,claimed);
+    };
+    if(encode(streamed(bytes,bytes.size()))!=bytes)throw std::runtime_error("Stream roundtrip differs");++checks;
+    rejects([&]{streamed(corrupt,corrupt.size());});
+    for(std::size_t size=0;size<bytes.size();size+=13){
+        const std::vector<std::uint8_t> shortWire(bytes.begin(),bytes.begin()+size);
+        rejects([&]{streamed(shortWire,bytes.size());});
+        rejects([&]{streamed(shortWire,size);});
+    }
+    // Cross the bounded reader refill boundary with both fixed records and
+    // variable-length addresses. The stream decoder must preserve every byte.
+    auto large=file;large.program.rays.clear();large.program.steps.clear();
+    for(unsigned i=0;i<24000;++i){const auto begin=large.program.steps.size();
+        large.program.steps.insert(large.program.steps.end(),p.steps.begin(),p.steps.begin()+8);
+        auto ray=p.rays.front();ray.begin=begin;ray.fraction=1./24000;large.program.rays.push_back(ray);
+    }
+    for(unsigned i=0;i<600;++i)large.bindings.push_back({std::string(4096,'a'+i%20),0});
+    const auto largeBytes=encode(large);
+    if(encode(streamed(largeBytes,largeBytes.size()))!=largeBytes)throw std::runtime_error("Refill boundary changed optical file");++checks;
+    File borrowed=large;borrowed.program={};
+    if(encode(borrowed,large.program)!=largeBytes)throw std::runtime_error("Borrowed program changed optical file");++checks;
     auto duplicate=file;duplicate.cells[1].outputs[0]=5;rejects([&]{encode(duplicate);});
     auto imageFile=file;imageFile.program.rays.clear();imageFile.program.steps={{Op::Branch,0,0},{Op::Observe,0,1},{Op::Segment,0,.5},{Op::Observe,1,.5},{Op::Escape,5,0}};imageFile.program.rays.push_back({0,5,0,1,0,1});
     imageFile.bindings.push_back({"CELL.B1",0});imageFile.cells[0].outputs[3]=6;
