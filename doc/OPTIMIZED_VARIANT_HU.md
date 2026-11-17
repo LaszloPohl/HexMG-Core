@@ -1,5 +1,40 @@
 # Optimalizált HexMG-Core – fejlesztési ág
 
+2026-11-17: külön választható SUNRED DC-pontosság, felhasználó által
+jóváhagyott szintaxissal:
+
+```text
+.OPTIONAL HEXMG_OPT 1
+REDUCTION_PRECISION LEVEL0 EXTENDED
+REDUCTION_PRECISION SUNRED EXTENDED
+.END OPTIONAL
+```
+
+A SUNRED mód `DOUBLE` vagy `EXTENDED`; kihagyva **DOUBLE**, a korábbi
+viselkedés. A LEVEL0 saját alapértéke változatlanul EXTENDED. Mindkét
+beállítás egész futtatásra érvényes, egymástól független; ismétlés,
+`SUNRED AUTO` vagy hibás érték forráshelyes hiba. A bináris bemenetben
+ugyanaz a szöveges tartalom működik. Az alap solver az OPTIONAL blokkot
+kihagyja; a fizikai hálózat nem változik.
+
+A SUNRED fa DC-mátrixai és vektorai azonos templátolt algoritmussal,
+double vagy `xxt` típuson futnak; a kiadott fordításban utóbbi 106 bites.
+Csak a választott munkamátrixok foglalnak memóriát. A csomóponti állapot
+és a kimenet továbbra double; az AC-mátrixok változatlanok. Ez nem teszi
+láthatóvá két double feszültség tárolásakor már elveszett különbségét.
+A nagyobb pontosság lassabb és több memóriát igényel; nincs automatikus
+üzemmódváltás vagy a konvergenciatűrések lazítása.
+
+32 célpróba PASS: független, 70 számjeggyel kiszámított nagy kontrasztú
+áramkör, alapmód/explicit DOUBLE egyezése, LEVEL0 függetlensége,
+HMG/HMGB, RC-időlépések, ismételt DC–AC váltás, korlátozott Newton-lépésű
+sugárzás/Joule referencia és hibás opciók. A nyers történeti sugárzásos
+fixture a változtatás előtti 1e184c4 és az új solverrel is az anyagtörvény
+tartományán kívülre lép; ez külön nyitott indulási eset, nem új regresszió.
+A lépéskorláttal ellenőrzött fizikai megoldás 66,219971910 °C, felületén
+55,232460312 °C. Reprodukció: `tests/sunred_precision_runtime.py`.
+A teljes eredeti OLED konvergenciája továbbra nincs igazolva.
+
 2026-11-17: a nagy tömbös sugárkontroller legfeljebb nyolc munkaszálon
 értékeli ki a sugarakat, külön cellaösszegzőkkel és rögzített sorrendű
 végső összeadással. Kis listán a soros út marad. A munkaszálak közös,

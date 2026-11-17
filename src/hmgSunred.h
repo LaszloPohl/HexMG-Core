@@ -14,6 +14,8 @@
 //***********************************************************************
 #include "hmgCommon.h"
 #include "hmgMatrix.hpp"
+#include "hmgOptimization.h"
+#include <type_traits>
 //***********************************************************************
 
 
@@ -23,19 +25,20 @@ namespace nsHMG {
 
 
 //***********************************************************************
+template<class Real>
 struct SunredReductorDC {
 //***********************************************************************
     struct CalcPack {
-        matrix<rvt> XAT, XB, YB_NZB;
-        matrix<rvt> NZBXA, NZBXAT;
-        vektor<rvt> JAUA, JBUB, NZBJB;
+        matrix<Real> XAT, XB, YB_NZB;
+        matrix<Real> NZBXA, NZBXAT;
+        vektor<Real> JAUA, JBUB, NZBJB;
     };
     struct LeafPack {
-        matrix<rvt> YA;
-        vektor<rvt> JA;
+        matrix<Real> YA;
+        vektor<Real> JA;
     };
-    matrix<rvt> YRED;
-    vektor<rvt> JRED;
+    matrix<Real> YRED;
+    vektor<Real> JRED;
     std::unique_ptr<CalcPack> calc;
     std::unique_ptr<LeafPack> leaf; // only if there are common (connected) nodes, so the YRED and JRED is not the same as the YRED and JRED of the source component
 };
@@ -85,7 +88,13 @@ class SunredTreeNode {
     bool isSymmDC = false, isSymmAC = false;
     bool isChangedDC = false, isChangedAC = false;
     bool initializedDC = false, initializedAC = false;
-    std::unique_ptr<SunredReductorDC> dc;
+    std::unique_ptr<SunredReductorDC<rvt>> dcDouble;
+    std::unique_ptr<SunredReductorDC<xxt>> dcWide;
+    bool wideDC = false;
+    template<class Real> auto& dcData() {
+        if constexpr(std::is_same_v<Real,rvt>) return dcDouble;
+        else return dcWide;
+    }
     std::unique_ptr<SunredReductorAC> ac;
 public:
     //***********************************************************************
@@ -93,6 +102,13 @@ public:
     void loadNodeDataFromTwoNodes(SunredTreeNode* src1, SunredTreeNode* src2);
     //***********************************************************************
     void allocDC() {
+        wideDC=optimization::enabled &&
+            optimization::sunredPrecision==optimization::Precision::Extended;
+        dcDouble.reset();dcWide.reset();
+        if(wideDC)allocDCTyped<xxt>();else allocDCTyped<rvt>();
+    }
+    template<class Real> void allocDCTyped() {
+        auto& dc=dcData<Real>();
     //***********************************************************************
         if (srcComponent != nullptr || srcCell1 != nullptr) {
 
@@ -101,19 +117,19 @@ public:
             cuns Csiz = (uns)CNodeIndex.size();
 
             initializedDC = false;
-            dc = std::make_unique<SunredReductorDC>();
+            dc = std::make_unique<SunredReductorDC<Real>>();
             dc->YRED.resize_if_needed(Asiz, Asiz, isSymmDC);
             dc->JRED.resize_if_needed(Asiz);
 
             if (srcComponent != nullptr) { // leaf
                 if (Asiz != Csiz) {
-                    dc->leaf = std::make_unique<SunredReductorDC::LeafPack>();
+                    dc->leaf = std::make_unique<typename SunredReductorDC<Real>::LeafPack>();
                     dc->leaf->YA.resize_if_needed(Csiz, Csiz, isSymmDC);
                     dc->leaf->JA.resize_if_needed(Csiz);
                 }
             }
             else { // nonleaf
-                dc->calc = std::make_unique<SunredReductorDC::CalcPack>();
+                dc->calc = std::make_unique<typename SunredReductorDC<Real>::CalcPack>();
                 if (!isSymmDC) dc->calc->XAT.resize_if_needed(Asiz, Bsiz, false);
                 dc->calc->XB.resize_if_needed(Asiz, Bsiz, false);
                 dc->calc->YB_NZB.resize_if_needed(Bsiz, Bsiz, false); // never symmetrical!
@@ -160,10 +176,12 @@ public:
         } // else: empty node, belsongs to a disabled component, nothing to do
     }
     //***********************************************************************
-    void clearDC() { dc.reset(); initializedDC = false; }
+    void clearDC() { dcDouble.reset(); dcWide.reset(); initializedDC = false; }
     void clearAC() { ac.reset(); initializedAC = false; }
+    template<class Real> void forwsubsDCTyped(ComponentSubCircuit* pSrc);
     void forwsubsDC(ComponentSubCircuit* pSrc);
     void forwsubsAC(ComponentSubCircuit* pSrc);
+    template<class Real> void backsubsDCTyped(ComponentSubCircuit* pSrc);
     void backsubsDC(ComponentSubCircuit* pSrc);
     void backsubsAC(ComponentSubCircuit* pSrc);
     //***********************************************************************

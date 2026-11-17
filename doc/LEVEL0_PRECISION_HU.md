@@ -1,5 +1,11 @@
 # Helyi DC-pontosság – első, referenciaellenőrzött változat
 
+2026-11-17-i kiegészítés: a SUNRED redukciós fa külön
+`REDUCTION_PRECISION SUNRED DOUBLE|EXTENDED` opciót kapott, DOUBLE
+alapértékkel. A lenti LEVEL0-szabályok ettől függetlenek; az AC továbbra
+változatlan. [Aktuális használat és ellenőrzés](OPTIMIZED_VARIANT_HU.md).
+A dokumentum alábbi része az eredeti LEVEL0 megvalósítás leírása.
+
 2026-10-27. Csak az optimalizált ág; hivatalos alap: `631f316`.
 
 ```text

@@ -151,7 +151,11 @@ void SunredTreeNode::loadNodeDataFromTwoNodes(SunredTreeNode* src1, SunredTreeNo
 
 
 //***********************************************************************
-void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runtime, 7.8% self
+void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) {
+    if(wideDC)forwsubsDCTyped<xxt>(pSrc);else forwsubsDCTyped<rvt>(pSrc);
+}
+template<class Real> void SunredTreeNode::forwsubsDCTyped(ComponentSubCircuit* pSrc) {
+    auto& dc=dcData<Real>(); // 94% of the runtime, 7.8% self
 //***********************************************************************
     cuns Asiz = (uns)ANodeIndex.size();
     cuns Bsiz = (uns)BNodeIndex.size();
@@ -251,11 +255,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex1[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => YA
-                                dc->YRED[dAy][dAx] += srcCell1->dc->YRED[y][x];
+                                dc->YRED[dAy][dAx] += srcCell1->dcData<Real>()->YRED[y][x];
                                 dAx++;
                             }
                             else if (ANodeIndex1[x].nodeIndex == BNodeIndex[dBx]) { // => XB
-                                dc->calc->XB[dAy][dBx] += srcCell1->dc->YRED[y][x];
+                                dc->calc->XB[dAy][dBx] += srcCell1->dcData<Real>()->YRED[y][x];
                                 dBx++;
                             }
                             else
@@ -277,11 +281,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex1[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => XA
-                                dc->calc->XB[dAx][dBy] += srcCell1->dc->YRED[y][x]; // XB = XAT
+                                dc->calc->XB[dAx][dBy] += srcCell1->dcData<Real>()->YRED[y][x]; // XB = XAT
                                 dAx++;
                             }
                             else if (ANodeIndex1[x].nodeIndex == BNodeIndex[dBx]) { // => YB
-                                dc->calc->YB_NZB[dBy][dBx] += srcCell1->dc->YRED[y][x];
+                                dc->calc->YB_NZB[dBy][dBx] += srcCell1->dcData<Real>()->YRED[y][x];
                                 dBx++;
                             }
                             else
@@ -322,11 +326,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex2[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => YA
-                                dc->YRED[dAy][dAx] += srcCell2->dc->YRED[y][x];
+                                dc->YRED[dAy][dAx] += srcCell2->dcData<Real>()->YRED[y][x];
                                 dAx++;
                             }
                             else if (ANodeIndex2[x].nodeIndex == BNodeIndex[dBx]) { // => XB
-                                dc->calc->XB[dAy][dBx] += srcCell2->dc->YRED[y][x];
+                                dc->calc->XB[dAy][dBx] += srcCell2->dcData<Real>()->YRED[y][x];
                                 dBx++;
                             }
                             else
@@ -348,11 +352,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex2[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => XA
-                                dc->calc->XB[dAx][dBy] += srcCell2->dc->YRED[y][x]; // XB = XAT
+                                dc->calc->XB[dAx][dBy] += srcCell2->dcData<Real>()->YRED[y][x]; // XB = XAT
                                 dAx++;
                             }
                             else if (ANodeIndex2[x].nodeIndex == BNodeIndex[dBx]) { // => YB
-                                dc->calc->YB_NZB[dBy][dBx] += srcCell2->dc->YRED[y][x];
+                                dc->calc->YB_NZB[dBy][dBx] += srcCell2->dcData<Real>()->YRED[y][x];
                                 dBx++;
                             }
                             else
@@ -399,11 +403,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex1[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => YA
-                                dc->YRED[dAy][dAx] += srcCell1->dc->YRED.get_elem(y, x);
+                                dc->YRED[dAy][dAx] += srcCell1->dcData<Real>()->YRED.get_elem(y, x);
                                 dAx++;
                             }
                             else if (ANodeIndex1[x].nodeIndex == BNodeIndex[dBx]) { // => XB
-                                dc->calc->XB[dAy][dBx] += srcCell1->dc->YRED.get_elem(y, x);
+                                dc->calc->XB[dAy][dBx] += srcCell1->dcData<Real>()->YRED.get_elem(y, x);
                                 dBx++;
                             }
                             else
@@ -425,11 +429,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex1[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => XA
-                                dc->calc->XAT[dAx][dBy] += srcCell1->dc->YRED.get_elem(y, x);
+                                dc->calc->XAT[dAx][dBy] += srcCell1->dcData<Real>()->YRED.get_elem(y, x);
                                 dAx++;
                             }
                             else if (ANodeIndex1[x].nodeIndex == BNodeIndex[dBx]) { // => YB
-                                dc->calc->YB_NZB[dBy][dBx] += srcCell1->dc->YRED.get_elem(y, x);
+                                dc->calc->YB_NZB[dBy][dBx] += srcCell1->dcData<Real>()->YRED.get_elem(y, x);
                                 dBx++;
                             }
                             else
@@ -470,11 +474,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex2[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => YA
-                                dc->YRED[dAy][dAx] += srcCell2->dc->YRED.get_elem(y, x);
+                                dc->YRED[dAy][dAx] += srcCell2->dcData<Real>()->YRED.get_elem(y, x);
                                 dAx++;
                             }
                             else if (ANodeIndex2[x].nodeIndex == BNodeIndex[dBx]) { // => XB
-                                dc->calc->XB[dAy][dBx] += srcCell2->dc->YRED.get_elem(y, x);
+                                dc->calc->XB[dAy][dBx] += srcCell2->dcData<Real>()->YRED.get_elem(y, x);
                                 dBx++;
                             }
                             else
@@ -496,11 +500,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
                             // merge
 
                             if (dAx < Asiz && ANodeIndex2[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => XA
-                                dc->calc->XAT[dAx][dBy] += srcCell2->dc->YRED.get_elem(y, x);
+                                dc->calc->XAT[dAx][dBy] += srcCell2->dcData<Real>()->YRED.get_elem(y, x);
                                 dAx++;
                             }
                             else if (ANodeIndex2[x].nodeIndex == BNodeIndex[dBx]) { // => YB
-                                dc->calc->YB_NZB[dBy][dBx] += srcCell2->dc->YRED.get_elem(y, x);
+                                dc->calc->YB_NZB[dBy][dBx] += srcCell2->dcData<Real>()->YRED.get_elem(y, x);
                                 dBx++;
                             }
                             else
@@ -546,11 +550,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
             // merge
 
             if (dAx < Asiz && ANodeIndex1[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => JA
-                dc->calc->JAUA[dAx] += srcCell1->dc->JRED[x];
+                dc->calc->JAUA[dAx] += srcCell1->dcData<Real>()->JRED[x];
                 dAx++;
             }
             else if (ANodeIndex1[x].nodeIndex == BNodeIndex[dBx]) { // => JB
-                dc->calc->JBUB[dBx] += srcCell1->dc->JRED[x];
+                dc->calc->JBUB[dBx] += srcCell1->dcData<Real>()->JRED[x];
                 dBx++;
             }
             else
@@ -571,11 +575,11 @@ void SunredTreeNode::forwsubsDC(ComponentSubCircuit* pSrc) { // 94% of the runti
             // merge
 
             if (dAx < Asiz && ANodeIndex2[x].nodeIndex == ANodeIndex[dAx].nodeIndex) { // => JA
-                dc->calc->JAUA[dAx] += srcCell2->dc->JRED[x];
+                dc->calc->JAUA[dAx] += srcCell2->dcData<Real>()->JRED[x];
                 dAx++;
             }
             else if (ANodeIndex2[x].nodeIndex == BNodeIndex[dBx]) { // => JB
-                dc->calc->JBUB[dBx] += srcCell2->dc->JRED[x];
+                dc->calc->JBUB[dBx] += srcCell2->dcData<Real>()->JRED[x];
                 dBx++;
             }
             else
@@ -1142,6 +1146,10 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
 
 //***********************************************************************
 void SunredTreeNode::backsubsDC(ComponentSubCircuit* pSrc) {
+    if(wideDC)backsubsDCTyped<xxt>(pSrc);else backsubsDCTyped<rvt>(pSrc);
+}
+template<class Real> void SunredTreeNode::backsubsDCTyped(ComponentSubCircuit* pSrc) {
+    auto& dc=dcData<Real>();
 //***********************************************************************
     cuns Asiz = (uns)ANodeIndex.size();
     cuns Bsiz = (uns)BNodeIndex.size();
@@ -1181,10 +1189,10 @@ void SunredTreeNode::backsubsDC(ComponentSubCircuit* pSrc) {
         for (uns i = 0; i < Bsiz; i++) {
             uns nodeIndex = BNodeIndex[i];
             if ((nodeIndex & externalNodeFlag) != 0) {
-                pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->setVDC(dc->calc->JBUB[i]);
+                pSrc->externalNodes[nodeIndex & ~externalNodeFlag]->setVDC(hmg_to_double(dc->calc->JBUB[i]));
             }
             else {
-                pSrc->internalNodesAndVars[nodeIndex].setVDC(dc->calc->JBUB[i]);
+                pSrc->internalNodesAndVars[nodeIndex].setVDC(hmg_to_double(dc->calc->JBUB[i]));
             }
         }
 

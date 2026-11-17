@@ -18,6 +18,10 @@ enum class Precision { Extended, Double, Auto };
 inline bool enabled = false; // Explicitly enabled by the optimized executable.
 inline Precision precision = Precision::Extended;
 inline bool precisionSeen = false;
+// SUNRED's DC elimination tree is independent of the LEVEL0 leaf mode.
+// DOUBLE preserves the previous tree matrices unless explicitly overridden.
+inline Precision sunredPrecision = Precision::Double;
+inline bool sunredPrecisionSeen = false;
 inline bool threadsSeen = false;
 inline unsigned maxIterations = 0; // Zero preserves legacy full-solve bounds.
 inline bool maxIterationsSeen = false;
@@ -122,6 +126,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     std::set<std::pair<std::string,std::string>> adaptiveNodeKeys;
     for(const auto& node:nextAdaptiveNodes)adaptiveNodeKeys.emplace(node.circuit,node.node);
     auto next = precision; bool seenPrecision = precisionSeen, seenThreads = threadsSeen;
+    auto nextSunred = sunredPrecision; bool seenSunred = sunredPrecisionSeen;
     for (unsigned i = 0; i < lines.size(); ++i) {
         const auto t = tokens(lines[i]); if (t.empty()) continue;
         const auto fail = [&] { throw hmgExcept("HEXMG_OPT", "invalid or repeated option in %s, line %u", file.c_str(), openingLine + i + 1); };
@@ -132,6 +137,12 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
             else if (t[2] == "AUTO") next = Precision::Auto;
             else fail();
             seenPrecision = true;
+        } else if (t.size() == 3 && t[0] == "REDUCTION_PRECISION" && t[1] == "SUNRED") {
+            if (seenSunred) fail();
+            if (t[2] == "EXTENDED") nextSunred = Precision::Extended;
+            else if (t[2] == "DOUBLE") nextSunred = Precision::Double;
+            else fail();
+            seenSunred = true;
         } else if (t.size() == 2 && t[0] == "THREADS" && (t[1] == "AUTO" || t[1] == "1")) {
             if (seenThreads) fail();
             seenThreads = true;
@@ -265,6 +276,7 @@ inline void parse(const std::vector<std::string>& lines, const std::string& file
     function_guard::enabled=!functionGuards.empty()||!functionRanges.empty()||!functionDerivatives.empty();
     maxIterations = nextMax; maxIterationsSeen = seenMax;
     precision = next; precisionSeen = seenPrecision; threadsSeen = seenThreads;
+    sunredPrecision=nextSunred;sunredPrecisionSeen=seenSunred;
 }
 inline void report() {
     std::cout << "HEXMG_OPT: LEVEL0 " << (precision == Precision::Extended ? "EXTENDED" : precision == Precision::Double ? "DOUBLE" : "AUTO")
@@ -272,6 +284,7 @@ inline void report() {
         << "; extended fallbacks=" << extendedFallbacks.load()
         << "; adaptive accepted/rejected/forced=" << adaptiveAcceptedSteps << "/" << adaptiveRejectedSteps << "/" << adaptiveForcedSteps
         << "; limited Newton updates=" << limitedNewtonSteps
-        << "; higher levels unchanged; AC unchanged\n";
+        << "; SUNRED DC " << (sunredPrecision==Precision::Extended?"EXTENDED":"DOUBLE")
+        << "; AC unchanged\n";
 }
 }
