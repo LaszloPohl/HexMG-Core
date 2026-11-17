@@ -5,7 +5,7 @@ set_target_properties(hexmg_binary_codec PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTO
 target_include_directories(hexmg_binary_codec PUBLIC third_party/miniz)
 target_compile_definitions(hexmg_binary_codec PUBLIC MINIZ_NO_ARCHIVE_APIS MINIZ_NO_STDIO MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
 include(CTest)
-add_library(hexmg_core STATIC src/hmgComponent.cpp src/hmgComponentCreate.cpp
+add_library(hexmg_core STATIC src/hmgComponent.cpp src/hmgComponentCreate.cpp src/hmgBatchMemory.cpp
     src/hmgHMGFileReader.cpp src/hmgSimulation.cpp src/hmgSunred.cpp)
 target_include_directories(hexmg_core PUBLIC src)
 target_link_libraries(hexmg_core PUBLIC hexmg_binary_codec)

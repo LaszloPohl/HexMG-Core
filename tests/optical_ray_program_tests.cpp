@@ -85,6 +85,35 @@ int main(){try{
     Executor<double> imageExecutor(images.program,1,1);const auto& image=imageExecutor.evaluate(c,blue,yellow);
     near(image.blueImage[0],2);near(image.yellowImage[0],0);near(image.blueImage[1],std::exp(-1.));near(image.yellowImage[1],0);
     const auto& dark=imageExecutor.evaluate(c,std::array<double,1>{0},yellow);near(dark.blueImage[0],0);near(dark.blueImage[1],0);
+    // Cached and direct execution must be bit-identical across changing laws,
+    // independent yellow feedback, branch splits and zero/negative sources.
+    Executor<double> cached(p,1,1,SIZE_MAX),uncached(p,1,1),tooSmall(p,1,1,1);
+    if(cached.cacheBytes()!=p.steps.size()*16||uncached.cacheBytes()||tooSmall.cacheBytes())throw std::runtime_error("Optical cache budget");++checks;
+    auto dynamic=c;
+    const auto same=[&](const Output<double>& a,const Output<double>& b){
+        if(a.heat!=b.heat||a.wall!=b.wall||a.yellow!=b.yellow||a.blueImage!=b.blueImage||a.yellowImage!=b.yellowImage||a.escape!=b.escape||a.cutoff!=b.cutoff)
+            throw std::runtime_error("Optical attenuation cache changed the calculation");++checks;
+    };
+    for(unsigned i=0;i<12;++i){
+        if(i==3)dynamic[0][0]*=2;if(i==6)dynamic[1][1]*=.5;if(i==9)dynamic[0][2]=.9;
+        const std::array<double,1> input{i%3==0?0.:i%3==1?-1.:2.};
+        const auto& reference=uncached.evaluate(dynamic,input,yellow);
+        same(cached.evaluate(dynamic,input,yellow),reference);same(tooSmall.evaluate(dynamic,input,yellow),reference);
+    }
+    auto threadedProgram=p;threadedProgram.rays.clear();threadedProgram.steps.clear();
+    for(unsigned i=0;i<262144;++i){const auto begin=threadedProgram.steps.size();
+        threadedProgram.steps.insert(threadedProgram.steps.end(),p.steps.begin(),p.steps.begin()+8);
+        auto ray=p.rays.front();ray.begin=begin;ray.fraction=1./262144;threadedProgram.rays.push_back(ray);}
+    Executor<double> sequential(threadedProgram,1,1),parallel(threadedProgram,1,1,0,4),parallelCache(threadedProgram,1,1,SIZE_MAX,4);
+    if(parallel.threadCount()!=4||parallelCache.threadCount()!=4)throw std::runtime_error("Parallel optical partition");++checks;
+    for(unsigned iteration=0;iteration<3;++iteration){dynamic[0][0]+=0.1;
+        const auto serial=sequential.evaluate(dynamic,blue,yellow),multi=parallel.evaluate(dynamic,blue,yellow);
+        same(parallelCache.evaluate(dynamic,blue,yellow),multi);same(parallel.evaluate(dynamic,blue,yellow),multi);
+        const auto close=[&](double a,double b){++checks;if(std::abs(a-b)>1e-9*std::max(1.,std::abs(b)))throw std::runtime_error("Parallel ray reduction mismatch");};
+        for(unsigned cell=0;cell<2;++cell){close(multi.heat[cell],serial.heat[cell]);close(multi.wall[cell],serial.wall[cell]);close(multi.yellow[cell],serial.yellow[cell]);}
+        for(unsigned side=0;side<6;++side)for(unsigned band=0;band<2;++band)close(multi.escape[side][band],serial.escape[side][band]);
+        for(unsigned band=0;band<2;++band)close(multi.cutoff[band],serial.cutoff[band]);
+    }
     imageFile.program.steps[1].value=.25;rejects([&]{encode(imageFile);});
     std::cout<<"PASS "<<checks<<" optical program/file checks\n";return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

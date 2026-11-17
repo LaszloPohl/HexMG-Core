@@ -6,6 +6,17 @@
 #include <memory>
 
 namespace nsHMG {
+std::size_t opticalAttenuationCacheBudget() noexcept;
+inline std::size_t opticalAttenuationCacheBudget(const hexmg::optics::File& file) noexcept {
+    std::size_t fixed=0,varying=0;
+    for(const auto& cell:file.cells){const auto& blue=file.bindings[cell.coefficients[0]];const auto& yellow=file.bindings[cell.coefficients[1]];
+        if(!blue.address.empty()||!yellow.address.empty())++varying;
+        else if(blue.constant>0||yellow.constant>0)++fixed;
+    }
+    // A cache is useful for fixed absorption. Rewriting a multi-GiB cache
+    // every temperature iteration can be slower than direct evaluation.
+    return fixed&&fixed>=varying?opticalAttenuationCacheBudget():0;
+}
 // Common controller lifecycle. A type supplies only the bulk calculation;
 // circuit reads precede every controller store at the same level.
 class BatchController {
@@ -23,7 +34,7 @@ class OpticalBatchController final:public BatchController {
     std::vector<std::array<double,4>> coefficients_;
 public:
     OpticalBatchController(std::shared_ptr<const hexmg::optics::File> file,std::vector<DeepInterfaceNodeID> ids)
-        :file_(std::move(file)),executor_(file_->program,file_->blue.size(),file_->yellow.size()),
+        :file_(std::move(file)),executor_(file_->program,file_->blue.size(),file_->yellow.size(),opticalAttenuationCacheBudget(*file_),std::max(1u,std::min(8u,std::thread::hardware_concurrency()/2))),
         values_(file_->bindings.size()),blue_(file_->blue.size()),yellow_(file_->yellow.size()),coefficients_(file_->cells.size()) {nodes=std::move(ids);}
     void load(const std::function<double(const DeepInterfaceNodeID&)>& read)override{
         for(std::size_t i=0;i<values_.size();++i)values_[i]=file_->bindings[i].address.empty()?file_->bindings[i].constant:read(nodes[i]);

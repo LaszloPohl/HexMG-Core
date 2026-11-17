@@ -9,6 +9,7 @@ int main(int argc,char** argv){try{
     if(std::filesystem::exists(root)||!std::filesystem::create_directories(root))throw std::runtime_error("Fresh directory required");
     File file;file.program.cells=1;file.program.steps={{Op::Branch,0,0},{Op::Segment,0,.5},{Op::Escape,1,0}};file.program.rays={{0,3,0,1,0,1}};
     file.bindings={{"B0",0},{{},0},{"N0",0},{"B1",0},{"B2",0}};file.cells.resize(1);file.cells[0].coefficients={0,1,1,1};file.cells[0].outputs[0]=3;file.blue={2};file.exits[2]=4;
+    if(opticalAttenuationCacheBudget(file)!=0)throw std::runtime_error("Dynamic absorption should not allocate attenuation cache");
     const auto bytes=encode(file);std::ofstream binary(root/"paths.hxray",std::ios::binary);binary.write(reinterpret_cast<const char*>(bytes.data()),static_cast<std::streamsize>(bytes.size()));binary.close();
     std::ofstream text(root/"input.hmg");text<<"HEXMG 1.0\n.FUNCTION CONST P=0 V=0\n_COPY RET 2\n.END FUNCTION CONST\n.FUNCTION COPY P=1 V=0\n_ADDC RET P0 0\n.END FUNCTION COPY\n"
         ".MODEL MAT CONTROLLER A=1\nFUNCTION CONST\nLOAD -\nSTORE A0\n.END MODEL MAT\n.MODEL READ CONTROLLER A=2\nFUNCTION COPY\nLOAD - A0\nSTORE A1\n.END MODEL READ\n"

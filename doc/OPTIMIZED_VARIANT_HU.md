@@ -1,5 +1,23 @@
 # Optimalizált HexMG-Core – fejlesztési ág
 
+2026-11-17: a nagy tömbös sugárkontroller legfeljebb nyolc munkaszálon
+értékeli ki a sugarakat, külön cellaösszegzőkkel és rögzített sorrendű
+végső összeadással. Kis listán a soros út marad. A munkaszálak közös,
+csak olvasott programot használnak; az összegezőpufferek kerete 512 MiB.
+Állandó elnyelésnél a rendelkezésre álló memória harmadáig pontos
+csillapítási cache használható; többségében hőfüggő törvényeknél nem
+foglalunk több GiB-ot minden iterációban újraszámítandó cache-re.
+
+Egymillió × nyolc szakasz: sorosan 74–76 ms, nyolc szálon 22–24 ms.
+Teljes eredeti CoB, 32 289 753 sugár, 843 494 239 cellaszakasz:
+ugyanazzal a 0,01%-os hibahatárral 16 iteráció; számítás 175,3 → 81,3 s,
+betöltéssel együtt 200,5 → körülbelül 107 s. A float kép bájtazonos;
+a mérési értékek legnagyobb abszolút eltérése 1,67e−13. A párhuzamos
+összegzés kerekítési sorrendje eltérhet a sorostól. 298 program-/fájlkapu,
+20 kontrollerütemezési és 314 geometriai/energiamérleg-kapu PASS.
+A teljes OLED-konvergencia külön nyitott; ez a gyorsítás nem oldja meg.
+
+
 2026-11-17: a relatív iterációs ciklus az első elfogadott korrekció után már
 a fizikai függvényértékekkel ellenőrzi a mérleget, nem a nulla sorszámú
 induló közelítéssel. Egy kis hálózat korábban tévesen 0 V-ot fogadott el
