@@ -14,6 +14,7 @@
 //***********************************************************************
 #include "hmgException.h"
 #include "hmgCommon.h"
+#include <set>
 //***********************************************************************
 
 
@@ -30,8 +31,8 @@ class Simulation {
     rvt timeFreqValue = rvt0;
     rvt dtValue = rvt0;
     rvt err = rvt0;
-    bool wasDC = false;
-    bool isBuiltForAC = false;
+    std::set<uns> circuitsWithDCState;
+    std::set<uns> circuitsBuiltForAC;
     bool isTau = false;
 
     void iterate(); // always DC

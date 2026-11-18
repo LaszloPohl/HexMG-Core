@@ -167,7 +167,7 @@ void Simulation::runDC(uns requestedIterations) {
         requireConverged(max_error, err);
     
     CircuitStorage::AcceptStepDC(fullCircuitID);
-    wasDC = true;
+    circuitsWithDCState.insert(fullCircuitID);
 }
 
 
@@ -211,10 +211,9 @@ void Simulation::runTimeStep(uns requestedIterations) {
 void Simulation::runAC() {
 //***********************************************************************
     CircuitStorage& gc = CircuitStorage::getInstance();
-    if (!isBuiltForAC) {
-        for (auto& fullCkt : gc.fullCircuitInstances)
-            fullCkt.component->buildForAC();
-        isBuiltForAC = true;
+    if (!circuitsBuiltForAC.contains(fullCircuitID)) {
+        gc.fullCircuitInstances[fullCircuitID].component->buildForAC();
+        circuitsBuiltForAC.insert(fullCircuitID);
     }
     gc.fullCircuitInstances[fullCircuitID].component->deleteD(false);
     gc.fullCircuitInstances[fullCircuitID].component->calculateCurrent(false);
@@ -269,7 +268,7 @@ void Simulation::run(const RunData& runData) {
     // END MULTIGRID
     // ******************************************************************
 
-    if ((!wasDC && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial)) {
+    if ((!circuitsWithDCState.contains(fullCircuitID) && (analysisType == atTimeStep || analysisType == atAC || analysisType == atTimeConst)) || (analysisType == atTimeStep && runData.isInitial)) {
         SimControl::setInitialDC();
         // TODO: runData.isPre
         timeFreqValue = rvt0;

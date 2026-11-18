@@ -651,7 +651,7 @@ public:
     //***********************************************************************
     using Component_RDissBase::Component_RDissBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
@@ -673,15 +673,9 @@ public:
             cplx V = N[0]->getValueAC() - N[1]->getValueAC();
             IAC = componentValue.getValueDC() * V; // componentValue.getValueDC() !
 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
+            crvt voltageDC = N[0]->getValueDC() - N[1]->getValueDC();
+            PAC = 2 * voltageDC * IAC;
 
-            rvt VDC = N[0]->getValueDC() - N[1]->getValueDC();
-            PAC = IAC * (2 * VDC + V);
             cplx P1 = PAC * share.get();
             cplx P2 = PAC - P1;
             N[0]->incDAC(-IAC);
@@ -736,11 +730,12 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (N[0] == N[1])
-            return;
-        ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
-        N[0]->incYiiAC(G);
-        N[1]->incYiiAC(G);
+        for (uns y = 0; y < 4; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < 4; ++x)
+                if (N[x] == N[y]) diagonal += getYAC(y, x);
+            N[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -940,7 +935,7 @@ public:
     //***********************************************************************
     using Component_GMDBase::Component_GMDBase;
     //************************** AC / DC functions *******************************
-    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return !isDC; }
+    bool isJacobianMXSymmetrical([[maybe_unused]] bool isDC)const noexcept override { return false; }
     //***********************************************************************
     void calculateCurrent([[maybe_unused]] bool isDC) noexcept override {
     //***********************************************************************
@@ -964,15 +959,9 @@ public:
             cplx V = N[0]->getValueAC() - N[1]->getValueAC();
             IAC = componentValue.getValueDC() * V; // componentValue.getValueDC() !
 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
+            const rvt voltageDC = N[0]->getValueDC() - N[1]->getValueDC();
+            PAC = 2 * voltageDC * IAC;
 
-            rvt VDC = N[0]->getValueDC() - N[1]->getValueDC();
-            PAC = IAC * (2 * VDC + V);
             cplx P1 = PAC * share.get();
             cplx P2 = PAC - P1;
             N[0]->incDAC(-IAC);
@@ -1036,12 +1025,12 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (N[0] == N[1])
-            return;
-        ccplx G = componentValue.getValueDC(); // componentValue.getValueDC() !
-        N[0]->incYiiAC(G);
-        N[1]->incYiiAC(G);
-        N[2]->incYiiDC(-1.0);
+        for (uns y = 0; y < 5; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < 5; ++x)
+                if (N[x] == N[y]) diagonal += getYAC(y, x);
+            N[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -2741,7 +2730,7 @@ public:
         externalNodes[1]->incYiiDC(Y);
     }
     //***********************************************************************
-    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC(); }
+    rvt getCurrentDC([[maybe_unused]] uns y) const noexcept override { return y >= 2 ? rvt0 : (y == 0 ? -componentCurrent.getValueDC() : componentCurrent.getValueDC()); }
     //***********************************************************************
     DefectCollector collectCurrentDefectDC() const noexcept override { return DefectCollector{}; }
     DefectCollector collectVoltageDefectDC() const noexcept override { return DefectCollector{}; }
@@ -2757,14 +2746,15 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[0].get();
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
+        for (uns y = 0; y < 2; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
-    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y == 0 ? IAC : -IAC; }
+    cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { return y >= 2 ? cplx0 : (y == 0 ? IAC : -IAC); }
     //***********************************************************************
 #ifdef HMG_DEBUGPRINT
     void printNodeValueDC(uns) const noexcept override {}
@@ -3013,11 +3003,12 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[1].get(); // pars[1] !
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
+        for (uns y = 0; y < 4; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -3250,12 +3241,12 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[0].get();
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
-        externalNodes[2]->incYiiAC(1.0);
+        for (uns y = 0; y < 3; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 
@@ -3535,12 +3526,12 @@ public:
     //***********************************************************************
     void calculateYiiAC() noexcept override {
     //***********************************************************************
-        if (externalNodes[0] == externalNodes[1])
-            return;
-        ccplx G = pars[1].get(); // pars[1] !
-        externalNodes[0]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(G);
-        externalNodes[1]->incYiiAC(1.0);
+        for (uns y = 0; y < 5; ++y) {
+            cplx diagonal = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                if (externalNodes[x] == externalNodes[y]) diagonal += getYAC(y, x);
+            externalNodes[y]->incYiiAC(diagonal);
+        }
     }
     //***********************************************************************
     cplx getCurrentAC([[maybe_unused]] uns y) const noexcept override { 

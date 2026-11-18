@@ -1095,7 +1095,7 @@ void SunredTreeNode::forwsubsAC(ComponentSubCircuit* pSrc) {
         else {
             if (isChangedAC) {
                 if (Bsiz == 1) {
-                    ac->calc->NZBXA.math_1_ninv_mulT(ac->calc->YB_NZB, ac->calc->XB); // XA should be here but internal data structure of XB is the same
+                    ac->calc->NZBXA.math_1_ninv_mulT(ac->calc->YB_NZB, ac->calc->XAT);
                     ac->YRED.math_1_add_mul(ac->YRED, ac->calc->XB, ac->calc->NZBXA);
                 }
                 else if (Bsiz == 2) {
