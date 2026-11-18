@@ -2936,7 +2936,7 @@ void HMGFileFunction::Read(ReadALine& reader, char* line, LineInfo& lineInfo) {
                 cuns nPar = f->nParams;
 
                 ReadComponentParams(func, nCompPar, lineToken, reader, line, lineInfo);
-                ReadParams(func, nPar, lineToken, reader, line, lineInfo, false);
+                ReadParams(func, nPar + 1, lineToken, reader, line, lineInfo, false);
             }
         }
     } while (isFunctionNotEnded);

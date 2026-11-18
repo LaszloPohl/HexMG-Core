@@ -731,9 +731,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (x > 1 || y > 1)
-            return cplx0;
-        return y == x ? componentValue.getValueDC() : -componentValue.getValueDC();  // componentValue.getValueDC() !
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -1033,17 +1031,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? componentValue.getValueDC() : -componentValue.getValueDC(); // componentValue.getValueDC() !
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -componentValue.getValueDC();
-            case 1: return componentValue.getValueDC();
-            case 2: return 1.0;
-        }
-        return 0;
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -2646,9 +2634,9 @@ public:
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
-            crvt G = pars[0].get();
-            ccplx IG = G * (externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC());
-            IAC = componentValue.getValueDC() - IG; // getValueDC !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
         }
@@ -2764,10 +2752,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 2)
-            return cplx0;
-        crvt G = x == 0 ? pars[0].get() + dg : x == 1 ? -pars[0].get() - dg : rvt0; // ! dg differential conductance
-        return y == 0 ? G : -G;
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -2863,26 +2848,20 @@ public:
             externalNodes[3]->incDDC(P2);
         }
         else {
-            crvt G = pars[1].get();
-            ccplx V = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
-            ccplx IG = G * V;
-            IAC = componentValue.getValueDC() - IG; // getValueDC ! // R or G components: IAC sign is opposite !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
- 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
 
-            rvt VDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
-            PAC = -IAC * (2 * VDC + V);
-            cplx P1 = PAC * pars[0].get(); // dissipated power share
-            cplx P2 = PAC - P1;
-            externalNodes[2]->incDAC(P1);
-            externalNodes[3]->incDAC(P2);
+            // d(V*I) = Vdc*dI + Idc*dV; no DC source or amplitude-squared term.
+            
+            crvt voltageDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
+            ccplx voltageAC = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
+            PAC = -voltageDC * IAC + componentCurrent.getValueDC() * voltageAC;
+            ccplx first = PAC * pars[0].get();
+            externalNodes[2]->incDAC(first);
+            externalNodes[3]->incDAC(PAC - first);
         }
     }
     //***********************************************************************
@@ -2936,7 +2915,7 @@ public:
             return rvt0;
 
         crvt A = pars[0].get();
-        crvt B = rvt0 - A;
+        crvt B = rvt1 - A;
         crvt G = pars[1].get();
         crvt V = (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC()); // sign?
         crvt ig = componentValue.getValueDC();
@@ -2966,13 +2945,13 @@ public:
             }
             break;
             case 2: switch (x) {
-                case 0:  return  A * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -A * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return  A * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return  A * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  A * dFv_per_dUi * V;
             }
             case 3: switch (x) {
-                case 0:  return  B * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -B * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return  B * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return  B * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  B * dFv_per_dUi * V;
             }
         }
@@ -3029,10 +3008,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 2)
-            return cplx0;
-        crvt G = x == 0 ? pars[1].get() + dg : x == 1 ? -pars[1].get() - dg : rvt0; // ! dg differential conductance // pars[1] !
-        return y == 0 ? G : -G;
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -3132,12 +3108,12 @@ public:
             // printf("** G = %g\tIG = %g\t Ifull = %g A U = %g**\n", G, IG, Ifull, externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC());
         }
         else {
-            crvt G = pars[0].get();
-            ccplx IG = G * (externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC());
-            IAC = componentValue.getValueDC() - IG; // getValueDC !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
-            IMC = -IAC - externalNodes[2]->getValueAC() * 1.0; // RM = 1 Ohm
+            IMC = -IAC - externalNodes[2]->getValueAC();
             externalNodes[2]->incDAC(IMC);
         }
     }
@@ -3269,17 +3245,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? pars[0].get() + dg : -pars[0].get() - dg; // ! dg differential conductance
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -pars[0].get() - dg;
-            case 1: return pars[0].get() + dg;
-            case 2: return 1.0;
-        }
-        return cplx0;
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
@@ -3388,29 +3354,22 @@ public:
             externalNodes[4]->incDDC(P2);
         }
         else {
-            crvt G = pars[1].get();
-            ccplx V = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
-            ccplx IG = G * V;
-            IAC = componentValue.getValueDC() - IG; // getValueDC ! // R or G components: IAC sign is opposite !
+            IAC = cplx0;
+            for (uns x = 0; x < externalNodes.size(); ++x)
+                IAC -= getYDC(0, x) * externalNodes[x]->getValueAC();
             externalNodes[0]->incDAC(IAC);
             externalNodes[1]->incDAC(-IAC);
- 
-            // full PDISS = G*(UDC+UAC)^2
-            //            = G*UDC^2 + G*2*UDC*UAC + G*UAC^2
-            //            = PDC + G*2*UDC*UAC + G*UAC^2
-            // => PAC = G*2*UDC*UAC + G*UAC^2
-            //        = 2*IAC*UDC + IAC*V
-            //        = IAC*(2*UDC+V)
-
-            IMC = -IAC - externalNodes[2]->getValueAC() * 1.0; // RM = 1 Ohm
+            IMC = -IAC - externalNodes[2]->getValueAC();
             externalNodes[2]->incDAC(IMC);
 
-            rvt VDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
-            PAC = -IAC * (2 * VDC + V);
-            cplx P1 = PAC * pars[0].get(); // dissipated power share
-            cplx P2 = PAC - P1;
-            externalNodes[3]->incDAC(P1);
-            externalNodes[4]->incDAC(P2);
+            // d(V*I) = Vdc*dI + Idc*dV; no DC source or amplitude-squared term.
+            
+            crvt voltageDC = externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC();
+            ccplx voltageAC = externalNodes[0]->getValueAC() - externalNodes[1]->getValueAC();
+            PAC = -voltageDC * IAC + componentCurrent.getValueDC() * voltageAC;
+            ccplx first = PAC * pars[0].get();
+            externalNodes[3]->incDAC(first);
+            externalNodes[4]->incDAC(PAC - first);
         }
     }
     //***********************************************************************
@@ -3460,11 +3419,11 @@ public:
     //***********************************************************************
     rvt getYDC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (y >= 4)
+        if (y >= 5)
             return rvt0;
 
         crvt A = pars[0].get();
-        crvt B = rvt0 - A;
+        crvt B = rvt1 - A;
         crvt G = pars[1].get();
         crvt V = (externalNodes[0]->getValueDC() - externalNodes[1]->getValueDC()); // sign?
         crvt ig = componentValue.getValueDC();
@@ -3501,13 +3460,13 @@ public:
             }
             break;
             case 3: switch (x) {
-                case 0:  return  A * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -A * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return  A * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return  A * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  A * dFv_per_dUi * V;
             }
             case 4: switch (x) {
-                case 0:  return  B * ((2 * G - dFv_per_dUi) * V - ig);
-                case 1:  return -B * ((2 * G - dFv_per_dUi) * V - ig);
+                case 0:  return  B * ((dFv_per_dUi - 2 * G) * V + ig);
+                case 1:  return  B * ((dFv_per_dUi + 2 * G) * V - ig);
                 default: return  B * dFv_per_dUi * V;
             }
         }
@@ -3571,17 +3530,7 @@ public:
     //***********************************************************************
     cplx getYAC([[maybe_unused]] uns y, [[maybe_unused]] uns x) const noexcept override {
     //***********************************************************************
-        if (x < 2 && y < 2)
-            return y == x ? pars[1].get() + dg : -pars[1].get() - dg; // ! dg differential conductance // pars[1] !
-        if (y < 2)
-            return cplx0;
-        // y = 2
-        switch (x) { // I3 = G(U2 - U1) + 1 * U3
-            case 0: return -pars[1].get() - dg;
-            case 1: return pars[1].get() + dg;
-            case 2: return 1.0;
-        }
-        return cplx0;
+        return getYDC(y, x);
     }
     //***********************************************************************
     void calculateYiiAC() noexcept override {
